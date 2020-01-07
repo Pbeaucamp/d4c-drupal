@@ -1,0 +1,211 @@
+/*
+  Icon Font: d4cui
+  
+  This file uses a library under MIT Licence :
+
+ods-widgets -- https://github.com/opendatasoft/ods-widgets
+Copyright (c) 2014 - Opendatasoft
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+@font-face {
+  font-family: "d4cui";
+  src: url("/sites/default/files/api/portail_d4c/fonts/d4c.eot");
+  src: url("/sites/default/files/api/portail_d4c/fonts/d4c.eot?#iefix") format("embedded-opentype"),
+       url("/sites/default/files/api/portail_d4c/fonts/d4c.woff") format("woff"),
+       url("/sites/default/files/api/portail_d4c/fonts/d4c.ttf") format("truetype"),
+       url("/sites/default/files/api/portail_d4c/fonts/d4c.svg#d4cui") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: "d4cui";
+    src: url("/sites/default/files/api/portail_d4c/fonts/d4c.svg#d4cui") format("svg");
+  }
+}
+
+[data-icon]:before { content: attr(data-icon); }
+
+[data-icon]:before,
+.d4cui-add:before,
+.d4cui-bars:before,
+.d4cui-basemap:before,
+.d4cui-bottom:before,
+.d4cui-caption:before,
+.d4cui-configuration:before,
+.d4cui-copy:before,
+.d4cui-dataset:before,
+.d4cui-dataset_group:before,
+.d4cui-delete:before,
+.d4cui-delete_light:before,
+.d4cui-description:before,
+.d4cui-dot_border_opacity_max:before,
+.d4cui-dot_border_opacity_mini:before,
+.d4cui-dot_opacity_max:before,
+.d4cui-dot_opacity_mini:before,
+.d4cui-dot_size_big:before,
+.d4cui-dot_size_medium:before,
+.d4cui-dot_size_small:before,
+.d4cui-dot_thickness_max:before,
+.d4cui-dot_thickness_mini:before,
+.d4cui-edit:before,
+.d4cui-folder:before,
+.d4cui-folder-open:before,
+.d4cui-group:before,
+.d4cui-home:before,
+.d4cui-left:before,
+.d4cui-link:before,
+.d4cui-list:before,
+.d4cui-location:before,
+.d4cui-maps_empty:before,
+.d4cui-marker_border_opacity_max:before,
+.d4cui-marker_border_opacity_mini:before,
+.d4cui-marker_opacity_max:before,
+.d4cui-marker_opacity_mini:before,
+.d4cui-marker_size_max:before,
+.d4cui-marker_size_medium:before,
+.d4cui-marker_size_mini:before,
+.d4cui-marker_thickness_max:before,
+.d4cui-marker_thickness_mini:before,
+.d4cui-move:before,
+.d4cui-d4clogo:before,
+.d4cui-paste:before,
+.d4cui-remove:before,
+.d4cui-reset:before,
+.d4cui-right:before,
+.d4cui-save:before,
+.d4cui-search:before,
+.d4cui-share:before,
+.d4cui-sign_in:before,
+.d4cui-sign_out:before,
+.d4cui-split:before,
+.d4cui-style:before,
+.d4cui-tooltips:before,
+.d4cui-top:before,
+.d4cui-valid:before,
+.d4cui-valid_white:before,
+.d4cui-visibility_off:before,
+.d4cui-visibility_on:before,
+.d4cui-visual_options:before,
+.d4cui-widget:before,
+.d4cui-zoom_less:before,
+.d4cui-zoom_plus:before {
+  display: inline-block;
+  font-family: "d4cui";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  line-height: 1;
+  text-decoration: inherit;
+  text-rendering: optimizeLegibility;
+  text-transform: none;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-smoothing: antialiased;
+}
+
+.d4cui-add:before { content: "\f100"; }
+.d4cui-bars:before { content: "\f101"; }
+.d4cui-basemap:before { content: "\f102"; }
+.d4cui-bottom:before { content: "\f103"; }
+.d4cui-caption:before { content: "\f104"; }
+.d4cui-configuration:before { content: "\f105"; }
+.d4cui-copy:before { content: "\f106"; }
+.d4cui-dataset:before { content: "\f107"; }
+.d4cui-dataset_group:before { content: "\f108"; }
+.d4cui-delete:before { content: "\f109"; }
+.d4cui-delete_light:before { content: "\f10a"; }
+.d4cui-description:before { content: "\f10b"; }
+.d4cui-dot_border_opacity_max:before { content: "\f10c"; }
+.d4cui-dot_border_opacity_mini:before { content: "\f10d"; }
+.d4cui-dot_opacity_max:before { content: "\f10e"; }
+.d4cui-dot_opacity_mini:before { content: "\f10f"; }
+.d4cui-dot_size_big:before { content: "\f110"; }
+.d4cui-dot_size_medium:before { content: "\f111"; }
+.d4cui-dot_size_small:before { content: "\f112"; }
+.d4cui-dot_thickness_max:before { content: "\f113"; }
+.d4cui-dot_thickness_mini:before { content: "\f114"; }
+.d4cui-edit:before { content: "\f115"; }
+.d4cui-folder:before { content: "\f116"; }
+.d4cui-folder-open:before { content: "\f117"; }
+.d4cui-group:before { content: "\f118"; }
+.d4cui-home:before { content: "\f119"; }
+.d4cui-left:before { content: "\f11a"; }
+.d4cui-link:before { content: "\f11b"; }
+.d4cui-list:before { content: "\f11c"; }
+.d4cui-location:before { content: "\f11d"; }
+.d4cui-maps_empty:before { content: "\f11e"; }
+.d4cui-marker_border_opacity_max:before { content: "\f11f"; }
+.d4cui-marker_border_opacity_mini:before { content: "\f120"; }
+.d4cui-marker_opacity_max:before { content: "\f121"; }
+.d4cui-marker_opacity_mini:before { content: "\f122"; }
+.d4cui-marker_size_max:before { content: "\f123"; }
+.d4cui-marker_size_medium:before { content: "\f124"; }
+.d4cui-marker_size_mini:before { content: "\f125"; }
+.d4cui-marker_thickness_max:before { content: "\f126"; }
+.d4cui-marker_thickness_mini:before { content: "\f127"; }
+.d4cui-move:before { content: "\f128"; }
+.d4cui-d4clogo:before { content: "\f12a"; }
+.d4cui-paste:before { content: "\f12b"; }
+.d4cui-remove:before { content: "\f12d"; }
+.d4cui-reset:before { content: "\f12e"; }
+.d4cui-right:before { content: "\f12f"; }
+.d4cui-save:before { content: "\f130"; }
+.d4cui-search:before { content: "\f131"; }
+.d4cui-share:before { content: "\f132"; }
+.d4cui-sign_in:before { content: "\f133"; }
+.d4cui-sign_out:before { content: "\f134"; }
+.d4cui-split:before { content: "\f135"; }
+.d4cui-style:before { content: "\f136"; }
+.d4cui-tooltips:before { content: "\f137"; }
+.d4cui-top:before { content: "\f138"; }
+.d4cui-valid:before { content: "\f139"; }
+.d4cui-valid_white:before { content: "\f13a"; }
+.d4cui-visibility_off:before { content: "\f13b"; }
+.d4cui-visibility_on:before { content: "\f13c"; }
+.d4cui-visual_options:before { content: "\f13d"; }
+.d4cui-widget:before { content: "\f13e"; }
+.d4cui-zoom_less:before { content: "\f13f"; }
+.d4cui-zoom_plus:before { content: "\f140"; }
+
+
+/* RTL For icons that require to be turned */
+html[dir=rtl] .d4cui-bars:before,
+html[dir=rtl] .d4cui-caption:before,
+html[dir=rtl] .d4cui-description:before,
+html[dir=rtl] .d4cui-edit:before,
+html[dir=rtl] .d4cui-folder:before,
+html[dir=rtl] .d4cui-folder-open:before,
+html[dir=rtl] .d4cui-group:before,
+html[dir=rtl] .d4cui-left:before,
+html[dir=rtl] .d4cui-link:before,
+html[dir=rtl] .d4cui-list:before,
+html[dir=rtl] .d4cui-location:before,
+html[dir=rtl] .d4cui-right:before,
+html[dir=rtl] .d4cui-share:before,
+html[dir=rtl] .d4cui-sign_in:before,
+html[dir=rtl] .d4cui-sign_out:before,
+html[dir=rtl] .d4cui-split:before,
+html[dir=rtl] .d4cui-style:before,
+html[dir=rtl] .d4cui-tooltips:before {
+  transform: scale(-1, 1);
+}

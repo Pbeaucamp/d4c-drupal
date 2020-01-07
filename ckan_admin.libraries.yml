@@ -1,0 +1,201 @@
+visu.angular:
+  version: VERSION
+  css:
+    theme:
+      css/visualisation.css: {}
+      
+theme.form:
+    version: VERSION
+    js:
+      /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+      js/libraries.js: {}
+      /sites/default/files/api/portail_d4c/js/angular-core.js: {}
+      /sites/default/files/api/portail_d4c/js/i18n.js: {}
+      /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
+      js/theme_form.js: {}
+    css:
+      theme:
+        /sites/default/files/api/portail_d4c/css/visualisation.css: {}
+    dependencies:
+      - core/jquery
+      
+custom_views.form:
+  version: VERSION
+  js:
+    js/customViewsForm.js: {}
+  dependencies:
+    - core/jquery
+    
+addThemeInDatasetForm.form:
+  version: VERSION
+  js:
+    js/addThemeInDatasetForm.js: {}
+  dependencies:
+    - core/jquery    
+    
+iconpicker.form:
+  version: VERSION
+  css:
+    theme:
+      js/fontawesome-iconpicker/dist/css/fontawesome-iconpicker.min.css: {}
+  js:
+    js/fontawesome-iconpicker/dist/js/fontawesome-iconpicker.js: {}
+  dependencies:
+    - core/jquery 
+    
+typeColumns.form:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/libraries.js: {}
+    js/typeColumnsForm.js: {}
+    /sites/default/files/api/portail_d4c/lib/sortableJs/Sortable.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
+    /sites/default/files/api/portail_d4c/js/i18n.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-visu.js: {}
+  css:
+    theme:
+      /sites/default/files/api/portail_d4c/css/bootstrap.min.css: {}
+    layout:
+      /sites/default/files/api/portail_d4c/lib/leaflet/leaflet.css: {}
+      /sites/default/files/api/portail_d4c/css/font-awesome.min.css: {}
+    base:
+      css/typesColumnForm.css: {}
+  dependencies:
+    - core/jquery
+    
+editMetaDataForm.form:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/libraries.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
+    /sites/default/files/api/portail_d4c/js/i18n.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
+    js/editMetaDataForm.js: {}
+  css:
+    theme:
+      /sites/default/files/api/portail_d4c/css/visualisation.css: {}
+  dependencies:
+    - core/jquery
+    
+editMetaDataFormModal.form:
+  version: VERSION
+  css:
+    theme:
+      css/modal.css: {} 
+
+organizationsManagementForm.form:
+  version: VERSION
+  js:
+    js/organizationsManagementForm.js: {}
+  dependencies:
+    - core/jquery
+    
+MoissonnageDataGouv.form:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/libraries.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
+    /sites/default/files/api/portail_d4c/js/i18n.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
+    js/MoissonnageDataGouv.js: {}
+  dependencies:
+    - core/jquery
+  css:
+    theme:
+      /sites/default/files/api/portail_d4c/css/visualisation.css: {}
+      /sites/default/files/api/portail_d4c/css/font-awesome.min.css: {}
+    base:
+      css/modal.css: {}
+
+updateControlForm.form:
+  version: VERSION
+  js:
+    js/updateControlForm.js: {}
+  dependencies:
+    - core/jquery
+    
+GeolocForm.form:
+  version: VERSION
+  js:
+    js/GeolocForm.js: {}
+  dependencies:
+    - core/jquery
+
+ckanForm.form:
+  version: VERSION
+  js:
+    js/ckanForm.js: {}
+  dependencies:
+    - core/jquery
+    
+controDataslForm.form:
+  version: VERSION
+  js:
+    js/controDataslForm.js: {}
+  dependencies:
+    - core/jquery
+
+mapTilesHarvestForm:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/lib/map/tilelayer.js: {}
+    /sites/default/files/api/portail_d4c/lib/map/map.js: {}
+    js/harvestTiles.js: {}
+  dependencies:
+    - core/jquery
+    - ckan_admin/leaflet
+
+leaflet:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/lib/leaflet/leaflet.js: {}
+    #/sites/default/files/api/portail_d4c/lib/leaflet-draw/leaflet.draw.js: {}
+    /sites/default/files/api/portail_d4c/lib/leaflet-control-geocoder/Control.Geocoder.js: {}
+    /sites/default/files/api/portail_d4c/lib/leaflet-proj4js/GpPluginLeaflet.js: {}
+  css:
+    base:
+      /sites/default/files/api/portail_d4c/lib/leaflet/leaflet.css: {}
+      /sites/default/files/api/portail_d4c/lib/leaflet-control-geocoder/Control.Geocoder.css: {}
+  dependencies:
+    - core/jquery
+    
+joinDatasetsForm.form:
+  version: VERSION
+  js:
+    js/joinDatasetsForm.js: {}
+  dependencies:
+    - core/jquery
+
+VanilaForm.form:
+  version: VERSION
+  js:
+    js/VanilaForm.js: {}
+  dependencies:
+    - core/jquery
+
+helpForm:
+  version: VERSION
+  js:
+    js/helpForm.js: {}
+  dependencies:
+    - core/jquery
+  css:
+    theme:
+      css/modal.css: {}
+
+datasetsBoardForm.form:
+  version: VERSION
+  js:
+    js/DatasetsBoardForm.js: {}
+  dependencies:
+    - core/jquery
+    
+reusesForm.form:
+  version: VERSION
+  js:
+    js/reusesForm.js: {}
+  dependencies:
+    - core/jquery

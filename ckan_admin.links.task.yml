@@ -1,0 +1,71 @@
+resume.tab_1:
+  route_name : ckan_admin.datagouvForm
+  title: 'Moissonnage'
+  base_route: ckan_admin.datagouvForm
+  weight: 10
+
+#resume.tab_2:
+#  route_name: ckan_admin.selectionForm
+#  title: 'Sélection'
+#  base_route: ckan_admin.datagouvForm
+#  weight: 20
+  
+resume.tab_3:
+  route_name: ckan_admin.ckanForm
+  title: 'Automatisation '
+  base_route: ckan_admin.datagouvForm
+  weight: 20
+
+resume.tab_4:
+  route_name: ckan_admin.updateControlForm
+  title: 'Сhronologie'
+  base_route: ckan_admin.datagouvForm
+  weight: 20
+
+ 
+#resume.tab_1:
+#  route_name: ckan_admin.editMetaDataForm
+#  title: 'Création et modification jeu de données'
+#  base_route: ckan_admin.organisationForm
+#  weight: 20
+
+
+
+
+resume.tab_5:
+  route_name: ckan_admin.themeForm
+  title: 'Gestion des thèmes'
+  base_route: ckan_admin.addThemeInDatasetForm
+  weight: 20
+  
+resume.tab_6:
+  route_name: ckan_admin.addThemeInDatasetForm
+  title: 'Lier un thème à un jeu de données'
+  base_route: ckan_admin.addThemeInDatasetForm
+  weight: 20
+  
+#resume.tab_3:
+#  route_name: ckan_admin.typeColumnsForm
+#  title: 'Dictionnaire de données (grille)'
+#  base_route: ckan_admin.organisationForm
+#  weight: 20 
+#  
+#resume.tab_4:
+#  route_name: ckan_admin.custom_views
+#  title: 'Vues personnalisées'
+#  base_route: ckan_admin.organisationForm
+#  weight: 20  
+
+map_tiles.tab_manage:
+  route_name: ckan_admin.manage_map_tiles
+  title: 'Gestion des fonds carte'
+  base_route: ckan_admin.manage_map_tiles
+  weight: 20
+  
+map_tiles.tab_harvest:
+  route_name: ckan_admin.harvest_map_tiles
+  title: 'Moissonnage des fonds de carte'
+  base_route: ckan_admin.manage_map_tiles
+  weight: 20
+
+

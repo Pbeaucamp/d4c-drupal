@@ -1,0 +1,39 @@
+access dictionnary:
+ title: 'Dictionnaire de données et Infobulles'
+ description: 'Typage des propriétés des colonnes et configuration des infobulles'
+ 
+access dataset:
+ title: 'Création et modification jeu de données'
+ description: 'Création et modification jeu de données'
+ 
+access organization:
+ title: 'Création et modification organisations'
+ description: 'Création et modification organisations'
+ 
+access theme:
+ title: 'Thèmes'
+ description: 'Thèmes'
+ 
+access map:
+ title: 'Données cartographiques'
+ description: 'Données cartographiques'
+ 
+access data site:
+ title: 'Données par site'
+ description: 'Données par site'
+ 
+access map layer:
+ title: 'Gestion des Fonds de Carte'
+ description: 'Gestion des Fonds de Carte'
+ 
+access crawl:
+ title: 'Moissonnage'
+ description: 'Moissonnage'
+ 
+access view custom:
+ title: 'Vues personnalisées'
+ description: 'Vues personnalisées'
+
+access dataset_board:
+ title: 'Tableau de contrôle des jeux de données'
+ description: 'Tableau de contrôle des jeux de données '

@@ -1,0 +1,65 @@
+html{font-size:16px!important;}
+#list-left{
+	min-height: 100px;
+    display: inline-block;
+    position: relative;
+}
+#shared-lists{
+    position: relative;
+}
+#empty-col{
+	color: rgb(153, 153, 153);
+    font-size: 20px;
+    text-align: center;
+	border-radius: 5px;
+    border-width: thin;
+    display: block;
+    border: dashed;
+    line-height: 100px;
+    z-index: -1;
+    position: absolute;
+	top:20px;
+}
+.title{margin-top:50px;}
+.area-label{
+	text-align: center;
+    color: #999;
+    font-weight: bold;
+}
+textarea{
+	font-family: 'Courier New',Monospace;
+    font-size: small;
+    background-color: #fff;
+    white-space: pre-wrap;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    display: block;
+}
+.help{
+	font-size: 11px;
+}
+.btn-preview{
+	display: block;
+    background: none;
+    border: none;
+    background-color: #333;
+    color: white;
+    border-radius: 3px;
+    padding: 3px 15px;
+}
+#preview{
+	height: 100%;
+    display: block;
+    min-height: 250px;	
+}
+.a.leaflet-popup-close-button {
+    color: #666;
+    min-width: 32px;
+    height: 32px;
+    padding: 8px;
+    font-weight: 400;
+    font-size: 1.44rem;
+    text-shadow: none;
+    z-index: 1;
+}

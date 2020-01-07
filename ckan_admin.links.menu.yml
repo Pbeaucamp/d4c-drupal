@@ -1,0 +1,97 @@
+hello.demo:
+  title: 'Explorer les données'
+  description: 'Recherche jeux de données'
+  parent: main
+  menu_name: main
+  route_name: ckan_admin.portail
+
+ckan_admin_config_data4citizen:
+  route_name: ckan_admin.admin_config_data4citizen
+  parent: system.admin_config
+  title: Data4Citizen
+  description: 'Configure et utilisation des outils Data4Citizen.'
+  weight: -10
+
+ckan_admin.editMetaDataForm:
+  title: Jeux de données
+  description: 'Création et modification d''un jeu de données'
+  route_name: ckan_admin.editMetaDataForm
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.organizationsManagementForm:
+  title: Organisations
+  description: 'Création et modification organisations'
+  route_name: ckan_admin.organizationsManagementForm
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.custom_views:
+  title: Vues personnalisées 
+  description: 'Gestion et Création des vues personnalisées'
+  route_name: ckan_admin.custom_views
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.addThemeInDatasetForm:
+  title: Thèmes 
+  description: 'Création et association des thèmes'
+  route_name: ckan_admin.addThemeInDatasetForm
+  parent: ckan_admin_config_data4citizen
+
+ckan_admin.typeColumnsForm:
+  title: Dictionnaire de données et Infobulle
+  description: 'Typage des propriétés des colonnes et configuration des infobulles'
+  route_name: ckan_admin.typeColumnsForm
+  parent: ckan_admin_config_data4citizen
+
+ckan_admin.GeolocForm:
+  title: Données cartographiques
+  description: 'Créer des jeux de données cartographiques'
+  route_name: ckan_admin.GeolocForm
+  parent: ckan_admin_config_data4citizen
+
+ckan_admin.settings_form:
+  title: Moissonnage
+  description: 'Configuration du moissonnage'
+  route_name: ckan_admin.datagouvForm
+  parent: ckan_admin_config_data4citizen
+  
+#ckan_admin.controDataslForm:
+#  title: Données par site
+#  description: "Configuration de l'affichage des données par site"
+#  route_name: ckan_admin.controDataslForm
+#  parent: ckan_admin_config_data4citizen  
+
+ckan_admin.manage_map_tiles:
+  title: Gestion des Fonds de Carte 
+  description: 'Gestion des fonds de carte et sous-couches'
+  route_name: ckan_admin.manage_map_tiles
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.vanila_form:
+  title: Paramétrage Back Office
+  description: 'Parametrage de BackOffice'
+  route_name: ckan_admin.VanilaForm
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.joinDatasets_form:
+  title: Jointure entre jeux de données
+  description: 'Créer un jeu de données à partir de la jointure entre deux autres'
+  route_name: ckan_admin.joinDatasetsForm
+  parent: ckan_admin_config_data4citizen  
+  
+ckan_admin.VanillaForm:
+  title: Vanilla
+  description: 'Création/mise à jour Métadata'
+  route_name: ckan_admin.VanillaForm
+  parent: ckan_admin_config_data4citizen  
+
+ckan_admin.datasets_dashboard:
+  title: Tableau de contrôle des jeux de données
+  description: "Visualisation d'ensemble des jeux de données et de leur état"
+  route_name: ckan_admin.datasets_dashboard
+  parent: ckan_admin_config_data4citizen
+  
+ckan_admin.reuses_dashboard:
+  title: Gestion des réutilisations
+  description: "Gestion, validation, suppression des réutilisations"
+  route_name: ckan_admin.form.reuses
+  parent: ckan_admin_config_data4citizen
