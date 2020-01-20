@@ -76,7 +76,7 @@ class editMetaDataForm extends HelpFormBase
 
         $api = new Api;
 
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
 							   
      
         $dataSet = $dataSet->getContent();
@@ -131,9 +131,11 @@ class editMetaDataForm extends HelpFormBase
         }
 
         $organizationList = array();
+        $organizationList2 = array();
 
         foreach ($orgs[result] as &$value) {
             $organizationList[$value[id]] = $value[display_name];
+            $organizationList2[$value[name]] = $value[display_name];
         }
 		
         $licList = array();
@@ -170,7 +172,7 @@ class editMetaDataForm extends HelpFormBase
             //'#prefix' =>'',
             '#type' => 'select',
             '#title' => t('Organisation :'),
-            '#options' => $organizationList,
+            '#options' => $organizationList2,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;','onchange' => 'clear();'),
             '#ajax'         => [
@@ -858,6 +860,30 @@ class editMetaDataForm extends HelpFormBase
 				
 				$extras[count($extras)]['key'] = 'widgets';
 				$extras[(count($extras) - 1)]['value'] = $widget;
+				
+				###### security #######
+				$idUser = "*".\Drupal::currentUser()->id()."*";
+				$users = \Drupal\user\Entity\User::loadMultiple();
+				$userlist = array();
+				foreach($users as $user){
+					$username = $user->get('name')->value;
+					$uid = $user->get('uid')->value;
+					$uroles = $user->getRoles();
+					if($username != "" && (in_array("administrator", $uroles) || $uid == 1)){
+						$userlist[] = "*".$uid."*";
+					}
+				}
+				$userlist[] = $idUser;
+				$userlist = array_unique($userlist);
+				if(count($userlist) == 1){
+					$userlist = array($userlist);
+				}
+				$security = array("roles" => array("administrator"), "users" => $userlist);
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = json_encode($security);
+				
+				#######################
 
 				$label = $title;
 				$label = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $label)));
@@ -1718,30 +1744,36 @@ class editMetaDataForm extends HelpFormBase
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api;
+		
+		$selected_org = $form_state->getValue('filtr_org');
+		$orgaFilter = "";
+		if($selected_org!=''){
+			$orgaFilter = '&q=organization:"'.$selected_org.'"';
+		}
 
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
 			
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
         $dataSet = json_decode($dataSet, true);
         $dataSet = $dataSet[result][results];
-        $selected_org = $form_state->getValue('filtr_org');
+        
 		$ids = array();
 
         $ids["new"] = "Сréer un jeu de données";
    
-		if($selected_org==''){
+		/*if($selected_org==''){*/
 			foreach($dataSet as &$ds) {
 				$ids[$ds[id]] = $ds[title];
 			} 
-		}
+		/*}
 		else{
 			foreach($dataSet as &$ds) {
 				if($ds[organization][id]==$selected_org){
 					$ids[$ds[id]] = $ds[title];
 				}
 			}
-		}
+		}*/
       
 		$elem = [
             '#type' => 'select',

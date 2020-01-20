@@ -46,7 +46,7 @@ class typeColumnsForm extends HelpFormBase {
 		$this->urlCkan = $this->config->ckan->url; 
         
         $api = new Api;
-        $dataSet= $api->callPackageSearch_public_private('rows=10000');
+        $dataSet= $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet,true);
         $dataSet = $dataSet[result][results];
@@ -72,10 +72,53 @@ class typeColumnsForm extends HelpFormBase {
             }
         }
 		
+		///////////////////////////////organization_list////
+
+        $cle = $this->config->ckan->api_key;
+        $optionst = array(
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_HTTPHEADER => array(
+                'Content-type:application/json',
+                'Content-Length: ' . strlen($jsonData),
+                'Authorization:  ' . $cle,
+            ),
+        );
+
+        $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
+        $curlOrg = curl_init($callUrlOrg);
+		error_log($callUrlOrg, true);
+		error_log($cle, true);
+        curl_setopt_array($curlOrg, $optionst);
+        $orgs = curl_exec($curlOrg);
+        curl_close($curlOrg);
+        $orgs = json_decode($orgs, true);
+        
+		///////////////////////////////organization_list////
+		
+		$organizationList = array();
+
+        foreach ($orgs[result] as &$value) {
+            $organizationList[$value[name]] = $value[display_name];
+        }
+		
 		//$rendered_message = \Drupal\Core\Render\Markup::create('<pre>' . print_r( $dataSet, true) . '</pre>');s
 		// drupal_set_message($rendered_message);
 			
 		// select for table
+		
+		$form['filtr_org'] = array(
+            //'#prefix' =>'',
+            '#type' => 'select',
+            '#title' => t('Organisation :'),
+            '#options' => $organizationList,
+            '#empty_option' => t('----'),
+            '#attributes' => array('style' => 'width: 50%;','onchange' => 'clear();'),
+            '#ajax'         => [
+                'callback'  => '::datasetCallback',
+                'wrapper'   => 'selected_data',
+			],
+        );
 
 		$form['selected_data'] = array(
 			'#type' => 'select',
@@ -555,4 +598,39 @@ class typeColumnsForm extends HelpFormBase {
         //drupal_set_message('<pre>'. print_r(json_encode($filds),true).'</pre>');
 	}
 
+	public function datasetCallback(array &$form, FormStateInterface $form_state){
+		//drupal_set_message('<pre>'. print_r($_SESSION, true) .'</pre>'); 
+   
+        $api = new Api;
+		
+		$selected_org = $form_state->getValue('filtr_org');
+		$orgaFilter = "";
+		if($selected_org!=''){
+			$orgaFilter = '&q=organization:"'.$selected_org.'"';
+		}
+
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
+			
+        $dataSet = $dataSet->getContent();
+        $dataSet = json_decode($dataSet, true);
+        $dataSet = $dataSet[result][results];
+        
+		$ids = array();
+
+        $ids["new"] = "Сréer un jeu de données";
+
+		foreach($dataSet as &$ds) {
+			$ids[$ds[id]] = $ds[title];
+		}
+      
+		$elem = [
+            '#type' => 'select',
+			'#title' => t('Sélectionner des données'),
+			'#options' => $ids,
+			'#attributes' => array(
+				'onchange' => 'getTableById()'),
+        ];
+
+		return $elem;
+	}  
 }

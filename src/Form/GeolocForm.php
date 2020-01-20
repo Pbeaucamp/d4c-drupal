@@ -59,7 +59,7 @@ class GeolocForm extends HelpFormBase
 		$organizationList = array();
 
 		for ($i = 0; $i < count($orgs[result]); $i++) {
-			$organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
+			$organizationList[$orgs[result][$i][name]] = $orgs[result][$i][display_name];
 		}
 
 		$form['text_message1'] = [
@@ -81,7 +81,7 @@ class GeolocForm extends HelpFormBase
 			'#title' => t('*Organisation:'),
 			'#options' => $organizationList,
 			'#attributes' => array(
-				'onchange' => 'getDatasets("' . $this->urlCkan . '")'
+				'onchange' => 'getDatasets("' . $this->urlCkan . '", '.\Drupal::currentUser()->id().')'
 			),
 			'#empty_option' => t('----'),
 		);

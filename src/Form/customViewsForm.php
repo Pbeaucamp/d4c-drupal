@@ -130,7 +130,7 @@ class customViewsForm extends HelpFormBase {
 		$config->set('ids', null)->save();
 		$organisations = $config->get('organisations');
         $api = new API();
-		$dataset = $api->callPackageSearch_public_private("q=&rows=10000");
+		$dataset = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
         $dataset = json_decode($dataset->getContent());
         $dataset= $dataset->result->results;
         $Select_data = array();

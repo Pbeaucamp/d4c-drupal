@@ -59,6 +59,8 @@ class VisualisationController extends ControllerBase {
 
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
+		
+		
 		$url = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
@@ -171,11 +173,11 @@ class VisualisationController extends ControllerBase {
             
             if($met[$i]['key']=='FTP_API'){
                 if($met[$i][value]!='FTP'){
-                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  API</div></div>';
-                   
-                    $lab_source =  parse_url($met[$i][value]);
+					$lab_source =  parse_url($met[$i][value]);
+                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Site Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$lab_source["host"].'</div></div>';
+                  
                     $source = '<div class="d4c-dataset-metadata-block">
-                                <div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Référence</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$lab_source["host"].'</code></p></div></div> </div>
+                                <div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div></div> </div>
                             </div>';
                 } 
             }
@@ -302,7 +304,7 @@ class VisualisationController extends ControllerBase {
 					<d4c-tabs sync-to-url="true" sync-to-url-mode="path" name="main" default-tab="'.$tab.'">
 						<d4c-pane pane-auto-unload="true" title="Information" icon="info-circle" translate="title" slug="information">
 
-							<div>'.$dataset["metas"]["notes"].'</div>
+							<div>'.$description.'</div>
 
 							<div class="row">
 								<div class="col-sm-12"

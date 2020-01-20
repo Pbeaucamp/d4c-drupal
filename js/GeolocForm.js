@@ -1,30 +1,43 @@
 $ = jQuery;
 
-function getDatasets(urlCkan) {
-  updateUI();
-
-  // $("textfield[name='title']").val() == 'Test';
-  let datasetId = $("#edit-selected-org").val();
-  if (datasetId != "" && datasetId != "----") {
-    $.ajax("/api/orga/2.0/show/include_datasets=true&id=" + datasetId,
-      {
-        type: "POST",
-        dataType: "json",
-        cache: true,
-        success: function (result) {
-          let data = extractPackages(result);
-          fillDataset(data);
-        },
-        error: function (e) {
-          console.log("ERROR: ", e);
-        }
-      }
-    );
-  }
+function getDatasets(urlCkan, iduser) {
+	updateUI();
+	
+	// $("textfield[name='title']").val() == 'Test';
+	let datasetId = $("#edit-selected-org").val();
+	if (datasetId != "" && datasetId != "----") {
+		/*$.ajax("/api/orga/2.0/show/include_datasets=true&id=" + datasetId,
+		  {
+			type: "POST",
+			dataType: "json",
+			cache: true,
+			success: function (result) {
+			  let data = extractPackages(result);
+			  fillDataset(data);
+			},
+			error: function (e) {
+			  console.log("ERROR: ", e);
+			}
+		  }
+		);*/
+		$.ajax('/api/datasets/2.0/searchPublicPrivate/include_private=true&rows=1000&q=organization:"' + datasetId + '"&fq=-(-edition_security:**'+iduser+'** OR edition_security:*)',
+		{
+			type: "POST",
+			dataType: "json",
+			cache: true,
+			success: function (result) {
+				let data = extractPackages(result);
+				fillDataset(data);
+			},
+			error: function (e) {
+				console.log("ERROR: ", e);
+			}
+		});
+	}
 }
 
 function extractPackages(data) {
-  data = data.result.packages;
+  data = data.result.results;
   return data;
 }
 
