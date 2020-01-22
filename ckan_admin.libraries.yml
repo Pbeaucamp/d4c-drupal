@@ -91,7 +91,17 @@ organizationsManagementForm.form:
     js/organizationsManagementForm.js: {}
   dependencies:
     - core/jquery
-    
+
+VanillaForm.form:
+  version: VERSION
+  js:
+    js/VanillaForm.js: {}
+  dependencies:
+    - core/jquery
+  css:
+    theme:
+      css/vanilla.css: {}
+
 MoissonnageDataGouv.form:
   version: VERSION
   js:
