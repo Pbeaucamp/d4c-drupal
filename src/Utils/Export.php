@@ -141,4 +141,87 @@ class Export{
 		
 		return $res;
 	}
+	
+	static function createCSVfromGeoJSON($json) {
+		if($json == null || count($json) == 0){
+			return "";
+		}
+		
+		// If passed a string, turn it into an array
+		if (is_array($json) === false) {
+			$json = json_decode($json, true);
+		}
+		if($json["type"] != "FeatureCollection"){
+			return "";
+		}
+		//construction du csv
+		$cols = array();
+		$data_csv = array();
+		$sample = $json["features"][0];
+		foreach($sample["properties"] as $key => $val){
+			$cols[] = $key;
+		}
+		if($sample["geometry"]["type"] == "Point"){
+			$cols[] = "geo_point_2d";
+		} else {
+			$cols[] = "coordinates";
+			$cols[] = "geo_shape";
+		}
+		
+		$crs = $json["crs"]["properties"]["name"];
+		
+		$rows = array();
+		foreach($json["features"] as $feat){
+			$row = array();
+			foreach($cols as $col){
+				if($col == "geo_point_2d"){
+					$str = json_encode($feat["geometry"]["coordinates"]);
+					preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
+					$val = '"'.$match[2] .",". $match[1].'"';
+					$row[] = $val;
+				} else if($col == "geo_shape") {
+					$str = json_encode($feat["geometry"]);
+					preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
+					$coord = '"'.$match[2] .",". $match[1].'"';
+					$row[] = $coord;
+					$row[] = $str;
+				} else if($col == "coordinates"){
+					continue;
+				}	
+				else {
+					if(!Export::isNumericColumn($col)){
+						$row[] = '"'.$feat["properties"][$col].'"';
+					} else {
+						$row[] = $feat["properties"][$col];
+					}
+				}
+			}
+			
+			$rows[] = $row;
+		}
+		
+		foreach($rows as &$row){
+			if(count($row) < count($cols)){
+				$row = array_pad($row, count($cols), "");
+			}
+			$row = implode($row, ";");
+		}
+		
+		$data_csv[] = strtolower(implode($cols, ";"));
+		$data_csv = array_merge($data_csv, $rows);
+		
+		$res = utf8_encode(implode($data_csv, "\n"));
+		return $res;
+	}
+	
+	static function isNumericColumn($json, $colName) {
+		
+		for($i=0; $i< 100; $i++){
+			$val = $json["features"][$i]["properties"][$col];
+			if( !is_numeric ($val)){
+				return false;
+			} 
+		}
+		return true;
+	}
 }

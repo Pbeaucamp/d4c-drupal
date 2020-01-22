@@ -7,6 +7,7 @@
 namespace Drupal\ckan_admin\Form;
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\External;
 use Drupal\Core\Form\FormBase;
@@ -893,7 +894,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 			
 				$config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
 				
-				$add_tres=false;    
+				$add_tres=false;
+				$geo_res = array();
 				foreach($results->resources as &$res){     
 					if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 						$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
@@ -1053,6 +1055,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 						$return = $api->updateRequest($callUrluptres, $resources, "POST");
 						$this->renderResourceLog($resources["name"], $return);
+						//error_log($res->format);
+						if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || (strtolower($res->format) == 'json' && (strpos(strtolower($res->title), "export geojson") !== false || strpos(strtolower($res->description), "export geojson") !== false))) {
+							$geo_res[strtolower($res->format)] = $res->url;
+						}
 					}              
 				}
 				
@@ -1080,8 +1086,83 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$api->addReuse($reuse);
 					}
 				}
+				$command = NULL;
+				if($add_tres == FALSE && count($geo_res) > 0){
+					// on créé un csv
+					$name = $label . "_" . uniqid();
+					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
+					$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
+					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+					if($geo_res["geojson"] != null){
+						$url = $geo_res["geojson"];
+						$json = Query::callSolrServer($url);
+						$csv = Export::createCSVfromGeoJSON($json);
+						
+						file_put_contents($rootCsv, $csv);
+					} else if($geo_res["json"] != null){
+						$url = $geo_res["json"];
+						$json = Query::callSolrServer($url);
+						$csv = Export::createCSVfromGeoJSON($json);
+						
+						file_put_contents($rootCsv, $csv);
+					} else {
+						$url = $geo_res["kml"];
+						//We create a tmp file in which we write the result and an output file to convert
+						$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+						$fileInput = fopen($pathInput, 'w');
+						$kml = Query::callSolrServer($url);
+						fwrite($fileInput, $kml);
+						fclose($fileInput);
+
+						//Get current Php directory to call the script
+						$dir = dirname(__FILE__);
+						$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
+
+						$typeConvert = 'GeoJSON';
+					
+						$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
+						$message = shell_exec($command);
+						$json = file_get_contents ($rootJson);
+						$csv = Export::createCSVfromGeoJSON($json);
+						
+						file_put_contents($rootCsv, $csv);
+						
+						unlink ($pathInput);
+						unlink ($rootJson);
+					}
+					
+					
+					$resource = [     
+						"package_id" => $idNewData,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" =>$name.".csv",
+						"format"=>'csv'
+					];
+
+					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resource, "POST");
+					$this->renderResourceLog($resource["name"], $return);
+					
+					$pathUserClient = '/home/user-client';
+					$pathUserClientData = $pathUserClient . '/data';
+					$buildGeoloc = 'false';
+					$selectedSeparator = ";";
+					$selectedEncoding = "UTF-8";
+					$onlyOneAddress = 'false';
+					$selectedAddress = "";
+					$selectedPostalCode = "";
+					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+					
+				}
+				
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				if($command != NULL){
+					error_log($command);
+					$output = shell_exec($command);
+					error_log($output);
+				}
 			}
         }
         else if($site_search=='Public_OpenDataSoft_com'){
@@ -2011,9 +2092,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
                 $tagsData = array();
                 
+				$name = str_replace('_', '-', $this->nettoyage($results->name));
 
                 $newData = [
-					"name" =>str_replace('_', '-', $this->nettoyage($results->name)),
+					"name" => $name,
 					"title" => $results->name,
 					"private" => $private,
 					"author" => "",
@@ -2034,7 +2116,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"groups" => [],
 					"owner_org" => $org_id,
 				];
-				error_log($this->nettoyage($results->name));
+				//error_log($this->nettoyage($results->name));
                 $coll=array('0'=>'0', '1'=>'', '2'=>'');
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
@@ -2072,6 +2154,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
             
                 $fileName = str_replace('-', '_', $newData["name"]);
+				$command = NULL;
 				
 				if(strpos($supportedQueryFormats, "geoJSON") !== false){
 					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.geojson';
@@ -2079,6 +2162,19 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 					$url_resource = $site_search_url.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=geojson';
 					$arr = Query::callSolrServer($url_resource);
+					
+					/*file_put_contents($root, $arr);
+
+					$resources = [     
+						"package_id" => $idNewData,
+						"url" => $url,
+						"description" => '',
+						"name" =>$fileName.".geojson",
+						"format"=>'geojson'
+					];
+
+					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
 					
 					//construction du csv
 					//$arr = utf8_encode($arr);
@@ -2191,7 +2287,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 					$data_csv[] = strtolower(implode($cols, ";"));
 					$data_csv = array_merge($data_csv, $rows);
-					
+					$fileName = $fileName . "_" . uniqid();
 					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.csv';
 					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.csv';
 					//$data_csv = mb_convert_encoding( $data_csv, 'Windows-1252', 'UTF-8');
@@ -2212,6 +2308,18 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 					$return = $api->updateRequest($callUrluptres, $resource, "POST");
 					$this->renderResourceLog($resource["name"], $return);
+					
+					$return = json_decode($return, true);
+					
+					$pathUserClient = '/home/user-client';
+					$pathUserClientData = $pathUserClient . '/data';
+					$buildGeoloc = 'false';
+					$selectedSeparator = ";";
+					$selectedEncoding = "UTF-8";
+					$onlyOneAddress = 'false';
+					$selectedAddress = "";
+					$selectedPostalCode = "";
+					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 					
 					
 				} else {
@@ -2237,9 +2345,13 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$this->renderResourceLog($resources["name"], $return);
 				}
 				
-				
                 sleep(20);
 				$api->calculateVisualisations($idNewData);
+				if($command != NULL){
+					error_log($command);
+					$output = shell_exec($command);
+					error_log($output);
+				}
 			}
         }
 		
