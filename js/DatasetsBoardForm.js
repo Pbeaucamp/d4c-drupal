@@ -1,4 +1,5 @@
 $ = jQuery;
+var users;
 
 /////////////modal/////////////
 ! function (e) {
@@ -16,45 +17,64 @@ $ = jQuery;
 document.addEventListener('DOMContentLoaded', function () {
 
     //modalButtons = document.querySelectorAll('.js-open-modal'),
-    var overlay = document.querySelector('.js-overlay-modal'),
-    closeButtons = document.querySelectorAll('.js-modal-close');
+    var overlay1 = document.querySelector('.js-overlay-modal'),
+    overlay2 = document.querySelector('.js-overlay-modal-security'),
+    closeButtons1 = document.querySelectorAll('.js-modal-close');
+    closeButtons2 = document.querySelectorAll('.js-modal-close-security');
 
-    closeButtons.forEach(function (item) {
+    closeButtons1.forEach(function (item) {
 
         item.addEventListener('click', function (e) {
             var parentModal = this.closest('.modal');
 
             parentModal.classList.remove('active');
-            overlay.classList.remove('active');
+            overlay1.classList.remove('active');
 			
 			$("select[data-id="+$("#edit-selected-id").val()+"]").val($("#edit-selected-type").val() == "private" ? "public" : "private");
 			
 			$("#edit-selected-type").val("");
 			$("#edit-selected-id").val("");
+			$("#edit-selected-users").val("");
 			
         });
 
     }); // end foreach
 
+	closeButtons2.forEach(function (item) {
 
-    /*document.body.addEventListener('keyup', function (e) {
-        var key = e.keyCode;
+        item.addEventListener('click', function (e) {
+            var parentModal = this.closest('.modal');
 
-        if (key == 27) {
+            parentModal.classList.remove('active');
+            overlay2.classList.remove('active');
+			
+			$("#edit-selected-type").val("");
+			$("#edit-selected-id").val("");
+			$("#edit-selected-users").val("");
+			
+        });
 
-            document.querySelector('.modal.active').classList.remove('active');
-            //document.querySelector('.overlay').classList.remove('active');
-        };
-    }, false);*/
-
-
-    /*overlay.addEventListener('click', function () {
-        document.querySelector('.modal.active').classList.remove('active');
-        this.classList.remove('active');
-    });*/
+    }); // end foreach
+	
+	$("#edit-roles-list").css("column-count", 2);
+	$("#edit-roles-list .form-type-checkbox").css("display", "inline-block");
+	
+	$("#edit-users-list").css("overflow", "auto").css("max-height", "200px");
+	
+	$("#edit-roles-list .form-type-checkbox input").click(function(event){
+		console.log(event);
+		var checked = event.target.checked;
+		var role = event.target.value;
+	
+		for (let [key, user] of Object.entries(users)) {
+			if(user.roles.indexOf(role) != -1 || (role == "administrator" && user.id == "1")){
+				$("#edit-users-list-"+parseInt(user.id)).prop("checked", checked);
+			}
+		}
+	});
 
 }); // end ready   
-$('#formModal').after(`<div style="width:25em;" class="modal" data-modal="1">
+$('#visibilityModal').after(`<div style="width:25em;" class="modal" data-modal="1">
 							<div id="title" style="color: cornflowerblue;">
 								<h2>Confirmation</h2>
 							</div>
@@ -65,6 +85,18 @@ $('#formModal').after(`<div style="width:25em;" class="modal" data-modal="1">
 							</div>
 						</div>
 						<div class="overlay js-overlay-modal"></div>`);
+						
+$('#securityModal').after(`<div style="width:35em;" class="modal" data-modal="2">
+							<div id="title2" style="color: cornflowerblue;">
+								<h2>Gestion</h2>
+							</div>
+							<div id="question2" style="text-align:left;"></div>
+							<div class="row">
+								<a href="#" id="cancel2" class="js-modal-close-security button" style="width:8em">Annuler</a>
+								<input type="button" id="apply2" class="js-modal-close-security button" style="width:8em" value="Confirmer" onclick="saveSecurity()">
+							</div>
+						</div>
+						<div class="overlay js-overlay-modal-security"></div>`);
 /////////////modal/////////////
 
 
@@ -93,6 +125,64 @@ function confirm(event){
 	overlay.classList.add('active');
 }
 
+function openecurityPopup(event){
+	$("#edit-security").css("display","block");
+	$("#edit-security .form-type-checkbox input").each(function( index ) {
+		$( this ).prop("checked", false);
+	});
+	
+	console.log(event);
+	var id = event.srcElement.attributes["data-id"].value;
+	var sec = atob(event.srcElement.attributes["data-security"].value);
+		
+	$("#question2").append($("#edit-security"));
+	
+	/*cbs = document.querySelectorAll('#edit-security .form-type-checkbox');
+	cbs.forEach(function (item) {
+		item.checked = false;
+    });*/
+
+	$("#edit-selected-id").val(id);
+	
+	if(sec != ""){
+		sec = JSON.parse(sec);
+		for(var role of sec.roles){
+			$("#edit-roles-list-"+role).prop("checked", true);
+		}
+		for(var user of sec.users){
+			$("#edit-users-list-"+user).prop("checked", true);
+		}
+	}
+	
+	let overlay = document.querySelector('.js-overlay-modal-security');
+	let modalElem = document.querySelector('.modal[data-modal="2"]');
+	modalElem.classList.add('active');
+	overlay.classList.add('active');
+}
+
 function end(){
 	$("#edit-search").click();
 }
+
+function saveSecurity(){
+	var res = {"roles":[], "users":[]};
+	cbRoles = document.querySelectorAll('#edit-roles-list .form-type-checkbox input');
+    cbUsers = document.querySelectorAll('#edit-users-list .form-type-checkbox input');
+	cbRoles.forEach(function (item) {
+		if(item.checked == true){
+			res.roles.push(item.value);
+		}
+    });
+	cbUsers.forEach(function (item) {
+		if(item.checked == true){
+			res.users.push("*"+parseInt(item.value)+"*");
+		}
+    });
+	$("#edit-selected-users").val(JSON.stringify(res));
+	
+	$("#edit-search").click();
+}
+
+(function($, Drupal, drupalSettings) {
+    users = JSON.parse(drupalSettings.users);
+})(jQuery, Drupal, drupalSettings);

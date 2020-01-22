@@ -52,16 +52,6 @@ class ChartController extends ControllerBase {
 					 ng-controller="BigController">
 					<div class="row">
 						<div class="col-md-6 ng-cloak">
-							<div advanced-chart-controls
-									
-								 urlsynchronize
-									
-								 advanced="true"
-								 can-save="true"
-								 chart-context="chartContext"
-								 context="fakeMultiChartContext"></div>
-						</div>
-						<div class="col-md-6 ng-cloak">
 							<div class="d4c-box">
 								<div d4c-highcharts-chart
 									 context="fakeMultiChartContext"
@@ -73,6 +63,17 @@ class ChartController extends ControllerBase {
 							</div>
 							 <d4c-notification-handler></d4c-notification-handler>
 						</div>
+						<div class="col-md-6 ng-cloak">
+							<div advanced-chart-controls
+									
+								 urlsynchronize
+									
+								 advanced="true"
+								 can-save="true"
+								 chart-context="chartContext"
+								 context="fakeMultiChartContext"></div>
+						</div>
+						
 					</div>
 				</div>
 		</main>
@@ -83,7 +84,7 @@ class ChartController extends ControllerBase {
         <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	//$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
-			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
+			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" ).css( "background-color", "#eee" );
             var mod = angular.module(\'d4c.core.config\', []);
             
             mod.factory("config", [function() {

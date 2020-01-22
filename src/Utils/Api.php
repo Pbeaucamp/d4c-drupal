@@ -773,30 +773,38 @@ class Api{
 	}
     
     
- 	public function callPackageSearch_public_private($params) {
+ 	public function callPackageSearch_public_private($params, $iduser=NULL) {
 		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
+		$params = str_replace(" ", "+", $params);	 
+		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));	 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 		
-        
+        if($iduser != NULL){
+			
+			$query_params = $this->proper_parse_str($params);
+			
+			$orgs = implode($orgs_private, " OR ");
+				$req = "-(-edition_security:**".$iduser."** OR edition_security:*)";
+				
+				if($query_params["fq"] == null){
+					$query_params["fq"] = $req;
+				} else {
+					$query_params["fq"] .= " AND " . $req;
+				}
+			
+			$params = http_build_query($query_params);
+		}
+		
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
-        $cle = $this->config->ckan->api_key;
-			$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => "POST",
-				CURLOPT_HTTPHEADER => array (
-						'Content-type:application/json',
-						'Content-Length: ' . strlen ( $jsonData ),
-						'Authorization:  ' .$cle 
-				)
-		);	
+        
 		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $options);
+		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		//echo $callUrl;
 		curl_close($curl);
-
+		
 		$result = json_decode($result,true);
         
         
@@ -1847,7 +1855,9 @@ class Api{
 		 	if($value['format'] == 'GeoJSON'){
 		 		$isGeo = true;
 		 	}
-			if(($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP')
+		}
+		foreach ($result['result']['resources'] as $value) {
+		 	if($resourceCSV == null || (($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'))
 				|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)){
 				$a = array();
 				$a["title"] = $value['name'];
@@ -3147,7 +3157,14 @@ class Api{
 				}/* else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				}*/ else {
-					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+					$ftype == null;
+					foreach($fields as $field){
+						if($field["name"] == $key){
+							$ftype = $field["type"];
+							break;
+						}
+					}
+					if(($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")){
 						$where .= $key . "=" . $value . " and ";
 					} else if(is_array($value)){ 
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
@@ -3484,7 +3501,7 @@ class Api{
 		$callUrl =  $this->urlCkan . "api/action/organization_show?" . $params;
 				
 		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getSimpleOptions());
+		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";

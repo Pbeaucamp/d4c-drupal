@@ -50,7 +50,7 @@ class addThemeInDatasetForm extends HelpFormBase {
 		$this->urlCkan = $this->config->ckan->url; 
         
         $api = new Api;
-        $dataSet= $api->callPackageSearch_public_private('rows=10000');
+        $dataSet= $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet,true);
         $dataSet = $dataSet[result][results];

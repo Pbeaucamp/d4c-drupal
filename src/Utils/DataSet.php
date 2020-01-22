@@ -1340,7 +1340,13 @@ class DataSet{
 				$extras[(count($extras) - 1)]['value'] = $lastmod; 
 			}
 			
-            $query = DataSet::updatePackage($name,$id_org,$results->description,$results->license,$update,$tags,/*$spatial,*/array(),$id_dataset,$extras);
+			$description = $results->description;
+				
+			$description = preg_replace("/\\n/", "<br>", $description);
+			$description = preg_replace("/(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:\/?#[\]@!\$&'\*\+,;=.]+/", "<a href='$0' target='_blank'>$0</a>", $description);
+				
+			
+            $query = DataSet::updatePackage($name,$id_org,$description,$results->license,$update,$tags,/*$spatial,*/array(),$id_dataset,$extras);
 
 			$idNewData=$id_dataset;
 			$add_tres=false;

@@ -126,10 +126,11 @@ class MapTilesHarvestForm extends HelpFormBase {
 				$url = $type == "wms" ? $url : $urlWsm;
 				
 				//protection parameters empty
-				if(strpos($url, "?") === false){
+				if(strpos($url, "?") === false){ 
 					$url .= "?";
 				}
-				$params = substr($url, strpos($url, "?"), count($url)-1);
+				$params = substr($url, strpos($url, "?"), strlen($url)-1);
+				
 				if(strpos(strtolower($params), "service") === false){
 					$url .= (count($params) > 0)? "&service=WMS" : "service=WMS";
 					$params .= "service=WMS";
@@ -148,7 +149,7 @@ class MapTilesHarvestForm extends HelpFormBase {
 					CURLOPT_SSL_VERIFYHOST =>  0
 				));
 				$result = curl_exec($curl);
-				//echo $callUrl;
+				//error_log( $url);
 				curl_close($curl);
 				
 				$this->layers = array();
@@ -270,12 +271,19 @@ class MapTilesHarvestForm extends HelpFormBase {
 							//echo json_encode($lay->ResourceURL->attributes()["template"]."");
 							//$this->selectedLayers[] = $layer['name'];
 						}
+					} else {
+						$form['panel']['panelLayers']['error'] = array(
+							'#type' => 'markup',
+							'#markup' => '<div id="result-message" class="messages messages--error">La ressource demandée est indisponible ou n\'est pas un service WMS/WMTS</div>'
+						);
+						$this->layers = array();
 					}
 				} else {
 					$form['panel']['panelLayers']['error'] = array(
 						'#type' => 'markup',
 						'#markup' => '<div id="result-message" class="messages messages--error">La ressource demandée est indisponible ou n\'est pas un service WMS/WMTS</div>'
 					);
+					$this->layers = array();
 				}
 				//echo json_encode($xml);
 				//error_log("xml: ".json_encode($xml));

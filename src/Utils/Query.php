@@ -10,7 +10,7 @@ Class Query{
 				CURLOPT_HEADER         => false,
 				CURLOPT_FOLLOWLOCATION => true,
 				CURLOPT_MAXREDIRS      => 10,
-				CURLOPT_ENCODING       => "",
+				CURLOPT_ENCODING       => "UTF-8",
 				CURLOPT_AUTOREFERER    => true,
 				CURLOPT_CONNECTTIMEOUT => 120,
 				CURLOPT_TIMEOUT        => 120,

@@ -63,7 +63,7 @@ class joinDatasetsForm extends HelpFormBase {
 				$this->organizationList[$value[id]] = $value[display_name];
 			}
 		
-			$dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');			   
+			$dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());			   
 			$dataSet = $dataSet->getContent();
 			$dataSet = json_decode($dataSet, true);
 			$this->datasets = $dataSet[result][results];  
@@ -445,6 +445,29 @@ class joinDatasetsForm extends HelpFormBase {
     
         $extras[count($extras)]['key'] = 'FTP_API';
         $extras[(count($extras) - 1)]['value'] = 'FTP';
+		
+		###### security #######
+		$idUser = "*".\Drupal::currentUser()->id()."*";
+		$users = \Drupal\user\Entity\User::loadMultiple();
+		$userlist = array();
+		foreach($users as $user){
+			$username = $user->get('name')->value;
+			$uid = $user->get('uid')->value;
+			$uroles = $user->getRoles();
+			if($username != "" && (in_array("administrator", $uroles) || $uid == 1)){
+				$userlist[] = "*".$uid."*";
+			}
+		}
+		$userlist[] = $idUser;
+		$userlist = array_unique($userlist);
+		if(count($userlist) == 1){
+			$userlist = array($userlist);
+		}
+		$security = json_encode(array("roles" => array("administrator"), "users" => $userlist));
+		#######################
+		
+		$extras[count($extras)]['key'] = 'edition_security';
+		$extras[(count($extras) - 1)]['value'] = $security;
     
 		if($jdd1[tags] == null) $jdd1[tags] = array();
 		if($jdd2[tags] == null) $jdd2[tags] = array();

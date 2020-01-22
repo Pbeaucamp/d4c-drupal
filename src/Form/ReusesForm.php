@@ -144,8 +144,12 @@ class ReusesForm extends HelpFormBase {
 		if($_GET["orga"] != ""){
 			$req .= "&q=organization:".$_GET["orga"];
 		}
-		$datasets = $api->getPackageSearch($req);
-		foreach ($datasets["result"]["results"] as $value) {
+		$datasets = $api->callPackageSearch_public_private($req, \Drupal::currentUser()->id());
+		$datasets = $datasets->getContent();
+		
+        $datasets = json_decode($datasets, true)[result];
+        $datasets = $datasets[results];
+		foreach ($datasets as $value) {
             $option_ds[$value["id"]] = $value["title"];
         }
 		

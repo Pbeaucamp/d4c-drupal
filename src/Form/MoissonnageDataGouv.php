@@ -220,6 +220,26 @@ class MoissonnageDataGouv extends HelpFormBase {
         $api = new Api;
         $this->urlCkan = $this->config->ckan->url;
         $site_search =  $org_id= $form_state->getValue('site_search');
+		
+		###### security #######
+		$idUser = "*".\Drupal::currentUser()->id()."*";
+		$users = \Drupal\user\Entity\User::loadMultiple();
+		$userlist = array();
+		foreach($users as $user){
+			$username = $user->get('name')->value;
+			$uid = $user->get('uid')->value;
+			$uroles = $user->getRoles();
+			if($username != "" && (in_array("administrator", $uroles) || $uid == 1)){
+				$userlist[] = "*".$uid."*";
+			}
+		}
+		$userlist[] = $idUser;
+		$userlist = array_unique($userlist);
+		if(count($userlist) == 1){
+			$userlist = array($userlist);
+		}
+		$security = json_encode(array("roles" => array("administrator"), "users" => $userlist));
+		#######################
         
         if($site_search=='InfoCom94'){
         
@@ -291,6 +311,9 @@ class MoissonnageDataGouv extends HelpFormBase {
                     $extras[count($extras)]['key'] = 'date_moissonnage_creation';
 					$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
                 }
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
                 
                 $newData = [
 					"name" => $results->name,
@@ -499,7 +522,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 				if($ex_dmc==false){
                     $extras[count($extras)]['key'] = 'date_moissonnage_creation';
 					$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
-                }
+                }				
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
            
                 $newData = [
 					"name" => $results->name,
@@ -800,6 +826,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->created_at;
 				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
+				
+				$description = $results->description;
+				
+				$description = preg_replace("/\\n/", "<br>", $description);
+				$description = preg_replace("/(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:\/?#[\]@!\$&'\*\+,;=.]+/", "<a href='$0' target='_blank'>$0</a>", $description);
+				
 				$newData = ["name" => substr($label, 0, 95),
 					"title" => $results->title,
 					"private" => $private,
@@ -808,7 +842,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"maintainer" => "",
 					"maintainer_email" => "",
 					"license_id" => 'notspecified',
-					"notes" => $results->description,
+					"notes" => $description,
 					"url" => $urlRes,
 					"version" => "",
 					"state" => "active",
@@ -1110,6 +1144,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->modified;
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
 			
 				$tagsData = array();
                 
@@ -1290,6 +1327,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->modified;
 				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
+				
                 $tagsData = array();
                 if ($results->keyword == '' || count($results->keyword)==0 || !$results->keyword) {
 					$tagsData = [];
@@ -1465,6 +1505,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->createdAt;
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
 				
 				$tagsData = array();
 				
@@ -1658,6 +1701,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
+				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
 				
 				$tagsData = array();
 				if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
@@ -1947,6 +1993,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				//$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				//$extras[(count($extras) - 1)]['value'] = $results->XXXXXXX;
 				
+				$extras[count($extras)]['key'] = 'edition_security';
+				$extras[(count($extras) - 1)]['value'] = $security;
+				
 				$geometryType = $results->geometryType;
 				$hasAttachments = $results->hasAttachments;
 				$htmlPopupType = $results->htmlPopupType;
@@ -1985,7 +2034,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"groups" => [],
 					"owner_org" => $org_id,
 				];
-            
+				error_log($this->nettoyage($results->name));
                 $coll=array('0'=>'0', '1'=>'', '2'=>'');
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
@@ -2032,6 +2081,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$arr = Query::callSolrServer($url_resource);
 					
 					//construction du csv
+					//$arr = utf8_encode($arr);
 					$json = json_decode($arr, true);
 					$cols = array();
 					$data_csv = array();
@@ -2144,8 +2194,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.csv';
 					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.csv';
+					//$data_csv = mb_convert_encoding( $data_csv, 'Windows-1252', 'UTF-8');
 					
-					file_put_contents($rootCsv, implode($data_csv, "\n"));
+					//$string = iconv('ASCII', 'UTF-8//IGNORE', implode($data_csv, "\n"));
+					//error_log(mb_detect_encoding($string));
+					file_put_contents($rootCsv, utf8_encode(implode($data_csv, "\n")));
+					
 					
 					$resource = [     
 						"package_id" => $idNewData,
@@ -2197,7 +2251,7 @@ class MoissonnageDataGouv extends HelpFormBase {
         $coll = $data[0];
         
 		// drupal_set_message('<pre>'.$data[0].'</pre>');
-         
+        //error_log(json_encode($newData));
         $api = new Api;
 		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");
@@ -2277,6 +2331,24 @@ class MoissonnageDataGouv extends HelpFormBase {
     
     function nettoyage( $str, $charset='utf-8' ) {
 			
+		$patterns[0] = '/á|â|à|å|ä/';
+		$patterns[1] = '/ð|é|ê|è|ë/';
+		$patterns[2] = '/í|î|ì|ï/';
+		$patterns[3] = '/ó|ô|ò|ø|õ|ö/';
+		$patterns[4] = '/ú|û|ù|ü/';
+		$patterns[5] = '/æ/';
+		$patterns[6] = '/ç/';
+		$patterns[7] = '/ß/';
+		$replacements[0] = 'a';
+		$replacements[1] = 'e';
+		$replacements[2] = 'i';
+		$replacements[3] = 'o';
+		$replacements[4] = 'u';
+		$replacements[5] = 'ae';
+		$replacements[6] = 'c';
+		$replacements[7] = 'ss';
+		$str = preg_replace($patterns, $replacements, $str);
+			
 		$str = utf8_decode($str);
 				
 		$str = str_replace("?", "", $str);   
@@ -2306,6 +2378,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
 		$str = preg_replace( '#&[^;]+;#', '', $str );      
+		
 		
 		return $str;     
 			 
