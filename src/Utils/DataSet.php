@@ -1350,6 +1350,7 @@ class DataSet{
 
 			$idNewData=$id_dataset;
 			$add_tres=false;
+			$geo_res = array();
             /////////////////////resources////////////
 			foreach($results->resources as &$res){
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
@@ -1501,13 +1502,93 @@ class DataSet{
                   
 					$callUrluptres = $ckan . "/api/action/resource_create";
 					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					
+					if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || (strtolower($res->format) == 'json' && (strpos(strtolower($res->title), "export geojson") !== false || strpos(strtolower($res->description), "export geojson") !== false))) {
+						$geo_res[strtolower($res->format)] = $res->url;
+					}
                 }  
             }
+				
+			$command = NULL;
 			if($add_tres){
+				sleep(20);
+			} else if($add_tres == FALSE && count($geo_res) > 0){
+				// on créé un csv
+				$name = $label . "_" . uniqid();
+				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
+				$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
+				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+				if($geo_res["geojson"] != null){
+					$url = $geo_res["geojson"];
+					$json = Query::callSolrServer($url);
+					$csv = Export::createCSVfromGeoJSON($json);
+					
+					file_put_contents($rootCsv, $csv);
+				} else if($geo_res["json"] != null){
+					$url = $geo_res["json"];
+					$json = Query::callSolrServer($url);
+					$csv = Export::createCSVfromGeoJSON($json);
+					
+					file_put_contents($rootCsv, $csv);
+				} else {
+					$url = $geo_res["kml"];
+					//We create a tmp file in which we write the result and an output file to convert
+					$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+					$fileInput = fopen($pathInput, 'w');
+					$kml = Query::callSolrServer($url);
+					fwrite($fileInput, $kml);
+					fclose($fileInput);
+
+					//Get current Php directory to call the script
+					$dir = dirname(__FILE__);
+					$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
+
+					$typeConvert = 'GeoJSON';
+				
+					$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
+					$message = shell_exec($command);
+					$json = file_get_contents ($rootJson);
+					$csv = Export::createCSVfromGeoJSON($json);
+					
+					file_put_contents($rootCsv, $csv);
+					
+					unlink ($pathInput);
+					unlink ($rootJson);
+				}
+				
+				
+				$resource = [     
+					"package_id" => $idNewData,
+					"url" => $urlCsv,
+					"description" => '',
+					"name" =>$name.".csv",
+					"format"=>'csv'
+				];
+
+				$callUrluptres = $ckan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resource, "POST");
+				$this->renderResourceLog($resource["name"], $return);
+				
+				$pathUserClient = '/home/user-client';
+				$pathUserClientData = $pathUserClient . '/data';
+				$buildGeoloc = 'false';
+				$selectedSeparator = ";";
+				$selectedEncoding = "UTF-8";
+				$onlyOneAddress = 'false';
+				$selectedAddress = "";
+				$selectedPostalCode = "";
+				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				
 				sleep(20);
 			}
 			
 			$api->calculateVisualisations($idNewData);
+			
+			if($command != NULL){
+				error_log($command);
+				$output = shell_exec($command);
+				error_log($output);
+			}
 			
             return $query;
         }

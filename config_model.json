@@ -1,0 +1,34 @@
+{
+	"ckan":
+	{
+		"url":"https://xxx-backoffice.data4citizen.com/",
+		"api_key": "xxx"
+	},
+	"cluster":
+	{
+		"url":"https://localhost:1337/"
+	},
+	"client":
+	{
+		"name":"XXX",
+		"domain":"xxx.data4citizen.com",
+		"css_file":"client.css"
+	},
+	"map_tiles": [
+        {
+            "name": "osm",
+            "label": "OpenStreetMap",
+            "provider": "osm",
+            "url": "",
+            "minZoom": 0,
+            "maxZoom": 19,
+            "type": "tile",
+            "key": "",
+            "attribution": ""
+        }
+    ],
+    "sitesSearch": [
+        "https:\/\/yyy.data4citizen.com\/",
+        "https:\/\/zzz.data4citizen.com\/"
+    ]
+}
