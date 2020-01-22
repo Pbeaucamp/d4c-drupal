@@ -54,7 +54,7 @@ function loadRepository(e) {
 }
 
 function createElementHtml(object) {
-	var html = '<li class="notselected" id="dir:' + object.id + '"><span class="caret">' + object.name + '</span><ul class="nested">';
+	var html = '<li class="notselected"><span class="caret" id="dir:' + object.id + '">' + object.name + '</span><ul class="nested">';
 	$.each( object.childs, function( key, val ) {
 		if(val.itemName != undefined) {
 			html = html + '<li class="notselected" id="item:' + object.id + '">' + val.itemName + '</li>';
