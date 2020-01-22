@@ -11,7 +11,7 @@ function loadRepository(e) {
 	var pass = document.getElementById('txtpass').value;
 	var group = document.getElementById('txtgroup').value;
 	var repo = document.getElementById('txtrepo').value;
-	$.getJSON('https://mla-vanilla.data4citizen.com/VanillaRuntime/externalRepositoryServlet?login=' + login + '&pass=' + pass + '&group=' + group + '&repository=' + repo, function(data) {
+	$.getJSON('https://dma-vanilla.data4citizen.com/VanillaRuntime/externalRepositoryServlet?login=' + login + '&pass=' + pass + '&group=' + group + '&repository=' + repo, function(data) {
     	var element = document.getElementById('repositoryDiv');
 		  var tree = '<ul id="myUL">';
 		  $.each( data, function( key, val ) {
@@ -35,7 +35,8 @@ function loadRepository(e) {
 					$( this ).attr("class",'notselected');
 				});
 				$( this ).attr("class",'selectedItem');
-				$('txtitemid').val(event.target.id);
+				document.getElementById('txtitemid').value = event.target.id;
+				//$('txtitemid').val(event.target.id);
 		    });
 		});
 
@@ -57,7 +58,7 @@ function createElementHtml(object) {
 	var html = '<li class="notselected"><span class="caret" id="dir:' + object.id + '">' + object.name + '</span><ul class="nested">';
 	$.each( object.childs, function( key, val ) {
 		if(val.itemName != undefined) {
-			html = html + '<li class="notselected" id="item:' + object.id + '">' + val.itemName + '</li>';
+			html = html + '<li class="notselected" id="item:' + val.id + '">' + val.itemName + '</li>';
 		}
 		else html = html + createElementHtml(val);
 	});
