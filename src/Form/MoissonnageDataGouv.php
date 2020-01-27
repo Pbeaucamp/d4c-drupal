@@ -862,6 +862,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData= $this->saveData($newData, $coll);
 				$idNewData= $NewData[1];
 				$NewTitle= $NewData[2];
+				$NewName= $NewData[3];
 				$dataset_conf=[
 					"id_data" => $idNewData,
 					"id_data_site"=>$results->id,
@@ -1152,7 +1153,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$onlyOneAddress = 'false';
 					$selectedAddress = "";
 					$selectedPostalCode = "";
-					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 					
 				}
 				
@@ -2121,6 +2122,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
                 $NewTitle= $NewData[2];
+				$NewName = $NewData[3];
             
                 $dataset_conf=[
 					"id_data" => $idNewData,
@@ -2319,7 +2321,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$onlyOneAddress = 'false';
 					$selectedAddress = "";
 					$selectedPostalCode = "";
-					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 					
 					
 				} else {
@@ -2371,11 +2373,13 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$resnew = json_decode($return);
 		$idNewData = $resnew->result->id;
 		$NewTitle = $resnew->result->title;
+		$NewName = $resnew->result->name;
                            
 		if ($resnew->success == true) {
 			drupal_set_message('Le jeu de données '.$resnew->result->title.' a bien été créé');
 			$idNewData = $resnew->result->id;
 			$NewTitle = $resnew->result->title;
+			$NewName = $resnew->result->name;
 		} 
 		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
 			$coll++;
@@ -2386,6 +2390,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
+				$NewName = $NewData[3];
 			}
 			else if($coll>10){
 				$newData[name]=substr($newData[name],0, -3);
@@ -2395,6 +2400,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
+				$NewName = $NewData[3];
 			}
 			else if($coll>100){
 				$newData[name]=substr($newData[name],0, -4);
@@ -2403,7 +2409,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$newData[title]=$newData[title].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
-				$NewTitle = $NewData[2];    
+				$NewTitle = $NewData[2];  
+				$NewName = $NewData[3];  
 			}
 			else if($coll>1000){
 				$newData[name]=substr($newData[name],0, -5);
@@ -2412,7 +2419,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$newData[title]=$newData[title].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
-				$NewTitle = $NewData[2];    
+				$NewTitle = $NewData[2]; 
+				$NewName = $NewData[3];   
 			}
 			else if($coll>10000){
 				$newData[name]=substr($newData[name],0, -6);
@@ -2422,6 +2430,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
+				$NewName = $NewData[3];
 			}
 			else{
 				$newData[name]=substr($newData[name],0, -2);
@@ -2431,13 +2440,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
+				$NewName = $NewData[3];
 			}
 		} 
 		else {
 			drupal_set_message('Le jeu de données '.$newData[title].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
 		}
         
-        return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle);
+        return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle, '3'=>$NewName);
         
     }
     

@@ -38,42 +38,43 @@ function getTableById(){
 //$('#edit-table > tbody').val("");
     $('#edit-table tbody tr').remove();
     
-let param = $('#edit-selected-data').val();    
-    param = param.split('%');
-    datasetId = param[0];   
-    resourceId = param[1];   
-    resId = resourceId;
-	
-    if(param != 'no_data_csv'){
-        $.ajax('/api/table/'+resourceId,
-		{
-			type: 'POST',
-			dataType: 'json',
-			cache : true,
-			success: function (result) {
-				if(result.success){
+let param = $('#selected_data select').val();    
+    if(param != null){
+		param = param.split('%');
+		datasetId = param[0];   
+		resourceId = param[1];   
+		resId = resourceId;
+		
+		if(param != 'no_data_csv'){
+			$.ajax('/api/table/'+resourceId,
+			{
+				type: 'POST',
+				dataType: 'json',
+				cache : true,
+				success: function (result) {
+					if(result.success){
 
-					addDataInTable(result);
-					//var names = result.result.fields.map(function(c){ return c.id;});
-					//$("#tooltip-standard").attr("data-cols", names.join(','));
-					loadTooltip(datasetId, result);
+						addDataInTable(result);
+						//var names = result.result.fields.map(function(c){ return c.id;});
+						//$("#tooltip-standard").attr("data-cols", names.join(','));
+						loadTooltip(datasetId, result);
+					}
+					else{
+						alert("pas de csv!");
+						console.log("ERROR: ");
+					}            
+				
+							
+				},
+				error: function (e) {
+					console.log("ERROR: ", e);
 				}
-				else{
-					alert("pas de csv!");
-					console.log("ERROR: ");
-				}            
-            
-                        
-			},
-			error: function (e) {
-				console.log("ERROR: ", e);
-			}
-		}); 
-	}
-    else{
-        alert("pas de csv!");
+			}); 
+		}
+		else{
+			alert("pas de csv!");
+		}
     }
-    
  
 }
 
@@ -468,3 +469,14 @@ function preview(){
 	
 }
 
+function baba(){
+	$('#selected_data select').html(""); 
+	getTableById();
+	var myVar = setInterval(function(){ 
+		if($('#selected_data select option').length > 0){
+			
+			getTableById();
+			clearInterval(myVar);
+		}
+	}, 500);
+}

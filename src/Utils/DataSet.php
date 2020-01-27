@@ -1577,7 +1577,7 @@ class DataSet{
 				$onlyOneAddress = 'false';
 				$selectedAddress = "";
 				$selectedPostalCode = "";
-				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $idNewData . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2["name"] . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 				
 				sleep(20);
 			}

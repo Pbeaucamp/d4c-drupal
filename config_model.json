@@ -12,7 +12,8 @@
 	{
 		"name":"XXX",
 		"domain":"xxx.data4citizen.com",
-		"css_file":"client.css"
+		"css_file":"client.css",
+		"default_bounding_box" : "5,46.85218,2.36996"
 	},
 	"map_tiles": [
         {
