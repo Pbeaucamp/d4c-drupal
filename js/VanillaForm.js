@@ -5,13 +5,17 @@ $(document).ready(function () {
 
 });
 
+$('#repositoryTab').before(`<p><h3>Référentiel Vanilla</h3></p>`);
+$('#repositoryTab').attr('style', ' background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em ');
+$('#datasetTab').attr('style', 'height: 400px; overflow:auto; ');
+
 
 function loadRepository(e) {
 	var login = document.getElementById('txtlogin').value;
 	var pass = document.getElementById('txtpass').value;
 	var group = document.getElementById('txtgroup').value;
 	var repo = document.getElementById('txtrepo').value;
-	$.getJSON('https://dma-vanilla.data4citizen.com/VanillaRuntime/externalRepositoryServlet?login=' + login + '&pass=' + pass + '&group=' + group + '&repository=' + repo, function(data) {
+	$.getJSON('https://mla-vanilla.data4citizen.com/VanillaRuntime/externalRepositoryServlet?login=' + login + '&pass=' + pass + '&group=' + group + '&repository=' + repo, function(data) {
     	var element = document.getElementById('repositoryDiv');
 		  var tree = '<ul id="myUL">';
 		  $.each( data, function( key, val ) {

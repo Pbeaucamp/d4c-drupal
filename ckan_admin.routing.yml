@@ -118,7 +118,15 @@ ckan_admin.api3:
     _title: ''
   requirements:
     _permission: 'access content'
-    
+
+ckan_admin.calculatevisu:
+  path: '/api/datasets/calculatevisu/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callCalculateVisualisations'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
 ckan_admin.callCustomView:
   path: '/api/datasets/2.0/callCustomView/{params}'
   defaults:
