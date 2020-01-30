@@ -4366,11 +4366,18 @@ class Api{
 		if($type != null){
 			foreach($tiles as $tile){
 				if($tile["type"] == $type){
-					$data_array[] = $tile;
+					$data_array["layers"][] = $tile;
 				}
 			}
 		} else {
-			$data_array = $tiles;
+			$data_array["layers"] = $tiles;
+		}
+		
+		$default_bbox = $this->config->client->default_bounding_box;
+		if($default_bbox != null && $default_bbox != ""){
+			$data_array["default_bbox"] = $default_bbox;
+		} else {
+			$data_array["default_bbox"] = null;
 		}
 		
 		return $data_array;

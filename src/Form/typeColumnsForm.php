@@ -113,7 +113,7 @@ class typeColumnsForm extends HelpFormBase {
             '#title' => t('Organisation :'),
             '#options' => $organizationList,
             '#empty_option' => t('----'),
-            '#attributes' => array('style' => 'width: 50%;','onchange' => 'clear();'),
+            '#attributes' => array('style' => 'width: 50%;','onchange' => 'baba();'),
             '#ajax'         => [
                 'callback'  => '::datasetCallback',
                 'wrapper'   => 'selected_data',
@@ -125,7 +125,11 @@ class typeColumnsForm extends HelpFormBase {
 			'#title' => t('Sélectionner des données'),
 			'#options' => $ids,
 			'#attributes' => array(
-				'onchange' => 'getTableById()'),
+				'onchange' => 'getTableById()',
+				//'id' => 'selected_data'
+			),
+			'#prefix' =>'<div id="selected_data">',
+			'#suffix' =>'</div>',
 		);
 			
 		// table form 
@@ -608,7 +612,7 @@ class typeColumnsForm extends HelpFormBase {
 		if($selected_org!=''){
 			$orgaFilter = '&q=organization:"'.$selected_org.'"';
 		}
-
+error_log($orgaFilter);
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
 			
         $dataSet = $dataSet->getContent();
@@ -617,20 +621,39 @@ class typeColumnsForm extends HelpFormBase {
         
 		$ids = array();
 
-        $ids["new"] = "Сréer un jeu de données";
-
-		foreach($dataSet as &$ds) {
+		/*foreach($dataSet as &$ds) {
 			$ids[$ds[id]] = $ds[title];
-		}
-      
-		$elem = [
+		}*/
+		
+        $tableData=array();
+       
+        for($i=0; $i<count($dataSet); $i++){
+            for($j=0; $j<count($dataSet[$i][resources]); $j++){
+                if($dataSet[$i][resources][$j][format]=='CSV'){
+					$filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
+					$tableData[$i]=$filds;
+						
+					$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
+						
+					break;
+                }
+                else{
+                    $tableData[$i]='no_data_csv';
+                    $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
+                }
+            }
+        }
+          error_log(count($ids));
+		$form['selected_data'] = [
             '#type' => 'select',
 			'#title' => t('Sélectionner des données'),
 			'#options' => $ids,
 			'#attributes' => array(
-				'onchange' => 'getTableById()'),
+				'onchange' => 'getTableById()',),
+			'#prefix' =>'<div id="selected_data">',
+			'#suffix' =>'</div>',
         ];
 
-		return $elem;
+		return $form['selected_data'];
 	}  
 }
