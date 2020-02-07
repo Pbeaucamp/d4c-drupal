@@ -15,6 +15,7 @@ use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\Api;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\Component\Render\FormattableMarkup; 
 
 /**
  * Implements an example form.
@@ -138,25 +139,67 @@ class typeColumnsForm extends HelpFormBase {
 			'#type' => 'table',
 			'#caption' => $this->t('Table'),
 			'#header' => array(
-				$this->t(''),
-				$this->t('Intitulé'),
-				$this->t("Intitulé FACETTE"),
-				$this->t('FACETTE'),
-				$this->t('FACETTE Multiple'),
-				$this->t('Tableau'),
+				"name" => $this->t(''),
+				"intitule" => $this->t('Intitulé'),
+				"intituleFacet" => $this->t("Intitulé FACETTE"),
+				"facet" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxFacet" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('FACETTE'),
+					':action' => 'checkAll("-facet","checkboxFacet")'])
+				),
+				"facetM" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxFacetM" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('FACETTE Multiple'),
+					':action' => 'checkAll("-disjunctive","checkboxFacetM")'])
+				),
+				"tableau" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxTableau" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Tableau'),
+					':action' => 'checkAll("-table","checkboxTableau")'])
+				),
 				//$this->t('Infobulle carte'),
-				$this->t('Tri'),
-				$this->t('Date ponctuel'),
-				$this->t('Date Début'),
-				$this->t('Date fin'),    
-				$this->t('Images'),    
-				$this->t('Nuage de mot'),    
-				$this->t('Nuage de mot(nombre)'),    
-				$this->t("DATE ET HEURE"),    
-				$this->t("Description"),
-				$this->t("Libellé de Frise Chronologique"), 
-				$this->t("Description pour Frise Chronologique"),
-				$this->t("DATE pour Frise Chronologique"),  
+				"tri" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxTri" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Tri'),
+					':action' => 'checkAll("-sortable","checkboxTri")'])
+				),
+				"datePonctuel" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDatePonctuel" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Date ponctuel'),
+					':action' => 'checkAll("-date","checkboxDatePonctuel")'])
+				),
+				"dateDebut" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDateDebut" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Date Début'),
+					':action' => 'checkAll("-startdate","checkboxDateDebut")'])
+				),
+				"dateFin" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDateFin" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Date fin'),
+					':action' => 'checkAll("-enddate","checkboxDateFin")'])
+				),
+				"images" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxImages" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Images'),
+					':action' => 'checkAll("-images","checkboxImages")'])
+				),
+				"nuageDeMot" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxNuageDeMot" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Nuage de mot'),
+					':action' => 'checkAll("-wordcount","checkboxNuageDeMot")'])
+				),
+				"nuageDeMotNombre" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxNuageDeMotNombre" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Nuage de mot(nombre)'),
+					':action' => 'checkAll("-wordcountnumber","checkboxNuageDeMotNombre")'])
+				),
+				"dateEtHeure" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDateEtHeure" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('DATE ET HEURE'),
+					':action' => 'checkAll("-dateTime","checkboxDateEtHeure")'])
+				),
+				"description" => $this->t("Description"),
+				"libelleFriseChrono" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxLibelleFriseChrono" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Libellé de Frise Chronologique'),
+					':action' => 'checkAll("-title_for_timeLine","checkboxLibelleFriseChrono")'])
+				),
+				"descriptionFriseChrono" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDescriptionFriseChrono" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Description pour Frise Chronologique'),
+					':action' => 'checkAll("-descr_for_timeLine","checkboxDescriptionFriseChrono")'])
+				),
+				"dateFriseChrono" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDateFriseChrono" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('DATE pour Frise Chronologique'),
+					':action' => 'checkAll("-date_timeline","checkboxDateFriseChrono")'])
+				),
 				//$this->t("image_url"),
 			),
 		);

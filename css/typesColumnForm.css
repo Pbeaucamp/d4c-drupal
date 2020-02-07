@@ -63,3 +63,7 @@ textarea{
     text-shadow: none;
     z-index: 1;
 }
+
+.headerCheckbox {
+    display: flex;
+}
