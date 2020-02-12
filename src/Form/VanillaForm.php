@@ -37,10 +37,13 @@ class VanillaForm extends HelpFormBase {
 		
 		$form['#attached']['library'][] = 'ckan_admin/VanillaForm.form';
 		
-
+        $form['m1'] = array(
+			'#markup' => '<div id="repositoryTab">',
+		); 
 			
 		$form['login'] = array(
             '#type' => 'textfield',
+			'#title' => $this->t('Utilisateur :'),
 			'#attributes' => [
 				'placeholder' => 'Utilisateur',
 				'id' => 'txtlogin'
@@ -50,6 +53,7 @@ class VanillaForm extends HelpFormBase {
 		
 		$form['pass'] = array(
             '#type' => 'password',
+			'#title' => $this->t('Mot de passe :'),
 			'#attributes' => [
 				'placeholder' => 'Mot de passe',
 				'id' => 'txtpass'
@@ -59,6 +63,7 @@ class VanillaForm extends HelpFormBase {
 		
 		$form['group'] = array(
             '#type' => 'textfield',
+			'#title' => $this->t('Groupe :'),
 			'#attributes' => [
 				'placeholder' => 'Groupe',
 				'id' => 'txtgroup'
@@ -68,6 +73,7 @@ class VanillaForm extends HelpFormBase {
 		
 		$form['repository'] = array(
             '#type' => 'textfield',
+			'#title' => $this->t('Référentiel :'),
 			'#attributes' => [
 				'placeholder' => 'Référentiel',
 				'id' => 'txtrepo'
@@ -87,7 +93,7 @@ class VanillaForm extends HelpFormBase {
 			
 			$form['repositorytree'] = [
 				  '#type' => 'container',
-				  '#attributes' => ['id' => 'repositoryDiv'],
+				  '#attributes' => ['id' => 'repositoryDiv', 'style' => 'height:200px;overflow:auto;'],
 				];
 				
 							$form['test'] = [
@@ -97,14 +103,7 @@ class VanillaForm extends HelpFormBase {
 			
 			
 			
-						$form['Dataset_lies_table'] = array(
-            '#type' => 'table',
-            '#header' => array(
-                $this->t('Jeux de données'),
-            ),
-            '#attributes' => array('style' => 'width: 100%;height: 450px;overflow:auto;'),
 
-        );
 		
 		$form['itemid'] = array(
             '#type' => 'textfield',
@@ -113,6 +112,37 @@ class VanillaForm extends HelpFormBase {
 				'style' => 'display:none;'
 			],
         );
+		
+		$form['m1_2'] = array(
+		  '#markup' => '</div>',
+		);   
+		
+		$form['itemName'] = array(
+            '#type' => 'textfield',
+			'#title' => $this->t('Nom du métadata :'),
+			'#attributes' => [
+				'placeholder' => 'D4CMetadata',
+				'id' => 'txtitemname'
+			],
+			'#default_value' => 'D4CMetadata',
+        );
+		
+		$form['m2'] = array(
+			'#markup' => '<div id="datasetTab">',
+		); 
+		
+		$form['Dataset_lies_table'] = array(
+            '#type' => 'table',
+            '#header' => array(
+                $this->t('Jeux de données'),
+            ),
+            '#attributes' => array('style' => 'width: 100%;height: 450px;overflow:auto;'),
+
+        );
+		
+		$form['m2_2'] = array(
+		  '#markup' => '</div>',
+		);   
 		
 			$form['search'] = array(
 					'#type' => 'submit',
@@ -150,6 +180,13 @@ class VanillaForm extends HelpFormBase {
 		
 			return $form;
 	}
+	
+	public function validateForm(array &$form, FormStateInterface $form_state) {
+		if ($form_state->getValue('itemid') == '') {
+			$form_state->setErrorByName('itemid', $this->t('La sélection d\'un dossier ou Metadata est obligatoire.'));
+		}
+		
+	}
 
 	public function submitForm(array &$form, FormStateInterface $form_state){
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
@@ -162,6 +199,8 @@ class VanillaForm extends HelpFormBase {
 				$string_dataset_lies = $string_dataset_lies . ';' . substr($key, strrpos($key, ':') + 1, strlen($key)-1);
 			}
 		}
+		
+		$itemName = $form_state->getValue('itemName');
 		
 		$itemId = $form_state->getValue('itemid');
 		$idparts= explode(':', $itemId);
@@ -178,7 +217,7 @@ class VanillaForm extends HelpFormBase {
 		$cle = $this->config->ckan->api_key;
 		$connection = Database::getConnectionInfo('default');
 		//drupal_set_message(print_r($connection,true));
-		drupal_set_message("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
-		exec("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
+		drupal_set_message("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -n \"" . $itemName . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
+		exec("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -n \"" . $itemName . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
 	}
 }

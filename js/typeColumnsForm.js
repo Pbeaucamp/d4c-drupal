@@ -34,6 +34,12 @@ var resId;
 var datasetName;
 var angularLoaded = false;
 
+
+
+document.addEventListener('DOMContentLoaded', function () {
+	baba();
+}); // end ready  
+
 function getTableById(){
 //$('#edit-table > tbody').val("");
     $('#edit-table tbody tr').remove();
@@ -43,6 +49,7 @@ function getTableById(){
 	$('#selected_data select').attr("id", "edit-selected-data");
 	$('#selected_data select').attr("name", "selected_data");
 	$('#selected_data select').attr("class", "form-select");
+	
     if(param != null){
 		param = param.split('%');
 		datasetId = param[0];   
@@ -83,7 +90,8 @@ function getTableById(){
 }
 
 function addDataInTable(data){
-    
+	
+	dataSize = data.result.fields.length;
     for(let i =1; i<data.result.fields.length; i++){
 
         if(!data.result.fields[i].info){
@@ -339,12 +347,39 @@ function loadTooltip(idDataset, dataFields){
 				}
 				var l1 = "";
 				var l2 = "";
-				for(var i=0; i<sel.length; i++){
-					l1 += '<div class="list-group-item">'+sel[i]+'</div>';
+				// for(var i=0; i<sel.length; i++){
+				// 	l1 += '<div class="list-group-item">'+sel[i]+'</div>';
+				// }
+				// for(var i=0; i<cols.length; i++){
+				// 	l2 += '<div class="list-group-item tinted">'+cols[i]+'</div>';
+				// }
+
+				if (sel.length == 0) {
+					for(var i=0; i<cols.length; i++){
+						l1 += '<div class="list-group-item">'+cols[i]+'</div>';
+					}
 				}
-				for(var i=0; i<cols.length; i++){
-					l2 += '<div class="list-group-item tinted">'+cols[i]+'</div>';
+				else {
+					for(var i=0; i<sel.length; i++){
+						l1 += '<div class="list-group-item">'+sel[i]+'</div>';
+					}
+					
+					for(var i=0; i<cols.length; i++){
+						let found = false;
+
+						for(var j=0; j<sel.length; j++){
+							if (sel[j] == cols[i]) {
+								found = true;
+								break;
+							}
+						}
+
+						if (!found) {
+							l2 += '<div class="list-group-item tinted">'+cols[i]+'</div>';
+						}
+					}
 				}
+
 				$("#tooltip-standard").html(`<div style="width:60%">
 						<div id="shared-lists" class="row">
 							<div class="col-md-6 area-label">Champs affichés</div>
@@ -483,4 +518,16 @@ function baba(){
 			clearInterval(myVar);
 		}
 	}, 500);
+}
+
+function checkAll(columnName, checkbox) {
+	var check = document.getElementById(checkbox).checked;
+
+	console.log(check);
+
+	if (!(typeof dataSize === 'undefined')) {
+		for(let j = 0; j < dataSize; j++) {
+			$('#edit-table-' + j + columnName).prop('checked', check);
+		}
+	}
 }

@@ -148,12 +148,11 @@ class Export{
 		}
 		
 		// If passed a string, turn it into an array
-		if (is_array($json) === false) { //error_log("json_decode ");error_log($json);
-			//$json = iconv("ASCII", "UTF-8", $json); 
+
+		if (is_array($json) === false) {
 			//$json = utf8_encode($json);
-			$json = Export::convert_bad_characters($json);
-			//error_log("json_decode ");error_log($json);
-			$json = json_decode($json, true);   
+			//$json = Export::convert_bad_characters($json);
+			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 		}
 		if($json["type"] != "FeatureCollection"){
 			return "";
@@ -173,7 +172,7 @@ class Export{
 		}
 		
 		$crs = $json["crs"]["properties"]["name"];
-		
+		$test = '';
 		$rows = array();
 		foreach($json["features"] as $feat){
 			$row = array();
@@ -211,15 +210,16 @@ class Export{
 			$row = implode($row, ";");
 		}
 		
-		$data_csv[] = strtolower(implode($cols, ";"));
-		$data_csv = array_merge($data_csv, $rows);
+		$data_csv = strtolower(implode($cols, ";"));
+		//$data_csv = array_merge($data_csv, $rows);
+		array_unshift($rows, $data_csv);
 		
 		//$res = utf8_encode(implode($data_csv, "\n"));
 		$res = implode($data_csv, "\n");
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
-		$res = Export::convert_bad_characters($res);
-		
+		//$res = Export::convert_bad_characters($res);
+		$res = iconv("UTF-8", "Windows-1252", $res);
 		return $res;
 	}
 	

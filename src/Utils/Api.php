@@ -5722,6 +5722,12 @@ class Api{
 		return $response;
 	}
 	
+	function callCalculateVisualisations($id) {
+		$this->calculateVisualisations($id);
+		$response = new Response();
+		return $response;
+	}
+	
 	function reBuildAllDataset(){
 		$allDatasets = $this->callPackageSearch_public_private("include_private=true&rows=10000");
 		$allDatasets = $allDatasets->getContent();
