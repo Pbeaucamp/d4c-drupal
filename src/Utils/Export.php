@@ -149,7 +149,7 @@ class Export{
 		
 		// If passed a string, turn it into an array
 		if (is_array($json) === false) {
-			$json = json_decode($json, true);
+			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 		}
 		if($json["type"] != "FeatureCollection"){
 			return "";
@@ -169,7 +169,7 @@ class Export{
 		}
 		
 		$crs = $json["crs"]["properties"]["name"];
-		
+		$test = '';
 		$rows = array();
 		foreach($json["features"] as $feat){
 			$row = array();
@@ -207,10 +207,15 @@ class Export{
 			$row = implode($row, ";");
 		}
 		
-		$data_csv[] = strtolower(implode($cols, ";"));
-		$data_csv = array_merge($data_csv, $rows);
+		$data_csv = strtolower(implode($cols, ";"));
+		//$data_csv = array_merge($data_csv, $rows);
+		array_unshift($rows, $data_csv);
 		
-		$res = utf8_encode(implode($data_csv, "\n"));
+		$res =implode($rows, "\n");
+		$res = iconv("UTF-8", "Windows-1252", $res);
+		//		$fp = fopen('testmoissonnage.txt', 'w');
+		//fwrite($fp, $res);
+		//fclose($fp);
 		return $res;
 	}
 	
