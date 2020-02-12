@@ -63,7 +63,7 @@ class Api{
 		$this->urlCkan = $this->config->ckan->url;
     }
     
-	private function getStoreOptions(){
+	public function getStoreOptions(){
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
@@ -79,7 +79,7 @@ class Api{
 		return $options;
 	}
 
-	private function getSimpleOptions(){
+	public function getSimpleOptions(){
 		$options = array(
 			CURLOPT_POST=>true,
 			CURLOPT_RETURNTRANSFER => true,
@@ -89,7 +89,7 @@ class Api{
 		return $options;
 	}
 
-	private function getSimpleGetOptions(){
+	public function getSimpleGetOptions(){
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_SSL_VERIFYPEER => false,
@@ -2810,6 +2810,7 @@ class Api{
 					$refineFeatures = array();
 					$refineFeatures[] = $query_params["refine.features"];
 				}
+				$filters[preg_replace($patternRefine,"",$key)] =  "(*". implode("* OR *", $refineFeatures) ."*)";
 				unset($query_params[$key]);
 			} else
 			if (preg_match($patternRefine,$key)){
@@ -2825,7 +2826,11 @@ class Api{
 		if(!empty($filters)){
 			$reqQ = "";
 			foreach($filters as $key => $value) {
-				$reqQ .= $key . ':"' . $value . '" AND ';
+				if($key != "features"){
+					$reqQ .= $key . ':"' . $value . '" AND ';
+				} else {
+					$reqQ .= $key . ':' . $value . ' AND ';
+				}
 			}
 			$reqQ = substr($reqQ, 0, -5);
 			$query_params["fq"] = $reqQ;
@@ -2878,12 +2883,12 @@ class Api{
 			$query_params["facet.field"] = $reqFacet;
 		}
 		
-		
+		//echo json_encode($query_params);
 	  	$url2 = http_build_query($query_params);
 		  
 
 	      //$callUrl =  $this->urlCkan . "api/action/package_search";
-	  	$callUrl =  $this->urlCkan . "api/action/package_search?". $url2; 
+	  	$callUrl =  $this->urlCkan . "api/action/package_search?". $url2;
 		/*if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} */
@@ -2941,13 +2946,20 @@ class Api{
 			}
 
 			$dataset['features'] = array(); //["timeserie", "analyze", "geo", "image", "calendar", "timeserie", "custom_view"]
-			if($isGeo){
+			/*if($isGeo){
 				$dataset['features'][] = "geo"; //tab map 
 			}
 			$dataset['features'][] = "analyze"; //tab chart 
 			//$dataset['features'][] = "timeserie"; //unknown tab
-			//echo json_encode($dataset['features']);
-			if($refineFeatures != null){
+			//echo json_encode($dataset['features']);*/
+			
+			foreach($value['extras'] as $extra){
+				if($extra["key"] == "features"){
+					$dataset['features'] = explode(",", $extra["value"]);
+				}
+			}
+			
+			/*if($refineFeatures != null){
 				$match = false;
 				foreach($refineFeatures as $feat) {
 					if (in_array($feat, $dataset['features'])) {
@@ -2958,7 +2970,7 @@ class Api{
 				if(!$match){
 					continue;
 				}
-			}
+			}*/
 			
 
 			$datasets[]=$dataset;
@@ -3266,7 +3278,7 @@ class Api{
 		} else {
 			$data_array["nhits"] = $result["result"]["records"][0]["total_count"];
 		}
-	
+		$data_array["status"] = $result["success"] == true ? "success" : "error";
 		return $data_array;
 				
 	}
@@ -5008,10 +5020,16 @@ class Api{
         
         $params = explode(";", $params);
         
-         //error_log($params[0]."/api/3/action/package_search?q=".$params[1]);
+         error_log($params[0]."/api/3/action/package_search?q=".$params[1]);
         
-        $result = Query::callSolrServer($params[0]."/api/3/action/package_search?q=".$params[1]);
-        
+        //$result = Query::callSolrServer('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
+        $curl = curl_init('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
+		$opt = $this->getSimpleGetOptions();                               
+		curl_setopt_array($curl, $opt);    
+		$result = curl_exec($curl);
+		curl_close($curl);
+		
+		error_log(json_encode($result));
         
         $response = new Response();
 		$response->setContent($result);
@@ -5868,6 +5886,31 @@ class Api{
 				//captcha_failed
 				//error
 				
+				//envoie mail
+				$sitename = \Drupal::config('system.site')->get('name');
+				$langcode = \Drupal::config('system.site')->get('langcode');
+				$module = 'ckan_admin';
+				$key = 'addReuse';
+				$to = \Drupal::config('system.site')->get('mail');
+				$reply = NULL;
+				$send = TRUE;
+
+				$params['message'][] = t('Une réutilisation "@name" a été déposée par @author sur le site @sitename, et est en attente de validation de votre part.',
+											array('@sitename' => $sitename,'@name' => $name,'@author' => $data["author_email"]));
+				$params['message'][] = t('Titre de la réutilisation : @name', array('@name' => $name));
+				$params['message'][] = t('Jeu de données concerné : @name', array('@name' => $data["dataset_title"]));
+				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://".$_SERVER['HTTP_HOST']."/admin/config/data4citizen/reusesManagement"));
+				$params['message'][] = t("Cordialement.");
+				$params['subject'] = t('Nouvelle réutilisation à valider');
+				//$params['options']['username'] = "KMO";
+				//$params['options']['title'] = t('gluglu');
+				//$params['options']['footer'] = t('blabla');
+				//$params['headers']['Content-Type'] = 'charset=UTF-8;';
+				//$params['from'] = \Drupal::config('system.site')->get('mail');
+				
+				$mailManager = \Drupal::service('plugin.manager.mail');
+				$mailManager->mail($module, $key, $to, $langcode, $params, $reply, $send);
+				
 				break;
 			case 'GET':  
 				$res = $this->getReuses(null, $datasetid, null, "online", null, null);
@@ -6099,5 +6142,110 @@ class Api{
 		]);
 
 		$query->execute();
+	}
+	
+	function callOrangeApiGetData($params){
+		//ex : /webservice/?service=getData&key=nXG9o1MSJxHbs1qH&db=stationnement&table=disponibilite_parking&format=json
+		
+		$query_params = $this->proper_parse_str($params);
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json; charset=utf-8');
+		if($query_params["service"] != "getData"){
+			echo "Ce service n'est pas supporté";
+			$response->setStatusCode(404);
+			
+		} else {
+			$cle = $query_params["key"];
+			$db = $query_params["db"];
+			$dataset = $query_params["table"];
+			$format = $query_params["format"];
+			$limit = $query_params["limit"];
+			$offset = $query_params["offset"];
+			$start = "";$rows = "";
+			if($limit != null && $limit != ""){
+				if($offset != null && $offset != ""){
+					$rows = "&rows=" . ($limit - $offset);
+				} else {
+					$rows = "&rows=" . $limit;
+				}
+			}
+			if($offset != null && $offset != ""){
+				$start = "&start=" . $offset;
+			}
+			
+			$res = $this->getDatastoreRecord_v2("dataset=".$dataset.$rows.$start);
+			//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
+			//echo json_encode($res);
+			//$res = utf8_encode(json_encode($res));echo $res;
+			//$res = mb_convert_encoding(json_encode($res), 'HTML-ENTITIES', 'UTF-8');echo $res;
+			//$res = html_entity_decode(preg_replace("/U\+([0-9A-F]{4})/", "&#x\\1;", $string), ENT_NOQUOTES, 'UTF-8');echo $res;
+			//$res = json_decode(json_encode($res), true);
+			$url = (isset($_SERVER['HTTPS']) ? "https" : "https") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+			$result = array();
+			$opendata = array();
+			$answer = array();
+			$status = array();
+			if($res["status"] == "success"){
+				$status["code"] = 0;
+				$status["message"] = "Success";
+				$answer["status"] = $status;
+				
+				$data = array();
+				//$data = array_column($res["records"], "fields");
+				$data = array_map(function($d){ unset($d["fields"]["_full_text"]);unset($d["fields"]["_id"]);return $d["fields"];}, $res["records"]);
+				$answer["data"] = $data;
+			} else {
+				$status["code"] = 7;
+				$status["message"] = "Une erreur s'est produite lors de l’exécution de la requête.";
+				$answer["status"] = $status;
+			}
+			
+			$opendata["request"] = $url;
+			$opendata["answer"] = $answer;
+			$result["opendata"] = $opendata;
+			
+			echo json_encode($result);
+		}
+
+		
+		return $response;
+	}
+	
+	
+	function updateResourceAndPushDatastore($resource){
+		
+		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resource["id"] . "&limit=0";
+		
+		//echo $callUrl;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);//error_log($result);
+		$fields = json_decode($result,true)["result"]["fields"];
+		
+		$resource["uuid"] = uniqid();
+		$callUrl =  $this->urlCkan . "/api/action/resource_update";
+		$return = $this->updateRequest($callUrl, $resource, "POST");
+		//error_log($return);
+		$fields2 = array();
+		foreach($fields as $f){
+			if($f["id"] != "_id"){
+				$fields2[] = $f;
+			}
+		}
+		for($i=0; $i<1; $i++){
+			sleep(10);
+			$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+			$data = array();
+			$data["resource_id"] = $resource["id"];
+			$data["force"] = true;
+			$data["fields"] = $fields2;
+			$data["uuid"] = uniqid();
+			$res2 = $this->updateRequest($callUrl, $data, "POST");
+			//error_log($res2);
+		}
+		
+		
+		return $return;
 	}
 }

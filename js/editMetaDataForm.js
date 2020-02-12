@@ -43,29 +43,11 @@ $ = jQuery;
     //angular.module('d4c.frontend', ['d4c', 'd4c-widgets']);
 	//angular.module('d4c-widgets', ['d4c', 'd4c-widgets']);
 	//angular.bootstrap(document.getElementById("app"), ['d4c-widgets']);
-	var app = angular.module('d4c.core.config', []);
-     
-	app.factory("domainConfig", [function() {
-		return {"languages": ["fr"], "explore.reuse": null, "explore.dataset_catalog_separate_languages": null, "explore.disable_analyze": null, "explore.enable_api_tab": false};
-	}]);
+	var mod = angular.module('d4c.core.config', []);
 	
-	app.factory("config", [function() {
+	mod.factory("config", [function() {
 		return {
-			DATASET_ID: '',
-			LANGUAGE: 'fr',
-			AVAILABLE_LANGUAGES: ["fr"],
-			USER: null,
-			DOMAIN_ID: "",
-			FEEDBACK: true,
-			RECORDS_COUNTER_ENABLED: true,
-			DOWNLOAD_COUNTER_ENABLED: false,
-			RESOURCE_DOWNLOAD_CONDITIONS: false,
-			PARENT_DOMAIN: false,
-			PAGES_SECURITY_ENABLED: false,
-			
-			MINUTE_LEVEL_SCHEDULING: false,
-		
-			FORCE_DEBUG_LOGGER: false
+			HOST: ''
 		}
 	}]);
 }());
@@ -128,6 +110,10 @@ $('#configurationTab').after('<br>');
 $('#datasetLies').after('<br>');
 //$("#edit-img-picto-upload").after('<div id= "old_img"></div><div id="btnImgHide"><br></div><div style=" overflow:scroll; height:15em; overflow-x: hidden; display: none;  width: 30%;" id="pickImg"></div><br>');
 $('#edit-selected-type-map').val("");
+$('#edit-table').after('<div id="up-stock" style="display:none"></div>');
+for(var i=1; i<=20; i++){
+	$('#up-stock').append($("#edit-table-"+i+"-file").parent().parent());
+}
 if ($('#selected_data').val() == 'new') {
     $('#edit-table tbody tr').remove();
 }
@@ -216,6 +202,9 @@ function clear() {
 
     $('#edit-selected-lic').val("");
     $('#edit-selected-org').val("");
+	for(var i=1; i<=20; i++){
+		$('#up-stock').append($('[id^=edit-table-'+i+'-file]').first().parent().parent());
+	}
     $('#edit-table tbody tr').remove();
     $('#edit-imgback').val('');
     $('#img_selected').remove();
@@ -303,29 +292,68 @@ function fillData(data) {
         $('#edit-selected-private').val('0');
     }
 	
-    // table resources 
+    // table resources
+	var upload_template = `<div id="edit-table-$$$-file" class="js-form-managed-file form-managed-file" style="margin-bottom: 5px;">
+							<input data-drupal-selector="edit-table-$$$-file-upload" type="file" id="edit-table-$$$-file-upload" name="files[table_$$$_file]" size="1" class="js-form-file form-file">
+							<input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-table-$$$-file-upload-button" formnovalidate="formnovalidate" type="submit" id="edit-table-$$$-file-upload-button" name="table_$$$_file_upload_button" value="Transférer">
+							<input data-drupal-selector="edit-table-$$$-file-fids" type="hidden" name="table[$$$][file][fids]">
+						</div>`;
+
+	
     $('#edit-table tbody tr').remove();
     let num = 0;
     for (let i = 0; i < data.resources.length; i++) {
         //console.log(data.resources[i]);
         num = i + 1;
 
-        let titre = '<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + num + '-name form-item-table-' + num + '-name form-no-label"><input data-drupal-selector="edit-table-' + num + '-name" type="text" id="edit-table-' + num + '-name" name="table[' + num + '][name]" value="' + data.resources[i].name + '" size="30" maxlength="128" class="form-text"></div>';
-        let description = '<div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-' + num + '-description form-item-table-' + num + '-description form-no-label"><div class="form-textarea-wrapper"><textarea style="height: 5em;width: 25em;" data-drupal-selector="edit-table-' + num + '-description" id="edit-table-' + num + '-description" name="table[' + num + '][description]" rows="5" cols="60" class="form-textarea resize-vertical">' + data.resources[i].description + '</textarea></div></div>';
-        let donnes = '<div class="form-textarea-wrapper"><textarea data-drupal-selector="edit-table-' + num + '-donnees-2" id="edit-table-' + num + '-donnees-2" name="table[' + num + '][donnees][2]" rows="5" cols="60" class="form-textarea resize-vertical" style="height: 2em;width: 19em;">' + data.resources[i].url + '</textarea></div>';
+		//var upload = upload_template.replace(/\$\$\$/gi, num);
+		var upload = '<div id="up-'+num+'"></div>';
+		
+        let titre = `<span class="label" id="label-table-` + num + `-name">` + data.resources[i].name + `</span>
+					<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-` + num + `-name form-item-table-` + num + `-name form-no-label edit">
+						<input data-drupal-selector="edit-table-` + num + `-name" type="text" id="edit-table-` + num + `-name" name="table[` + num + `][name]" value="` + data.resources[i].name + `" size="30" maxlength="128" class="form-text">
+					</div>`;
+        let description = `<span class="label" id="label-table-` + num + `-description">` + data.resources[i].description + `</span>
+							<div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-` + num + `-description form-item-table-` + num + `-description form-no-label edit">
+								<div class="form-textarea-wrapper">
+									<textarea style="height: 5em;width: 25em;" data-drupal-selector="edit-table-` + num + `-description" id="edit-table-` + num + `-description" name="table[` + num + `][description]" rows="5" cols="60" class="form-textarea resize-vertical">` + data.resources[i].description + `</textarea>
+								</div>
+							</div>`;
+        let donnes = `<a class="label" id="label-table-` + num + `-donnees" href="`+ data.resources[i].url +`">` + data.resources[i].url + `</a>
+						<div class="form-textarea-wrapper edit"> ` + upload + `
+							<textarea data-drupal-selector="edit-table-` + num + `-donnees" id="edit-table-` + num + `-donnees" name="table[` + num + `][donnees]" rows="5" cols="60" class="form-textarea resize-vertical" style="height: 2em;width: 19em;">` + data.resources[i].url + `</textarea>
+						</div>`;
 
-        let supprimer = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-supprimer-1 form-item-table-' + num + '-supprimer-1 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-1" type="checkbox" id="edit-table-' + num + '-supprimer-1" name="table[' + num + '][supprimer][1]" value="" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-supprimer-2 form-item-table-' + num + '-supprimer-2 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-2" type="checkbox" id="edit-table-' + num + '-supprimer-2" name="table[' + num + '][supprimer][2]" value="1" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + num + '-supprimer-3 form-item-table-' + num + '-supprimer-3 form-no-label"><input style="display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-3" type="text" id="edit-table-' + num + '-supprimer-3" name="table[' + num + '][supprimer][3]" value="" size="60" class="form-text"></div>' +
+		let editer = `<input class="button js-form-submit form-submit label" value="Editer" type="button" onclick="editRow(` + (num) + `);">
+						<input class="button js-form-submit form-submit edit" value="Valider" type="button" onclick="validRow(` + (num) + `);" style="margin-bottom: 5px;">
+						<input class="button js-form-submit form-submit edit" value="Annuler" type="button" onclick="cancelRow(` + (num) + `);" style="color: #fcfcfa; background:#e1070799;">`;				
+						
+        let supprimer = `<input class="button js-form-submit form-submit label" value="Supprimer" type="button" onclick="hideRow(` + (num) + `);" style="color: #fcfcfa; background:#e1070799;">`;
+		
+		let status = `<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-` + num + `-status-1 form-item-table-` + num + `-status-1 form-no-label">
+							<input style=" display: none;" data-drupal-selector="edit-table-` + num + `-status-1" type="checkbox" id="edit-table-` + num + `-status-1" name="table[` + num + `][status][1]" value="" class="form-checkbox">
+						</div>
+						<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-` + num + `-status-2 form-item-table-` + num + `-status-2 form-no-label">
+							<input style=" display: none;" data-drupal-selector="edit-table-` + num + `-status-2" type="checkbox" id="edit-table-` + num + `-status-2" name="table[` + num + `][status][2]" value="1" class="form-checkbox">
+						</div>
+						<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-` + num + `-status-3 form-item-table-` + num + `-status-3 form-no-label">
+							<input style="display: none;" data-drupal-selector="edit-table-` + num + `-status-3" type="text" id="edit-table-` + num + `-status-3" name="table[` + num + `][status][3]" value="" size="60" class="form-text">
+						</div>`;
 
-            '<input class="button js-form-submit form-submit" value="Supprimer" type="button" onclick="hideRow(' + (num) + ');">';
+        $('#edit-table > tbody:last-child').append(`<tr id="row_` + num + `" data-drupal-selector="edit-table-` + num + `" class="odd resource-row noedit">
+														<td>` + titre + `</td>
+														<td>` + description + `</td>
+														<td>` + donnes + `</td>
+														<td>` + editer + `</td>
+														<td>` + supprimer + status + `</td>
+														
+													</tr>`);
 
-        $('#edit-table > tbody:last-child').append('<tr id="row_' + num + '" data-drupal-selector="edit-table-' + num + '" class="odd"><td>' + titre + '</td><td>' + description + '</td><td>' + donnes + '</td><td>' + supprimer + '</td></tr>');
-
-        $('#edit-table-' + num + '-supprimer-2').attr('checked', 'checked');
-        $('#edit-table-' + num + '-supprimer-3').val(data.resources[i].id);
+        //$('#edit-table-' + num + '-status-2').attr('checked', 'checked');
+        $('#edit-table-' + num + '-status-3').val(data.resources[i].id);
+		
+		$('#up-' + num).append($('[id^=edit-table-'+num+'-file]').first().parent().parent());
     }
-
-    //$('#addRowBtn').remove();   
-    //$("#edit-table").after('<input class="button js-form-submit form-submit" id="addRowBtn" value="Nouvelles ressources" type="button" onclick="addResource('+(num-1)+');">');
 
     for (let g = 0; g < data.extras.length; g++) {
         if (data.extras[g].key == 'Picto') {
@@ -464,13 +492,13 @@ function addResource(num) {
 
     //style=" display: none;"
 
-    let supprimer = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-supprimer-1 form-item-table-' + num + '-supprimer-1 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-1" type="checkbox" id="edit-table-' + num + '-supprimer-1" name="table[' + num + '][supprimer][1]" value="" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-supprimer-2 form-item-table-' + num + '-supprimer-2 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-2" type="checkbox" id="edit-table-' + num + '-supprimer-2" name="table[' + num + '][supprimer][2]" value="" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + num + '-supprimer-3 form-item-table-' + num + '-supprimer-3 form-no-label"><input style="display: none;" data-drupal-selector="edit-table-' + num + '-supprimer-3" type="text" id="edit-table-' + num + '-supprimer-3" name="table[' + num + '][supprimer][3]" value="" size="60" class="form-text"></div>' +
+    let supprimer = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-status-1 form-item-table-' + num + '-status-1 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-status-1" type="checkbox" id="edit-table-' + num + '-status-1" name="table[' + num + '][supprimer][1]" value="" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + num + '-status-2 form-item-table-' + num + '-status-2 form-no-label"><input style=" display: none;" data-drupal-selector="edit-table-' + num + '-status-2" type="checkbox" id="edit-table-' + num + '-status-2" name="table[' + num + '][supprimer][2]" value="" class="form-checkbox"></div><div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + num + '-status-3 form-item-table-' + num + '-status-3 form-no-label"><input style="display: none;" data-drupal-selector="edit-table-' + num + '-status-3" type="text" id="edit-table-' + num + '-status-3" name="table[' + num + '][supprimer][3]" value="" size="60" class="form-text"></div>' +
 
 
         '<input class="button js-form-submit form-submit" value="Supprimer" type="button" onclick="hideRow(' + (num) + ');">';
 
-    $('#edit-table-' + num + '-supprimer-2').selected(true);
-    $('#edit-table-' + num + '-supprimer-2').val('1');
+    $('#edit-table-' + num + '-status-2').selected(true);
+    $('#edit-table-' + num + '-status-2').val('1');
 
 
     $('#edit-table > tbody:last-child').append('<tr id="row_' + num + '" data-drupal-selector="edit-table-' + num + '" class="odd"><td>' + titre + '</td><td>' + description + '</td><td>' + donnes + '</td><td>' + supprimer + '</td></tr>');
@@ -483,14 +511,46 @@ function hideRow(num) {
 
     if (conf) {
 
-        $('#edit-table-' + num + '-supprimer-1').selected(true);
-        $('#edit-table-' + num + '-supprimer-1').val('1');
+        $('#edit-table-' + num + '-status-1').selected(true);
+        $('#edit-table-' + num + '-status-1').val('1');
         $('#row_' + num).attr('style', 'display:none;');
     }
-
-
-
 }
+
+function editRow(num) {
+	$('#edit-table-' + num + '-name').val($('#label-table-' + num + '-name').text());
+	$('#edit-table-' + num + '-description').val($('#label-table-' + num + '-description').text());
+	$('#edit-table-' + num + '-donnees').val($('#label-table-' + num + '-donnees').text());
+	$('#row_' + num).addClass('edit').removeClass("noedit");
+}
+
+function validRow(num) {
+    var conf = confirm("Etes-vous sûr de valider les modifications ?");
+
+    if (conf) {
+		$('#row_' + num).addClass('noedit').removeClass("edit");
+        $('#edit-table-' + num + '-status-2').selected(true);
+        $('#edit-table-' + num + '-status-2').val('1');
+		
+		$('#label-table-' + num + '-name').text($('#edit-table-' + num + '-name').val());
+		$('#label-table-' + num + '-description').text($('#edit-table-' + num + '-description').val());
+		
+		if($('[id^=edit-table-'+num+'-file] a').length > 0){
+			$('#label-table-' + num + '-donnees').text($('[id^=edit-table-'+num+'-file] a')[0].href);
+			$('#label-table-' + num + '-donnees').attr("href",$('[id^=edit-table-'+num+'-file] a')[0].href);
+			$('#edit-table-' + num + '-donnees').val($('[id^=edit-table-'+num+'-file] a')[0].href);
+		} else {
+			$('#label-table-' + num + '-donnees').text($('#edit-table-' + num + '-donnees').val());
+		}
+		
+    }
+}
+
+function cancelRow(num) {
+	$('#row_' + num).addClass('noedit').removeClass("edit");
+	$('#edit-file_' + num + '-upload').val("");
+}
+
 
 function onlyDigits() {
     this.value = this.value.replace(/[\s]/g, "");

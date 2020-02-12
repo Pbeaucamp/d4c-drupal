@@ -578,10 +578,10 @@ class DataSet{
 		$binaryData->extras = $extras;
 		$binaryData->tags = $listTag;
 		
-		$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+		$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
         
         
-        
+        /*
         foreach ($reuses as &$value){
             
             //$query2 = DataSet::createResource($id_dataset,$value->url,$value->description,$value->title, $value->format,$value->id);
@@ -592,7 +592,7 @@ class DataSet{
            // drupal_set_message('<pre>'. print_r($query2, true) .'</pre>'); 
             
         }
-        
+        */
         
         
 		//$r = json_decode($query);
@@ -1032,9 +1032,18 @@ class DataSet{
 				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
             }
 
+			$old_resources = $result2[resources];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == $res->name && strtolower($oldRes["format"]) == strtolower($res->format)){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
+                 
            
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
@@ -1047,17 +1056,19 @@ class DataSet{
             
 				if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
 					$add_tres=true;
-                  
+					
 					$filepathN = $res->url;
 					$filepathN = explode('/',$filepathN);
 					$filepathN = $filepathN[count($filepathN)-1];
-					$filepathN = explode('.',$filepathN)[0]; 
+					//$filepathN = explode('.',$filepathN)[0]; 
 					$filepathN =urldecode($filepathN);  
 					$filepathN = strtolower($filepathN);
                   
+					$url_res = $res->url;
+				  
 					if($res->format == 'csv' || $res->format == 'CSV') {
                   
-						$filepathN = explode(".",$filepathN)[0].'.csv';
+						//$filepathN = explode(".",$filepathN)[0].'.csv';
 						$url_res = $url_res.''.$filepathN;
                 
 						// read into array
@@ -1070,35 +1081,64 @@ class DataSet{
                 
 						// write back to file
 						file_put_contents($root.''. $filepathN, implode($arr));
-
+					}
+					if($editId == null){
 						$resources = [
-                            "package_id" => $id_dataset,
-                            "url" => $url_res,
-                            "description" => $res->description,
-                            "name" =>$res->name,
-                            "format"=>$res->format
-                        ];
+							"package_id" => $id_dataset,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->name,
+							"format"=>$res->format
+						];
 
 						$callUrluptres = $ckan . "/api/action/resource_create";
 						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-                
+					} else {
+						$resources = [
+							//"package_id" => $id_dataset,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->name,
+							"format" => $res->format,
+							"clear_upload" => true
+						];
+						
+						/*$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+						$return = $api->updateResourceAndPushDatastore($resources);
 					}
+					
 				}
 				else{
                     $url_res = $res->url;
                     //$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
                   
-                    $resources = [
-						"package_id" => $id_dataset,
-						"fields" => $url_res,
-						"description" => $res->description,
-						"name" =>$res->name,
-						"format"=>$res->format
-					];
+					if($editId == null){
+						$resources = [
+							"package_id" => $id_dataset,
+							"fields" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->name,
+							"format"=>$res->format
+						];
 
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
-                  
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					} else {
+						$resources = [
+							//"package_id" => $id_dataset,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->name,
+							"format" => $res->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
                 } 
             }
 			if($add_tres){
@@ -1184,9 +1224,17 @@ class DataSet{
 				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
             }
             
+			$old_resources = $result2[resources];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == $res->name && strtolower($oldRes["format"]) == strtolower($res->format)){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
            
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
@@ -1207,7 +1255,7 @@ class DataSet{
 					$filepathN =urldecode($filepathN);  
 					$filepathN = strtolower($filepathN);
                   
-					if($res->format == 'csv' || $res->format == 'CSV') {
+					//if($res->format == 'csv' || $res->format == 'CSV') {
 						/*
 						$filepathN = explode(".",$filepathN)[0].'.csv';
 						$url_res = $url_res.''.$filepathN;
@@ -1227,33 +1275,63 @@ class DataSet{
 						$download = $api_ext->getDownloadFromSource("d4c", $site_search, $results->id, http_build_query($parameters));
 						$url = $download["url"];
 						$fileName = $download["name"];
+ 
+						if($editId == null){
+							$resources = [
+								"package_id" => $id_dataset,
+								"url" => $url,
+								"description" => $res->description,
+								"name" =>$fileName,
+								"format"=>$res->format
+							];
 
-						$resources = [
-                            "package_id" => $id_dataset,
-                            "url" => $url,
-                            "description" => $res->description,
-                            "name" =>$fileName,
-                            "format"=>$res->format
-                        ];
-
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-					}
+							$callUrluptres = $ckan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+						} else {
+							$resources = [
+								//"package_id" => $id_dataset,
+								"id" => $editId,
+								"url" => $url,
+								"description" => $res->description,
+								"name" => $fileName,
+								"format" => $res->format,
+								"clear_upload" => true
+							];
+							
+							/*$callUrluptres = $ckan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+						}
+					//}
 				}
 				else{
                     $url_res = $res->url;
                     //$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
-                  
-                    $resources = [
-						"package_id" => $id_dataset,
-						"url" => $url_res,
-						"description" => $res->description,
-						"name" =>$res->name,
-						"format"=>$res->format
-					];
-
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					
+					if($editId == null){
+						$resources = [
+							"package_id" => $id_dataset,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->name,
+							"format"=>$res->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						$resources = [
+							//"package_id" => $id_dataset,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->name,
+							"format" => $res->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
                 } 
             }
             if($add_tres){
@@ -1275,7 +1353,7 @@ class DataSet{
 				$tags = $results->tags;
 				for ($j = 0; $j < count($tags); $j++) {
 					if($tags[$j]!=''){
-						$val = $this->nettoyage($tags[$j]);
+						$val = DataSet::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
 					}
 				}  
@@ -1349,10 +1427,15 @@ class DataSet{
             $query = DataSet::updatePackage($name,$id_org,$description,$results->license,$update,$tags,/*$spatial,*/array(),$id_dataset,$extras);
 
 			$idNewData=$id_dataset;
+			$old_resources = $result2[resources];
 			$add_tres=false;
 			$geo_res = array();
             /////////////////////resources////////////
 			foreach($results->resources as &$res){
+				
+				$editId = null;
+				
+				
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
 				}
@@ -1382,22 +1465,22 @@ class DataSet{
                         $title_f= $res->title.'_xls';
                         switch ($res->format) {
 							case 'XLS':
-								$filepathN = explode(".",$filepathN)[0].'.XLS';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLS';
 								$filepathDell =  $filepathN;
 								$reader = new Xls();
 								break;
 							case 'XLSX':
-								$filepathN = explode(".",$filepathN)[0].'.XLSX';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLSX';
 								$filepathDell =  $filepathN;
 								$reader = new Xlsx();
 								break;
 							case 'xls':
-								$filepathN = explode(".",$filepathN)[0].'.xls';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xls';
 								$filepathDell =  $filepathN;
 								$reader = new Xls();
 								break;
 							case 'xlsx':
-								$filepathN = explode(".",$filepathN)[0].'.xlsx';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xlsx';
 								$filepathDell =  $filepathN;
 								$reader = new Xlsx();
 								break;                    
@@ -1433,7 +1516,8 @@ class DataSet{
 						}
 
 						$arr = file($url_res);
-						$label = utf8_decode($arr[0]);
+						//$label = utf8_decode($arr[0]);
+						$label = $arr[0];
 
 						$label = DataSet::nettoyage($label);  
 						// edit first line
@@ -1443,28 +1527,50 @@ class DataSet{
 						file_put_contents($root.'xls_'.$fileName, implode($arr));
 
 						//$query = DataSet::createResource($idNewData,$url_res,$res->description, $title_f, 'csv','false');
-                  
-						$resources = [
-                            "package_id" => $idNewData,
-                            "url" => $url_res,
-                            "description" => $res->description,
-                            "name" =>$title_f,
-                            "format"=>'csv'
-                        ];
-                  
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+						foreach($old_resources as $oldRes){
+							if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == "csv"){
+								$editId = $oldRes["id"];
+								break;
+							}
+						}
+						
+						if($editId == null){
+							$resources = [
+								"package_id" => $idNewData,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" =>$res->id,
+								"format"=>'csv'
+							];
+							$callUrluptres = $ckan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+						} else {
+							$resources = [
+								//"package_id" => $idNewData,
+								"id" => $editId,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" => $res->id,
+								"format" =>'csv',
+								"clear_upload" => true
+							];
+							
+							/*$callUrluptres = $ckan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+						}
                     }
 
                     if($res->format == 'csv' || $res->format == 'CSV') {
 
-                        $filepathN = explode(".",$filepathN)[0].'.csv';
+                        $filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.csv';
                         $url_res = $url_res.''.$filepathN;
 
                         // read into array
                         //$arr = file('/home/user-client/drupal-d4c'.$filepath);
                         $arr = file($res->url);
-                        $label = utf8_decode($arr[0]);
+                        //$label = utf8_decode($arr[0]);
+                        $label = $arr[0];
                         $label = DataSet::nettoyage($label);  
 
                         // edit first line
@@ -1472,19 +1578,41 @@ class DataSet{
 
                         // write back to file
                         file_put_contents($root.''. $filepathN, implode($arr));
+						
+						foreach($old_resources as $oldRes){
+							if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
+								$editId = $oldRes["id"];
+								break;
+							}
+						}
 
 						// $query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false'); 
-                  
-						$resources = [
-                            "package_id" => $idNewData,
-                            "url" => $url_res,
-                            "description" => $res->description,
-                            "name" =>$res->title,
-                            "format"=>$res->format
-                        ];
-                  
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+						
+						if($editId == null){
+							$resources = [
+								"package_id" => $idNewData,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" =>$res->id,
+								"format"=>$res->format
+							];
+							$callUrluptres = $ckan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+						} else {
+							$resources = [
+								//"package_id" => $idNewData,
+								"id" => $editId,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" => $res->id,
+								"format" =>$res->format,
+								"clear_upload" => true
+							];
+							
+							/*$callUrluptres = $ckan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+						}
                         
                     }
 				}
@@ -1492,16 +1620,38 @@ class DataSet{
 					$url_res = $res->url;
 					//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false');
                   
-					$resources = [
-						"package_id" => $idNewData,
-						"url" => $url_res,
-						"description" => $res->description,
-						"name" =>$res->title,
-						"format"=>$res->format
-					];
-                  
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					foreach($old_resources as $oldRes){
+						if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
+							$editId = $oldRes["id"];
+							break;
+						}
+					}
+				  
+					
+					if($editId == null){
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->id,
+							"format"=>$res->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						$resources = [
+							//"package_id" => $idNewData,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->id,
+							"format" =>$res->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
 					
 					if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || (strtolower($res->format) == 'json' && (strpos(strtolower($res->title), "export geojson") !== false || strpos(strtolower($res->description), "export geojson") !== false))) {
 						$geo_res[strtolower($res->format)] = $res->url;
@@ -1514,10 +1664,10 @@ class DataSet{
 				sleep(20);
 			} else if($add_tres == FALSE && count($geo_res) > 0){
 				// on créé un csv
-				$name = $label . "_" . uniqid();
-				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
+				$name = $label;
+				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
 				$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
-				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
 				if($geo_res["geojson"] != null){
 					$url = $geo_res["geojson"];
 					$json = Query::callSolrServer($url);
@@ -1556,18 +1706,40 @@ class DataSet{
 					unlink ($rootJson);
 				}
 				
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == ($name.".csv") && strtolower($oldRes["format"]) == "csv"){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
 				
-				$resource = [     
-					"package_id" => $idNewData,
-					"url" => $urlCsv,
-					"description" => '',
-					"name" =>$name.".csv",
-					"format"=>'csv'
-				];
-
-				$callUrluptres = $ckan . "/api/action/resource_create";
-				$return = $api->updateRequest($callUrluptres, $resource, "POST");
-				$this->renderResourceLog($resource["name"], $return);
+				if($editId == null){
+					$resources = [
+						"package_id" => $idNewData,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" =>$name.".csv",
+						"format"=>'csv'
+					];
+					$callUrluptres = $ckan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					$this->renderResourceLog($resource["name"], $return);
+				} else {
+					$resources = [
+						//"package_id" => $idNewData,
+						"id" => $editId,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" => $name.".csv",
+						"format" =>'csv',
+						"clear_upload" => true
+					];
+					
+					$callUrluptres = $ckan . "/api/action/resource_update";
+					/*$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					$this->renderResourceLog($resource["name"], $return);*/
+					$return = $api->updateResourceAndPushDatastore($resources);
+				}
 				
 				$pathUserClient = '/home/user-client';
 				$pathUserClientData = $pathUserClient . '/data';
@@ -1661,6 +1833,8 @@ class DataSet{
             }
 			
 			$idNewData=$id_dataset;
+			$old_resources = $result2[resources];
+
 
             //resources//
 			/*
@@ -1692,16 +1866,41 @@ class DataSet{
 			$url = $download["url"];
 			$fileName = $download["name"];
 			
-            $resources = [     
-				"package_id" => $idNewData,
-				"url" => $url,
-				"description" => '',
-				"name" =>$fileName,
-				"format"=>'csv'
-			];
-
-			$callUrluptres = $ckan. "/api/action/resource_create";
-			$return = $api->updateRequest($callUrluptres, $resources, "POST");
+			$editId = null;
+			foreach($old_resources as $oldRes){
+				if($oldRes["name"] == $fileName && strtolower($oldRes["format"]) == "csv"){
+					$editId = $oldRes["id"];
+					break;
+				}
+			}
+			
+			if($editId == null){
+				$resources = [
+					"package_id" => $idNewData,
+					"url" => $url,
+					"description" => '',
+					"name" =>$fileName,
+					"format"=>'csv'
+				];
+				$callUrluptres = $ckan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+			} else {
+				$resources = [
+					//"package_id" => $idNewData,
+					"id" => $editId,
+					"url" => $url,
+					"description" => '',
+					"name" => $fileName,
+					"format" => 'csv',
+					"clear_upload" => true
+				];
+				
+				/*$callUrluptres = $ckan . "/api/action/resource_update";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+				$return = $api->updateResourceAndPushDatastore($resources);
+			}
+			
+			
 			sleep(20);
 			$api->calculateVisualisations($idNewData);
 
@@ -1777,6 +1976,8 @@ class DataSet{
             }
 
 			$idNewData=$id_dataset;
+			$old_resources = $result2[resources];
+			
             //resources//
 
 			/*$fileName = str_replace('-', '_', $query2->datasetid);
@@ -1804,17 +2005,42 @@ class DataSet{
 			$download = $api_ext->getDownloadFromSource("ods", $site_search, $query2->datasetid, http_build_query($parameters));
 			$url = $download["url"];
 			$fileName = $download["name"];
+			
+			$editId = null;
+			foreach($old_resources as $oldRes){
+				if($oldRes["name"] == $fileName && strtolower($oldRes["format"]) == "csv"){
+					$editId = $oldRes["id"];
+					break;
+				}
+			}
 
-			$resources = [     
-				"package_id" => $idNewData,
-				"url" => $url,
-				"description" => '',
-				"name" =>$fileName,
-				"format"=>'csv'
-			];
-
-			$callUrluptres = $ckan. "/api/action/resource_create";
-			$return = $api->updateRequest($callUrluptres, $resources, "POST");
+			
+			if($editId == null){
+				$resources = [
+					"package_id" => $idNewData,
+					"url" => $url,
+					"description" => '',
+					"name" =>$fileName,
+					"format"=>'csv'
+				];
+				$callUrluptres = $ckan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+			} else {
+				$resources = [
+					//"package_id" => $idNewData,
+					"id" => $editId,
+					"url" => $url,
+					"description" => '',
+					"name" => $fileName,
+					"format" => 'csv',
+					"clear_upload" => true
+				];
+				
+				/*$callUrluptres = $ckan . "/api/action/resource_update";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+				$return = $api->updateResourceAndPushDatastore($resources);
+			}
+			
 			sleep(20);
 			$api->calculateVisualisations($idNewData);
 		}
@@ -1887,6 +2113,15 @@ class DataSet{
     
              /////////////////////resources////////////    
             $host = $_SERVER['HTTP_HOST']; 
+			$old_resources = $result2[resources];
+			
+			$editId = null;
+			foreach($old_resources as $oldRes){
+				if($oldRes["name"] == $id_dataset_gouv && strtolower($oldRes["format"]) == "csv"){
+					$editId = $oldRes["id"];
+					break;
+				}
+			}
            
             if($_SERVER['HTTP_HOST']=='192.168.2.217'){
                 $root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
@@ -1905,13 +2140,14 @@ class DataSet{
 			$filepathN = strtolower($filepathN);
                   
                   
-			$filepathN = explode(".",$filepathN)[0].'.csv';
+			$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.csv';
 			$url_res = $url_res.''.$filepathN;
                 
 			// read into array
 			$arr = file('https://'.$site_search.'/resource/'.$id_dataset_gouv.'.csv');
                         
-			$label = utf8_decode($arr[0]);
+			//$label = utf8_decode($arr[0]);
+			$label = $arr[0];
 			$label = DataSet::nettoyage($label);
 
 			// edit first line
@@ -1919,17 +2155,33 @@ class DataSet{
 
 			// write back to file
 			file_put_contents($root.''. $filepathN, implode($arr));
-                
-			$resources = [
-				"package_id" => $id_dataset,
-				"url" => $url_res,
-				"description" => '',
-				"name" =>$id_dataset_gouv,
-				"format"=>'csv'
-			];
-                
-            $callUrluptres = $ckan . "/api/action/resource_create";
-            $return = $api->updateRequest($callUrluptres, $resources, "POST");
+			
+			if($editId == null){
+				$resources = [
+					"package_id" => $id_dataset,
+					"url" => $url_res,
+					"description" => '',
+					"name" =>$id_dataset_gouv,
+					"format"=>'csv'
+				];
+				$callUrluptres = $ckan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+			} else {
+				$resources = [
+					//"package_id" => $id_dataset,
+					"id" => $editId,
+					"url" => $url_res,
+					"description" => '',
+					"name" => $id_dataset_gouv,
+					"format" => 'csv',
+					"clear_upload" => true
+				];
+				
+				/*$callUrluptres = $ckan . "/api/action/resource_update";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+				$return = $api->updateResourceAndPushDatastore($resources);
+			}
+			
 			sleep(20);
 			$api->calculateVisualisations($id_dataset);
 		} 
@@ -1988,8 +2240,17 @@ class DataSet{
             }
     
 			$add_tres = false;
+			$old_resources = $result2[resources];
 			/// resources update
 			foreach($results->resources as &$res){
+				
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == $res->name && strtolower($oldRes["format"]) == strtolower($res->format)){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
                 
 				$host = $_SERVER['HTTP_HOST']; 
 			   
@@ -2017,22 +2278,22 @@ class DataSet{
 						$title_f= $res->title.'_xls';
 						switch ($res->format) {
 							case 'XLS':
-								$filepathN = explode(".",$filepathN)[0].'.XLS';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLS';
 								$filepathDell =  $filepathN;
 								$reader = new Xls();
 								break;
 							case 'XLSX':
-								$filepathN = explode(".",$filepathN)[0].'.XLSX';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLSX';
 								$filepathDell =  $filepathN;
 								$reader = new Xlsx();
 								break;
 							case 'xls':
-								$filepathN = explode(".",$filepathN)[0].'.xls';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xls';
 								$filepathDell =  $filepathN;
 								$reader = new Xls();
 								break;
 							case 'xlsx':
-								$filepathN = explode(".",$filepathN)[0].'.xlsx';
+								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xlsx';
 								$filepathDell =  $filepathN;
 								$reader = new Xlsx();
 								break;                    
@@ -2069,7 +2330,8 @@ class DataSet{
 						}
                 
 						$arr = file($url_res);
-						$label = utf8_decode($arr[0]);
+						//$label = utf8_decode($arr[0]);
+						$label = $arr[0];
                  
 						$label = DataSet::nettoyage($label);  
 						// edit first line
@@ -2081,29 +2343,45 @@ class DataSet{
             
 						//$query = DataSet::createResource($id_dataset,$url_res,$res->description, $title_f, 'csv','false');
               
-						$resources = [
-                            "package_id" => $id_dataset,
-                            "url" => $url_res,
-                            "description" => $res->description,
-                            "name" =>$res->name,
-                            "format"=>$res->format
-                        ];
-                
-						//drupal_set_message("RES:". print_r($resources,true) );
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+						
+						if($editId == null){
+							$resources = [
+								"package_id" => $id_dataset,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" =>$res->name,
+								"format"=>$res->format
+							];
+							$callUrluptres = $ckan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+						} else {
+							$resources = [
+								//"package_id" => $id_dataset,
+								"id" => $editId,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" => $res->name,
+								"format" => $res->format,
+								"clear_upload" => true
+							];
+							
+							/*$callUrluptres = $ckan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+						}
                 
 					}
             
 					if($res->format == 'csv' || $res->format == 'CSV') {
                   
-						$filepathN = explode(".",$filepathN)[0].'.csv';
+						$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.csv';
 						$url_res = $url_res.''.$filepathN;
                 
 						// read into array
 						//$arr = file('/home/user-client/drupal-d4c'.$filepath);
 						$arr = file($res->url);
-						$label = utf8_decode($arr[0]);
+						//$label = utf8_decode($arr[0]);
+						$label = $arr[0];
 						$label = DataSet::nettoyage($label);  
                 
 						// edit first line
@@ -2113,18 +2391,32 @@ class DataSet{
 						file_put_contents($root.''. $filepathN, implode($arr));
                 
 						//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
-                
-						$resources = [
-                            "package_id" => $id_dataset,
-                            "url" => $url_res,
-                            "description" => $res->description,
-                            "name" =>$res->name,
-                            "format"=>$res->format
-                        ];
-                
-						//drupal_set_message("RES:". print_r($resources,true) );
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+						
+						if($editId == null){
+							$resources = [
+								"package_id" => $id_dataset,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" =>$res->name,
+								"format"=>$res->format
+							];
+							$callUrluptres = $ckan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+						} else {
+							$resources = [
+								//"package_id" => $id_dataset,
+								"id" => $editId,
+								"url" => $url_res,
+								"description" => $res->description,
+								"name" => $res->name,
+								"format" => $res->format,
+								"clear_upload" => true
+							];
+							
+							/*$callUrluptres = $ckan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+						}
                 
 						//drupal_set_message("REZ:". print_r($return,true) );    
                 
@@ -2134,18 +2426,31 @@ class DataSet{
                 else{
                     $url_res = $res->url;
                     //$query = DataSet::createResource($id_dataset,$url_res,$res->description,$res->name, $res->format,'false');
-                  
-                  
-					$resources = [
-						"package_id" => $id_dataset,
-						"url" => $url_res,
-						"description" => $res->description,
-						"name" =>$res->name,
-						"format"=>$res->format
-					];
-                  
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+
+					if($editId == null){
+						$resources = [
+							"package_id" => $id_dataset,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->name,
+							"format"=>$res->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						$resources = [
+							//"package_id" => $id_dataset,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->name,
+							"format" => $res->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
                 }  
 			}  
 			if($add_tres){
@@ -2229,6 +2534,7 @@ class DataSet{
             
 			$csv1='';
 			$csv2='';
+			$old_resources = json_decode(json_encode($datasetUpt->resources), true);
     
 			foreach($jdd1->resources as &$value){
 				if($value->format=="CSV" || $value->format=="csv"){
@@ -2237,14 +2543,38 @@ class DataSet{
 					
 				}
 				else{
-					 $resources = [ "package_id" => $idNewData,
-									"url" => $value->url,
-									"description" => $value->description,
-									"name" =>$value->name,
-								];
-
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					$editId = null;
+					foreach($old_resources as $oldRes){
+						if($oldRes["name"] == $value->name && strtolower($oldRes["format"]) == strtolower($value->format)){
+							$editId = $oldRes["id"];
+							break;
+						}
+					}
+					
+					if($editId == null){
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $value->url,
+							"description" => $value->description,
+							"name" =>$value->name,
+							"format"=>$value->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						$resources = [
+							//"package_id" => $idNewData,
+							"id" => $editId,
+							"url" => $value->url,
+							"description" => $value->description,
+							"name" => $value->name,
+							"format" => $value->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
 				}
 			}
     
@@ -2253,29 +2583,81 @@ class DataSet{
 					$csv2=$value->url;   
 				}
 				else{
-					$resources = [ "package_id" => $idNewData,
-									"url" => $value->url,
-									"description" => $value->description,
-									"name" =>$value->name,
-								];
-
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					$editId = null;
+					foreach($old_resources as $oldRes){
+						if($oldRes["name"] == $value->name && strtolower($oldRes["format"]) == strtolower($value->format)){
+							$editId = $oldRes["id"];
+							break;
+						}
+					}
+					
+					if($editId == null){
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $value->url,
+							"description" => $value->description,
+							"name" =>$value->name,
+							"format"=>$value->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						$resources = [
+							//"package_id" => $idNewData,
+							"id" => $editId,
+							"url" => $value->url,
+							"description" => $value->description,
+							"name" => $value->name,
+							"format" => $value->format,
+							//"clear_upload" => true
+						];
+						
+						$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+					}
 				}
 			}
+			
+			
     
 			if($csv1!='' && $csv2!=''){
-				$urlFileNew = DataSet::join2csv($csv1, $csv2, $jdd1->name.'_'.$jdd2->name, $columns_data, $columns_data2);
+				$resName = $jdd1->name.'_'.$jdd2->name;
+				$urlFileNew = DataSet::join2csv($csv1, $csv2, $resName, $columns_data, $columns_data2);
 				//drupal_set_message('<pre>'. print_r($idNewData, true) .'</pre>'); 
 				
-				$resources = [ "package_id" => $idNewData,
-									"url" => $urlFileNew,
-									"description" =>'',
-									"name" =>$jdd1->name.'_'.$jdd2->name,
-								];
-
-				$callUrluptres = $ckan . "/api/action/resource_create";
-				$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == $resName && strtolower($oldRes["format"]) == "csv"){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
+				
+				if($editId == null){
+					$resources = [
+						"package_id" => $idNewData,
+						"url" => $urlFileNew,
+						"description" => '',
+						"name" =>$resName,
+						"format"=>"csv"
+					];
+					$callUrluptres = $ckan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+				} else {
+					$resources = [
+						//"package_id" => $idNewData,
+						"id" => $editId,
+						"url" => $urlFileNew,
+						"description" => '',
+						"name" => $resName,
+						"format" => "csv",
+						"clear_upload" => true
+					];
+					
+					/*$callUrluptres = $ckan . "/api/action/resource_update";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+					$return = $api->updateResourceAndPushDatastore($resources);
+				}
 			}   
 			sleep(20);
 			$api->calculateVisualisations($idNewData);
@@ -2334,8 +2716,18 @@ class DataSet{
 			$fileName = str_replace('-', '_', $result2->name);
 			//error_log($supportedQueryFormats);
 			$add_tres = false;
+			$old_resources = $result2->resources;
 			if(strpos($supportedQueryFormats, "geoJSON") !== false){
 				$add_tres = true;
+				
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == ($fileName.".csv") && strtolower($oldRes["format"]) == "csv"){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
+				
 				$root='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.geojson';
 				$url = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.geojson';
 				 
@@ -2457,22 +2849,38 @@ class DataSet{
 				
 				$data_csv[] = strtolower(implode($cols, ";"));
 				$data_csv = array_merge($data_csv, $rows);
-				
+				$resname = $fileName . "_" . uniqid();
 				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.csv';
 				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.csv';
 				
 				file_put_contents($rootCsv, implode($data_csv, "\n"));
+		
 				
-				$resources = [     
-					"package_id" => $idNewData,
-					"url" => $urlCsv,
-					"description" => '',
-					"name" =>$fileName.".csv",
-					"format"=>'csv'
-				];
-				
-				$callUrluptres = $ckan . "/api/action/resource_create";
-				$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				if($editId == null){
+					$resources = [
+						"package_id" => $idNewData,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" =>$fileName.".csv",
+						"format"=>'csv'
+					];
+					$callUrluptres = $ckan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+				} else {
+					$resources = [
+						//"package_id" => $idNewData,
+						"id" => $editId,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" => $fileName.".csv",
+						"format" => 'csv',
+						"clear_upload" => true
+					];
+					
+					/*$callUrluptres = $ckan . "/api/action/resource_update";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+					$return = $api->updateResourceAndPushDatastore($resources);
+				}
 				$return = json_decode($return, true);
 				
 				$pathUserClient = '/home/user-client';
@@ -2490,6 +2898,14 @@ class DataSet{
 				error_log($output);
 			} else {
 				
+				$editId = null;
+				foreach($old_resources as $oldRes){
+					if($oldRes["name"] == ($fileName.".json") && strtolower($oldRes["format"]) == "json"){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
+				
 				$root='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.json';
 				$url = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.json';
 				
@@ -2498,16 +2914,31 @@ class DataSet{
 				
 				file_put_contents($root, $arr);
 
-				$resources = [     
-					"package_id" => $idNewData,
-					"url" => $url,
-					"description" => '',
-					"name" =>$fileName.".json",
-					"format"=>'json'
-				];
-
-				$callUrluptres = $ckan . "/api/action/resource_create";
-				$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				
+				if($editId == null){
+					$resources = [
+						"package_id" => $idNewData,
+						"url" => $url,
+						"description" => '',
+						"name" =>$fileName.".json",
+						"format"=>'json'
+					];
+					$callUrluptres = $ckan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+				} else {
+					$resources = [
+						//"package_id" => $idNewData,
+						"id" => $editId,
+						"url" => $url,
+						"description" => '',
+						"name" => $fileName.".json",
+						"format" => 'json',
+						//"clear_upload" => true
+					];
+					
+					$callUrluptres = $ckan . "/api/action/resource_update";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				}
 			}
 			if($add_tres){
 				sleep(20);
@@ -2521,7 +2952,7 @@ class DataSet{
     
     function nettoyage( $str, $charset='utf-8' ) {
           
-		$str = utf8_decode($str);
+		//$str = utf8_decode($str);
 			 
 		$str = str_replace("?", "", $str);   
 		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
@@ -2575,7 +3006,7 @@ class DataSet{
 			$url_res = 'https://'.$host.'/sites/default/files/dataset/';
 		} 
          
-        $url_res = $url_res.$nameFile.'.csv';       
+        $url_res = $url_res.$nameFile. "_" . uniqid().'.csv';       
     
         $fh = fopen($url1, 'r');
         $fhg = fopen($url2, 'r');

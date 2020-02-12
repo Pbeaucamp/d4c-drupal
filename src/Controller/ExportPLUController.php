@@ -69,6 +69,10 @@ class ExportPLUController extends ControllerBase {
         <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
             var mod = angular.module("d4c.core.config", []);
+			
+			mod.factory("domainConfig", [function() {
+                return {};
+            }]);
 
             mod.factory("config", [function() {
                 return {

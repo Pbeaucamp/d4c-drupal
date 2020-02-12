@@ -1619,31 +1619,11 @@ function openModalFilter(elem){
     //angular.module('d4c.frontend', ['d4c', 'd4c-widgets']);
 	//angular.module('d4c-widgets', ['d4c', 'd4c-widgets']);
 	//angular.bootstrap(document.getElementById("app"), ['d4c-widgets']);
-	var app = angular.module('d4c.core.config', []);
+	var mod = angular.module('d4c.core.config', []);
 
-            
-	app.factory("domainConfig", [function() {
-		return {"languages": ["fr"], "explore.reuse": null, "explore.dataset_catalog_separate_languages": null, "explore.disable_analyze": null, "explore.enable_api_tab": false};
-	}]);
-	
-
-	app.factory("config", [function() {
+	mod.factory("config", [function() {
 		return {
-			DATASET_ID: '',
-			LANGUAGE: 'fr',
-			AVAILABLE_LANGUAGES: ["fr"],
-			USER: null,
-			DOMAIN_ID: "",
-			FEEDBACK: true,
-			RECORDS_COUNTER_ENABLED: true,
-			DOWNLOAD_COUNTER_ENABLED: false,
-			RESOURCE_DOWNLOAD_CONDITIONS: false,
-			PARENT_DOMAIN: false,
-			PAGES_SECURITY_ENABLED: false,
-			
-			MINUTE_LEVEL_SCHEDULING: false,
-		
-			FORCE_DEBUG_LOGGER: false
+			HOST: ""
 		}
 	}]);
         

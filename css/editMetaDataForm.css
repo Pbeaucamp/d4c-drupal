@@ -1,0 +1,7 @@
+.resource-row.edit .label, .resource-row.noedit .edit{
+	display: none;
+} 
+
+.resource-row.noedit .label, .resource-row.edit .edit{
+	display: inline-block;
+}

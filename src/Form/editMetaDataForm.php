@@ -408,6 +408,7 @@ class editMetaDataForm extends HelpFormBase
                 $this->t('Titre'),
                 $this->t('Description'),
                 $this->t('Données'),
+                $this->t('Mettre à jour'),
                 $this->t('Supprimer'),
             ),
             
@@ -416,7 +417,7 @@ class editMetaDataForm extends HelpFormBase
 
         );
 
-        for ($i = 1; $i <= 1; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
 //titre
             $form['table'][$i]['name'] = array(
                 '#type' => 'textfield',
@@ -432,23 +433,39 @@ class editMetaDataForm extends HelpFormBase
             );
 
 
-            $form['table'][$i]['donnees']['2'] = array(
+            $form['table'][$i]['donnees'] = array(
                 '#type' => 'textarea',
                 '#attributes' => array('style' => 'height: 2em;width: 19em;'),
             );
+			
+			$form['table'][$i]['file'] = array(
+				'#type' => 'managed_file',
+				'#upload_location' => 'public://dataset/',
+				'#upload_validators' => array(
+					'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson'),
+				),
+				'#size' => 1,
+            );
+			
+			$form['table'][$i]['editer'] = array(
+                '#type' => 'textfield',
+                '#maxlength' => null,
+                '#attributes' => array('style' => 'display: none;'),
+
+            );
 
 // supprimer
-            $form['table'][$i]['supprimer'][1] = array(
+            $form['table'][$i]['status'][1] = array(
                 '#type' => 'checkbox',
                 '#maxlength' => null,
 
             );
-            $form['table'][$i]['supprimer'][2] = array(
+            $form['table'][$i]['status'][2] = array(
                 '#type' => 'checkbox',
                 '#maxlength' => null,
 
             );
-            $form['table'][$i]['supprimer'][3] = array(
+            $form['table'][$i]['status'][3] = array(
                 '#type' => 'textfield',
                 '#maxlength' => null,
                 '#attributes' => array('style' => 'display: none;'),
@@ -638,8 +655,6 @@ class editMetaDataForm extends HelpFormBase
         $dataSet = json_decode($dataSet, true);
         $dataSet = $dataSet[result][results];
 
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-        $this->urlCkan = $this->config->ckan->url;
         $callUrl = $this->urlCkan . "/api/action/package_update";
         
         $title = $form_state->getValue('title');
@@ -1227,6 +1242,7 @@ class editMetaDataForm extends HelpFormBase
 							$writer->save($csvpath);
 							break;
 						}
+						$has_csv = true;
 					}
             
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
@@ -1248,6 +1264,7 @@ class editMetaDataForm extends HelpFormBase
 						// write back to file
 						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
 						file_put_contents($root.''.$filepath, implode($arr));
+						$has_csv = true;
 					}
             
 					$resources = [    "package_id" => $idNewData,
@@ -1334,6 +1351,7 @@ class editMetaDataForm extends HelpFormBase
 							$writer->save($csvpath);
 							break;
 						}
+						
 					}
             
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
@@ -1355,6 +1373,7 @@ class editMetaDataForm extends HelpFormBase
 						// write back to file
 						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
 						file_put_contents($root.''.$filepath, implode($arr));
+						
 					}
             
 					$resources = [     
@@ -1369,13 +1388,15 @@ class editMetaDataForm extends HelpFormBase
 					$return = json_decode($return, true);                
 					sleep(20);
 				}
-            
+				$has_csv = false;
+				
 				for ($i = 1; $i <= count($table_data); $i++) {
 					// del res
-					if ($table_data[$i][supprimer][1] == 1) {
+					//error_log(json_encode($table_data[$i]));
+					if ($table_data[$i][status][1] == 1) {
 
 						$delRes = [
-							"id" => $table_data[$i][supprimer][3],
+							"id" => $table_data[$i][status][3],
 							"force" => "True",
 						];
 
@@ -1384,66 +1405,126 @@ class editMetaDataForm extends HelpFormBase
 
 						
 					} 
-                
-					/*else {
-				   
-						if ($table_data[$i][supprimer][2] == 1) {
-							error_log("update ".$table_data[$i]['name']);
-							$resources = [
-								"id" => $table_data[$i][supprimer][3],
-								//"url" => $table_data[$i][donnees][2],
-								"description" => $table_data[$i]['description'],
-								"name" => $table_data[$i]['name'],
 					
+					else if ($table_data[$i][status][2] == 1) {
+				   
+						error_log("update ".$table_data[$i]['name']);
+						
+						$url = "";
+						$url = $table_data[$i][donnees];
+						if($url != ""){
+							$fileName = parse_url($url);
+							$host=$fileName[host];
+							$fileName = $fileName[path];
+							$filepath = $fileName;
+							
+							$fileName= strtolower($fileName);
+							$fileName =urldecode($fileName);
+							$fileName = $this->nettoyage2($fileName);
+							
+								
+							$fileName =explode("/", $fileName);
+							$fileName = $fileName[(count($fileName)-1)];
+							//$table_data[$i][status][3] = $fileName;
+							
+							$url_res = $url;
+							$url_res = str_replace('http:', 'https:', $url_res);
+								
+							$filepathN = strtolower($filepath);
+							$filepathN =urldecode($filepathN);
+							$filepathN = $this->nettoyage2($filepathN);
+
+							rename($root.''.urldecode($filepath), $root.''.$filepathN);
+							$filepath=$filepathN;
+							
+							$url_res = 'https://'.$host.''.$filepath;
+						
+							if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
+								
+								$xls_file = $root.''.$filepath;
+							
+								$reader = new Xlsx();
+							
+								if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
+									$reader = new Xls();
+								}
+						
+								$spreadsheet = $reader->load($xls_file);
+
+								$loadedSheetNames = $spreadsheet->getSheetNames();
+
+								$writer = new Csv($spreadsheet);
+
+								foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
+									$writer->setSheetIndex($sheetIndex);
+									
+									$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
+									$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
+									$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
+									$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+									$writer->save($csvpath);
+									break;
+								}
+								$has_csv = true;
+							}
+					
+							if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+						  
+								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
+						  
+								// read into array
+								//$arr = file('/home/user-client/drupal-d4c'.$filepath);
+								$arr = file($root.''.$filepath);
+								//$label = utf8_decode($arr[0]);
+								$label = $arr[0];
+								$label = str_replace(" ", "_", $label);
+								$label = $this->nettoyage($label);
+								$label = strtolower($label);
+								$label = str_replace("?", "", $label);
+						
+								// edit first line
+								$arr[0] = $label;
+						
+								// write back to file
+								//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
+								file_put_contents($root.''.$filepath, implode($arr));
+								$has_csv = true;
+							}
+					
+							/*$resources = [     
+								"package_id" => $data_id,
+								"url" => $url_res,
+								"description" => '',
+								"name" =>$fileName,
 							];
 
-							if (substr($table_data[$i][donnees][2], -3) == 'csv') {
-
-								
-								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=' . $table_data[$i][donnees][2]);
-
-							}
-
-							$callUrluptres = $this->urlCkan . "/api/action/resource_update";
+							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");
+							$return = json_decode($return, true);                
+							sleep(20);
+							*/
 							
-
-						} 
-						
-						else {
-							// add new resources in old data
-							error_log("else  ".$table_data[$i]['name']);
-							if(count($table_data)!=1){
-
-							$url_t = '';
-						  
-
-							if ($url_t == '') {
-								$url_t = $table_data[$i][donnees]['2'];
-							}
-
-							if (substr($table_data[$i][donnees][2], -3) == 'csv') {
-
-								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=' . $table_data[$i][donnees][2]);
-
-								}
-
-								$resources = [
-									"package_id" => $data_id,
-									"url" => $url_t,
-									"description" => $table_data[$i]['description'],
-									"name" => $table_data[$i]['name'],
-								];
-
-								$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-								$return = $api->updateRequest($callUrluptres, $resources, "POST");
-								$return = json_decode($return, true);
-								//sleep(20);
-							}
+							$resources = [
+								//"package_id" => $data_id,
+								"id" => $table_data[$i][status][3],
+								"url" => $url_res,
+								//"upload" => curl_file_create($url_res),
+								"description" => $table_data[$i]['description'],
+								"name" => $table_data[$i]['name'],
+								"format" => strtoupper(explode(".", $fileName)[1]),
+								"clear_upload" => true
+							];
+							//error_log(json_encode($resources));
+							/*$callUrluptres = $this->urlCkan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
 						}
-					}*/
+					}
 				}
-				
+				if($has_csv == TRUE){
+					sleep(20);
+					
+				}
 				$api->calculateVisualisations($data_id);
 			}
 			
@@ -1701,7 +1782,7 @@ class editMetaDataForm extends HelpFormBase
 		$str = utf8_decode($str);
 		// $str = htmlentities( $str, ENT_NOQUOTES, $charset );
 		
-		$str = utf8_decode($str);
+		//$str = utf8_decode($str);
 			 
 		   
 		$str = str_replace("?", "", $str);   
@@ -1741,8 +1822,6 @@ class editMetaDataForm extends HelpFormBase
     public function datasetCallback(array &$form, FormStateInterface $form_state){
 		//drupal_set_message('<pre>'. print_r($_SESSION, true) .'</pre>'); 
     
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-        $this->urlCkan = $this->config->ckan->url;
         $api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');
