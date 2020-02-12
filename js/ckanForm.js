@@ -73,9 +73,9 @@ function select(data) {
                           
                             
                     
-                    if(parseInt(Date.parse(Date()))/ 1000>date){
+                    if(parseInt(Date.parse(dateLastUp))/ 1000>date){
                         
-                       date = (parseInt(Date.parse(Date()) / 1000) + date )*1000; 
+                       date = (parseInt(Date.parse(dateLastUp) / 1000) + date )*1000; 
                         
                     }
                     else{
