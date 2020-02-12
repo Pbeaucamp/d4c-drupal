@@ -71,3 +71,80 @@ function createElementHtml(object) {
 	return html;
 }
 
+function changeSelection(length) {
+	var dimensions = '';
+	var measures = '';
+	for(let i =1; i<length; i++) {
+		var colname = $('#colname' + i).val();
+		var type = $('#coltype' + i + ' option:selected').text();
+		var parentc = $('#colparent' + i + ' option:selected').text();
+		if(type == 'Mesure') {
+			measures += colname + ';';
+		}
+		if(type == 'Dimension') {
+			if(parentc == 'Aucun') {
+				dimensions += colname + ';';
+			}
+		}
+	}
+	for(let i =1; i<length; i++) {
+		var colname = $('#colname' + i).val();
+		var type = $('#coltype' + i + ' option:selected').text();
+		var parentc = $('#colparent' + i + ' option:selected').text();
+		if(type == 'Dimension') {
+			if(parentc != 'Aucun') {
+				dimensions = dimensions.replace(parentc, parentc + ',' + colname);
+			}
+		}
+	}
+	
+	document.getElementById('dimensions').value = dimensions;
+	document.getElementById('measures').value = measures;
+}
+
+function fillTable(data) {
+	$('#edit-table tbody').remove();
+	var fieldOptions = '<option>Aucun</option>';
+	for(let i =1; i<data.length; i++) {
+		fieldOptions += '<option>' + data[i].label + '</option>';
+	}
+	var typeOptions = '<option>Aucun</option><option>Dimension</option><option>Mesure</option>';
+	
+	var tableHtml = '';
+	
+	for(let i =1; i<data.length; i++) {
+		tableHtml += '<tr>';
+		var label = '<td><input id="colname' + i + '" type="text" value="'+data[i].label+'" size="15" maxlength="128" class="form-text"></td>';
+		var type = '<td><select id="coltype' + i + '" onchange="changeSelection(' + data.length + ');">' + typeOptions + '</select></td>';
+		var parentCol = '<td><select id="colparent' + i + '" onchange="changeSelection(' + data.length + ');">' + fieldOptions + '</select></td>';
+		tableHtml += label + type + parentCol;
+		tableHtml += '</tr>';
+	}
+	
+	 $('#edit-table').append('<tbody>' + tableHtml + '</tbody>');
+}
+
+function loadFields(urlCkan) {
+  let datasetId = $("#edit-selected-dataset").val();
+  if (datasetId != "" && datasetId != "----") {
+    $.ajax("/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
+      {
+        type: "POST",
+        dataType: "json",
+        cache: true,
+        success: function (result) {
+          let data = extractFields(result);
+          fillTable(data);
+        },
+        error: function (e) {
+          console.log("ERROR: ", e);
+        }
+      }
+    );
+  }
+}
+
+function extractFields(data) {
+  data = data.fields;
+  return data;
+}

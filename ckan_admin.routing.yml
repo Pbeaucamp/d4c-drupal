@@ -646,7 +646,15 @@ ckan_admin.VanillaForm:
    _form: 'Drupal\ckan_admin\Form\VanillaForm'
  requirements:
    _permission: 'access content'
-    
+
+ckan_admin.CubeForm:
+ path: '/admin/config/data4citizen/CubeForm'
+ defaults:
+   _title: 'Cube'
+   _form: 'Drupal\ckan_admin\Form\CubeForm'
+ requirements:
+   _permission: 'access content'
+
 ckan_admin.callSearchArcgis:
   path: '/api/datasets/2.0/callSearchArcGIS/{params}'
   defaults:

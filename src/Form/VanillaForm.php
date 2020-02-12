@@ -117,6 +117,16 @@ class VanillaForm extends HelpFormBase {
 		  '#markup' => '</div>',
 		);   
 		
+		$form['itemName'] = array(
+            '#type' => 'textfield',
+			'#title' => $this->t('Nom du métadata :'),
+			'#attributes' => [
+				'placeholder' => 'D4CMetadata',
+				'id' => 'txtitemname'
+			],
+			'#default_value' => 'D4CMetadata',
+        );
+		
 		$form['m2'] = array(
 			'#markup' => '<div id="datasetTab">',
 		); 
@@ -190,6 +200,8 @@ class VanillaForm extends HelpFormBase {
 			}
 		}
 		
+		$itemName = $form_state->getValue('itemName');
+		
 		$itemId = $form_state->getValue('itemid');
 		$idparts= explode(':', $itemId);
 		$type = $idparts[0];
@@ -205,7 +217,7 @@ class VanillaForm extends HelpFormBase {
 		$cle = $this->config->ckan->api_key;
 		$connection = Database::getConnectionInfo('default');
 		//drupal_set_message(print_r($connection,true));
-		drupal_set_message("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
-		exec("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
+		drupal_set_message("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -n \"" . $itemName . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
+		exec("cd /home/user-client && java -cp d4cmetadata.jar bpm.metadata.tools.TestD4cMetadata -u \"" . $urlCkan . "\" -k \"" . $cle . "\" -o \"infogreffe\" -j \"jdbc:postgresql://" . $connection['default']['host'] . ":" . $connection['default']['port'] . "/" . str_replace('drupal_d4c', 'datastore', $connection['default']['database']) . "\" -l \"" . $connection['default']['username'] . "\" -p \"" . $connection['default']['password'] . "\" -n \"" . $itemName . "\" -d " . $id . " -up " . $up . " -ds \"" . $string_dataset_lies . "\" > logs.txt");
 	}
 }
