@@ -1306,9 +1306,9 @@ class editMetaDataForm extends HelpFormBase
 					$url_res = $file->url();
 					$url_res = str_replace('http:', 'https:', $url_res);
 						
-					$filepathN = strtolower($filepath);
-					$filepathN =urldecode($filepathN);
-					$filepathN = $this->nettoyage2($filepathN);
+					//$filepathN = strtolower($filepath);
+					$filepathN =urldecode($filepath);
+					$filepathN = $this->nettoyagePath($filepathN);
 
 					rename($root.''.urldecode($filepath), $root.''.$filepathN);
 
@@ -1430,9 +1430,9 @@ class editMetaDataForm extends HelpFormBase
 							$url_res = $url;
 							$url_res = str_replace('http:', 'https:', $url_res);
 								
-							$filepathN = strtolower($filepath);
-							$filepathN =urldecode($filepathN);
-							$filepathN = $this->nettoyage2($filepathN);
+							//$filepathN = strtolower($filepath);
+        					$filepathN =urldecode($filepath);
+        					$filepathN = $this->nettoyagePath($filepathN);
 
 							rename($root.''.urldecode($filepath), $root.''.$filepathN);
 							$filepath=$filepathN;
@@ -1815,6 +1815,38 @@ class editMetaDataForm extends HelpFormBase
 		
 			
 			
+		$str = str_replace("-", "_", $str);    
+		return $str;
+	}
+	
+	function nettoyagePath($str) {
+		$str = str_replace("?", "", $str);   
+		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
+		$str = str_replace("`", "_", $str);
+		$str = str_replace("'", "_", $str);
+		$str = str_replace("-", "_", $str);
+		$str = str_replace(" ", "_", $str);
+		$str = str_replace("%", "1", $str);
+		$str = str_replace("(", "1", $str);
+		$str = str_replace(")", "1", $str);
+		$str = str_replace("*", "1", $str);
+		$str = str_replace("!", "1", $str);
+		$str = str_replace("@", "1", $str);
+		$str = str_replace("#", "1", $str);
+		$str = str_replace("$", "1", $str);
+		$str = str_replace("^", "1", $str);
+		$str = str_replace("&", "1", $str);
+		$str = str_replace("+", "1", $str);
+		$str = str_replace(":", "1", $str);
+		$str = str_replace(">", "1", $str);
+		$str = str_replace("<", "1", $str);
+	//    $str = str_replace('\'', "_", $str);
+	//    $str = str_replace("/", "_", $str);
+		$str = str_replace("|", "_", $str);
+		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
+		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
+		$str = preg_replace( '#&[^;]+;#', '', $str );      
+		
 		$str = str_replace("-", "_", $str);    
 		return $str;
 	}
