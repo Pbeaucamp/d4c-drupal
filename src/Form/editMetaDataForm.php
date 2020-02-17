@@ -1782,7 +1782,7 @@ class editMetaDataForm extends HelpFormBase
 		$str = utf8_decode($str);
 		// $str = htmlentities( $str, ENT_NOQUOTES, $charset );
 		
-		//$str = utf8_decode($str);
+		$str = utf8_decode($str);
 			 
 		   
 		$str = str_replace("?", "", $str);   
