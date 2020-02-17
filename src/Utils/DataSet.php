@@ -450,7 +450,7 @@ class DataSet{
 	static function correctName($chaine)
 	{
 		$chaine = strtolower($chaine);
-		$accents = Array("/é/", "/è/", "/ê/","/ë/", "/ç/", "/à/", "/â/","/á/","/ä/","/ã/","/å/", "/î/", "/ï/", "/í/", "/ì/", "/ù/", "/ô/", "/ò/", "/ó/", "/ö/");
+		$accents = Array("/Ã©/", "/Ã¨/", "/Ãª/","/Ã«/", "/Ã§/", "/Ã /", "/Ã¢/","/Ã¡/","/Ã¤/","/Ã£/","/Ã¥/", "/Ã®/", "/Ã¯/", "/Ã­/", "/Ã¬/", "/Ã¹/", "/Ã´/", "/Ã²/", "/Ã³/", "/Ã¶/");
 		$sans = Array("e", "e", "e", "e", "c", "a", "a","a", "a","a", "a", "i", "i", "i", "i", "u", "o", "o", "o", "o");
 		$chaine = preg_replace($accents, $sans,$chaine);
 		$chaine = preg_replace('#[^A-Za-z0-9]#','-',$chaine);
@@ -1026,10 +1026,10 @@ class DataSet{
                 $binaryData->notes = $results->notes;
                 $binaryData->title = $results->title;
                 $binaryData->tags = $results->tags;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = json_decode(DataSet::mixExtras(json_encode($extras2), json_encode($extras)));
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 
 			$old_resources = $result2[resources];
@@ -1218,10 +1218,10 @@ class DataSet{
                 $binaryData->notes = $results->notes;
                 $binaryData->title = $results->title;
                 $binaryData->tags = $results->tags;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = json_decode(DataSet::mixExtras(json_encode($extras2), json_encode($extras)));
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
             
 			$old_resources = $result2[resources];
@@ -1663,7 +1663,7 @@ class DataSet{
 			if($add_tres){
 				sleep(20);
 			} else if($add_tres == FALSE && count($geo_res) > 0){
-				// on créé un csv
+				// on crÃ©Ã© un csv
 				$name = $label;
 				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
 				$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
@@ -1826,10 +1826,10 @@ class DataSet{
                 $binaryData->notes = $results->description;
                 $binaryData->title = $results->title;
                 $binaryData->tags = $tagsData;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = $extras;
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 			
 			$idNewData=$id_dataset;
@@ -1969,10 +1969,10 @@ class DataSet{
                 $binaryData->notes = $results->description;
                 $binaryData->title = $results->title;
                 $binaryData->tags = $tagsData;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = $extras;
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 
 			$idNewData=$id_dataset;
@@ -2058,7 +2058,7 @@ class DataSet{
 				$tags = $results->tags;
 				for ($j = 0; $j < count($tags); $j++) {
 					if($tags[$j]!=''){
-						$val = $this->nettoyage($tags[$j]);
+						$val = DataSet::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
 					}
 				} 
@@ -2104,10 +2104,10 @@ class DataSet{
                 $binaryData->notes = $results->description;
                 $binaryData->title = $results->name;
                 $binaryData->tags = $tagsData;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = json_decode(json_encode($extras));
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 		
     
@@ -2233,10 +2233,10 @@ class DataSet{
                 $binaryData->notes = $results->notes;
                 $binaryData->title = $results->title;
                 $binaryData->tags = $results->tags;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = json_decode(json_encode($extras));
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
     
 			$add_tres = false;
@@ -2507,10 +2507,10 @@ class DataSet{
 			
            // if($result2){
 				$binaryData = $datasetUpt;
-                $binaryData->resources = [];
+                //$binaryData->resources = [];
                 $binaryData->extras = json_decode(json_encode($extras));
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
            // }
 			
             $columns_data=$site_search[2];
@@ -2706,10 +2706,10 @@ class DataSet{
                 $binaryData->notes = $results->description;
                 $binaryData->relationships = $results->relationships;
                 $binaryData->tags = $tagsData;
-                $binaryData->resources = array();
+                //$binaryData->resources = array();
                 $binaryData->extras = $extras;
 				
-				$query = Query::putSolrRequest($ckan . '/api/action/package_update', $binaryData, 'POST');
+				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 			
 			
