@@ -215,7 +215,7 @@ class Export{
 		array_unshift($rows, $data_csv);
 		
 		//$res = utf8_encode(implode($data_csv, "\n"));
-		$res = implode($data_csv, "\n");
+		$res = implode($rows, "\n");
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
 		//$res = Export::convert_bad_characters($res);
