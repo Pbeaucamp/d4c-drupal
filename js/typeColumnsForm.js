@@ -64,7 +64,8 @@ function getTableById(){
 				cache : true,
 				success: function (result) {
 					if(result.success){
-
+					    
+						uncheckAllHeader();
 						addDataInTable(result);
 						//var names = result.result.fields.map(function(c){ return c.id;});
 						//$("#tooltip-standard").attr("data-cols", names.join(','));
@@ -343,7 +344,9 @@ function loadTooltip(idDataset, dataFields){
 				
 				var sel = [];
 				if(edit && config.type == "standard"){
-					sel = config.value.fields.split(',');
+					if (config.value.fields) {
+						sel = config.value.fields.split(',');
+					}
 				}
 				var l1 = "";
 				var l2 = "";
@@ -520,10 +523,16 @@ function baba(){
 	}, 500);
 }
 
+function uncheckAllHeader() {
+	var headers = ['checkboxFacet','checkboxFacetM','checkboxTableau','checkboxTri','checkboxDatePonctuel','checkboxDateDebut','checkboxDateFin','checkboxImages','checkboxNuageDeMot','checkboxNuageDeMotNombre','checkboxDateEtHeure','checkboxLibelleFriseChrono','checkboxDescriptionFriseChrono','checkboxDateFriseChrono'];
+
+	for (let j = 0; j < headers.length; j++) {
+		document.getElementById(headers[j]).checked = false;
+	}
+}
+
 function checkAll(columnName, checkbox) {
 	var check = document.getElementById(checkbox).checked;
-
-	console.log(check);
 
 	if (!(typeof dataSize === 'undefined')) {
 		for(let j = 0; j < dataSize; j++) {
