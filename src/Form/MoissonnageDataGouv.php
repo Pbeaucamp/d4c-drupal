@@ -1979,6 +1979,15 @@ class MoissonnageDataGouv extends HelpFormBase {
 							// read into array
 							//$arr = file('/home/user-client/drupal-d4c'.$filepath);
 							$arr = file($res->url); //error_log($arr);
+							if($arr == false || $arr == ""){error_log("retentative..");
+								$arrContextOptions=array(
+									"ssl"=>array(
+										"verify_peer"=>false,
+										"verify_peer_name"=>false,
+									),
+								);
+								$arr = file($res->url, 0, stream_context_create($arrContextOptions));
+							}
 							$label = utf8_decode($arr[0]);
 							$label = $this->nettoyage($label);  
 					
