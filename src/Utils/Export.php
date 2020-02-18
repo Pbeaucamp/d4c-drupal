@@ -174,6 +174,7 @@ class Export{
 		$crs = $json["crs"]["properties"]["name"];
 		$test = '';
 		$rows = array();
+		$colsTypes = array();
 		foreach($json["features"] as $feat){
 			$row = array();
 			foreach($cols as $col){
@@ -192,10 +193,16 @@ class Export{
 					continue;
 				}	
 				else {
-					if(!Export::isNumericColumn($col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($col)){
 						$row[] = '"'.$feat["properties"][$col].'"';
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "text";
+						}
 					} else {
 						$row[] = $feat["properties"][$col];
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "float";
+						}
 					}
 				}
 			}
@@ -215,7 +222,7 @@ class Export{
 		array_unshift($rows, $data_csv);
 		
 		//$res = utf8_encode(implode($data_csv, "\n"));
-		$res = implode($data_csv, "\n");
+		$res = implode($rows, "\n");
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
 		//$res = Export::convert_bad_characters($res);
