@@ -422,7 +422,7 @@ function getDataset() {
 
     //$.getJSON('https://www.data.gouv.fr/api/1/organizations/?page_size=10000&q='+$('#edit-chercher').val(), function(result){
     $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q=' + $('#edit-chercher').val(), function (result) {
-
+		//console.log(result.data.length);
         if (result.data.length != 0) {
 
 
@@ -449,10 +449,8 @@ function getDataset() {
 
                     if (result.data[f].resources[g].format == 'CSV' || result.data[f].resources[g].format == 'XLS' || result.data[f].resources[g].format == 'XLSX' || result.data[f].resources[g].format == 'csv' || result.data[f].resources[g].format == 'xls' || result.data[f].resources[g].format == 'xlsx') {
                         res_valid = true;
-                        let format = result.data[f].resources[g].url.split('.');
-                            format = format[format.length-1];
                         
-                        if(format == 'CSV' || format == 'csv'){
+                        if(result.data[f].resources[g].format == 'CSV' || result.data[f].resources[g].format == 'csv'){
                             //console.log(result.data[f].resources[g]);
                             
                         let url_res=result.data[f].resources[g].url,
@@ -464,8 +462,12 @@ function getDataset() {
                             
                             
                             $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
-                             
+                              //console.log(result.data[f].resources[g].url);
+							  break;
                         }
+						else {
+							 //console.log(result.data[f].resources[g].url);
+						}
                         
 
                     }
@@ -481,7 +483,7 @@ function getDataset() {
 
                if(res_valid==false){
                    
-               
+              
 
                 $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a> </div>');
 }
@@ -530,7 +532,7 @@ function addDatasetCheckBox() {
 
         if (result.data.length != 0) {
 
-
+			console.log(result.data.length);
 
             result.data.sort(function (a, b) {
                 var textA = a.slug.toLowerCase(),
@@ -547,17 +549,16 @@ function addDatasetCheckBox() {
 
 
             for (let f = 0; f < result.data.length; f++) {
+				let added = false;
                 //console.log(result.data[f]);
                 let res_valid = false;
-
                 for (let g = 0; g < result.data[f].resources.length; g++) {
 
                     if (result.data[f].resources[g].format == 'CSV' || result.data[f].resources[g].format == 'XLS' || result.data[f].resources[g].format == 'XLSX' || result.data[f].resources[g].format == 'csv' || result.data[f].resources[g].format == 'xls' || result.data[f].resources[g].format == 'xlsx') {
-                        res_valid = true;
-                        let format = result.data[f].resources[g].url.split('.');
-                            format = format[format.length-1];
+                       
                         
-                        if(format == 'CSV' || format == 'csv'){
+                        if(result.data[f].resources[g].format == 'CSV' || result.data[f].resources[g].format == 'csv'){
+							 res_valid = true;
                             //console.log(result.data[f].resources[g]);
                             
                         let url_res=result.data[f].resources[g].url,
@@ -567,9 +568,9 @@ function addDatasetCheckBox() {
                             
                             
                             
-                            
+							added = true;
                             $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
-                             
+                             break;
                         }
                         
 
@@ -585,8 +586,7 @@ function addDatasetCheckBox() {
                 });
 
                if(res_valid==false){
-                   
-               
+                   added = true;
 
                 $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a> </div>');
 }
@@ -596,6 +596,9 @@ function addDatasetCheckBox() {
                     $('input[type="submit"]').attr('disabled', false);
                 }
 
+				if(!added) {
+					console.log(result.data[f].id);
+				}
             }
         } else {
             alert("Il n'y a aucun DataSet dans cette organisation.");

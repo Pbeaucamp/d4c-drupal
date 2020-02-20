@@ -348,7 +348,9 @@ class typeColumnsForm extends HelpFormBase {
 			'#type' => "textfield",
 			'#attributes' => [
 				'style' => 'display:none;'
-			]
+			],
+			'#validated' => TRUE,
+			'#maxlength' => 4096
 		);
 		
 		$form['tooltip']["html"] = array(
@@ -370,6 +372,15 @@ class typeColumnsForm extends HelpFormBase {
 			//'#default_value' => '<p>The quick brown fox jumped over the lazy dog.</p>',
 			'#prefix' => '<div class="row"><div class="col-md-4 col-xs-12">',
 			'#suffix' => '</div>',
+			'#value' => 'test'
+			// '#default_value' => '<h2 class="d4cwidget-map-tooltip__header" ng-show="!!getTitle(record)">\n'.
+			// '<span ng-bind="getTitle(record)">'.
+			// '</span>'.
+			// '</h2>'.
+			// '<ul style="display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;">'.
+			// '<li  ng-repeat="field in context.dataset.extra_metas.visualization.map_tooltip_fields">'.
+			// '<strong>{{field}}</strong> : {{record.fields[field]}}</li>'.
+			// '</ul>',
 		);
 		
 		$form['tooltip']["html"]["preview"] = array(

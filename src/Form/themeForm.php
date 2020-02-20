@@ -201,6 +201,12 @@ class themeForm extends HelpFormBase {
 			'#type' => 'submit',
 			'#value' => $this->t('Valider'),
 		);
+		
+		$form['delete'] = array(
+            '#type' => 'submit',
+            '#value' => $this->t('Supprimer'),
+			'#submit' => array('::deleteTheme'),
+        );
         
         //$directory = "sites/default/files/api/portail_d4c/img/set-v2/";
         //$images = glob($directory . "*.svg");
@@ -230,6 +236,45 @@ class themeForm extends HelpFormBase {
         );
 		
 		return $form;
+	}
+	
+	public function deleteTheme(array &$form, FormStateInterface $form_state){
+		$api = new Api;
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->urlCkan = $this->config->ckan->url;
+		
+		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
+		$t = $config->get('themes');
+        $themes = json_decode($t);
+		
+		$callUrl = $this->urlCkan . "/api/action/package_update";
+		
+		$selectThem = $form_state->getValue('selected');
+		$selectThem = explode("%", $selectThem);
+		$selectThemIndex = $selectThem[0];
+		if(intval($selectThemIndex) > 8){
+			$themeTitle = $themes[$selectThemIndex]->title;
+			$datasetsToUpdate = json_decode($api->datasetByTheme($themeTitle)->getContent());
+			for($i=0; $i< count($datasetsToUpdate) ; $i++){
+				
+				for($j=0; $j<count($datasetsToUpdate[$i]->extras) ; $j++ ){
+					if( $datasetsToUpdate[$i]->extras[$j]->key == "theme" ){
+						$datasetsToUpdate[$i]->extras[$j]->value = 'default';
+					}
+					if( $datasetsToUpdate[$i]->extras[$j]->key == "label_theme" ){
+						$datasetsToUpdate[$i]->extras[$j]->value = 'Default';
+					}
+				}
+				error_log(json_encode($datasetsToUpdate[$i]->extras));
+				$api->updateRequest($callUrl, $datasetsToUpdate[$i], "POST");
+			}
+			array_splice($themes, $selectThemIndex, 1);
+			$config->set('themes',json_encode($themes))->save(); 
+			drupal_set_message('Thême supprimé avec succès','status');
+		}
+		else {
+			drupal_set_message('Les thêmes par défaut ne peuvent pas être supprimés.','error');
+		}
 	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
