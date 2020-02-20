@@ -76,6 +76,8 @@ editMetaDataForm.form:
   css:
     theme:
       /sites/default/files/api/portail_d4c/css/visualisation.css: {}
+    base:
+      css/editMetaDataForm.css: {}
   dependencies:
     - core/jquery
     

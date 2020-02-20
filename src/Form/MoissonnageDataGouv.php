@@ -398,14 +398,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$filepathN = $res->url;
 						$filepathN = explode('/',$filepathN);
 						$filepathN = $filepathN[count($filepathN)-1];
-						$filepathN = explode('.',$filepathN)[0]; 
+						//$filepathN = explode('.',$filepathN)[0]; 
 						$filepathN =urldecode($filepathN);  
 						$filepathN = strtolower($filepathN);
                   
-                
+						$url_res = $res->url;
 						if($res->format == 'csv' || $res->format == 'CSV') {
 							  
-							$filepathN = explode(".",$filepathN)[0].'.csv';
+							//$filepathN = explode(".",$filepathN)[0].'.csv';
 							$url_res = $url_res.''.$filepathN;
 							
 							   // read into array
@@ -419,21 +419,21 @@ class MoissonnageDataGouv extends HelpFormBase {
 							
 							// write back to file
 							file_put_contents($root.''. $filepathN, implode($arr));
-							
+						}	
 							//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
 							
-							$resources = [
-								"package_id" => $idNewData,
-								"url" => $url_res,
-								"description" => $res->description,
-								"name" =>$res->name,
-								"format"=>$res->format
-							];
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->name,
+							"format"=>$res->format
+						];
 
-							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-							$return = $api->updateRequest($callUrluptres, $resources, "POST");
-							$this->renderResourceLog($resources["name"], $return);
-						}
+						$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");
+						$this->renderResourceLog($resources["name"], $return);
+						
 					}
 					else{
 						$url_res = $res->url;
@@ -606,11 +606,11 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$filepathN = $res->url;
 						$filepathN = explode('/',$filepathN);
 						$filepathN = $filepathN[count($filepathN)-1];
-						$filepathN = explode('.',$filepathN)[0]; 
+						//$filepathN = explode('.',$filepathN)[0]; 
 						$filepathN =urldecode($filepathN);  
 						$filepathN = strtolower($filepathN);
                   
-						if($res->format == 'csv' || $res->format == 'CSV') {
+						//if($res->format == 'csv' || $res->format == 'CSV') {
                   
 							/*$filepathN = explode(".",$filepathN)[0].'.csv';
 							$url_res = $url_res.''.$filepathN;
@@ -647,7 +647,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");
 							$this->renderResourceLog($resources["name"], $return);
-						}            
+						//}            
 					} else {
 						$url_res = $res->url;
 						//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
@@ -997,7 +997,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 							$resources = [   "package_id" => $idNewData,
 								"url" => $url_res,
 								"description" => $res->description,
-								"name" =>$title_f,
+								"name" =>$res->id,
 								"format"=>'csv'
 							];
 
@@ -1007,14 +1007,15 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 				
 						if($res->format == 'csv' || $res->format == 'CSV') {
-						  
+							//ini_set("auto_detect_line_endings", true);
 							$filepathN = explode(".",$filepathN)[0].'.csv';
 							$url_res = $url_res.''.$filepathN;
 						
 							// read into array
 							//$arr = file('/home/user-client/drupal-d4c'.$filepath);
 							$arr = file($res->url);
-							$label = utf8_decode($arr[0]);
+							//$label = utf8_decode($arr[0]);
+							$label = $arr[0];
 							$label = $this->nettoyage($label);  
 						
 							// edit first line
@@ -1030,7 +1031,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 								"package_id" => $idNewData,
 								"url" => $url_res,
 								"description" => $res->description,
-								"name" =>$res->title,
+								"name" =>$res->id,
 								"format"=>$res->format
 							];
 						
@@ -1049,7 +1050,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 							"package_id" => $idNewData,
 							"url" => $url_res,
 							"description" => $res->description,
-							"name" =>$res->title,
+							"name" =>$res->id,
 							"format"=>$res->format
 						];
 
@@ -1759,8 +1760,13 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$count_datas=count($dataForUpdateDatasets);
 				   
 				$value= explode("|", $value);
-				
-				$query = Query::callSolrServer($value[1]."/api/3/action/package_show?id=".$value[0]);
+				//error_log(json_encode($value));
+				//$query = Query::callSolrServer("https://".$value[1]."/api/3/action/package_show?id=".$value[0]);
+				$curl = curl_init('https://'.$value[1]."/api/3/action/package_show?id=".$value[0]);
+				$opt = $api->getSimpleGetOptions();                               
+				curl_setopt_array($curl, $opt);    
+				$query = curl_exec($curl);
+				curl_close($curl);
 					
 				$results = json_decode($query);
 				$results = $results->result;
@@ -1979,10 +1985,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 					  
 							$filepathN = explode(".",$filepathN)[0].'.csv';
 							$url_res = $url_res.''.$filepathN;
-					
+							error_log($res->url);
 							// read into array
 							//$arr = file('/home/user-client/drupal-d4c'.$filepath);
-							$arr = file($res->url);
+							$arr = file($res->url); //error_log($arr);
 							$label = utf8_decode($arr[0]);
 							$label = $this->nettoyage($label);  
 					
@@ -2486,7 +2492,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$replacements[7] = 'ss';
 		$str = preg_replace($patterns, $replacements, $str);
 			
-		$str = utf8_decode($str);
+		//$str = utf8_decode($str);
 				
 		$str = str_replace("?", "", $str);   
 		$str = str_replace("`", "_", $str);

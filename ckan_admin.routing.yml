@@ -801,3 +801,12 @@ ckan_admin.menu.chart.frame:
     _title: ''
   requirements:
     _permission: 'access content'
+    
+ckan_admin.records.api.orange:
+  path: '/webservice/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callOrangeApiGetData'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'

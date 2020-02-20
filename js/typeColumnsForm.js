@@ -44,11 +44,12 @@ function getTableById(){
 //$('#edit-table > tbody').val("");
     $('#edit-table tbody tr').remove();
     
-let param = $('#selected_data select').val();    
-$('#selected_data select').attr("data-drupal-selector", "edit-selected-data");
-$('#selected_data select').attr("id", "edit-selected-data");
-$('#selected_data select').attr("name", "selected_data");
-$('#selected_data select').attr("class", "form-select");
+	let param = $('#selected_data select').val();    
+	$('#selected_data select').attr("data-drupal-selector", "edit-selected-data");
+	$('#selected_data select').attr("id", "edit-selected-data");
+	$('#selected_data select').attr("name", "selected_data");
+	$('#selected_data select').attr("class", "form-select");
+	
     if(param != null){
 		param = param.split('%');
 		datasetId = param[0];   

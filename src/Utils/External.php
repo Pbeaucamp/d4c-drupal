@@ -542,12 +542,12 @@ class External {
 		
 		//write csv file
 		$fileName = 'req_'.$typeSource."_".$idDataset;
-		$rootCsv = DRUPAL_ROOT . '/sites/default/files/dataset/'.$fileName.'.csv';
+		$rootCsv = DRUPAL_ROOT . '/sites/default/files/dataset/'.$fileName. "_" . uniqid().'.csv';
 		//error_log($rootCsv);
 		file_put_contents($rootCsv, $result);
 		
 		$protocol = /*isset($_SERVER['HTTPS']) ? */'https://' /*: 'http://'*/;
-		$url = $protocol.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.csv';
+		$url = $protocol.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName. "_" . uniqid().'.csv';
 		//error_log($url);
 		$res = array();
 		$res["url"] = $url;

@@ -148,7 +148,10 @@ class Export{
 		}
 		
 		// If passed a string, turn it into an array
+
 		if (is_array($json) === false) {
+			//$json = utf8_encode($json);
+			//$json = Export::convert_bad_characters($json);
 			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 		}
 		if($json["type"] != "FeatureCollection"){
@@ -171,6 +174,7 @@ class Export{
 		$crs = $json["crs"]["properties"]["name"];
 		$test = '';
 		$rows = array();
+		$colsTypes = array();
 		foreach($json["features"] as $feat){
 			$row = array();
 			foreach($cols as $col){
@@ -189,10 +193,16 @@ class Export{
 					continue;
 				}	
 				else {
-					if(!Export::isNumericColumn($col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($col)){
 						$row[] = '"'.$feat["properties"][$col].'"';
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "text";
+						}
 					} else {
 						$row[] = $feat["properties"][$col];
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "float";
+						}
 					}
 				}
 			}
@@ -211,11 +221,12 @@ class Export{
 		//$data_csv = array_merge($data_csv, $rows);
 		array_unshift($rows, $data_csv);
 		
-		$res =implode($rows, "\n");
-		$res = iconv("UTF-8", "Windows-1252", $res);
-		//		$fp = fopen('testmoissonnage.txt', 'w');
-		//fwrite($fp, $res);
-		//fclose($fp);
+		//$res = utf8_encode(implode($data_csv, "\n"));
+		$res = implode($rows, "\n");
+		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
+		//$res = utf8_decode($res);
+		//$res = Export::convert_bad_characters($res);
+		$res = iconv("UTF-8", "Windows-1252//TRANSLIT", $res);
 		return $res;
 	}
 	
@@ -228,5 +239,131 @@ class Export{
 			} 
 		}
 		return true;
+	}
+	
+	static function convert_bad_characters($string){
+		$new2old = array(
+			 'á' => '/Ã¡/',
+			 
+			 'À' => '/Ã€/',
+			 'ä' => '/Ã¤/',
+			 'Ä' => '/Ã„/',
+			 'ã' => '/Ã£/',
+			 'å' => '/Ã¥/',
+			 'Å' => '/Ã…/',
+			 'æ' => '/Ã¦/',
+			 'Æ' => '/Ã†/',
+			 'ç' => '/Ã§/',
+			 'Ç' => '/Ã‡/',
+			 'é' => '/Ã©/',
+			 'É' => '/Ã‰/',
+			 'è' => '/Ã¨/',
+			 'È' => '/Ãˆ/',
+			 'ê' => '/Ãª/',
+			 'Ê' => '/ÃŠ/',
+			 'ë' => '/Ã«/',
+			 'Ë' => '/Ã‹/',
+			 'í' => '/Ã-­­/',
+			 'Í' => '/Ã/',
+			 'ì' => '/Ã¬/',
+			 'Ì' => '/ÃŒ/',
+			 'î' => '/Ã®/',
+			 'Î' => '/ÃŽ/',
+			 'ï' => '/Ã¯/',
+			 'Ï' => '/Ã/',
+			 'ñ' => '/Ã±/',
+			 'Ñ' => '/Ã‘/',
+			 'ó' => '/Ã³/',
+			 'Ó' => '/Ã“/',
+			 'ò' => '/Ã²/',
+			 'Ò' => '/Ã’/',
+			 'ô' => '/Ã´/',
+			 'Ô' => '/Ã”/',
+			 'ö' => '/Ã¶/',
+			 'Ö' => '/Ã–/',
+			 'õ' => '/Ãµ/',
+			 'Õ' => '/Ã•/',
+			 'ø' => '/Ã¸/',
+			 'Ø' => '/Ã˜/',
+			 'œ' => '/Å“/',
+			 'Œ' => '/Å’/',
+			 'ß' => '/ÃŸ/',
+			 'ú' => '/Ãº/',
+			 'Ú' => '/Ãš/',
+			 'ù' => '/Ã¹/',
+			 'Ù' => '/Ã™/',
+			 'û' => '/Ã»/',
+			 'Û' => '/Ã›/',
+			 'ü' => '/Ã¼/',
+			 'Ü' => '/Ãœ/',
+			 '€' => '/â‚¬/',
+			 '’' => '/â€™/',
+			 '‚' => '/â€š/',
+			 'ƒ' => '/Æ’/',
+			 '„' => '/â€ž/',
+			 '…' => '/â€¦/',
+			 '‡' => '/â€¡/',
+			 'ˆ' => '/Ë†/',
+			 '‰' => '/â€°/',
+			 'Š' => '/Å /',
+			 '‹' => '/â€¹/',
+			 'Ž' => '/Å½/',
+			 '‘' => '/â€˜/',
+			 '“' => '/â€œ/',
+			 '•' => '/â€¢/',
+			 '–' => '/â€“/',
+			 '—' => '/â€”/',
+			 '˜' => '/Ëœ/',
+			 '™' => '/â„¢/',
+			 'š' => '/Å¡/',
+			 '›' => '/â€º/',
+			 'ž' => '/Å¾/',
+			 'Ÿ' => '/Å¸/',
+			 '¡' => '/Â¡/',
+			 '¢' => '/Â¢/',
+			 '£' => '/Â£/',
+			 '¤' => '/Â¤/',
+			 '¥' => '/Â¥/',
+			 '¦' => '/Â¦/',
+			 '§' => '/Â§/',
+			 '¨' => '/Â¨/',
+			 '©' => '/Â©/',
+			 'ª' => '/Âª/',
+			 '«' => '/Â«/',
+			 '¬' => '/Â¬/',
+			 '®' => '/Â®/',
+			 '¯' => '/Â¯/',
+			 '°' => '/Â°/',
+			 '±' => '/Â±/',
+			 '²' => '/Â²/',
+			 '³' => '/Â³/',
+			 '´' => '/Â´/',
+			 'µ' => '/Âµ/',
+			 '¶' => '/Â¶/',
+			 '·' => '/Â·/',
+			 '¸' => '/Â¸/',
+			 '¹' => '/Â¹/',
+			 'º' => '/Âº/',
+			 '»' => '/Â»/',
+			 '¼' => '/Â¼/',
+			 '½' => '/Â½/',
+			 '¾' => '/Â¾/',
+			 '¿' => '/Â¿/',
+			 'à' => '/Ã /',
+			 '†' => '/â€ /',
+			 '”' => '/â€/',
+			 'Á' => '/Ã/',
+			 'â' => '/Ã¢/',
+			 'Â' => '/Ã‚/',
+			 'Ã' => '/Ãƒ/',
+			);
+			 
+			foreach( $new2old as $key => $value ) {
+			   $new[] = $key;
+			   $old[] = $value;
+			}
+			error_log("convert");
+			$string_new = str_replace( $old, $new, $string );
+			return $string_new;
 	}
 }
