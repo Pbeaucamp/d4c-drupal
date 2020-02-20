@@ -4,6 +4,7 @@ namespace Drupal\ckan_admin\Utils;
 
 
 ini_set('memory_limit', '2048M'); // or you could use 1G
+ini_set('max_execution_time', 2000);
 
 class Export{
 
@@ -143,16 +144,17 @@ class Export{
 	}
 	
 	static function createCSVfromGeoJSON($json) {
+		$start = microtime(true);
 		if($json == null || count($json) == 0){
 			return "";
 		}
 		
 		// If passed a string, turn it into an array
-
 		if (is_array($json) === false) {
 			//$json = utf8_encode($json);
 			//$json = Export::convert_bad_characters($json);
 			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
+			//$json = json_decode($json, true);
 		}
 		if($json["type"] != "FeatureCollection"){
 			return "";
@@ -174,6 +176,7 @@ class Export{
 		$crs = $json["crs"]["properties"]["name"];
 		$test = '';
 		$rows = array();
+		$colsTypes = array();
 		foreach($json["features"] as $feat){
 			$row = array();
 			foreach($cols as $col){
@@ -192,10 +195,16 @@ class Export{
 					continue;
 				}	
 				else {
-					if(!Export::isNumericColumn($col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($col)){
 						$row[] = '"'.$feat["properties"][$col].'"';
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "text";
+						}
 					} else {
 						$row[] = $feat["properties"][$col];
+						if(!isset($colsTypes[$col])){
+							$colsTypes[$col] = "float";
+						}
 					}
 				}
 			}
@@ -213,13 +222,13 @@ class Export{
 		$data_csv = strtolower(implode($cols, ";"));
 		//$data_csv = array_merge($data_csv, $rows);
 		array_unshift($rows, $data_csv);
-		
+		error_log("count ". (count($rows)));
 		//$res = utf8_encode(implode($data_csv, "\n"));
-		$res = implode($data_csv, "\n");
+		$res = implode($rows, "\n");
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
 		//$res = Export::convert_bad_characters($res);
-		$res = iconv("UTF-8", "Windows-1252", $res);
+		$res = iconv("UTF-8", "Windows-1252//TRANSLIT", $res);
 		return $res;
 	}
 	

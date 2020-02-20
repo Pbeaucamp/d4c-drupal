@@ -901,7 +901,7 @@ class editMetaDataForm extends HelpFormBase
 				#######################
 
 				$label = $title;
-				$label = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $label)));
+				/*$label = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $label)));
 				$label = str_replace(" ", "_", $label);
 				$label = str_replace("`", "_", $label);
 				$label = str_replace("'", "_", $label);
@@ -911,7 +911,8 @@ class editMetaDataForm extends HelpFormBase
 				$label = preg_replace('#\&([A-za-z])(?:acute|cedil|circ|grave|ring|tilde|uml)\;#', '\1', $label);
 				$label = preg_replace('#\&([A-za-z]{2})(?:lig)\;#', '\1', $label); // pour les ligatures e.g. '&oelig;'
 				$label = preg_replace('#\&[^;]+\;#', '', $label); // supprime les autres caractères
-				$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
+				$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);*/
+				$label = $this->nettoyage($title);
 				
 				$urlRes = $this->urlCkan ."/dataset/".$label;
 				
@@ -1141,8 +1142,9 @@ class editMetaDataForm extends HelpFormBase
                              
                         } else {
                              
-                            drupal_set_message(print_r($return,true));
+                            
                             drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
+							drupal_set_message("Raison: " . $return->error->message);
                         }
                         
                         $callUrluptOwner = $this->urlCkan . "/api/action/package_owner_org_update";
@@ -1200,8 +1202,8 @@ class editMetaDataForm extends HelpFormBase
 					$url_res = $file->url();
 					$url_res = str_replace('http:', 'https:', $url_res);
 						
-					$filepathN = strtolower($filepath);
-					$filepathN =urldecode($filepathN);
+					//$filepathN = strtolower($filepath);
+					$filepathN =urldecode($filepath);
 					$filepathN = $this->nettoyage2($filepathN);
 
 					rename($root.''.urldecode($filepath), $root.''.$filepathN); 
@@ -1272,7 +1274,7 @@ class editMetaDataForm extends HelpFormBase
 						"description" => '',
 						"name" =>$fileName,
 					];
-
+					error_log("ddddddddddd .".json_encode($resources));
 					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 					$return = $api->updateRequest($callUrluptres, $resources, "POST");
 					$return = json_decode($return, true);                
@@ -1290,7 +1292,7 @@ class editMetaDataForm extends HelpFormBase
 					$file = File::load($form_file[0]);
 					$file->setPermanent();
 					$file->save();
-					$fileName = parse_url($file->url());
+					$fileName = parse_url($file->url());//error_log(json_encode($fileName));
 					$host=$fileName[host];
 					$fileName = $fileName[path];
 					$filepath = $fileName;
@@ -1306,9 +1308,9 @@ class editMetaDataForm extends HelpFormBase
 					$url_res = $file->url();
 					$url_res = str_replace('http:', 'https:', $url_res);
 						
-					$filepathN = strtolower($filepath);
-					$filepathN =urldecode($filepathN);
-					$filepathN = $this->nettoyage2($filepathN);
+					//$filepathN = strtolower($filepath);
+					$filepathN =urldecode($filepath);
+					$filepathN = $this->nettoyagePath($filepathN);
 
 					rename($root.''.urldecode($filepath), $root.''.$filepathN);
 
@@ -1430,9 +1432,10 @@ class editMetaDataForm extends HelpFormBase
 							$url_res = $url;
 							$url_res = str_replace('http:', 'https:', $url_res);
 								
-							$filepathN = strtolower($filepath);
-							$filepathN =urldecode($filepathN);
-							$filepathN = $this->nettoyage2($filepathN);
+							//$filepathN = strtolower($filepath);
+							$filepathN = urldecode($filepath);
+							$filepathN = $this->nettoyagePath($filepathN);
+							$filepathN = explode(".", $filepathN)[0] . uniqid() .".". explode(".", $filepathN)[1];
 
 							rename($root.''.urldecode($filepath), $root.''.$filepathN);
 							$filepath=$filepathN;
@@ -1661,7 +1664,7 @@ class editMetaDataForm extends HelpFormBase
         $coll = $data[0];
         
         //drupal_set_message('<pre>'.$data[0].'</pre>');
-         
+        error_log(json_encode($newData));
         $api = new Api;
 		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");
@@ -1729,6 +1732,8 @@ class editMetaDataForm extends HelpFormBase
 		else {
 			//drupal_set_message(print_r($resnew,true));
 			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
+			drupal_set_message("Raison: " . json_encode($resnew->error->name));
+
 		}
         
         //console.log($idNewData);
@@ -1782,7 +1787,7 @@ class editMetaDataForm extends HelpFormBase
 		$str = utf8_decode($str);
 		// $str = htmlentities( $str, ENT_NOQUOTES, $charset );
 		
-		//$str = utf8_decode($str);
+		$str = utf8_decode($str);
 			 
 		   
 		$str = str_replace("?", "", $str);   
@@ -1815,6 +1820,38 @@ class editMetaDataForm extends HelpFormBase
 		
 			
 			
+		$str = str_replace("-", "_", $str);    
+		return $str;
+	}
+	
+	function nettoyagePath($str) {
+		$str = str_replace("?", "", $str);   
+		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
+		$str = str_replace("`", "_", $str);
+		$str = str_replace("'", "_", $str);
+		$str = str_replace("-", "_", $str);
+		$str = str_replace(" ", "_", $str);
+		$str = str_replace("%", "1", $str);
+		$str = str_replace("(", "1", $str);
+		$str = str_replace(")", "1", $str);
+		$str = str_replace("*", "1", $str);
+		$str = str_replace("!", "1", $str);
+		$str = str_replace("@", "1", $str);
+		$str = str_replace("#", "1", $str);
+		$str = str_replace("$", "1", $str);
+		$str = str_replace("^", "1", $str);
+		$str = str_replace("&", "1", $str);
+		$str = str_replace("+", "1", $str);
+		$str = str_replace(":", "1", $str);
+		$str = str_replace(">", "1", $str);
+		$str = str_replace("<", "1", $str);
+	//    $str = str_replace('\'', "_", $str);
+	//    $str = str_replace("/", "_", $str);
+		$str = str_replace("|", "_", $str);
+		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
+		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
+		$str = preg_replace( '#&[^;]+;#', '', $str );      
+		
 		$str = str_replace("-", "_", $str);    
 		return $str;
 	}
@@ -1864,6 +1901,6 @@ class editMetaDataForm extends HelpFormBase
         ];
 
 		return $elem;
-	}  
+	}
     
 }

@@ -5020,7 +5020,7 @@ class Api{
         
         $params = explode(";", $params);
         
-         error_log($params[0]."/api/3/action/package_search?q=".$params[1]);
+        error_log($params[0]."/api/3/action/package_search?q=".$params[1]);
         
         //$result = Query::callSolrServer('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
         $curl = curl_init('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);

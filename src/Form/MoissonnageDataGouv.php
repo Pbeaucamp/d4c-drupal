@@ -1091,21 +1091,26 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$command = NULL;
 				if($add_tres == FALSE && count($geo_res) > 0){
 					// on créé un csv
+					error_log("on créée un csv");
 					$name = $label . "_" . uniqid();
 					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
 					$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
 					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
 					if($geo_res["geojson"] != null){
+						error_log("la source est un geojson");
 						$url = $geo_res["geojson"];
 						$json = Query::callSolrServer($url);
+						error_log("fichier récuperé");
 						$csv = Export::createCSVfromGeoJSON($json);
-						
+						error_log("fichier converti");
 						file_put_contents($rootCsv, $csv);
 					} else if($geo_res["json"] != null){
+						error_log("la source est un json");
 						$url = $geo_res["json"];
 						$json = Query::callSolrServer($url);
+						error_log("fichier récuperé");
 						$csv = Export::createCSVfromGeoJSON($json);
-						
+						error_log("fichier converti");
 						file_put_contents($rootCsv, $csv);
 					} else {
 						$url = $geo_res["kml"];
@@ -1760,6 +1765,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$opt = $api->getSimpleGetOptions();                               
 				curl_setopt_array($curl, $opt);    
 				$query = curl_exec($curl);
+				error_log($query);
 				curl_close($curl);
 					
 				$results = json_decode($query);
@@ -1979,7 +1985,18 @@ class MoissonnageDataGouv extends HelpFormBase {
 							// read into array
 							//$arr = file('/home/user-client/drupal-d4c'.$filepath);
 							$arr = file($res->url); //error_log($arr);
+							if($arr == false || $arr == ""){error_log("retentative..");
+								$arrContextOptions=array(
+									"ssl"=>array(
+										"verify_peer"=>false,
+										"verify_peer_name"=>false,
+									),
+								);
+								$arr = file($res->url, 0, stream_context_create($arrContextOptions));
+							}
+							
 							$label = utf8_decode($arr[0]);
+							
 							$label = $this->nettoyage($label);  
 					
 							// edit first line

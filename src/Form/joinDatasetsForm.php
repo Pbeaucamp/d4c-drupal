@@ -400,6 +400,10 @@ class joinDatasetsForm extends HelpFormBase {
             '#type' => 'submit',
             '#value' => $this->t('Faire la jointure'),
         );
+		
+		$form['m3d'] = array(
+			'#markup' => '<span>Ceci est effectue une jointure Full Join.</span>',
+		);
 
 		return $form;
 	}    
@@ -472,12 +476,15 @@ class joinDatasetsForm extends HelpFormBase {
 		if($jdd1[tags] == null) $jdd1[tags] = array();
 		if($jdd2[tags] == null) $jdd2[tags] = array();
     
-		$description ='Ce DataSet a été créé par la jointure entre les jeux de données: "'.$jdd1[title].'" et "'.$jdd2[title].'". '.$description;
+		$description ='Ce DataSet a été créé par la jointure entre les jeux de données: "'.$jdd1[title].'" et "'.$jdd2[title].'". </br>'
+						.$description .'</br>'
+						."[".$jdd1[notes] .']</br>'
+						."[".$jdd2[notes] .']</br>';
     
         $newData = [
 			"name" => $this->nettoyage($title),
 			"title" =>  $title,
-			"private" => false,
+			"private" => true,
 			"author" => "",
 			"author_email" => "",
 			"maintainer" => "",
@@ -570,8 +577,8 @@ class joinDatasetsForm extends HelpFormBase {
         
     
 		foreach($jdd1[resources] as $value){
-			if($value[format]=="CSV" || $value[format]=="csv"){
-				$csv1=$value[url];   
+			if(($value[format]=="CSV" || $value[format]=="csv" || $value[datastore_active] == true) && $csv1 == ""){
+				$csv1=$value[id];   
 			}
 			else{
 				$resources = [ "package_id" => $idNewData,
@@ -585,8 +592,8 @@ class joinDatasetsForm extends HelpFormBase {
 		}
     
 		foreach($jdd2[resources] as $value){
-			if($value[format]=="CSV" || $value[format]=="csv"){
-				$csv2=$value[url];   
+			if(($value[format]=="CSV" || $value[format]=="csv" || $value[datastore_active] == true) && $csv2 == ""){
+				$csv2=$value[id];   
 			}
 			else{
 				$resources = [ "package_id" => $idNewData,
@@ -610,7 +617,7 @@ class joinDatasetsForm extends HelpFormBase {
             $callUrluptres = $this->urlCkan . "/api/action/resource_create";
             $return = $api->updateRequest($callUrluptres, $resources, "POST"); 
 		}
-     
+		sleep(10);
 		$api->calculateVisualisations($idNewData);
 	}
 
@@ -793,9 +800,111 @@ class joinDatasetsForm extends HelpFormBase {
 			$url_res = 'https://'.$host.'/sites/default/files/dataset/';
 		} 
           
-        $url_res = $url_res.$nameFile.'.csv';       
-    
-        $fh = fopen($url1, 'r');
+        $url_res = $url_res.$nameFile.'.csv';      
+
+		$api = new Api();
+		// on récupère les champs de la premiere table
+		$req = array();
+		$sql = "Select *from \"".$url1."\" limit 0";
+		$req['sql'] = $sql;
+		//error_log( $sql);
+		$query = http_build_query($req);
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $query;
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $api->getStoreOptions());
+		$result = curl_exec($curl);
+		//error_log($result);
+		curl_close($curl);
+		$result = json_decode($result,true);
+		$cols1 = array();
+		if($result["success"] == true){
+			foreach($result["result"]["fields"] as $f){
+				if($f["id"] != "_id" && $f["id"] != "_full_text"){
+					$cols1[$f["id"]] = $f["id"];
+				}
+			}
+		}
+		
+		
+		// on récupère les champs de la seconde table
+		$req = array();
+		$sql = "Select *from \"".$url2."\" limit 0";
+		$req['sql'] = $sql;
+		//error_log( $sql);
+		$query = http_build_query($req);
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $query;
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $api->getStoreOptions());
+		$result = curl_exec($curl);
+		//error_log($result);
+		curl_close($curl);
+		$result = json_decode($result,true);
+		$cols2 = array();
+		if($result["success"] == true){
+			foreach($result["result"]["fields"] as $f){
+				if($f["id"] != "_id" && $f["id"] != "_full_text"){
+					$cols2[$f["id"]] = $f["id"];
+				}
+			}
+		}
+		//error_log(json_encode($cols1));
+		//error_log(json_encode($cols2));
+		
+		// on renomme les colonnes doublons
+		foreach($cols2 as $key => $value){
+			if(array_key_exists($key, $cols1)){
+				$cols2[$key] = $value . "2";
+			}
+		}
+		//error_log(json_encode($cols1));
+		//error_log(json_encode($cols2));
+		
+		//on lance la requete ultime		
+		$req = array();
+		$fields = array();
+		foreach($cols1 as $key=>$value2){
+			$fields[] = "a.".$key." as ".$value2;
+		}
+		foreach($cols2 as $key=>$value2){
+			$fields[] = "b.".$key." as ".$value2;
+		}
+		$fieldreq = implode(", ", $fields);
+		//error_log(json_encode($fields));
+		$sql = "Select ".$fieldreq." from \"".$url1."\" as a full join \"".$url2."\" as b on cast(a.".$columns_data." as varchar) = cast(b.".$columns_data2." as varchar)";
+		$req['sql'] = $sql;
+		//error_log( $sql);
+		$query = http_build_query($req);
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $query;
+		
+		//echo $callUrl;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $api->getStoreOptions());
+		$result = curl_exec($curl);
+		//error_log($result);
+		curl_close($curl);
+		$result = json_decode($result,true);
+		
+		$res_arr = array();
+		if(count($result["result"]["records"]) > 0){
+			$nome_column_new=array_merge(array_values($cols1), array_values($cols2));
+			
+			$res_arr[0] = $nome_column_new;
+		
+			foreach($result["result"]["records"] as $record){
+				$line = array();
+				foreach($nome_column_new as $k=>$col){
+					$val = $record[$col];
+					$line[] = $val;
+				} 
+				$res_arr[] = $line;
+			}
+		}
+		//drupal_set_message('<pre>'. print_r($res_arr, true) .'</pre>');
+	
+	
+    /*    $fh = fopen($url1, 'r');
         $fhg = fopen($url2, 'r');
     
 		$arr1 = file($url1);
@@ -821,7 +930,7 @@ class joinDatasetsForm extends HelpFormBase {
     
 		$index_column_join = array_search($columns_data, $csv1[0]);
 		$index_column_join2 = array_search($columns_data2, $csv2[0]);
-		
+		error_log(json_encode($csv1[0]) . " i:" . $index_column_join ." , ". json_encode($csv2[0]) . " i:" . $index_column_join2);
 		$arr_dupl_column_csv1=array();
 		
 		$arr_csv1 = array();
@@ -833,7 +942,11 @@ class joinDatasetsForm extends HelpFormBase {
 			for($b = 0; $b<count($csv1[$a]); $b++){
 			   $arr[$csv1[0][$b]]= $csv1[$a][$b];
 			}
-			$arr_csv1[] = $arr;
+			//$arr_csv1[] = $arr;
+			if(!isset($arr_csv1[$columns_data]){
+				$arr_csv1[$columns_data] = array();
+			}
+			$arr_csv1[$columns_data][] = $arr;
 		}
     
 		for($a = 1; $a<count($csv2); $a++){
@@ -841,14 +954,24 @@ class joinDatasetsForm extends HelpFormBase {
 			for($b = 0; $b<count($csv2[$a]); $b++){  
 				$arr[$csv2[0][$b]]= $csv2[$a][$b];
             }
-			$arr_csv2[] = $arr;
+			//$arr_csv2[] = $arr;
+			if(!isset($arr_csv2[$columns_data2]){
+				$arr_csv2[$columns_data2] = array();
+			}
+			$arr_csv2[$columns_data2][] = $arr;
 		}
     
-    
+		error_log(json_encode($arr_csv1));
+		error_log(json_encode($arr_csv2));
 		unset($csv1[0][$index_column_join]);
 		$nome_column_new=array_unique(array_merge($csv2[0],$csv1[0]));
 		//drupal_set_message('<pre>'. print_r($nome_column_new, true) .'</pre>');    
-        
+        error_log(json_encode($nome_column_new));
+		
+		$full_arr = array();
+		foreach($arr_csv1 as $key => $values){
+			
+		}
     
 		for($x=0;$x< count($arr_csv2);$x++)
 		{
@@ -901,13 +1024,13 @@ class joinDatasetsForm extends HelpFormBase {
     
 		//drupal_set_message('<pre>'. print_r($res_arr, true) .'</pre>');
     
-    
+ */   
 
   // 3 section     
         $fp = fopen($root.$nameFile.'.csv', 'w');//output file set here
 
         foreach ( $res_arr as $fields) {
-            fputcsv($fp, $fields);
+            fputcsv($fp, $fields,";");
         }
         fclose($fp);
     
