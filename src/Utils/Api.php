@@ -798,7 +798,7 @@ class Api{
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
-        
+        //error_log('url check : ' . $callUrl);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
@@ -1096,7 +1096,7 @@ class Api{
 	    }
 	}
 
-	public function getAllFields($id, $full = FALSE) {
+	public function getAllFields($id, $full = FALSE, $includeIdCkan = TRUE) {
 
 		$callUrl ="";
 		if($full){
@@ -1122,6 +1122,9 @@ class Api{
 		$data_array = array();
 		$hasFacet = false;
 		foreach ($result['result']['fields'] as $value) {
+			if(!$includeIdCkan && $value['id'] == "_id"){
+				continue;
+			}
 			$field = array();
 			//if($value['id'] == "_id") continue;
 			$field['name'] = $value['id'];
@@ -1179,6 +1182,17 @@ class Api{
 					$annotations[] = array("name" => "date_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
+				
+				$descriptionLabel = $description;
+				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
+				if($matches) {
+					$descriptionLabel = $matches[1][0];
+				}
+				else {
+					$descriptionLabel = '';
+				}
+				$field['descriptionlabel'] = $descriptionLabel;
+				
 				$field['description'] = $description;
 				
 				if(count($annotations) > 0){
@@ -1344,7 +1358,7 @@ class Api{
        
         
 
-		$fields = $this->getAllFields($query_params['resource_id']);
+		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 		//echo json_encode($fields);
 		$fieldId = "_id";$reqFields="";
 		$fieldCoordinates='';$fieldGeometries='';
@@ -1946,7 +1960,7 @@ class Api{
 			}
 			
 			
-			$data_array['fields'] = $this->getAllFields($resourcesid, TRUE);
+			$data_array['fields'] = $this->getAllFields($resourcesid, TRUE, FALSE);
 		}
 		
 		
@@ -5159,7 +5173,10 @@ class Api{
     function updateRequest($callUrl, $binaryData, $requestType) {
         
         
-        
+        error_log($callUrl);
+		error_log(json_encode( $binaryData ));
+		error_log($requestType);
+		
 		$jsonData = json_encode( $binaryData );
         //drupal_set_message('<pre>'. print_r($jsonData, true) .'</pre>');
         //$cle = 'dc6d41ef-7721-4617-9669-9de423fe383f'; 
@@ -5357,20 +5374,29 @@ class Api{
     }
     
     function datasetByTheme($theme){
-        $datasetList = $this->getPackageSearch("rows=1000");
-        $dataJson = $datasetList->getContent() ;
-        //echo $dataJson ;
-        $data = json_decode($datasetList->getContent() );
-        $dataset_list = $data->result->results ;
+        // $datasetList = $this->getPackageSearch("rows=1000");
+		$datasetList = $this->callPackageSearch_public_private('include_private=true&rows=1000');
+		
+        // $dataJson = $datasetList ;
+        // //echo $dataJson ;
+        // $data = json_decode($datasetList);
+        // $dataset_list = $data->result->results ;
+		$datasetList = $datasetList->getContent();
+		
+		$dataset_list = json_decode($datasetList)->result->results;
+		
         $selectedDataset = array();
          //echo " theme à chercher trimé:".trim($theme)."\r" ;
         
         //echo " count : ".count($dataset_list) ."\r";
         for($i=0; $i< count($dataset_list) ; $i++){
+			
             $theme_found=false;
 			for($j=0; $j<count($dataset_list[$i]->extras) ; $j++ ){
+				
 				if( $dataset_list[$i]->extras[$j]->key == "theme" ){
-					$dataset_theme = $data->result->results[$i]->extras[$j]->value;
+					$dataset_theme = $dataset_list[$i]->extras[$j]->value;
+					// error_log('dataset2 : ' . $dataset_theme);
                    // echo " dataset a ajouter ". $dataset_list[$i]->title." theme :".trim($dataset_theme)." \r" ;
                     //echo " resultat de stristrt : " .stristr( trim($dataset_theme) , trim($theme)  )." \r";          
                     if ( stristr( trim($dataset_theme) , trim($theme)  ) !==False ) $selectedDataset[] = $dataset_list[$i] ;

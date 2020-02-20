@@ -1244,6 +1244,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 					}  
 				}    
+				
  
 				$newData = [
 					"name" =>$query->datasetid,
@@ -1605,9 +1606,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 					}             
                 }
+				
+			    $name = $results->name;
+				if(strlen($name) > 100) {
+					$name = substr($name, 0, 99);
+				}
                 
 				$newData = [
-					"name" => str_replace('-', '_',$this->nettoyage($results->name)),
+					"name" => str_replace('-', '_',$this->nettoyage($name)),
 					"title" => $results->name,
 					"private" => $private,
 					"author" => "",
@@ -1799,10 +1805,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 					}             
                 }
+				$name = $results->title;
+				if(strlen($name) > 100) {
+					$name = substr($name, 0, 99);
+				}
         
 				$newData = [
-					"name" => str_replace('-', '_',$results->name),
-					"title" => $results->title,
+					"name" => str_replace('-', '_',$name),
+					"title" => $results->name,
 					"private" => $private,
 					"author" => $results->author,
 					"author_email" => $results->author_email,
@@ -2094,7 +2104,9 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $tagsData = array();
                 
 				$name = str_replace('_', '-', $this->nettoyage($results->name));
-
+				if(strlen($name) > 100) {
+					$name = substr($name, 0, 99);
+				}
                 $newData = [
 					"name" => $name,
 					"title" => $results->name,
@@ -2163,6 +2175,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$url = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.geojson';
 					
 					$url_resource = $site_search_url.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=geojson';
+					error_log($url_resource);
 					$arr = Query::callSolrServer($url_resource);
 					
 					/*file_put_contents($root, $arr);
@@ -2296,7 +2309,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 					//$string = iconv('ASCII', 'UTF-8//IGNORE', implode($data_csv, "\n"));
 					//error_log(mb_detect_encoding($string));
-					file_put_contents($rootCsv, utf8_encode(implode($data_csv, "\n")));
+					// file_put_contents($rootCsv, utf8_encode(implode($data_csv, "\n")));
+					$res = iconv("UTF-8", "Windows-1252//TRANSLIT", (implode($data_csv, "\n")));
+					file_put_contents($rootCsv, $res);
 					
 					
 					$resource = [     

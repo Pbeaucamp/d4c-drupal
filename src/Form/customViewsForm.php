@@ -152,16 +152,16 @@ class customViewsForm extends HelpFormBase {
             ],
        );
         
-		$form['name'] = array(
-				'#type' => 'textfield',
-				'#title' => $this->t('Nom:'),
+		// $form['name'] = array(
+				// '#type' => 'textfield',
+				// '#title' => $this->t('Nom:'),
                 
-		);
+		// );
         
         $form['title'] = array(
 				'#type' => 'textfield',
 				'#title' => $this->t('Titre:'),
-                
+                '#maxlength' => 50
 		);
         
                 
@@ -235,7 +235,7 @@ class customViewsForm extends HelpFormBase {
         
         $data = array();
         $data["cv_dataset_id"]=$form_state->getValue('selected_Data');
-        $data["cv_name"]=$form_state->getValue('name');
+        $data["cv_name"]=$form_state->getValue('title');
         $data["cv_title"]=$form_state->getValue('title');
         $data["cv_icon"]='tachometer';
         $data["cv_template"]=$selected_templ;
@@ -362,11 +362,11 @@ class customViewsForm extends HelpFormBase {
     public function validateForm(array &$form, FormStateInterface $form_state){
         
         $selected_Data = $form_state->getValue('selected_Data');
-        $name = $form_state->getValue('name');
+        //$name = $form_state->getValue('name');
         $title = $form_state->getValue('title');
      
         if( $selected_Data == '') $form_state->setErrorByName('selected_Data', $this->t('Aucune donnée sélectionnée'));   
-        if( $name == '') $form_state->setErrorByName('name', $this->t('Aucune donnée sélectionnée'));   
+       // if( $name == '') $form_state->setErrorByName('name', $this->t('Aucune donnée sélectionnée'));   
         if( $title == '') $form_state->setErrorByName('title', $this->t('Aucune donnée sélectionnée'));   
         
     } 

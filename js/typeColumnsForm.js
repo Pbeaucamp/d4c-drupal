@@ -440,7 +440,15 @@ function loadTooltip(idDataset, dataFields){
 					$("#edit-type").val("standard");
 					$("#edit-type").change();
 					$("#edit-title").val("");
-					$("#edit-template").val("")
+					//$("#edit-template").val("");
+										$("#edit-template").val('<h2 class="d4cwidget-map-tooltip__header" ng-show="!!getTitle(record)">\n'+
+			'<span ng-bind="getTitle(record)">\n'+
+			'</span>\n'+
+			'</h2>\n'+
+			'<ul style="display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;">\n'+
+			'<li  ng-repeat="field in context.dataset.extra_metas.visualization.map_tooltip_fields">\n'+
+			'<strong>{{field}}</strong> : {{record.fields[field]}}</li>\n'+
+			'</ul>');
 				}
 			}
 			else{

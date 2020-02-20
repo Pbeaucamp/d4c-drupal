@@ -77,7 +77,7 @@ class editMetaDataForm extends HelpFormBase
         $api = new Api;
 
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-							   
+		
      
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
@@ -100,8 +100,8 @@ class editMetaDataForm extends HelpFormBase
 
         $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
         $curlOrg = curl_init($callUrlOrg);
-		error_log($callUrlOrg, true);
-		error_log($cle, true);
+		//error_log($callUrlOrg, true);
+		//error_log($cle, true);
         curl_setopt_array($curlOrg, $optionst);
         $orgs = curl_exec($curlOrg);
         curl_close($curlOrg);
@@ -1204,7 +1204,7 @@ class editMetaDataForm extends HelpFormBase
             
 					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
 						$xls_file = $root.''.$filepath;
-				  
+						//\PhpOffice\PhpSpreadsheet\Settings::setLocale('fr');
 						$reader = new Xlsx();
                     
 						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
@@ -1214,6 +1214,9 @@ class editMetaDataForm extends HelpFormBase
 						$spreadsheet = $reader->load($xls_file);
 
 						$loadedSheetNames = $spreadsheet->getSheetNames();
+						$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 
 						$writer = new Csv($spreadsheet);
 
@@ -1235,19 +1238,59 @@ class editMetaDataForm extends HelpFormBase
                   
 					   // read into array
 					   //$arr = file('/home/user-client/drupal-d4c'.$filepath);
-						$arr = file($root.''.$filepath);
-						$label = utf8_decode($arr[0]);
-						$label = $this->nettoyage($label);
-						$label = strtolower($label);
-						$label = str_replace("?", "", $label);
+					   
+					    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						$spreadsheet = $reader->load($root.''.$filepath);
+					    //$arr = $spreadsheet->getActiveSheet()->toArray();
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$existingCols = array();
+						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							$label = utf8_decode($label);
+							$label = $this->nettoyage($label);
+							$label = strtolower($label);
+							$label = str_replace("?", "", $label);
+							$label = preg_replace("/\r|\n/", "", $label);
+							if(in_array($label, $existingCols)) {
+								$label = $label . $i;
+							}
+							$existingCols[] = $label;
+							
+							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+						}
+						
+						$writer = new Csv($spreadsheet);
+						
+						$writer->save($root.''.$filepath);
+						
+						// drupal_set_message(json_encode($arr),'status');
+						
+						//$arr = file($root.''.$filepath);
+						// $label = utf8_decode($arr[0]);
+						// $label = $this->nettoyage($label);
+						// $label = strtolower($label);
+						// $label = str_replace("?", "", $label);
                 
-						//drupal_set_message('<pre>'. print_r($label, true) .'</pre>');
-						// edit first line
-						$arr[0] = $label;
+						// //drupal_set_message('<pre>'. print_r($label, true) .'</pre>');
+						// // edit first line
+						// $arr[0] = $label;
                   
 						// write back to file
 						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						file_put_contents($root.''.$filepath, implode($arr));
+						// for($i=0; $i< count($arr) ; $i++){
+							// if($i == 0) {
+								// for($j=0; $j< count($arr[$i]) ; $j++){
+									// $label = utf8_decode($arr[$i][$j]);
+									// $label = $this->nettoyage($label);
+									// $label = strtolower($label);
+									// $label = str_replace("?", "", $label);
+									// $arr[$i][$j] = $label;
+								// }
+							// }
+							// $arr[$i] = implode(';',$arr[$i]);
+						// }
+						// // drupal_set_message(json_encode($arr),'status');
+						// file_put_contents($root.''.$filepath, implode(PHP_EOL,$arr));
 					}
             
 					$resources = [    "package_id" => $idNewData,
@@ -1340,21 +1383,45 @@ class editMetaDataForm extends HelpFormBase
                   
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
                   
+				  		$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						$spreadsheet = $reader->load($root.''.$filepath);
+					    //$arr = $spreadsheet->getActiveSheet()->toArray();
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$existingCols = array();
+						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							$label = utf8_decode($label);
+							$label = $this->nettoyage($label);
+							$label = strtolower($label);
+							$label = str_replace("?", "", $label);
+							$label = preg_replace("/\r|\n/", "", $label);
+							if(in_array($label, $existingCols)) {
+								$label = $label . $i;
+							}
+							$existingCols[] = $label;
+							
+							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+						}
+						
+						$writer = new Csv($spreadsheet);
+						
+						$writer->save($root.''.$filepath);
+				  
 						// read into array
 						//$arr = file('/home/user-client/drupal-d4c'.$filepath);
-						$arr = file($root.''.$filepath);
-						$label = utf8_decode($arr[0]);
-						$label = str_replace(" ", "_", $label);
-						$label = $this->nettoyage($label);
-						$label = strtolower($label);
-						$label = str_replace("?", "", $label);
+						// $arr = file($root.''.$filepath);
+						// $label = utf8_decode($arr[0]);
+						// $label = str_replace(" ", "_", $label);
+						// $label = $this->nettoyage($label);
+						// $label = strtolower($label);
+						// $label = str_replace("?", "", $label);
                 
-						// edit first line
-						$arr[0] = $label;
+						// // edit first line
+						// $arr[0] = $label;
                 
-						// write back to file
-						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						file_put_contents($root.''.$filepath, implode($arr));
+						// // write back to file
+						// //file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
+						// file_put_contents($root.''.$filepath, implode($arr));
 					}
             
 					$resources = [     
@@ -1490,6 +1557,32 @@ class editMetaDataForm extends HelpFormBase
 			}
         }
     }
+	
+	function lettersToNumber($letters){
+		$alphabet = range('A', 'Z');
+		$number = 0;
+
+		foreach(str_split(strrev($letters)) as $key=>$char){
+			$number = $number + (array_search($char,$alphabet)+1)*pow(count($alphabet),$key);
+		}
+		return $number;
+	}
+	
+	function numberToLetters($number) {
+		$alphabet = range('A', 'Z');
+
+		$count = count($alphabet);
+        if ($number <= $count) {
+            return $alphabet[$number - 1];
+        }
+        $alpha = '';
+        while ($number > 0) {
+            $modulo = ($number - 1) % $count;
+            $alpha  = $alphabet[$modulo] . $alpha;
+            $number = floor((($number - $modulo) / $count));
+        }
+        return $alpha;
+	}
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
         

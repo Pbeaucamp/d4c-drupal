@@ -61,8 +61,10 @@ class organizationsManagementForm extends HelpFormBase
         curl_setopt_array($curlOrg, $optionst);
         $orgs = curl_exec($curlOrg);
         $orgsData = $orgs;
+		
         curl_close($curlOrg);
         $orgs = json_decode($orgs, true);
+		$this->orgas = $orgs;
 
 		$organizationList = array();
 		$organizationList["new"] = "Créer une organisation";
@@ -114,9 +116,37 @@ class organizationsManagementForm extends HelpFormBase
             '#type' => 'submit',
             '#value' => $this->t('Valider'),
         );
+		
+		$form['delete'] = array(
+            '#type' => 'submit',
+            '#value' => $this->t('Supprimer'),
+			'#submit' => array('::deleteOrga'),
+        );
 
         return $form;
     }
+	
+	public function deleteOrga(array &$form, FormStateInterface $form_state){
+		$api = new Api;
+		$this->urlCkan = $this->config->ckan->url;
+		$selected_org = $form_state->getValue('selected_org');		
+		for ($i = 0; $i < count($this->orgas[result]); $i++) {
+			if($this->orgas[result][$i][id] == $selected_org) {
+				$this->org = $this->orgas[result][$i];
+				break;
+			}
+        }
+		
+		if($this->org[package_count] > 0) {
+			drupal_set_message('Cette organisation contient des jeux de données. Ils doivent être supprimés avant de pouvoir supprimer cette organisation.','error');
+		}
+		else {
+			$context[id]=$this->org[id];
+			$callUrlUpdate = $this->urlCkan . "/api/action/organization_delete";
+			$return = $api->updateRequest($callUrlUpdate, $context, "POST");
+		}
+		
+	}
 
     public function submitForm(array &$form, FormStateInterface $form_state){
         
