@@ -5613,8 +5613,8 @@ class Api{
 			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
 		$dataset["extras"] = $extras;
-		error_log(json_encode($fields));
-		error_log(json_encode($dataset['extras']));
+		//error_log(json_encode($fields));
+		//error_log(json_encode($dataset['extras']));
 		if($blockDateModification){
 			$dataset["modified_date_forced"] = true;
 		}
