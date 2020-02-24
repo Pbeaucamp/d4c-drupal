@@ -77,7 +77,7 @@ class editMetaDataForm extends HelpFormBase
         $api = new Api;
 
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-		
+							   
      
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
@@ -1226,7 +1226,7 @@ class editMetaDataForm extends HelpFormBase
             
 					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
 						$xls_file = $root.''.$filepath;
-						//\PhpOffice\PhpSpreadsheet\Settings::setLocale('fr');
+				  
 						$reader = new Xlsx();
                     
 						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
@@ -1236,9 +1236,6 @@ class editMetaDataForm extends HelpFormBase
 						$spreadsheet = $reader->load($xls_file);
 
 						$loadedSheetNames = $spreadsheet->getSheetNames();
-						$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-						$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 
 						$writer = new Csv($spreadsheet);
 
@@ -1258,10 +1255,7 @@ class editMetaDataForm extends HelpFormBase
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
                   
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-                  
-					   // read into array
-					   //$arr = file('/home/user-client/drupal-d4c'.$filepath);
-					   
+						
 					    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 						$spreadsheet = $reader->load($root.''.$filepath);
 					    //$arr = $spreadsheet->getActiveSheet()->toArray();
@@ -1298,35 +1292,6 @@ class editMetaDataForm extends HelpFormBase
 						$writer = new Csv($spreadsheet);
 						
 						$writer->save($root.''.$filepath);
-						
-						// drupal_set_message(json_encode($arr),'status');
-						
-						//$arr = file($root.''.$filepath);
-						// $label = utf8_decode($arr[0]);
-						// $label = $this->nettoyage($label);
-						// $label = strtolower($label);
-						// $label = str_replace("?", "", $label);
-                
-						// //drupal_set_message('<pre>'. print_r($label, true) .'</pre>');
-						// // edit first line
-						// $arr[0] = $label;
-                  
-						// write back to file
-						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						// for($i=0; $i< count($arr) ; $i++){
-							// if($i == 0) {
-								// for($j=0; $j< count($arr[$i]) ; $j++){
-									// $label = utf8_decode($arr[$i][$j]);
-									// $label = $this->nettoyage($label);
-									// $label = strtolower($label);
-									// $label = str_replace("?", "", $label);
-									// $arr[$i][$j] = $label;
-								// }
-							// }
-							// $arr[$i] = implode(';',$arr[$i]);
-						// }
-						// // drupal_set_message(json_encode($arr),'status');
-						// file_put_contents($root.''.$filepath, implode(PHP_EOL,$arr));
 						$has_csv = true;
 					}
             
@@ -1335,7 +1300,7 @@ class editMetaDataForm extends HelpFormBase
 						"description" => '',
 						"name" =>$fileName,
 					];
-					error_log("ddddddddddd .".json_encode($resources));
+					//error_log("ddddddddddd .".json_encode($resources));
 					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 					$return = $api->updateRequest($callUrluptres, $resources, "POST");
 					$return = json_decode($return, true);                
@@ -1420,7 +1385,7 @@ class editMetaDataForm extends HelpFormBase
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
                   
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-                  
+
 				  		$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 						$spreadsheet = $reader->load($root.''.$filepath);
 					    //$arr = $spreadsheet->getActiveSheet()->toArray();
@@ -1455,24 +1420,7 @@ class editMetaDataForm extends HelpFormBase
 						$writer = new Csv($spreadsheet);
 						
 						$writer->save($root.''.$filepath);
-				  
-						// read into array
-						//$arr = file('/home/user-client/drupal-d4c'.$filepath);
-						// $arr = file($root.''.$filepath);
-						// $label = utf8_decode($arr[0]);
-						// $label = str_replace(" ", "_", $label);
-						// $label = $this->nettoyage($label);
-						// $label = strtolower($label);
-						// $label = str_replace("?", "", $label);
-                
-						// // edit first line
-						// $arr[0] = $label;
-                
-						// // write back to file
-						// //file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						// file_put_contents($root.''.$filepath, implode($arr));
-						// write back to file
-						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
+						
 					}
             
 					$resources = [     
@@ -1530,6 +1478,7 @@ class editMetaDataForm extends HelpFormBase
 							$url_res = str_replace('http:', 'https:', $url_res);
 								
 							//$filepathN = strtolower($filepath);
+
 							$filepathN = urldecode($filepath);
 							$filepathN = $this->nettoyagePath($filepathN);
 							$filepathN = explode(".", $filepathN)[0] . uniqid() .".". explode(".", $filepathN)[1];
@@ -1671,32 +1620,6 @@ class editMetaDataForm extends HelpFormBase
 			}
         }
     }
-	
-	function lettersToNumber($letters){
-		$alphabet = range('A', 'Z');
-		$number = 0;
-
-		foreach(str_split(strrev($letters)) as $key=>$char){
-			$number = $number + (array_search($char,$alphabet)+1)*pow(count($alphabet),$key);
-		}
-		return $number;
-	}
-	
-	function numberToLetters($number) {
-		$alphabet = range('A', 'Z');
-
-		$count = count($alphabet);
-        if ($number <= $count) {
-            return $alphabet[$number - 1];
-        }
-        $alpha = '';
-        while ($number > 0) {
-            $modulo = ($number - 1) % $count;
-            $alpha  = $alphabet[$modulo] . $alpha;
-            $number = floor((($number - $modulo) / $count));
-        }
-        return $alpha;
-	}
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
         
@@ -1787,7 +1710,7 @@ class editMetaDataForm extends HelpFormBase
         $coll = $data[0];
         
         //drupal_set_message('<pre>'.$data[0].'</pre>');
-        error_log(json_encode($newData));
+        //error_log(json_encode($newData));
         $api = new Api;
 		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");

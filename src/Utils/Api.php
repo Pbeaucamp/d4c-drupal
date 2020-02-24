@@ -4668,7 +4668,7 @@ class Api{
             }
         
             $arr=array('delimiter'=>$delimiter, 'data'=>$arr);
-            error_log(print_r($arr,true));
+            //error_log(print_r($arr,true));
 
         }
         
@@ -5044,7 +5044,7 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		
-		error_log(json_encode($result));
+		//error_log(json_encode($result));
         
         $response = new Response();
 		$response->setContent($result);
@@ -5193,7 +5193,7 @@ class Api{
         
         
         error_log($callUrl);
-		error_log(json_encode( $binaryData ));
+		//error_log(json_encode( $binaryData ));
 		error_log($requestType);
 		
 		$jsonData = json_encode( $binaryData );
@@ -5640,8 +5640,8 @@ class Api{
 			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
 		$dataset["extras"] = $extras;
-		error_log(json_encode($fields));
-		error_log(json_encode($dataset['extras']));
+		//error_log(json_encode($fields));
+		//error_log(json_encode($dataset['extras']));
 		if($blockDateModification){
 			$dataset["modified_date_forced"] = true;
 		}
@@ -5799,7 +5799,7 @@ class Api{
 						'Content-Length: ' . strlen($data_string))                                                                       
 					); 
 					$resp = curl_exec($curl);
-					curl_close($curl);error_log($resp);
+					curl_close($curl);//error_log($resp);
 					$resp = json_decode($resp, true);
 					if($resp["success"] == false){
 						$data_array["status"] = "captcha_failed";
@@ -5866,7 +5866,7 @@ class Api{
 						mkdir($uploaddir, 0777, true);
 					}
 					$uploadfile = $uploaddir . basename($_FILES['file']['name']);
-					error_log( "eeeeeeeee :: ".$uploadfile);
+					//error_log( "eeeeeeeee :: ".$uploadfile);
 					
 					if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
 						error_log( "Le fichier est valide, et a été téléchargé avec succès. Voici plus d'informations :\n");
@@ -5981,7 +5981,7 @@ class Api{
 			$query->condition('reu_dataset_id',$dataset);
 		} else if($orga != null && $orga != ""){
 			$req = "include_private=true&rows=10000&q=organization:".$orga;
-			$datasets = $this->getPackageSearch($req)["result"]["results"]; error_log(json_encode($datasets));
+			$datasets = $this->getPackageSearch($req)["result"]["results"]; //error_log(json_encode($datasets));
 			$ids = array();
 			
 			foreach($datasets as $row){

@@ -450,7 +450,7 @@ class DataSet{
 	static function correctName($chaine)
 	{
 		$chaine = strtolower($chaine);
-		$accents = Array("/é/", "/è/", "/ê/","/ë/", "/ç/", "/à/", "/â/","/á/","/ä/","/ã/","/å/", "/î/", "/ï/", "/í/", "/ì/", "/ù/", "/ô/", "/ò/", "/ó/", "/ö/");
+		$accents = Array("/Ã©/", "/Ã¨/", "/Ãª/","/Ã«/", "/Ã§/", "/Ã /", "/Ã¢/","/Ã¡/","/Ã¤/","/Ã£/","/Ã¥/", "/Ã®/", "/Ã¯/", "/Ã­/", "/Ã¬/", "/Ã¹/", "/Ã´/", "/Ã²/", "/Ã³/", "/Ã¶/");
 		$sans = Array("e", "e", "e", "e", "c", "a", "a","a", "a","a", "a", "i", "i", "i", "i", "u", "o", "o", "o", "o");
 		$chaine = preg_replace($accents, $sans,$chaine);
 		$chaine = preg_replace('#[^A-Za-z0-9]#','-',$chaine);
@@ -1663,7 +1663,7 @@ class DataSet{
 			if($add_tres){
 				sleep(20);
 			} else if($add_tres == FALSE && count($geo_res) > 0){
-				// on créé un csv
+				// on crÃ©Ã© un csv
 				$name = $label;
 				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
 				$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
