@@ -80,14 +80,8 @@ ckan_admin.joinDatasets_form:
   
 ckan_admin.VanillaForm:
   title: Vanilla
-  description: 'Création/mise à jour Métadata'
+  description: 'Création et mise à jour Métadatas et Cubes'
   route_name: ckan_admin.VanillaForm
-  parent: ckan_admin_config_data4citizen
-
-ckan_admin.CubeForm:
-  title: Cube Vanilla
-  description: 'Création/mise à jour de cube'
-  route_name: ckan_admin.CubeForm
   parent: ckan_admin_config_data4citizen
 
 ckan_admin.datasets_dashboard:

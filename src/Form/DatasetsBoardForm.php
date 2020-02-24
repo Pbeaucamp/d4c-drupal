@@ -327,6 +327,13 @@ class DatasetsBoardForm extends HelpFormBase {
 			// '#default_value' => $settings['tynt_roles'],
 			'#options'       => $userlist
 		);
+		
+		// drupal_add_js('$(document).ready(function(){
+                       // $("#edit-users-list-1").attr("disabled", "disabled");
+                    // });', 'inline');
+
+		
+		
 		$form['#attached']['drupalSettings']['users'] = json_encode($userListComplete);
 	
 		return $form;
