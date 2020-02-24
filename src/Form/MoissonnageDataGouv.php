@@ -1290,7 +1290,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"parameters" => $jsonValue["params"]
 				];
 				
-				error_log($dataset_conf);
+				//error_log($dataset_conf);
 				$controlEx =false;
 		
 				foreach($dataForUpdateDatasets as $key => $value){
@@ -1771,7 +1771,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$opt = $api->getSimpleGetOptions();                               
 				curl_setopt_array($curl, $opt);    
 				$query = curl_exec($curl);
-				error_log($query);
+				//error_log($query);
 				curl_close($curl);
 					
 				$results = json_decode($query);
@@ -1817,14 +1817,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 					}             
                 }
-				$name = $results->title;
-				if(strlen($name) > 100) {
-					$name = substr($name, 0, 99);
-				}
-        
+				
 				$newData = [
-					"name" => str_replace('-', '_',$name),
-					"title" => $results->name,
+					"name" => str_replace('-', '_',$results->name),
+					"title" => $results->title,
 					"private" => $private,
 					"author" => $results->author,
 					"author_email" => $results->author_email,
