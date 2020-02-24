@@ -345,7 +345,7 @@ class typeColumnsForm extends HelpFormBase {
 		);
 		
 		$form['tooltip']["standard"]["fields"] = array(
-			'#type' => "textfield",
+			'#type' => "textarea",
 			'#attributes' => [
 				'style' => 'display:none;'
 			],
@@ -603,7 +603,7 @@ class typeColumnsForm extends HelpFormBase {
 			$filds[result][fields][$i][info][label]=$title;
         
 			array_push($json["fields"], $filds[result][fields][$i]);
-        }
+		}
 
         $callUrl = $this->urlCkan . "/api/action/datastore_create";//create
         

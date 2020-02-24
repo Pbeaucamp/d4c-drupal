@@ -1433,6 +1433,7 @@ class editMetaDataForm extends HelpFormBase
 							$url_res = str_replace('http:', 'https:', $url_res);
 								
 							//$filepathN = strtolower($filepath);
+
 							$filepathN = urldecode($filepath);
 							$filepathN = $this->nettoyagePath($filepathN);
 							$filepathN = explode(".", $filepathN)[0] . uniqid() .".". explode(".", $filepathN)[1];

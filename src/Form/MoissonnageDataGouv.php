@@ -2000,7 +2000,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 								);
 								$arr = file($res->url, 0, stream_context_create($arrContextOptions));
 							}
-							
+
 							$label = utf8_decode($arr[0]);
 							
 							$label = $this->nettoyage($label);  
