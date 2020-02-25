@@ -291,7 +291,7 @@ class editMetaDataForm extends HelpFormBase
 			'#type' => 'checkbox',
 			'#title' => $this->t('Ne pas afficher les API'),
 		);
-        
+
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
 			'#type' => 'managed_file',
@@ -302,6 +302,11 @@ class editMetaDataForm extends HelpFormBase
 			'#size' => 10,
             '#suffix' => '</div>',
 
+		);
+		
+		$form['generate_cols'] = array(
+			'#type' => 'checkbox',
+			'#title' => $this->t('Générer des noms de colonnes (pour CSV ou XLS)'),
 		);
         
 		// $form['#suffix'] = '</div>';
@@ -1250,22 +1255,43 @@ class editMetaDataForm extends HelpFormBase
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
                   
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-                  
-					   // read into array
-					   //$arr = file('/home/user-client/drupal-d4c'.$filepath);
-						$arr = file($root.''.$filepath);
-						$label = utf8_decode($arr[0]);
-						$label = $this->nettoyage($label);
-						$label = strtolower($label);
-						$label = str_replace("?", "", $label);
-                
-						//drupal_set_message('<pre>'. print_r($label, true) .'</pre>');
-						// edit first line
-						$arr[0] = $label;
-                  
-						// write back to file
-						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						file_put_contents($root.''.$filepath, implode($arr));
+						
+					    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						$spreadsheet = $reader->load($root.''.$filepath);
+					    //$arr = $spreadsheet->getActiveSheet()->toArray();
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$existingCols = array();
+						$genCols = $form_state->getValue('generate_cols');
+						
+						if($genCols) {
+							$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
+						}
+						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+							if($genCols) {
+								$label = 'colonne_' . $i;
+							}
+							else {
+								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							}
+							//error_log('value : ' . $label);
+							//$label = utf8_decode($label);
+							//error_log('utf8dec : ' . $label);
+							$label = $this->nettoyage($label);
+							//error_log('clean : ' . $label);
+							//$label = strtolower($label);
+							//$label = str_replace("?", "", $label);
+							//$label = preg_replace("/\r|\n/", "", $label);
+							if(in_array($label, $existingCols)) {
+								$label = $label . $i;
+							}
+							$existingCols[] = $label;
+							
+							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+						}
+						
+						$writer = new Csv($spreadsheet);
+						
+						$writer->save($root.''.$filepath);
 						$has_csv = true;
 					}
             
@@ -1359,22 +1385,41 @@ class editMetaDataForm extends HelpFormBase
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
                   
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-                  
-						// read into array
-						//$arr = file('/home/user-client/drupal-d4c'.$filepath);
-						$arr = file($root.''.$filepath);
-						$label = utf8_decode($arr[0]);
-						$label = str_replace(" ", "_", $label);
-						$label = $this->nettoyage($label);
-						$label = strtolower($label);
-						$label = str_replace("?", "", $label);
-                
-						// edit first line
-						$arr[0] = $label;
-                
-						// write back to file
-						//file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
-						file_put_contents($root.''.$filepath, implode($arr));
+
+				  		$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						$spreadsheet = $reader->load($root.''.$filepath);
+					    //$arr = $spreadsheet->getActiveSheet()->toArray();
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$existingCols = array();
+						$genCols = $form_state->getValue('generate_cols');
+						
+						if($genCols) {
+							$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
+						}
+						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+							if($genCols) {
+								$label = 'colonne_' . $i;
+							}
+							else {
+								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							}
+							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							//$label = utf8_decode($label);
+							$label = $this->nettoyage($label);
+							//$label = strtolower($label);
+							//$label = str_replace("?", "", $label);
+							//$label = preg_replace("/\r|\n/", "", $label);
+							if(in_array($label, $existingCols)) {
+								$label = $label . $i;
+							}
+							$existingCols[] = $label;
+							
+							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+						}
+						
+						$writer = new Csv($spreadsheet);
+						
+						$writer->save($root.''.$filepath);
 						
 					}
             
@@ -1744,12 +1789,23 @@ class editMetaDataForm extends HelpFormBase
     }
 
     function nettoyage( $str, $charset='utf-8' ) {
-		$str = utf8_decode($str);
+		//$str = utf8_decode($str);
 	   // $str = htmlentities( $str, ENT_NOQUOTES, $charset );
 		
-		$str = utf8_decode($str);
-			 
-		   
+		//$str = utf8_decode($str);
+		
+		if(!mb_detect_encoding($str, 'UTF-8', true)) {
+			//error_log('utf8 -> iconv');
+			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
+		}
+		
+		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+                            'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+                            'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+                            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+                            'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+		$str = strtr( $str, $unwanted_array );
+		
 		$str = str_replace("?", "", $str);   
 		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
 		$str = str_replace("`", "_", $str);

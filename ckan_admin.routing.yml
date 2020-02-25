@@ -645,7 +645,7 @@ ckan_admin.VanillaForm:
    _title: 'Vanilla'
    _form: 'Drupal\ckan_admin\Form\VanillaForm'
  requirements:
-   _permission: 'access content'
+   _permission: 'Vanilla'
 
 ckan_admin.CubeForm:
  path: '/admin/config/data4citizen/CubeForm'
@@ -653,7 +653,7 @@ ckan_admin.CubeForm:
    _title: 'Cube'
    _form: 'Drupal\ckan_admin\Form\CubeForm'
  requirements:
-   _permission: 'access content'
+   _permission: 'Vanilla'
 
 ckan_admin.callSearchArcgis:
   path: '/api/datasets/2.0/callSearchArcGIS/{params}'
@@ -767,7 +767,7 @@ ckan_admin.form.reuses:
     _form: 'Drupal\ckan_admin\Form\ReusesForm'
     _title: 'Gestion des réutilisations'
   requirements:
-    _permission: 'access content'
+    _permission: 'access dataset'
     
 ckan_admin.datasets.reuses:
   path: '/api/datasets/1.0/{datasetid}/reuses'

@@ -2109,7 +2109,8 @@ class Api{
 		$data_array["metas"]["domain"]="";
 		$data_array["metas"]["language"]="fr";
 		//$data_array["metas"]["title"]=$result["result"]["name"];
-		$data_array["metas"]["description"]= $result["result"]["notes"];
+		$desc = str_replace(PHP_EOL, '<br>', $result["result"]["notes"]);
+		$data_array["metas"]["description"]= $desc;
 		$data_array["metas"]["modified"]= current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $result["result"]["metadata_modified"];
 		$data_array["metas"]["visibility"]="domain";
 		$data_array["metas"]["metadata_processed"]=$result["result"]["metadata_created"];

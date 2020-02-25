@@ -44,6 +44,18 @@ resume.tab_6:
   base_route: ckan_admin.addThemeInDatasetForm
   weight: 20
   
+vanilla.tab_7:
+  route_name: ckan_admin.VanillaForm
+  title: 'Création et édition Metadata'
+  base_route: ckan_admin.VanillaForm
+  weight: 20
+
+vanilla.tab_8:
+  route_name: ckan_admin.CubeForm
+  title: 'Création cube'
+  base_route: ckan_admin.VanillaForm
+  weight: 20
+
 #resume.tab_3:
 #  route_name: ckan_admin.typeColumnsForm
 #  title: 'Dictionnaire de données (grille)'

@@ -1,6 +1,16 @@
 $ = jQuery;
 var users;
 
+$(document).ready(function(){
+	$("#edit-roles-list-administrator").attr("disabled", "disabled");
+	for (let [key, user] of Object.entries(users)) {
+		if(user.roles.includes('administrator')) {
+			$("#edit-users-list-" + user.id).attr("disabled", "disabled");
+		}
+	}
+	
+});
+
 /////////////modal/////////////
 ! function (e) {
     "function" != typeof e.matches && (e.matches = e.msMatchesSelector || e.mozMatchesSelector || e.webkitMatchesSelector || function (e) {
