@@ -169,6 +169,7 @@ class themeForm extends HelpFormBase {
 		$form['theme'] = array(
 			'#type' => 'textfield', 
 			'#title' => $this->t('Nom:'),
+			'#required' => TRUE,
 				 
 		);
         
@@ -430,7 +431,6 @@ class themeForm extends HelpFormBase {
 	}
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
-        
         $theme = $form_state->getValue('theme');
      
         if( $theme == '') $form_state->setErrorByName('theme', $this->t('Aucune donnée sélectionnée'));   
