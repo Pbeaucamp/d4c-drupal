@@ -1406,7 +1406,7 @@ class editMetaDataForm extends HelpFormBase
 							else {
 								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
 							}
-							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							//$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
 							//$label = utf8_decode($label);
 							$label = $this->nettoyage($label);
 							//$label = strtolower($label);

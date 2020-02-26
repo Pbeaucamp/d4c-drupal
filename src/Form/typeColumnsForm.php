@@ -37,9 +37,9 @@ class typeColumnsForm extends HelpFormBase {
     
 
 	public function buildForm(array $form, FormStateInterface $form_state) {
-		$form['#attached']['library'][] = 'ckan_admin/typeColumns.form';
+		
         $form = parent::buildForm($form, $form_state);
-         
+        $form['#attached']['library'][] = 'ckan_admin/typeColumns.form'; 
         //$config = \Drupal::service('config.factory')->getEditable('ckan_admin.typeColumnsForm');
         
 		

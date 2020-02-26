@@ -25,7 +25,7 @@ SOFTWARE.
 
 $ = jQuery;
 //preview();
-getTableById();
+getTableById(false);
 
 $(".btn-preview").click(function(ev){
 	preview();
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	baba();
 }); // end ready  
 
-function getTableById(){
+function getTableById(refresh=true){
 //$('#edit-table > tbody').val("");
     $('#edit-table tbody tr').remove();
     
@@ -72,8 +72,10 @@ function getTableById(){
 						loadTooltip(datasetId, result);
 					}
 					else{
-						alert("pas de csv!");
-						console.log("ERROR: ");
+						if(refresh) {
+							alert("pas de csv!");
+							console.log("ERROR: ");
+						}
 					}            
 				
 							
@@ -84,7 +86,9 @@ function getTableById(){
 			}); 
 		}
 		else{
-			alert("pas de csv!");
+			if(refresh) {
+				alert("pas de csv!");
+			}
 		}
     }
  
@@ -520,12 +524,12 @@ function preview(){
 }
 
 function baba(){
-	$('#selected_data select').html(""); 
-	getTableById();
+	//$('#selected_data select').html(""); 
+	getTableById(false);
 	var myVar = setInterval(function(){ 
 		if($('#selected_data select option').length > 0){
 			
-			getTableById();
+			getTableById(false);
 			clearInterval(myVar);
 		}
 	}, 500);
