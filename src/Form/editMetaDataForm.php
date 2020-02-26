@@ -1179,262 +1179,157 @@ class editMetaDataForm extends HelpFormBase
 			else{
 				$root='/home/user-client/drupal-d4c/';
 			}
-            
-        
+            $geo_res = array();
+			$idDataset;
 			if ($data_id == 'new') {
-            
-				////////resurce file/////
-				$form_file = $form_state->getValue('resours', 0);
-
-				if (isset($form_file[0]) && !empty($form_file[0])) {
-					$file = File::load($form_file[0]);
-					$file->setPermanent();
-					$file->save();
-					$fileName = parse_url($file->url());
-					//drupal_set_message('<pre>'. print_r($fileName,true) .'</pre>');
-					$host=$fileName[host];/////////////////////////////////////
-					$fileName = $fileName[path];
-					$filepath = $fileName;
-					
-					$fileName= strtolower($fileName);
-					$fileName =urldecode($fileName);
-					$fileName = $this->nettoyage2($fileName);
-					
-						
-					$fileName =explode("/", $fileName);
-					$fileName = $fileName[(count($fileName)-1)];
-					
-					$url_res = $file->url();
-					$url_res = str_replace('http:', 'https:', $url_res);
-						
-					//$filepathN = strtolower($filepath);
-					$filepathN =urldecode($filepath);
-					$filepathN = $this->nettoyage2($filepathN);
-
-					rename($root.''.urldecode($filepath), $root.''.$filepathN); 
-					
-					$filepath=$filepathN;
-					
-					
-					if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-						
-						 $url_res = 'http://'.$host.''.$filepath;
-					}
-					else{
-						$url_res = 'https://'.$host.''.$filepath;
-					}
-            
-					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
-						$xls_file = $root.''.$filepath;
-				  
-						$reader = new Xlsx();
-                    
-						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
-							$reader = new Xls();
-						}
-                
-						$spreadsheet = $reader->load($xls_file);
-
-						$loadedSheetNames = $spreadsheet->getSheetNames();
-
-						$writer = new Csv($spreadsheet);
-
-						foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
-							$writer->setSheetIndex($sheetIndex);
-							
-							$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
-							$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
-							$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
-							$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
-							$writer->save($csvpath);
-							break;
-						}
-						$has_csv = true;
-					}
-            
-					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
-                  
-						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-						
-					    $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-						$spreadsheet = $reader->load($root.''.$filepath);
-					    //$arr = $spreadsheet->getActiveSheet()->toArray();
-						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-						$existingCols = array();
-						$genCols = $form_state->getValue('generate_cols');
-						
-						if($genCols) {
-							$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
-						}
-						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
-							if($genCols) {
-								$label = 'colonne_' . $i;
-							}
-							else {
-								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
-							}
-							//error_log('value : ' . $label);
-							//$label = utf8_decode($label);
-							//error_log('utf8dec : ' . $label);
-							$label = $this->nettoyage($label);
-							//error_log('clean : ' . $label);
-							//$label = strtolower($label);
-							//$label = str_replace("?", "", $label);
-							//$label = preg_replace("/\r|\n/", "", $label);
-							if(in_array($label, $existingCols)) {
-								$label = $label . $i;
-							}
-							$existingCols[] = $label;
-							
-							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
-						}
-						
-						$writer = new Csv($spreadsheet);
-						
-						$writer->save($root.''.$filepath);
-						$has_csv = true;
-					}
-            
-					$resources = [    "package_id" => $idNewData,
-						"url" => $url_res,
-						"description" => '',
-						"name" =>$fileName,
-					];
-					//error_log("ddddddddddd .".json_encode($resources));
-					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
-					$return = json_decode($return, true);                
-					sleep(20);
-				}
-				
-				$api->calculateVisualisations($idNewData);
-			} 
+				$idDataset = $idNewData;
 			else {
-				////////resurce file/////
-            
-				$form_file = $form_state->getValue('resours', 0);
+				$idDataset = $data_id;
+			}
+				
+			////////resurce file/////
+			$form_file = $form_state->getValue('resours', 0);
 
-				if (isset($form_file[0]) && !empty($form_file[0])) {
-					$file = File::load($form_file[0]);
-					$file->setPermanent();
-					$file->save();
-					$fileName = parse_url($file->url());//error_log(json_encode($fileName));
-					$host=$fileName[host];
-					$fileName = $fileName[path];
-					$filepath = $fileName;
+			if (isset($form_file[0]) && !empty($form_file[0])) {
+				$file = File::load($form_file[0]);
+				$file->setPermanent();
+				$file->save();
+				$fileName = parse_url($file->url());
+				//drupal_set_message('<pre>'. print_r($fileName,true) .'</pre>');
+				$host=$fileName[host];/////////////////////////////////////
+				$fileName = $fileName[path];
+				$filepath = $fileName;
+				
+				$fileName= strtolower($fileName);
+				$fileName =urldecode($fileName);
+				$fileName = $this->nettoyage2($fileName);
+				
 					
-					$fileName= strtolower($fileName);
-					$fileName =urldecode($fileName);
-					$fileName = $this->nettoyage2($fileName);
+				$fileName =explode("/", $fileName);
+				$fileName = $fileName[(count($fileName)-1)];
+				
+				$url_res = $file->url();
+				$url_res = str_replace('http:', 'https:', $url_res);
 					
-						
-					$fileName =explode("/", $fileName);
-					$fileName = $fileName[(count($fileName)-1)];
+				//$filepathN = strtolower($filepath);
+				$filepathN =urldecode($filepath);
+				$filepathN = $this->nettoyage2($filepathN);
+
+				rename($root.''.urldecode($filepath), $root.''.$filepathN); 
+				
+				$filepath=$filepathN;
+				
+				
+				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					
-					$url_res = $file->url();
-					$url_res = str_replace('http:', 'https:', $url_res);
-						
-					//$filepathN = strtolower($filepath);
-					$filepathN =urldecode($filepath);
-					$filepathN = $this->nettoyagePath($filepathN);
-
-					rename($root.''.urldecode($filepath), $root.''.$filepathN);
-
-					rename($root.''.urldecode($filepath), $root.''.$filepathN);
-					
-					
-					$filepath=$filepathN;
-					
-					if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-						
-						 $url_res = 'http://'.$host.''.$filepath;
-					}
-					else{
-						$url_res = 'https://'.$host.''.$filepath;
-					}
-            
-					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
-				   
-						$xls_file = $root.''.$filepath;
-					
-						$reader = new Xlsx();
-                    
-						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
-							$reader = new Xls();
-						}
-                
-						$spreadsheet = $reader->load($xls_file);
-
-						$loadedSheetNames = $spreadsheet->getSheetNames();
-
-						$writer = new Csv($spreadsheet);
-
-						foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
-							$writer->setSheetIndex($sheetIndex);
-							
-							$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
-							$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
-							$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
-							$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
-							$writer->save($csvpath);
-							break;
-						}
-						
-					}
-            
-					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
-                  
-						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-
-				  		$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-						$spreadsheet = $reader->load($root.''.$filepath);
-					    //$arr = $spreadsheet->getActiveSheet()->toArray();
-						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-						$existingCols = array();
-						$genCols = $form_state->getValue('generate_cols');
-						
-						if($genCols) {
-							$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
-						}
-						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
-							if($genCols) {
-								$label = 'colonne_' . $i;
-							}
-							else {
-								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
-							}
-							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
-							//$label = utf8_decode($label);
-							$label = $this->nettoyage($label);
-							//$label = strtolower($label);
-							//$label = str_replace("?", "", $label);
-							//$label = preg_replace("/\r|\n/", "", $label);
-							if(in_array($label, $existingCols)) {
-								$label = $label . $i;
-							}
-							$existingCols[] = $label;
-							
-							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
-						}
-						
-						$writer = new Csv($spreadsheet);
-						
-						$writer->save($root.''.$filepath);
-						
-					}
-            
-					$resources = [     
-						"package_id" => $data_id,
-						"url" => $url_res,
-						"description" => '',
-						"name" =>$fileName,
-					];
-
-					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST");
-					$return = json_decode($return, true);                
-					sleep(20);
+					 $url_res = 'http://'.$host.''.$filepath;
 				}
+				else{
+					$url_res = 'https://'.$host.''.$filepath;
+				}
+            
+				if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
+					$xls_file = $root.''.$filepath;
+			  
+					$reader = new Xlsx();
+				
+					if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
+						$reader = new Xls();
+					}
+			
+					$spreadsheet = $reader->load($xls_file);
+
+					$loadedSheetNames = $spreadsheet->getSheetNames();
+
+					$writer = new Csv($spreadsheet);
+
+					foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
+						$writer->setSheetIndex($sheetIndex);
+						
+						$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
+						$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
+						$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
+						$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+						$writer->save($csvpath);
+						break;
+					}
+					$has_csv = true;
+				}
+            
+				else if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+			  
+					array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
+					
+					$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+					$spreadsheet = $reader->load($root.''.$filepath);
+					//$arr = $spreadsheet->getActiveSheet()->toArray();
+					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+					$existingCols = array();
+					$genCols = $form_state->getValue('generate_cols');
+					
+					if($genCols) {
+						$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
+					}
+					for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+						if($genCols) {
+							$label = 'colonne_' . $i;
+						}
+						else {
+							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+						}
+						//error_log('value : ' . $label);
+						//$label = utf8_decode($label);
+						//error_log('utf8dec : ' . $label);
+						$label = $this->nettoyage($label);
+						//error_log('clean : ' . $label);
+						//$label = strtolower($label);
+						//$label = str_replace("?", "", $label);
+						//$label = preg_replace("/\r|\n/", "", $label);
+						if(in_array($label, $existingCols)) {
+							$label = $label . $i;
+						}
+						$existingCols[] = $label;
+						
+						$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+					}
+					
+					$writer = new Csv($spreadsheet);
+					
+					$writer->save($root.''.$filepath);
+					$has_csv = true;
+				}
+				/*else if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || strtolower($res->format) == 'json') {
+					$json_match = false;
+					if(strtolower($res->format) == 'json'){
+						$json = file_get_contents($res->url);
+						$json = json_decode($json, true);
+						if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
+							$json_match = true;
+						}
+					}
+					if(strtolower($res->format) != 'json' || $json_match == True){
+						$geo_res[strtolower($res->format)] = $res->url;
+					}
+				}*/
+            
+				$resources = [    
+					"package_id" => $idDataset,
+					"url" => $url_res,
+					"description" => '',
+					"name" =>$fileName,
+				];
+				//error_log("ddddddddddd .".json_encode($resources));
+				$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				$return = json_decode($return, true);                
+				//sleep(20);
+			}
+			if($has_csv == TRUE){
+				sleep(20);
+			}
+			$api->calculateVisualisations($idNewData);
+			
+			if($data_id != "new"){
 				$has_csv = false;
 				
 				for ($i = 1; $i <= count($table_data); $i++) {
