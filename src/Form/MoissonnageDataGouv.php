@@ -2071,7 +2071,8 @@ class MoissonnageDataGouv extends HelpFormBase {
             $org_name = $org[result][title];
 
             $selectedDatasets = array_filter($form_state->getValue('ids'));
-
+			$tz = date_default_timezone_get();
+			date_default_timezone_set('UTC');
             foreach($selectedDatasets as &$value){
                 
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
@@ -2297,8 +2298,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 								continue;
 							}	
 							else {
-								if($ftypes[$col] == "esriFieldTypeString"){
-									$row[] = '"'.$feat["properties"][$col].'"';
+								if($ftypes[$col] == "esriFieldTypeDate"){
+									$row[] = '"'.date("d/m/Y H:i:s", intval($feat["properties"][$col])/1000).'"';
+									//$record[strtolower($col)] = '"'.$feat["properties"][$col].'"';
+								} else if($ftypes[$col] == "esriFieldTypeString"){
+									$str = str_replace('"', "'", $feat["properties"][$col]);
+									$row[] = '"'.$str.'"';
 									//$record[strtolower($col)] = '"'.$feat["properties"][$col].'"';
 								} else {
 									$row[] = $feat["properties"][$col];
@@ -2389,6 +2394,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					error_log($output);
 				}
 			}
+			date_default_timezone_set($tz);
+			error_log(date_default_timezone_get());
         }
 		
 

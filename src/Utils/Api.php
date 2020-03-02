@@ -296,7 +296,7 @@ class Api{
 				}
 			} else if(count(explode("NOT #null(", $value)) > 1){
 				$field = substr(explode("NOT #null(", $value)[1], 0, -1);
-				$res.=  $field. " <> ''"; 
+				$res.=  $field. " not in ('', ',')"; 
 			} else {
 				$res.=  "_full_text @@ to_tsquery('" . $value . "')";
 			}
@@ -433,11 +433,11 @@ class Api{
 									$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
 								}
 								
-								$where .= $fieldCoordinates." <> '' and ";
+								$where .= $fieldCoordinates." not in ('', ',') and ";
 							} else if($key == "geofilter.polygon"){
 								//polygon(path '((0,0),(1,1),(2,0))')
 								$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
-								$where .= $fieldCoordinates." <> '' and ";
+								$where .= $fieldCoordinates." not in ('', ',') and ";
 							} else {
 								if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
 									$where .= $key . "=" . $value . " and ";
@@ -941,7 +941,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.distance"){
 					$coord = explode(',', $value);
 					$lat = $coord[0];
@@ -965,7 +965,7 @@ class Api{
 						$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
 					}
 					
-					//$where .= $fieldCoordinates." <> '' and ";
+					//$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.polygon"){
 					//polygon(path '((0,0),(1,1),(2,0))')
 					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
@@ -1002,14 +1002,14 @@ class Api{
 			//$sql = "Select count(*) as count,min(CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT)) as minLat,max(CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT)) as maxLat,min(CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT)) as minLong,max(CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT)) as maxLong from \"" . $query_params['resource_id'] . "\"";
 			$sql = "Select count(*), min((point(".$fieldCoordinates."))[0]) as minLat, max((point(".$fieldCoordinates."))[0]) as maxLat, min((point(".$fieldCoordinates."))[1]) as minLong, max((point(".$fieldCoordinates."))[1]) as maxLong from \"" . $query_params['resource_id'] . "\"";
 			if(!empty($filters_init)){
-				$sql = $sql . $where. " and ".$fieldCoordinates." <> ''";
+				$sql = $sql . $where. " and ".$fieldCoordinates." not in ('', ',')";
 			} else {
-				$sql = $sql . " where ".$fieldCoordinates." <> ''";
+				$sql = $sql . " where ".$fieldCoordinates." not in ('', ',')";
 			}
 			$req['sql'] = $sql;
 		}
   
-		//echo $sql;
+		//echo $req['sql'];
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		
@@ -1023,9 +1023,9 @@ class Api{
 
 		if($fieldGeometries != ""){
 			if(!empty($filters_init)){
-				$where = $where. " and ".$fieldGeometries." <> ''";
+				$where = $where. " and ".$fieldGeometries." not in ('', ',')";
 			} else {
-				$where = " where ".$fieldGeometries." <> ''";
+				$where = " where ".$fieldGeometries." not in ('', ',')";
 			}
 			$sql = "Select cast(".$fieldGeometries."::json->'type' as text) as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where ." group by type_geom";
 			$req['sql'] = $sql;
@@ -1472,7 +1472,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.distance"){
 					$coord = explode(',', $value);
 					$lat = $coord[0];
@@ -1495,13 +1495,13 @@ class Api{
 						$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
 					}
 					
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				} else if($key == "geofilter.polygon"){
 					//polygon(path '((0,0),(1,1),(2,0))')
 					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else {
 					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
 						$where .= $key . "=" . $value . " and ";
@@ -3172,7 +3172,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.distance"){
 					$coord = explode(',', $value);
 					$lat = $coord[0];
@@ -3180,7 +3180,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
 					$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				}/* else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				}*/ else {
@@ -3728,7 +3728,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.distance"){
 					$coord = explode(',', $value);
 					$lat = $coord[0];
@@ -3736,7 +3736,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
 					$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." <> '' and ";
+					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				} else {
@@ -3986,7 +3986,7 @@ class Api{
 			*/
 			$func = $y["func"]; $f = "";
 			if (is_numeric($y["expr"][0])){
-				$y["expr"] = '"'.$y["expr"].'"';
+				$y["expr"] = ''.$y["expr"].'';
 			}
 			switch ($func) {
 				case "COUNT":
@@ -4113,6 +4113,9 @@ class Api{
 
 	  	$req = array();
 		$sql = "Select ". $fields ." from \"" . $query_params['resource_id'] . "\"" . $where . $groupby . $orderby . $limit;
+		
+		//error_log($sql);
+		
 		$req['sql'] = $sql;
 		//echo $sql;
 		$url2 = http_build_query($req);
@@ -4123,6 +4126,8 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
+		
+		error_log('ttt' . $result);
 		
 		$result = json_decode($result,true);
 	

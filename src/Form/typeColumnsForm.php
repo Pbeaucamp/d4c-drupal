@@ -137,7 +137,7 @@ class typeColumnsForm extends HelpFormBase {
 			
 		$form['table'] = array(
 			'#type' => 'table',
-			'#caption' => $this->t('Table'),
+			'#caption' => $this->t('Typage colonnes'),
 			'#header' => array(
 				"name" => $this->t(''),
 				"intitule" => $this->t('Intitulé'),
@@ -372,7 +372,7 @@ class typeColumnsForm extends HelpFormBase {
 			//'#default_value' => '<p>The quick brown fox jumped over the lazy dog.</p>',
 			'#prefix' => '<div class="row"><div class="col-md-4 col-xs-12">',
 			'#suffix' => '</div>',
-			'#value' => 'test'
+			//'#value' => 'test'
 			// '#default_value' => '<h2 class="d4cwidget-map-tooltip__header" ng-show="!!getTitle(record)">\n'.
 			// '<span ng-bind="getTitle(record)">'.
 			// '</span>'.

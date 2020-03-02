@@ -39,7 +39,7 @@ class MapTilesForm extends HelpFormBase {
 		$form['#attached']['drupalSettings']['maxBounds'] = json_encode(array());
 
         $api = new API();
-		$this->tiles = $api->getMapLayers();
+		$this->tiles = $api->getMapLayers()["layers"];
         
         $values = array();
 		$values["new"] = t("Ajouter une couche");

@@ -205,8 +205,14 @@ function addDataInTable(data){
         let date_timeLine_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-date_timeline form-item-table-'+i+'-date_timeline form-no-label">'+date_timeLine+'</div>';
         
         
-
-        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td>'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
+		$('#edit-table > thead > tr > th').first().css('position','sticky');
+		$('#edit-table > thead > tr > th').first().css('position','-webkit-sticky');
+		$('#edit-table > thead > tr > th').first().css('width','100px');
+		$('#edit-table > thead > tr > th').first().css('min-width','100px');
+		$('#edit-table > thead > tr > th').first().css('max-width','100px');
+		$('#edit-table > thead > tr > th').first().css('left','0px');
+		$('#edit-table > thead > tr > th').first().css('background-color','white');
+        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td style="background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
         //'<td>'+image_url_div+'</td>'+
         
         if(data.result.fields[i].info.notes){
@@ -475,7 +481,7 @@ function loadTooltip(idDataset, dataFields){
 }
 
 function preview(){
-	var html = $("#edit-template").val().replace(/\{/gi, "[").replace(/\}/gi, "]");
+	var html = $("#edit-template").val();//.replace(/\{/gi, "[").replace(/\}/gi, "]");
 	//'basemap':'`+new Date().getTime()+`'
 	var inner = `<d4c-dataset-context id="dataset" context="test" test-dataset="`+datasetName+`" test-parameters="{}">
 			<div class="leaflet-popup  leaflet-zoom-animated" style="opacity: 1;">

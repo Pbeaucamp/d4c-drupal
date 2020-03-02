@@ -323,6 +323,11 @@ function fillData(data) {
 						<div class="form-textarea-wrapper edit"> ` + upload + `
 							<textarea data-drupal-selector="edit-table-` + num + `-donnees" id="edit-table-` + num + `-donnees" name="table[` + num + `][donnees]" rows="5" cols="60" class="form-textarea resize-vertical" style="height: 2em;width: 19em;">` + data.resources[i].url + `</textarea>
 						</div>`;
+						
+		let donnees_old = `<a class="label" id="label-table-` + num + `-donnees_old" href="`+ data.resources[i].url +`" style="display:none;">` + data.resources[i].url + `</a>
+						<div class="form-textarea-wrapper edit" style="display:none;"> ` + upload + `
+							<textarea data-drupal-selector="edit-table-` + num + `-donnees_old" id="edit-table-` + num + `-donnees_old" name="table[` + num + `][donnees_old]" rows="5" cols="60" class="form-textarea resize-vertical" style="height: 2em;width: 19em;display:none;">` + data.resources[i].url + `</textarea>
+						</div>`;
 
 		let editer = `<input class="button js-form-submit form-submit label" value="Editer" type="button" onclick="editRow(` + (num) + `);">
 						<input class="button js-form-submit form-submit edit" value="Valider" type="button" onclick="validRow(` + (num) + `);" style="margin-bottom: 5px;">
@@ -346,6 +351,7 @@ function fillData(data) {
 														<td>` + donnes + `</td>
 														<td>` + editer + `</td>
 														<td>` + supprimer + status + `</td>
+														<td>` + donnees_old + `</td>
 														
 													</tr>`);
 
@@ -521,6 +527,7 @@ function editRow(num) {
 	$('#edit-table-' + num + '-name').val($('#label-table-' + num + '-name').text());
 	$('#edit-table-' + num + '-description').val($('#label-table-' + num + '-description').text());
 	$('#edit-table-' + num + '-donnees').val($('#label-table-' + num + '-donnees').text());
+	$('#edit-table-' + num + '-donnees_old').val($('#label-table-' + num + '-donnees_old').text());
 	$('#row_' + num).addClass('edit').removeClass("noedit");
 }
 
@@ -539,6 +546,7 @@ function validRow(num) {
 			$('#label-table-' + num + '-donnees').text($('[id^=edit-table-'+num+'-file] a')[0].href);
 			$('#label-table-' + num + '-donnees').attr("href",$('[id^=edit-table-'+num+'-file] a')[0].href);
 			$('#edit-table-' + num + '-donnees').val($('[id^=edit-table-'+num+'-file] a')[0].href);
+			$('#edit-table-' + num + '-donnees_old').val($('#label-table-' + num + '-donnees_old').text());
 		} else {
 			$('#label-table-' + num + '-donnees').text($('#edit-table-' + num + '-donnees').val());
 		}
