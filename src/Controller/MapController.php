@@ -92,7 +92,8 @@ class MapController extends ControllerBase {
 
             mod.factory("config", [function() {
                 return {
-                    HOST: "'.$config->client->domain.'"
+                    HOST: "'.$config->client->domain.'",
+					LANGUAGE: "fr"
                 }
             }]);
         </script>

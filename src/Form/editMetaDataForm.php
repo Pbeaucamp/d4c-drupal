@@ -8,6 +8,7 @@ namespace Drupal\ckan_admin\Form;
 
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Query;
+use Drupal\ckan_admin\Utils\Export;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
@@ -210,7 +211,6 @@ class editMetaDataForm extends HelpFormBase
             '#title' => $this->t('Titre :'),
              '#attributes' => array('style' => 'width: 50%;'),
 			 '#required' => TRUE,
-			 '#maxlength' => 95
         );
         
         $form['img_backgr'] = array(
@@ -244,7 +244,6 @@ class editMetaDataForm extends HelpFormBase
             '#options' => $licList,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;'),
-			'#required' => TRUE,
 
         );
 
@@ -254,7 +253,6 @@ class editMetaDataForm extends HelpFormBase
             '#options' => $organizationList,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;'),
-			'#required' => TRUE,
 
         );
 
@@ -804,6 +802,8 @@ class editMetaDataForm extends HelpFormBase
 				$private = false;
 			}
 
+			$datasetName = null;
+			$editDataset = null;
 			if ($data_id == 'new') {
                 
 				$tagsData = array();
@@ -958,7 +958,7 @@ class editMetaDataForm extends HelpFormBase
                     
                 $idNewData= $this->saveData($newData, $coll);
                 $idNewData= $idNewData[1];
-
+				$datasetName = $label;
 				//$api->calculateVisualisations($idNewData);
             }    
 			else {
@@ -966,7 +966,8 @@ class editMetaDataForm extends HelpFormBase
 				foreach ($dataSet as &$value) {
                     if ($value[id] == $data_id) {
                         $check=true;
-                        
+                        $datasetName = $value[name];
+						$editDataset = $value;
                         $extras = array();
                         $cout_extras = count($value[extras]);
                         $pict = false;
@@ -1314,19 +1315,7 @@ class editMetaDataForm extends HelpFormBase
 					$writer->save($root.''.$filepath);
 					$has_csv = true;
 				}
-				/*else if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || strtolower($res->format) == 'json') {
-					$json_match = false;
-					if(strtolower($res->format) == 'json'){
-						$json = file_get_contents($res->url);
-						$json = json_decode($json, true);
-						if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
-							$json_match = true;
-						}
-					}
-					if(strtolower($res->format) != 'json' || $json_match == True){
-						$geo_res[strtolower($res->format)] = $res->url;
-					}
-				}*/
+				
             
 				$genCols = $form_state->getValue('generate_cols');
 					
@@ -1343,7 +1332,21 @@ class editMetaDataForm extends HelpFormBase
 				//error_log("ddddddddddd .".json_encode($resources));
 				$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 				$return = $api->updateRequest($callUrluptres, $resources, "POST");
-				$return = json_decode($return, true);                
+				$return = json_decode($return, true);      
+
+				if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
+					$json_match = false;
+					if(strtolower(explode(".", $fileName)[1]) == 'json'){
+						$json = file_get_contents($url_res);
+						$json = json_decode($json, true);
+						if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
+							$json_match = true;
+						}
+					}
+					if(strtolower(explode(".", $fileName)[1]) != 'json' || $json_match == True){
+						$geo_res[strtolower(explode(".", $fileName)[1])] = array("url"=>$url_res, "id"=>$return["result"]["id"]);
+					}
+				}
 				//sleep(20);
 			}
 			if($has_csv == TRUE){
@@ -1352,7 +1355,7 @@ class editMetaDataForm extends HelpFormBase
 			$api->calculateVisualisations($idNewData);
 			
 			if($data_id != "new"){
-				$has_csv = false;
+				$is_csv = false;
 				
 				for ($i = 1; $i <= count($table_data); $i++) {
 					// del res
@@ -1436,9 +1439,10 @@ class editMetaDataForm extends HelpFormBase
 									break;
 								}
 								$has_csv = true;
+								$is_csv = true;
 							}
 					
-							if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+							else if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
 						  
 								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
 								// error_log('cccc' . $i . json_encode($table_data[$i]));
@@ -1507,6 +1511,7 @@ class editMetaDataForm extends HelpFormBase
 								
 								
 								$has_csv = true;
+								$is_csv = true;
 							}
 					
 							/*$resources = [     
@@ -1538,14 +1543,144 @@ class editMetaDataForm extends HelpFormBase
 							/*$callUrluptres = $this->urlCkan . "/api/action/resource_update";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
 							$return = $api->updateResourceAndPushDatastore($resources);
+							
+							if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
+								$json_match = false;
+								if(strtolower(explode(".", $fileName)[1]) == 'json'){
+									$json = file_get_contents($url_res);
+									$json = json_decode($json, true);
+									if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
+										$json_match = true;
+									}
+								}
+								if(strtolower(explode(".", $fileName)[1]) != 'json' || $json_match == True){
+									$geo_res[strtolower(explode(".", $fileName)[1])] = array("url"=>$url_res, "id"=>$table_data[$i][status][3]);
+								}
+							}
 						}
 					}
 				}
-				if($has_csv == TRUE){
+				if($is_csv == TRUE){
 					sleep(20);
-					
 				}
 				$api->calculateVisualisations($data_id);
+			}
+			
+			$command = NULL;
+			if($hascsv == FALSE && count($geo_res) > 0){
+				// on créé un csv
+				error_log("on créée un csv");
+				$csv = null;
+				$id = null;
+				if($geo_res["geojson"] != null){
+					error_log("la source est un geojson");
+					$url = $geo_res["geojson"]["url"];
+					$id = $geo_res["geojson"]["id"];
+					$json = Query::callSolrServer($url);
+					error_log("fichier récuperé");
+					$csv = Export::createCSVfromGeoJSON($json);
+					error_log("fichier converti");
+					file_put_contents($rootCsv, $csv);
+				} else if($geo_res["json"] != null){
+					error_log("la source est un json");
+					$url = $geo_res["json"]["url"];
+					$id = $geo_res["json"]["id"];
+					$json = Query::callSolrServer($url);
+					error_log("fichier récuperé");
+					$csv = Export::createCSVfromGeoJSON($json);
+					error_log("fichier converti");
+					file_put_contents($rootCsv, $csv);
+				} else {
+					$url = $geo_res["kml"]["url"];
+					$id = $geo_res["kml"]["id"];
+					//We create a tmp file in which we write the result and an output file to convert
+					$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+					$fileInput = fopen($pathInput, 'w');
+					$kml = Query::callSolrServer($url);
+					fwrite($fileInput, $kml);
+					fclose($fileInput);
+
+					//Get current Php directory to call the script
+					$dir = dirname(__FILE__);
+					$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
+
+					$typeConvert = 'GeoJSON';
+					
+					$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
+					$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
+					$message = shell_exec($command);
+					$json = file_get_contents ($rootJson);
+					$csv = Export::createCSVfromGeoJSON($json);
+					
+					
+					
+					unlink ($pathInput);
+					unlink ($rootJson);
+				}
+				$name = "csv_gen_" . $id . "_" . uniqid();
+				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
+				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+				file_put_contents($rootCsv, $csv);
+				
+				$update = null;
+				if($data_id != "new"){
+					foreach($editDataset[resources] as $res){
+						if(strpos($res[url], "csv_gen_" . $id) !== false){
+							$update = $res;
+							break;
+						}
+					}
+				}
+				
+				$return;
+				if($update != null){
+					$resources = [
+						//"package_id" => $data_id,
+						"id" => $update[id],
+						"url" => $urlCsv,
+						//"upload" => curl_file_create($url_res),
+						"description" => $update['description'],
+						"name" => $update['name'],
+						"format" => "csv",
+						"clear_upload" => true
+					];
+					
+					$return = $api->updateResourceAndPushDatastore($resources);
+					$return = json_decode($return, true); 
+				} else {
+					$resource = [     
+						"package_id" => $idDataset,
+						"url" => $urlCsv,
+						"description" => '',
+						"name" =>$name.".csv",
+						"format"=>'csv'
+					];
+
+					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resource, "POST");
+					$return = json_decode($return, true); 
+				}
+				
+				
+				$pathUserClient = '/home/user-client';
+				$pathUserClientData = $pathUserClient . '/data';
+				$buildGeoloc = 'false';
+				$selectedSeparator = ";";
+				$selectedEncoding = "UTF-8";
+				$onlyOneAddress = 'false';
+				$selectedAddress = "";
+				$selectedPostalCode = "";
+				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $datasetName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				
+			}
+			
+			
+			if($command != NULL){
+				sleep(20);
+				$api->calculateVisualisations($idNewData);
+				error_log($command);
+				$output = shell_exec($command);
+				error_log($output);
 			}
 			
 			// validata
@@ -1591,32 +1726,6 @@ class editMetaDataForm extends HelpFormBase
 			}
         }
     }
-	
-	function lettersToNumber($letters){
-		$alphabet = range('A', 'Z');
-		$number = 0;
-
-		foreach(str_split(strrev($letters)) as $key=>$char){
-			$number = $number + (array_search($char,$alphabet)+1)*pow(count($alphabet),$key);
-		}
-		return $number;
-	}
-	
-	function numberToLetters($number) {
-		$alphabet = range('A', 'Z');
-
-		$count = count($alphabet);
-        if ($number <= $count) {
-            return $alphabet[$number - 1];
-        }
-        $alpha = '';
-        while ($number > 0) {
-            $modulo = ($number - 1) % $count;
-            $alpha  = $alphabet[$modulo] . $alpha;
-            $number = floor((($number - $modulo) / $count));
-        }
-        return $alpha;
-	}
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
         
@@ -1955,6 +2064,32 @@ class editMetaDataForm extends HelpFormBase
         ];
 
 		return $elem;
+	}
+	
+	function lettersToNumber($letters){
+		$alphabet = range('A', 'Z');
+		$number = 0;
+
+		foreach(str_split(strrev($letters)) as $key=>$char){
+			$number = $number + (array_search($char,$alphabet)+1)*pow(count($alphabet),$key);
+		}
+		return $number;
+	}
+	
+	function numberToLetters($number) {
+		$alphabet = range('A', 'Z');
+
+		$count = count($alphabet);
+        if ($number <= $count) {
+            return $alphabet[$number - 1];
+        }
+        $alpha = '';
+        while ($number > 0) {
+            $modulo = ($number - 1) % $count;
+            $alpha  = $alphabet[$modulo] . $alpha;
+            $number = floor((($number - $modulo) / $count));
+        }
+        return $alpha;
 	}
     
 }
