@@ -211,6 +211,7 @@ class editMetaDataForm extends HelpFormBase
             '#title' => $this->t('Titre :'),
              '#attributes' => array('style' => 'width: 50%;'),
 			 '#required' => TRUE,
+			 '#maxlength' => 300
         );
         
         $form['img_backgr'] = array(
@@ -915,8 +916,11 @@ class editMetaDataForm extends HelpFormBase
 				$extras[(count($extras) - 1)]['value'] = json_encode($security);
 				
 				#######################
-
 				$label = $title;
+				if(strlen($label) > 95) {
+					$label = substr($label, 0, 95);
+				}
+				
 				/*$label = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $label)));
 				$label = str_replace(" ", "_", $label);
 				$label = str_replace("`", "_", $label);
@@ -928,7 +932,7 @@ class editMetaDataForm extends HelpFormBase
 				$label = preg_replace('#\&([A-za-z]{2})(?:lig)\;#', '\1', $label); // pour les ligatures e.g. '&oelig;'
 				$label = preg_replace('#\&[^;]+\;#', '', $label); // supprime les autres caractères
 				$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);*/
-				$label = $this->nettoyage($title);
+				$label = $this->nettoyage($label);
 				
 				$urlRes = $this->urlCkan ."/dataset/".$label;
 				
@@ -1442,7 +1446,7 @@ class editMetaDataForm extends HelpFormBase
 								$is_csv = true;
 							}
 					
-							else if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+							if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
 						  
 								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
 								// error_log('cccc' . $i . json_encode($table_data[$i]));
@@ -1481,11 +1485,11 @@ class editMetaDataForm extends HelpFormBase
 									else {
 										$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($j) . '1')->getValue();
 									}
-									//error_log('value : ' . $label);
+									error_log('value : ' . $label);
 									//$label = utf8_decode($label);
 									//error_log('utf8dec : ' . $label);
 									$label = $this->nettoyage($label);
-									//error_log('clean : ' . $label);
+									error_log('clean : ' . $label);
 									//$label = strtolower($label);
 									//$label = str_replace("?", "", $label);
 									//$label = preg_replace("/\r|\n/", "", $label);
