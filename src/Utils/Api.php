@@ -1217,10 +1217,10 @@ class Api{
 				preg_match("/equgpsy_x/i",$value['id']) || preg_match("/geoban/i",$value['id']) || 
 				preg_match("/codegeo/i",$value['id']) || preg_match("/localisation/i",$value['id']) || 
 				preg_match("/latlon/i",$value['id']) || preg_match("/lat_lon/i",$value['id'])) {
-					if($geoPointnb == 0) {
+					// if($geoPointnb == 0) {
 						$field['type'] = "geo_point_2d";
 						$geoPointnb = 1;
-					}
+					// }
 				//$field['type'] = "geo_point_2d";
 			} else if(preg_match("/geo_shape/i",$value['id']) || preg_match("/geom/i",$value['id']) || preg_match("/geojson/i",$value['id'])) {
 				$field['type'] = "geo_shape";
@@ -1457,6 +1457,22 @@ class Api{
 				unset($query_params[$key]);
 		    }
 		}
+		
+		if($reqFields == "") {
+			$i = 0;
+			foreach ($fields as $value) {
+				if($i > 0) {
+					$reqFields .= ',';
+					
+				}
+				if($value['name'] != '_id' && $value['name'] != '_full_text') {
+					$reqFields .= $value['name'];
+					$i++;
+				}
+				
+			}
+		}
+		
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
 		$where = "";$limit  = "";
@@ -1577,6 +1593,7 @@ class Api{
 		if($format == "objects"){
 			$records = array();
 		}
+		
 		foreach ($chunk as $_ids){
 			$query_params['filters'] = json_encode(array($fieldId => $_ids));
 			if($reqFields != ""){$query_params['fields'] = $reqFields;}
@@ -1599,6 +1616,8 @@ class Api{
 			if($format == "objects"){
 				$records = array_merge($records, json_decode($result2,true)["result"]["records"]);
 			} else {
+				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
+				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.$callUrl );
 				$records .= json_decode($result2,true)["result"]["records"];
 			}
 		
@@ -5197,9 +5216,9 @@ class Api{
     function updateRequest($callUrl, $binaryData, $requestType) {
         
         
-        error_log($callUrl);
+        // error_log($callUrl);
 		//error_log(json_encode( $binaryData ));
-		error_log($requestType);
+		// error_log($requestType);
 		
 		$jsonData = json_encode( $binaryData );
         //drupal_set_message('<pre>'. print_r($jsonData, true) .'</pre>');
@@ -5225,6 +5244,79 @@ class Api{
         //drupal_set_message('<pres>'.print_r($result, true).'</pre>');
         
 		return $result;
+	}
+	
+	function callDatapusher($resourceId) {
+		$callUrl = 'http://127.0.0.1:8800/job';
+		$cle = $this->config->ckan->api_key; 
+		$url = $this->config->ckan->url; 
+		$binaryData['api_key'] = $cle;
+		$binaryData['job_type'] = 'push_to_datastore';
+		$binaryData['metadata']['resource_id'] = $resourceId;
+		$binaryData['metadata']['ckan_url'] = $url;
+		$binaryData['api_key'] = $cle;
+		// error_log(json_encode( $binaryData ));
+		$jsonData = json_encode( $binaryData );
+        
+		$options = array (
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => 'POST',
+				CURLOPT_POSTFIELDS => $jsonData,
+				CURLOPT_HTTPHEADER => array (
+					'Content-type:application/json',
+					'Content-Length: ' . strlen ( $jsonData )
+				)
+		);
+	
+		$curl = curl_init ( $callUrl );
+		curl_setopt_array ( $curl, $options );
+		$result = curl_exec ( $curl );
+		curl_close ( $curl );
+		
+		$resp = json_decode($result);
+		// error_log($result);
+		$jobId = $resp->job_id;
+		$jobKey = $resp->job_key;
+		$i = 0;
+		while(true) {
+			$i = $i + 1;
+			if($i > 300) {
+				break;
+			}
+			sleep(1);
+			$options = array (
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => 'GET',
+				CURLOPT_HTTPHEADER => array (
+					'Authorization:  ' .$jobKey 
+				)
+			);
+			$curl = curl_init ( $callUrl . '/' . $jobId );
+			curl_setopt_array ( $curl, $options );
+			$result = curl_exec ( $curl );
+			curl_close ( $curl );
+			
+			$resp = json_decode($result);
+			if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
+				break;
+			}
+			else {
+				$finished = false;
+				foreach ($resp->logs as $value) {
+					error_log($value-> message);
+					$pos = strpos($value-> message, 'Saving chunk');
+					if($pos) {
+						$finished = true;
+						break;
+					}
+				}
+				if($finished) {
+					break;
+				}
+			}
+		}
+		
+		
 	}
 
     function sortDatasetbyKey($key){

@@ -402,7 +402,7 @@ class joinDatasetsForm extends HelpFormBase {
         );
 		
 		$form['m3d'] = array(
-			'#markup' => '<span>Ceci est effectue une jointure Full Join.</span>',
+			'#markup' => '<span>Ceci effectue une jointure Full Join.</span>',
 		);
 
 		return $form;

@@ -1206,7 +1206,7 @@ class editMetaDataForm extends HelpFormBase
 				
 			////////resurce file/////
 			$form_file = $form_state->getValue('resours', 0);
-
+			$idres = '';
 			if (isset($form_file[0]) && !empty($form_file[0])) {
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
@@ -1281,6 +1281,7 @@ class editMetaDataForm extends HelpFormBase
 					$spreadsheet = $reader->load($root.''.$filepath);
 					//$arr = $spreadsheet->getActiveSheet()->toArray();
 					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+					$nbColumns = $this->lettersToNumber($highestColumn);
 					$existingCols = array();
 					$genCols = $form_state->getValue('generate_cols');
 					
@@ -1338,6 +1339,8 @@ class editMetaDataForm extends HelpFormBase
 				$return = $api->updateRequest($callUrluptres, $resources, "POST");
 				$return = json_decode($return, true);      
 
+				$idres = $return["result"]["id"];
+				
 				if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
 					$json_match = false;
 					if(strtolower(explode(".", $fileName)[1]) == 'json'){
@@ -1354,13 +1357,23 @@ class editMetaDataForm extends HelpFormBase
 				//sleep(20);
 			}
 			if($has_csv == TRUE){
-				sleep(20);
+				//call datastore to make sure everything is loaded correctly
+				//error_log($idres);
+				// $urlDatapusher = 'http://localhost:8800/job';
+				$api->callDatapusher($idres);
+				
+				// if($nbColumns > 30) {
+					// sleep(40);
+				// }
+				// else {
+					// sleep(20);
+				// }
 			}
 			$api->calculateVisualisations($idNewData);
 			
 			if($data_id != "new"){
 				$is_csv = false;
-				
+				$idres = '';
 				for ($i = 1; $i <= count($table_data); $i++) {
 					// del res
 					// error_log('aaaa' . $i . json_encode($table_data[$i]));
@@ -1471,6 +1484,7 @@ class editMetaDataForm extends HelpFormBase
 								$spreadsheet = $reader->load($root.''.$filepath);
 								//$arr = $spreadsheet->getActiveSheet()->toArray();
 								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+								$nbColumns = $this->lettersToNumber($highestColumn);
 								$existingCols = array();
 								$oldname = $table_data[$i][donnees_old];
 								$genCols = strpos($oldname, '_gencol.csv') !== false;
@@ -1485,11 +1499,11 @@ class editMetaDataForm extends HelpFormBase
 									else {
 										$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($j) . '1')->getValue();
 									}
-									error_log('value : ' . $label);
+									// error_log('value : ' . $label);
 									//$label = utf8_decode($label);
 									//error_log('utf8dec : ' . $label);
 									$label = $this->nettoyage($label);
-									error_log('clean : ' . $label);
+									// error_log('clean : ' . $label);
 									//$label = strtolower($label);
 									//$label = str_replace("?", "", $label);
 									//$label = preg_replace("/\r|\n/", "", $label);
@@ -1547,7 +1561,7 @@ class editMetaDataForm extends HelpFormBase
 							/*$callUrluptres = $this->urlCkan . "/api/action/resource_update";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
 							$return = $api->updateResourceAndPushDatastore($resources);
-							
+							$idres = $table_data[$i][status][3];
 							if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
 								$json_match = false;
 								if(strtolower(explode(".", $fileName)[1]) == 'json'){
@@ -1565,7 +1579,15 @@ class editMetaDataForm extends HelpFormBase
 					}
 				}
 				if($is_csv == TRUE){
-					sleep(20);
+					
+					$api->callDatapusher($idres);
+					
+					// if($nbColumns > 30) {
+						// sleep(40);
+					// }
+					// else {
+						// sleep(20);
+					// }
 				}
 				$api->calculateVisualisations($data_id);
 			}
@@ -2095,5 +2117,4 @@ class editMetaDataForm extends HelpFormBase
         }
         return $alpha;
 	}
-    
 }
