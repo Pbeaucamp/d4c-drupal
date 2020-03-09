@@ -52,6 +52,9 @@ class DatasetsBoardForm extends HelpFormBase {
 			$isAdmin = true;
 		}
 
+		
+		
+		
         $option_org=array();
 		
 		$page = pager_find_page();
@@ -335,7 +338,8 @@ class DatasetsBoardForm extends HelpFormBase {
 		
 		
 		$form['#attached']['drupalSettings']['users'] = json_encode($userListComplete);
-	
+		// drupal_set_message('eee' . $current_user->id());
+		$form['#attached']['drupalSettings']['currentuser'] = $current_user->id();
 		return $form;
 	}
     

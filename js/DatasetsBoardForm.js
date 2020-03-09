@@ -1,10 +1,15 @@
 $ = jQuery;
 var users;
+var currentuser;
 
 $(document).ready(function(){
 	$("#edit-roles-list-administrator").attr("disabled", "disabled");
 	for (let [key, user] of Object.entries(users)) {
-		if(user.roles.includes('administrator')) {
+		// if(user.roles.includes('administrator')) {
+			// $("#edit-users-list-" + user.id).attr("disabled", "disabled");
+		// }
+		// console.log(currentuser);
+		if(currentuser == user.id) {
 			$("#edit-users-list-" + user.id).attr("disabled", "disabled");
 		}
 	}
@@ -195,4 +200,6 @@ function saveSecurity(){
 
 (function($, Drupal, drupalSettings) {
     users = JSON.parse(drupalSettings.users);
+	currentuser = drupalSettings.currentuser;
+	// console.log(currentuser);
 })(jQuery, Drupal, drupalSettings);

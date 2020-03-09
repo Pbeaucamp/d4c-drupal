@@ -195,7 +195,7 @@ class Export{
 					continue;
 				}	
 				else {
-					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($json,$col)){
 						$row[] = '"'.$feat["properties"][$col].'"';
 						if(!isset($colsTypes[$col])){
 							$colsTypes[$col] = "text";
