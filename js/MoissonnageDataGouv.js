@@ -224,15 +224,17 @@ $('#edit-ids').empty();
         $('#param_dataGouv').removeAttr('style');
         $('#edit-site-search').val('');
         $('#edit-site-search').val('Data_Gouv_fr');
+		$('#edit-chercher').show('');
 
     } else if (siteSearch == 'InfoCom94') {
         $('#edit-site-search').val('');
         $('#edit-site-search').val('InfoCom94');
+		$('#edit-chercher').show('');
 
     } else if (siteSearch == 'Public_OpenDataSoft_com') {
         $('#edit-site-search').val('');
         $('#edit-site-search').val('Public_OpenDataSoft_com');
-
+		$('#edit-chercher').show('');
 
     }
     else if (siteSearch == 'socrata') {
@@ -240,24 +242,28 @@ $('#edit-ids').empty();
         $('#edit-site-search').val('');
         $('#edit-site-search').val('socrata');
         $('#div_socrata').removeAttr('style');
+		$('#edit-chercher').show('');
     } 
     else if (siteSearch == 'dckan') {
         //alert();
         $('#edit-site-search').val('');
         $('#edit-site-search').val('ckan'); 
         $('#div_ckan').removeAttr('style');
+		$('#edit-chercher').show('');
     }
     else if (siteSearch == 'd4c') {
         //alert();
         $('#edit-site-search').val('');
         $('#edit-site-search').val('d4c'); 
         $('#div_d4c').removeAttr('style');
+		$('#edit-chercher').show('');
     }
     else if (siteSearch == 'odsall') {
         //alert();
         $('#edit-site-search').val('');
         $('#edit-site-search').val('odsall'); 
         $('#div_odsall').removeAttr('style');
+		$('#edit-chercher').show('');
     }
 	else if (siteSearch == 'arcgis') {
         //alert();

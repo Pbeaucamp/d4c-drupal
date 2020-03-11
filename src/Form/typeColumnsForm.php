@@ -51,6 +51,13 @@ class typeColumnsForm extends HelpFormBase {
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet,true);
         $dataSet = $dataSet[result][results];
+		
+		uasort($dataSet, function($a, $b) {
+			$res =  strcasecmp($a['title'], $b['title']);
+			// drupal_set_message(json_encode($a) . ' ------- ' . $b . '-----' .$res);
+			return $res;
+		});
+		
 		$this->datasets = $dataSet;
 		
         $ids=array();
@@ -66,10 +73,10 @@ class typeColumnsForm extends HelpFormBase {
 						
 					break;
                 }
-                else{
-                    $tableData[$i]='no_data_csv';
-                    $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
-                }
+                // else{
+                    // $tableData[$i]='no_data_csv';
+                    // $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
+                // }
             }
         }
 		
@@ -667,7 +674,7 @@ class typeColumnsForm extends HelpFormBase {
 		if($selected_org!=''){
 			$orgaFilter = '&q=organization:"'.$selected_org.'"';
 		}
-error_log($orgaFilter);
+// error_log($orgaFilter);
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
 			
         $dataSet = $dataSet->getContent();
@@ -692,13 +699,14 @@ error_log($orgaFilter);
 						
 					break;
                 }
-                else{
-                    $tableData[$i]='no_data_csv';
-                    $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
-                }
+                // else{
+                    // $tableData[$i]='no_data_csv';
+                    // $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
+					// break;
+                // }
             }
         }
-          error_log(count($ids));
+          // error_log(count($ids));
 		$form['selected_data'] = [
             '#type' => 'select',
 			'#title' => t('Sélectionner des données'),

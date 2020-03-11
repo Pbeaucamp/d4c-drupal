@@ -78,12 +78,19 @@ class editMetaDataForm extends HelpFormBase
         $api = new Api;
 
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-							   
+		
      
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
         $dataSet = json_decode($dataSet, true);
         $dataSet = $dataSet[result][results];
+		
+		uasort($dataSet, function($a, $b) {
+			$res =  strcasecmp($a['title'], $b['title']);
+			// drupal_set_message(json_encode($a) . ' ------- ' . $b . '-----' .$res);
+			return $res;
+		});
+		
 		//$dataSet = array();
 		
 		///////////////////////////////organization_list////

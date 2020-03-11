@@ -1,5 +1,9 @@
 $ = jQuery;
 
+document.addEventListener('DOMContentLoaded', function () {
+	updateUI();
+});
+
 function getDatasets(urlCkan, iduser) {
 	updateUI();
 	
@@ -120,21 +124,53 @@ function extractFields(data) {
 function fillFields(data) {
   // Resources
   $('#edit-selected-address').empty();
-  $('#edit-selected-address').append($('<option>').text("----"))
+  $('#edit-selected-address').append($('<option>').text("----"));
   
   $('#edit-selected-postalcode').empty();
-  $('#edit-selected-postalcode').append($('<option>').text("----"))
+  $('#edit-selected-postalcode').append($('<option>').text("----"));
+  
+  $('#edit-selected-numero').empty();
+  $('#edit-selected-numero').append($('<option>').text("----"));
+  
+  $('#edit-selected-rue').empty();
+  $('#edit-selected-rue').append($('<option>').text("----"));
+  
+  $('#edit-selected-ville').empty();
+  $('#edit-selected-ville').append($('<option>').text("----"));
+  
+  $('#edit-selected-lat').empty();
+  $('#edit-selected-lat').append($('<option>').text("----"));
+  
+  $('#edit-selected-long').empty();
+  $('#edit-selected-long').append($('<option>').text("----"));
   for (let i = 0; i < data.length; i++) {
     $('#edit-selected-address').append($('<option>').text(data[i].label).attr('value', data[i].name));
     $('#edit-selected-postalcode').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	$('#edit-selected-numero').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	$('#edit-selected-rue').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	$('#edit-selected-ville').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	$('#edit-selected-lat').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	$('#edit-selected-long').append($('<option>').text(data[i].label).attr('value', data[i].name));
   }
 }
 
 function updateUI() {
   let resourceId = $("#edit-selected-resource").val();
-  let value = $('input[name=type_geoloc]:checked', '#edit-type-geoloc').val();
+  let valueGeoloc = $('input[name=type_geoloc]:checked', '#edit-type-geoloc').val();
+  if(valueGeoloc == 'address') {
+	  $('#div_adress').css('display', 'block');
+	  $('#div_latlong').css('display', 'none');
+  }
+  else if(valueGeoloc == 'latlong') {
+	  $('#div_adress').css('display', 'none');
+	  $('#div_latlong').css('display', 'block');
+  }
+  else {
+	  $('#div_adress').css('display', 'none');
+	  $('#div_latlong').css('display', 'none');
+  }
 
-  let showFields = resourceId != "" && value == 'address';
-  $("#edit-selected-address").prop("disabled", !showFields);
-  $("#edit-selected-postalcode").prop("disabled", !showFields);
+  // let showFields = resourceId != "" && value == 'address';
+  // $("#edit-selected-address").prop("disabled", !showFields);
+  // $("#edit-selected-postalcode").prop("disabled", !showFields);
 }
