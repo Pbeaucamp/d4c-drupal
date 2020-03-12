@@ -273,8 +273,8 @@ class GeolocForm extends HelpFormBase
 		$numero = $form_state->getValue('selected_numero');
 		$rue = $form_state->getValue('selected_rue');
 		$ville = $form_state->getValue('selected_ville');
-		$lat = $form_state->getValue('selected_latitude');
-		$long = $form_state->getValue('selected_longitude');
+		$lat = $form_state->getValue('selected_lat');
+		$long = $form_state->getValue('selected_long');
 
 		$buildGeoloc = ($typeGeoloc == 'address') ? '1' : '0';
 		if($buildGeoloc == '0') {
@@ -307,30 +307,29 @@ class GeolocForm extends HelpFormBase
 		// 	-p "' . $selectedPostalCode . '" 
 		// 	-s ' . $minimumScore . ' 
 		// 	-f "' . $pathTempFile . '"';
-		' -g $g -n $n -np $np -d $d -k $k -pid $pid -rid $rid -rs "$rs" -re "$re" -oa $oa -a "$a" -p "$p" -s $s -f $f'
-		$command = '/usr/bin/java -jar /home/user-client/data/bpm.geoloc.creator_1.0.0.jar -g ' . $buildGeoloc . ' -n https://localhost:1337/ -np /home/user-client/data/clusters -d ' . $this->urlCkan . ' -k ' . $this->config->ckan->api_key . 
-		' -pid ' . $selectedDataset . ' -rid ' . $selectedResource . ' -rs ' . $selectedSeparator . ' -re ' . $selectedEncoding . ' -f /home/user-client/data/temp -s 10';
+		// ' -g $g -n $n -np $np -d $d -k $k -pid $pid -rid $rid -rs "$rs" -re "$re" -oa $oa -a "$a" -p "$p" -s $s -f $f'
+		$command = '/usr/bin/java -jar /home/user-client/data/bpm.geoloc.creator_1.0.0.jar -g "' . $buildGeoloc . '" -n "https://localhost:1337/" -np "/home/user-client/data/clusters" -d "' . $this->urlCkan . '" -k "' . $this->config->ckan->api_key . '" -pid "' . $selectedDataset . '" -rid "' . $selectedResource . '" -rs "' . $selectedSeparator . '" -re "' . $selectedEncoding . '" -f "/home/user-client/data/temp" -s "10"';
 		
 		if($buildGeoloc == '1') {
 			if($selectedPostalCode == '') {
 				$onlyOneAddress = 'true';
-				$command = $command . ' -p ' . $selectedPostalCode;
+				$command = $command . ' -p "' . $selectedPostalCode . '"';
 			}
-			$command = $command . ' -a ' . $numero . ' ' . $rue . ' ' . $ville . ' ' . $selectedAddress;
+			$command = $command . ' -a "' . $numero . ' ' . $rue . ' ' . $ville . ' ' . $selectedAddress . '"';
 		}
 		else if($buildGeoloc == '2') {
-			$command = $command . ' -lat ' . $lat . ' -long ' . $long;
+			$command = $command . ' -lat "' . $lat . '" -lon "' . $long . '"';
 		}
 		
-		drupal_set_message($command);
+		// drupal_set_message($command);
 
 		// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $selectedDataset . '" "' . $selectedResource . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 		// //error_log($command);
 
-		// $output = shell_exec($command);
+		$output = shell_exec($command);
         
         
-        // $validOutput = explode(" ", $output);
+        $validOutput = explode(" ", $output);
         
         if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
             drupal_set_message($output, 'error');

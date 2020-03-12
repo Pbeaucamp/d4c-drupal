@@ -143,6 +143,7 @@ class VisualisationController extends ControllerBase {
         
         $theme_label_ex=false;
         $theme=false;
+		$visu = 1;
         for($i=0; $i < count($met); $i++){
             if($met[$i]['key']=='LinkedDataSet'){
                 $links = $met[$i][value];
@@ -164,6 +165,10 @@ class VisualisationController extends ControllerBase {
                 
                 $themes ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">'.$themes.'</div></div>'; 
             }
+			
+			 if($met[$i]['key']=='default_visu'){
+				 $visu = $met[$i][value];
+			 }
 
             if($met[$i]['key']=='theme' && $theme_label_ex==false){
                 $theme=true;
@@ -208,7 +213,20 @@ class VisualisationController extends ControllerBase {
 				$visWidget = $result_w;
             }
         }
-        
+        // drupal_set_message($visu);
+		if($visu == 0) {
+			$tab = 'information';
+		}
+		else if($visu == 1) {
+			$tab = 'table';
+		}
+		else if($visu == 2) {
+			$tab = 'analyze';
+		}
+		else if($visu == 3) {
+			$tab = 'map';
+		}
+		
         if($theme==false){
             $themes ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">Default</div></div>'; 
         }

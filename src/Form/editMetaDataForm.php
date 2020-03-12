@@ -270,6 +270,14 @@ class editMetaDataForm extends HelpFormBase
             '#options' => array('Publique', 'Privée'),
             '#attributes' => array('style' => 'width: 50%;'),
         );
+		
+		
+        $form['selected_visu'] = array(
+            '#type' => 'select',
+            '#title' => t('*Visuallisation par défaut :'),
+            '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte'),
+            '#attributes' => array('style' => 'width: 50%;'),
+        );
         
 
         $form['selected_theme'] = array(
@@ -686,6 +694,9 @@ class editMetaDataForm extends HelpFormBase
         $licence = $form_state->getValue('selected_lic');
         $organization = $form_state->getValue('selected_org');
         $private = $form_state->getValue('selected_private');
+		$visu = $form_state->getValue('selected_visu');
+		
+		// drupal_set_message($visu);
         
         $widget = $form_state->getValue('table_widgets');
         $widget_html='';
@@ -900,6 +911,9 @@ class editMetaDataForm extends HelpFormBase
 				$extras[count($extras)]['key'] = 'widgets';
 				$extras[(count($extras) - 1)]['value'] = $widget;
 				
+				$extras[count($extras)]['key'] = 'default_visu';
+				$extras[(count($extras) - 1)]['value'] = $visu;
+				
 				###### security #######
 				$idUser = "*".\Drupal::currentUser()->id()."*";
 				$users = \Drupal\user\Entity\User::loadMultiple();
@@ -991,6 +1005,7 @@ class editMetaDataForm extends HelpFormBase
                         $overlaysMap_ex = false;
                         $dnt_viz_api = false;
                         $widget_ex = false;
+						$visu_ex = false;
                         
                         if ($cout_extras != 0) {
 
@@ -1058,6 +1073,11 @@ class editMetaDataForm extends HelpFormBase
                                     $value[extras][$j]['value'] = $them;
                                 }
 								
+								 if ($value[extras][$j]['key'] == 'default_visu') {
+                                    $visu_ex = true;
+                                    $value[extras][$j]['value'] = $visu;
+                                }
+								
                                 if ($value[extras][$j]['key'] == 'label_theme') {
                                     $theme_label_ex = true;
                                     $value[extras][$j]['value'] = $them_label;
@@ -1118,6 +1138,11 @@ class editMetaDataForm extends HelpFormBase
                         if ($them_t == false) {
                             $value[extras][count($value[extras])]['key'] = 'theme';
                             $value[extras][count($value[extras]) - 1]['value'] = $them; 
+                        }
+						
+						if ($visu_ex == false) {
+                            $value[extras][count($value[extras])]['key'] = 'default_visu';
+                            $value[extras][count($value[extras]) - 1]['value'] = $visu; 
                         }
                         
                         if ($analyse == false && $analyse_default!='') {
