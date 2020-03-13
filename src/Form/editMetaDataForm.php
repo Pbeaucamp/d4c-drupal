@@ -230,6 +230,11 @@ class editMetaDataForm extends HelpFormBase
             ),
             '#size' => 22,
         );
+		
+		$form['del_img'] = array(
+			'#type' => 'checkbox',
+			'#title' => $this->t('Supprimer l\'image de fond'),
+		);
         
         $form['description'] = array(
             '#type' => 'textarea',
@@ -1052,10 +1057,17 @@ class editMetaDataForm extends HelpFormBase
                                 }
                                 
                                 if ($value[extras][$j]['key'] == 'img_backgr') {
-                                    $pict2 = true;
-                                    if ($url_pict2 != '') {
-                                        $value[extras][$j]['value'] = $url_pict2;
-                                    }
+                                    $del_img = $form_state->getValue('del_img');
+									if(isset($del_img)) {
+										unset($value[extras]);
+										// $j--;
+									}
+									else {
+										$pict2 = true;
+										if ($url_pict2 != '') {
+											$value[extras][$j]['value'] = $url_pict2;
+										}
+									}
                                 }
                                 
                                 if ($value[extras][$j]['key'] == 'LinkedDataSet') {
