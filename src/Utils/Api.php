@@ -312,7 +312,7 @@ class Api{
 
 
 	public function callDatastoreApiFacet($params) {
-			
+		//error_log('params = ' . $params);
 		$query_params = $this->proper_parse_str($params);
 		if(array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
 
@@ -459,6 +459,9 @@ class Api{
 
 					$req = array();
 					$sql = "Select ".$query_params['fields'].", count(".$query_params['fields'].") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by ".$query_params['fields'];
+					
+					error_log($sql);
+					
 					$req['sql'] = $sql;
 					//echo $sql;
 					$url2 = http_build_query($req);
@@ -3126,6 +3129,9 @@ class Api{
 
 		foreach($query_params as $key => $value) {
 		    if (preg_match($patternRefine,$key)){
+				
+				$value = str_replace('_plussign_', '+', $value);
+				
 		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
 		        unset($query_params[$key]);
 		    }

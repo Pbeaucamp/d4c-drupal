@@ -1301,7 +1301,9 @@ class editMetaDataForm extends HelpFormBase
 					$spreadsheet = $reader->load($xls_file);
 
 					$loadedSheetNames = $spreadsheet->getSheetNames();
-
+					$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+					$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 					$writer = new Csv($spreadsheet);
 
 					foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
@@ -1324,7 +1326,9 @@ class editMetaDataForm extends HelpFormBase
 					$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 					$spreadsheet = $reader->load($root.''.$filepath);
 					//$arr = $spreadsheet->getActiveSheet()->toArray();
+					$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+					$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 					$nbColumns = $this->lettersToNumber($highestColumn);
 					$existingCols = array();
 					$genCols = $form_state->getValue('generate_cols');
@@ -1484,9 +1488,11 @@ class editMetaDataForm extends HelpFormBase
 								}
 						
 								$spreadsheet = $reader->load($xls_file);
-
+								$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+								$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 								$loadedSheetNames = $spreadsheet->getSheetNames();
-
+	
 								$writer = new Csv($spreadsheet);
 
 								foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
@@ -1527,7 +1533,9 @@ class editMetaDataForm extends HelpFormBase
 								$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 								$spreadsheet = $reader->load($root.''.$filepath);
 								//$arr = $spreadsheet->getActiveSheet()->toArray();
+								$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+								$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 								$nbColumns = $this->lettersToNumber($highestColumn);
 								$existingCols = array();
 								$oldname = $table_data[$i][donnees_old];
@@ -1876,7 +1884,7 @@ class editMetaDataForm extends HelpFormBase
 					 $form_state->setErrorByName('selected_lic', $this->t('Aucune licence sélectionnée'));
 				}	
 				if(($analyse_default!=$data_id && $analyse_default!='') || ($analyse_default1!='' && $analyse_default=='') || ($analyse_ok==false && $analyse_default1!='' && $analyse_default1!=$analyse_default)) {
-					$form_state->setErrorByName('analyse_default', $this->t('Erreur de valeur "Analyse par défaut"'));
+					//$form_state->setErrorByName('analyse_default', $this->t('Erreur de valeur "Analyse par défaut"'));
 				}   
 			}
         }
