@@ -1739,6 +1739,10 @@ class editMetaDataForm extends HelpFormBase
 					$return = json_decode($return, true); 
 				}
 				
+				$idres = $return["result"]["id"];
+				$api->callDatapusher($idres);
+				$api->calculateVisualisations($idDataset);
+				
 				
 				$pathUserClient = '/home/user-client';
 				$pathUserClientData = $pathUserClient . '/data';
