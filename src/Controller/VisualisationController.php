@@ -186,6 +186,9 @@ class VisualisationController extends ControllerBase {
                             </div>';
                 } 
             }
+			if($met[$i]['key']=='custom_view'){
+				$view = json_encode($met[$i][value]);
+			}
             
             if($met[$i]['key']=='widgets'){
                 $visWidget = $met[$i][value];
@@ -225,6 +228,15 @@ class VisualisationController extends ControllerBase {
 		}
 		else if($visu == 3) {
 			$tab = 'map';
+		}
+		else if($visu == 4) {
+			$tab = $view->title;
+		}
+		else if($visu == 5) {
+			$tab = 'timeline';
+		}
+		else if($visu == 6) {
+			$tab = 'calendar';
 		}
 		
         if($theme==false){

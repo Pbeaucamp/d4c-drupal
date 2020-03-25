@@ -280,7 +280,7 @@ class editMetaDataForm extends HelpFormBase
         $form['selected_visu'] = array(
             '#type' => 'select',
             '#title' => t('*Visuallisation par défaut :'),
-            '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte'),
+            '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte', 'Vues personalisées', 'Frise', 'Calendrier'),
             '#attributes' => array('style' => 'width: 50%;'),
         );
         
@@ -1288,87 +1288,90 @@ class editMetaDataForm extends HelpFormBase
 				else{
 					$url_res = 'https://'.$host.''.$filepath;
 				}
-            
-				if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
-					$xls_file = $root.''.$filepath;
-			  
-					$reader = new Xlsx();
 				
-					if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
-						$reader = new Xls();
+				//if files > 50MB we don't do the treatments.
+				if(!filesize($root.''.$filepath) > 50000000) {
+					
+					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
+						$xls_file = $root.''.$filepath;
+				  
+						$reader = new Xlsx();
+					
+						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
+							$reader = new Xls();
+						}
+				
+						$spreadsheet = $reader->load($xls_file);
+
+						$loadedSheetNames = $spreadsheet->getSheetNames();
+						$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+						$writer = new Csv($spreadsheet);
+
+						foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
+							$writer->setSheetIndex($sheetIndex);
+							
+							$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
+							$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
+							$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
+							$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+							$writer->save($csvpath);
+							break;
+						}
+						$has_csv = true;
 					}
-			
-					$spreadsheet = $reader->load($xls_file);
-
-					$loadedSheetNames = $spreadsheet->getSheetNames();
-					$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-					$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
-					$writer = new Csv($spreadsheet);
-
-					foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
-						$writer->setSheetIndex($sheetIndex);
+				
+					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+				  
+						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
 						
-						$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
-						$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
-						$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
-						$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
-						$writer->save($csvpath);
-						break;
-					}
-					$has_csv = true;
-				}
-            
-				if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
-			  
-					array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-					
-					$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-					$spreadsheet = $reader->load($root.''.$filepath);
-					//$arr = $spreadsheet->getActiveSheet()->toArray();
-					$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-					$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-					$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
-					$nbColumns = $this->lettersToNumber($highestColumn);
-					$existingCols = array();
-					$genCols = $form_state->getValue('generate_cols');
-					
-					if($genCols) {
-						$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
-					}
-					for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+						$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						$spreadsheet = $reader->load($root.''.$filepath);
+						//$arr = $spreadsheet->getActiveSheet()->toArray();
+						$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+						$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+						$nbColumns = $this->lettersToNumber($highestColumn);
+						$existingCols = array();
+						$genCols = $form_state->getValue('generate_cols');
+						
 						if($genCols) {
-							$label = 'colonne_' . $i;
+							$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
 						}
-						else {
-							$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+						for($i=1; $i<= $this->lettersToNumber($highestColumn) ; $i++){
+							if($genCols) {
+								$label = 'colonne_' . $i;
+							}
+							else {
+								$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+							}
+							//error_log('value : ' . $label);
+							//$label = utf8_decode($label);
+							//error_log('utf8dec : ' . $label);
+							$label = $this->nettoyage($label);
+							//error_log('clean : ' . $label);
+							//$label = strtolower($label);
+							//$label = str_replace("?", "", $label);
+							//$label = preg_replace("/\r|\n/", "", $label);
+							if(in_array($label, $existingCols)) {
+								$label = $label . $i;
+							}
+							$existingCols[] = $label;
+							
+							$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
 						}
-						//error_log('value : ' . $label);
-						//$label = utf8_decode($label);
-						//error_log('utf8dec : ' . $label);
-						$label = $this->nettoyage($label);
-						//error_log('clean : ' . $label);
-						//$label = strtolower($label);
-						//$label = str_replace("?", "", $label);
-						//$label = preg_replace("/\r|\n/", "", $label);
-						if(in_array($label, $existingCols)) {
-							$label = $label . $i;
-						}
-						$existingCols[] = $label;
 						
-						$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+						$writer = new Csv($spreadsheet);
+						if($genCols) {
+							$filepath = str_ireplace('.csv', '_gencol.csv', $filepath);
+							$url_res = 'https://'.$host.''.$filepath;
+						}
+						
+						$writer->save($root.''.$filepath);
+						$has_csv = true;
 					}
-					
-					$writer = new Csv($spreadsheet);
-					if($genCols) {
-						$filepath = str_ireplace('.csv', '_gencol.csv', $filepath);
-						$url_res = 'https://'.$host.''.$filepath;
-					}
-					
-					$writer->save($root.''.$filepath);
-					$has_csv = true;
 				}
-				
             
 				$genCols = $form_state->getValue('generate_cols');
 					
