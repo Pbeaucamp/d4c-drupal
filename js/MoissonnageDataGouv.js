@@ -81,7 +81,7 @@ var locale = "";
 if($("#domaine").length){
 	locale = '<span> <input name="search_on_site" type="radio" checked="checked" value="locale" onclick="hide_param();"> '+ $("#domaine").text() +'</span> <br>'
 }
-
+$('#edit-chercher').attr("placeholder", "Mots clés de recherche");
 $('#edit-chercher').before('<div id="site_search" style="margin-bottom:1em;""><p>'+locale+
 '<span><input name="search_on_site"  type="radio" value="Data_Gouv_fr" onclick="hide_param();"> Data.Gouv.fr </span><br>'+
 '<span> <input name="search_on_site" type="radio" value="Public_OpenDataSoft_com" onclick="hide_param();"> Public.OpenDataSoft.com</span><br>'+
@@ -91,11 +91,11 @@ $('#edit-chercher').before('<div id="site_search" style="margin-bottom:1em;""><p
 '<span> <input name="search_on_site" type="radio" value="odsall" onclick="hide_param();"> ODS</span><br> '+
 '<span> <input name="search_on_site" type="radio" value="arcgis" onclick="hide_param();"> ArcGIS</span>'+
 '</p></div>'+
-'<div id="div_ckan"><br><label for="edit-ckan-search">Ckan/Dkan:</label><input data-drupal-selector="edit-ckan-search" type="search" id="edit-ckan-search" name="ckan_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
-'<div id="div_d4c" style="display:none;"><br><label for="edit-d4c-search">D4C:</label><input data-drupal-selector="edit-d4c-search" type="search" id="edit-d4c-search" name="d4c_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
-'<div id="div_odsall" style="display:none;"><br><label for="edit-odsall-search">ODS:</label><input data-drupal-selector="edit-odsall-search" type="search" id="edit-odsall-search" name="odsall_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
+'<div id="div_ckan"><br><label for="edit-ckan-search">Url Ckan/Dkan:</label><input data-drupal-selector="edit-ckan-search" type="search" id="edit-ckan-search" name="ckan_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
+'<div id="div_d4c" style="display:none;"><br><label for="edit-d4c-search">Url Data4citizen:</label><input data-drupal-selector="edit-d4c-search" type="search" id="edit-d4c-search" name="d4c_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
+'<div id="div_odsall" style="display:none;"><br><label for="edit-odsall-search">Url ODS:</label><input data-drupal-selector="edit-odsall-search" type="search" id="edit-odsall-search" name="odsall_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
 '<div id="div_socrata" style="display:none;"><br><label for="edit-socrata-search">URL Socrata:</label><input data-drupal-selector="edit-socrata-search" type="search" id="edit-socrata-search" name="socrata_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>'+
-'<div id="div_arcgis" style="display:none;"><br><label for="edit-arcgis-search">ArcGIS Service Url:</label><input data-drupal-selector="edit-arcgis-search" type="search" id="edit-arcgis-search" name="arcgis_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>');
+'<div id="div_arcgis" style="display:none;"><br><label for="edit-arcgis-search">Url ArcGIS:</label><input data-drupal-selector="edit-arcgis-search" type="search" id="edit-arcgis-search" name="arcgis_search" value="" size="60" maxlength="128" class="form-search"><br><br></div>');
 
 $('#site_search').after('<div id="param_dataGouv"><hr><p><span><input name="search_by" type="radio" value="datasets"> Data Sets </span>&nbsp;<span> <input name="search_by" type="radio" checked="checked" value="organizations"> Organisations</span></p></div>');
 
