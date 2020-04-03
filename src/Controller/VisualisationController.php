@@ -238,6 +238,13 @@ class VisualisationController extends ControllerBase {
 		else if($visu == 6) {
 			$tab = 'calendar';
 		}
+		else if($visu == 7) {
+			$tab = 'wordcloud';
+		}
+		
+		if(!isset($tab)) {
+			$tab = 'table';
+		}
 		
         if($theme==false){
             $themes ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">Default</div></div>'; 

@@ -458,7 +458,7 @@ class Api{
 					}
 
 					$req = array();
-					$sql = "Select ".$query_params['fields'].", count(".$query_params['fields'].") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by ".$query_params['fields'];
+					$sql = "Select \"".$query_params['fields']."\", count(\"".$query_params['fields']."\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"".$query_params['fields'] . "\"";
 					
 					error_log($sql);
 					

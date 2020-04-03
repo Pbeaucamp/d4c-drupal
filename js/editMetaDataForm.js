@@ -380,6 +380,10 @@ function fillData(data) {
                 $('#edit-dataset-lies-table-' + links[f] + '-dt').val(1);
             }
         }
+		
+		if (data.extras[g].key == 'default_visu') {
+			$('#edit-selected-visu').val(data.extras[g].value);
+		}
 
         if (data.extras[g].key == 'theme') {
             for (let f = 0; f < data.extras.length; f++) {

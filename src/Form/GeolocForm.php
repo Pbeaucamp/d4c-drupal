@@ -321,7 +321,7 @@ class GeolocForm extends HelpFormBase
 			$command = $command . ' -lat "' . $lat . '" -lon "' . $long . '"';
 		}
 		
-		// drupal_set_message($command);
+		drupal_set_message($command);
 
 		// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $selectedDataset . '" "' . $selectedResource . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 		// //error_log($command);

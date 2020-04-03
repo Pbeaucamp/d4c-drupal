@@ -114,6 +114,20 @@ class DatasetsBoardForm extends HelpFormBase {
 		
 		$output = array();
 		foreach ($datasets as $row) {
+			
+			//$default_chart
+			// drupal_set_message(json_encode($row[extras]));
+			 for ($j = 0; $j < count($row[extras]); $j++) {
+				 if ($row[extras][$j]['key'] == 'analyse_default') {
+					 $default_chart = $row[extras][$j]['value'];
+					 break;
+				 }
+			 }
+			$viewLink = "/visualisation/?id=".$row["name"];
+			if(isset($default_chart)) {
+				$viewLink = $viewLink . '&' . $default_chart;
+			}
+			// drupal_set_message($viewLink);
 			$uirow = [
 				'name' => array('data' => array('#markup' => $row["title"])),
 				'orga' => array('data' => array('#markup' => $row["organization"]["title"])),
@@ -128,12 +142,16 @@ class DatasetsBoardForm extends HelpFormBase {
 					)
 				)),
 				//$row["name"],
+				
+				
+				
+				
 				'edit' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
 					[':link' => "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
 					'@name' => $this->t('Editer')])
 				),
 				'view' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
-					[':link' => "/visualisation/?id=".$row["name"], 
+					[':link' => $viewLink, 
 					'@name' => ($row["private"] ? $this->t('Prévisualiser') : $this->t('Visualiser'))])
 				),
 			];

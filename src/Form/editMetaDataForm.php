@@ -15,7 +15,8 @@ use Drupal\file\Entity\File;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
-use Drupal\ckan_admin\Utils\HelpFormBase;							  
+use Drupal\ckan_admin\Utils\HelpFormBase;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 
 /**
  * Implements an example form.
@@ -257,6 +258,7 @@ class editMetaDataForm extends HelpFormBase
             '#options' => $licList,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;'),
+			 '#required' => TRUE,
 
         );
 
@@ -266,6 +268,7 @@ class editMetaDataForm extends HelpFormBase
             '#options' => $organizationList,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;'),
+			 '#required' => TRUE,
 
         );
 
@@ -280,7 +283,7 @@ class editMetaDataForm extends HelpFormBase
         $form['selected_visu'] = array(
             '#type' => 'select',
             '#title' => t('*Visuallisation par défaut :'),
-            '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte', 'Vues personalisées', 'Frise', 'Calendrier'),
+            '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte', 'Vues personalisées', 'Frise', 'Calendrier', 'Nuage de mots'),
             '#attributes' => array('style' => 'width: 50%;'),
         );
         
@@ -1895,7 +1898,45 @@ class editMetaDataForm extends HelpFormBase
 				}   
 			}
         }
+		$this->applyErrorsInline($form, $form_state);
+		// if ($errors = $form_state->getErrors()) {
+			// // Add error to fields using Symfony Accessor
+			// $accessor = PropertyAccess::createPropertyAccessor();
+			// foreach ($errors as $field => $error) {
+				// if ($accessor->getValue($form, $field)) {
+					// $accessor->setValue($form, $field.'[#prefix]', '<div class="form-group error">');
+					// $accessor->setValue($form, $field.'[#suffix]', '<div class="input-error-desc">' .$error. '</div></div>');
+				// }
+			// }
+		// }
 	}
+	
+	  public function applyErrorsInline(array &$form, FormStateInterface $form_state) {
+		// If validation errors, add inline errors.
+		if ($errors = $form_state->getErrors()) {
+		  // Add error to fields using Symfony Accessor.
+		  $accessor = PropertyAccess::createPropertyAccessor();
+		  foreach ($errors as $field_accessor => $error) {
+			try {
+			  $accessor->getValue($form, $field_accessor);
+			  if ($field = $accessor->getValue($form, $field_accessor)) {
+
+				$prefix = str_replace('form-group', 'form-group has-danger error', $field['#prefix']);
+				$suffix = '<div class="input-error-desc" id="' . $field['#id'] . '-error">' . $error . '</div>' . $field['#suffix'];
+
+				$accessor->setValue($form, $field_accessor . '[#prefix]', $prefix);
+				$accessor->setValue($form, $field_accessor . '[#suffix]', $suffix);
+
+				$accessor->setValue($form, $field_accessor . '[#attributes][aria-invalid]', 'true');
+				$accessor->setValue($form, $field_accessor . '[#attributes][aria-describedby]', $field['#id'] . '-error');
+			  }
+			}
+			catch (\Exception $e) {
+
+			}
+		  }
+		}
+	  }
     
     public function saveData($newData, $data){
         $coll = $data[0];
