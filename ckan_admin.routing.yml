@@ -810,3 +810,11 @@ ckan_admin.records.api.orange:
     params: ''
   requirements:
     _permission: 'access content'
+
+ckan_admin.calldatapuhser:
+  path: '/api/datapusher/{resourceId}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::externalCallDatapusher'
+    _title: ''
+  requirements:
+    _permission: 'access content'

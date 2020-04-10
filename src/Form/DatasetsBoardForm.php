@@ -71,23 +71,24 @@ class DatasetsBoardForm extends HelpFormBase {
 			$qt = "";
 			$qs = "";
 			if($_GET["orga"] != ""){
-				$qo = 'organization:"'.$_GET["orga"].'"%20AND%20';
+				$qo = 'organization:"'.$_GET["orga"].'" AND ';
 			}
 			if($_GET["q"] != ""){
-				$qs = 'text:"*'.strtolower($_GET["q"]).'*"%20AND%20';
+				$qs = 'text:"*'.strtolower($_GET["q"]).'*" AND ';
 			}
 			if($_GET["type"] != ""){
-				$qt = $_GET["type"] == "private" ?  'private:"true"%20AND%20' : 'private:"false"%20AND%20';
+				$qt = $_GET["type"] == "private" ?  'private:"true" AND ' : 'private:"false" AND ';
 			}
 			$filterQuery .= $qo . $qs . $qt;
-			if(strlen($filterQuery) > 9){
-				$filterQuery = substr($filterQuery, 0, -9);
+			if(strlen($filterQuery) > 5){
+				$filterQuery = substr($filterQuery, 0, -5);
 			}
 			
 		}
         //rows=10&start=0&q=organization:ariam-idf%20AND%20text:*de*
 		$query = 'include_private=true&rows='.$num_per_page.'&start='.$offset.$filterQuery;
-		//drupal_set_message($query);
+		// drupal_set_message($query);
+		//error_log($query);
         $result = $api->callPackageSearch_public_private($query, $current_user->id());
 							   
      //drupal_set_message($result); 

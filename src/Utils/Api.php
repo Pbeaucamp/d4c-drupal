@@ -778,7 +778,7 @@ class Api{
     
  	public function callPackageSearch_public_private($params, $iduser=NULL) {
 		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
-		$params = str_replace(" ", "+", $params);	 
+		//$params = str_replace(" ", "+", $params);	 
 		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));	 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 		
@@ -801,6 +801,7 @@ class Api{
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
+		// drupal_set_message($callUrl);
         //error_log('url check : ' . $callUrl);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -5252,6 +5253,39 @@ class Api{
 		return $result;
 	}
 	
+	function externalCallDatapusher($resourceId) {
+		$callUrl = 'http://127.0.0.1:8800/job';
+		$cle = $this->config->ckan->api_key; 
+		$url = $this->config->ckan->url; 
+		$binaryData['api_key'] = $cle;
+		$binaryData['job_type'] = 'push_to_datastore';
+		$binaryData['metadata']['resource_id'] = $resourceId;
+		$binaryData['metadata']['ckan_url'] = $url;
+		$binaryData['api_key'] = $cle;
+		// error_log(json_encode( $binaryData ));
+		$jsonData = json_encode( $binaryData );
+        
+		$options = array (
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => 'POST',
+				CURLOPT_POSTFIELDS => $jsonData,
+				CURLOPT_HTTPHEADER => array (
+					'Content-type:application/json',
+					'Content-Length: ' . strlen ( $jsonData )
+				)
+		);
+	
+		$curl = curl_init ( $callUrl );
+		curl_setopt_array ( $curl, $options );
+		$result = curl_exec ( $curl );
+		curl_close ( $curl );
+		
+		$response = new Response();
+        $response->setContent('Done');
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
+	
 	function callDatapusher($resourceId) {
 		$callUrl = 'http://127.0.0.1:8800/job';
 		$cle = $this->config->ckan->api_key; 
@@ -5309,7 +5343,7 @@ class Api{
 			else {
 				$finished = false;
 				foreach ($resp->logs as $value) {
-					error_log($value-> message);
+					// error_log($value-> message);
 					$pos = strpos($value-> message, 'Saving chunk');
 					if($pos) {
 						$finished = true;
