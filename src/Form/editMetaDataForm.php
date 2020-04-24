@@ -1291,9 +1291,18 @@ class editMetaDataForm extends HelpFormBase
 				else{
 					$url_res = 'https://'.$host.''.$filepath;
 				}
+
+				try {
+					$filesize = filesize($root.''.$filepath);
+
+					error_log('Got file size ' .$root.''.$filepath.' of '.$filesize);
+				} catch (Exception $e) {
+					$filesize = 0;
+					error_log('Unable to get file size for ' .$root.''.$filepath);
+				}
 				
 				//if files > 50MB we don't do the treatments.
-				if(!filesize($root.''.$filepath) > 50000000) {
+				if($filesize < 50000000) {
 					
 					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
 						$xls_file = $root.''.$filepath;

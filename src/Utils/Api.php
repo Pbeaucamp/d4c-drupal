@@ -879,6 +879,8 @@ class Api{
 				break;
 			} 
 		}*/
+		$coordinatesAlreadyDefined = false;
+		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
 			//echo $value['id'];
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
@@ -886,11 +888,17 @@ class Api{
 			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
-			if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+			if(!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
+				$fieldCoordinates = $value['name'];
+				$coordinatesAlreadyDefined = true;
+			}
 			//if($value['type'] == "geo_shape") $fieldGeometries = "cast(".$value['name']."::json->'type' as text)";
-			if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
+			if(!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
+				$fieldGeometries = $value['name'];
+				$geometriesAlreadyDefined = true;
+			}
 		}
-		//echo $fieldCoordinates.$fieldGeometries;
+		//echo $fieldCoordinates;
 
 
 		if(array_key_exists('rows', $query_params)){
@@ -1373,14 +1381,21 @@ class Api{
 				break;
 			} 
 		}*/
+		$coordinatesAlreadyDefined = false;
+		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
 			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];*/
-			if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
-			if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];					  
+			if(!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
+				$fieldCoordinates = $value['name'];
+				$coordinatesAlreadyDefined = true;
+			}
+			if(!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
+				$fieldGeometries = $value['name'];
+				$geometriesAlreadyDefined = true;
+			}					  
 		}
-
 
 		foreach($query_params as $key => $value) {
 		    if (preg_match($patternRefine,$key)){
