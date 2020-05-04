@@ -128,11 +128,15 @@ class DatasetsBoardForm extends HelpFormBase {
 			if(isset($default_chart)) {
 				$viewLink = $viewLink . '&' . $default_chart;
 			}
+
+			$saveTimeZone = date_default_timezone_get();
+			date_default_timezone_set('Europe/Paris');
+
 			// drupal_set_message($viewLink);
 			$uirow = [
 				'name' => array('data' => array('#markup' => $row["title"])),
 				'orga' => array('data' => array('#markup' => $row["organization"]["title"])),
-				'last_modif' => array('data' => array('#markup' => date('Y-m-d H:i:s', strtotime($row["metadata_modified"])))),
+				'last_modif' => array('data' => array('#markup' => date('Y-m-d H:i:s', strtotime($row["metadata_modified"] . " UTC")))),
 				'display' => array('data' => array(
 					'#type' => 'select',     
 					'#options' => array('private'=>'Privé', 'public'=>'Public'),    
@@ -156,6 +160,9 @@ class DatasetsBoardForm extends HelpFormBase {
 					'@name' => ($row["private"] ? $this->t('Prévisualiser') : $this->t('Visualiser'))])
 				),
 			];
+			
+			date_default_timezone_set($saveTimeZone);
+
 			if($isAdmin == true){
 				$dataSecurity = "";
 				foreach($row["extras"] as $ext){

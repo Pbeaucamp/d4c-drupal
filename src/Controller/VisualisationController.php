@@ -214,8 +214,9 @@ class VisualisationController extends ControllerBase {
                 }
                 
 				$visWidget = $result_w;
-            }
-        }
+			}
+		}
+
         // drupal_set_message($visu);
 		if($visu == 0) {
 			$tab = 'information';
@@ -351,6 +352,13 @@ class VisualisationController extends ControllerBase {
 										<div class="d4c-dataset-metadata-block__metadata">
 											<div class="d4c-dataset-metadata-block__metadata-name" translate>Dataset Identifier</div>
 											<div class="d4c-dataset-metadata-block__metadata-value"><code>\{\{ ctx.dataset.metas.name \}\}</code></div>
+										</div>
+									</div>
+
+									<div class="d4c-dataset-metadata-block" ng-show="(ctx.dataset.metas.extras | filter:{key:\'date_dataset\'})[0].value">
+										<div class="d4c-dataset-metadata-block__metadata">
+											<div class="d4c-dataset-metadata-block__metadata-name" translate>Dataset date</div>
+											<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'date_dataset\'\})[0].value | formatMeta:\'date\' \}\}</div>
 										</div>
 									</div>
 
@@ -558,8 +566,8 @@ class VisualisationController extends ControllerBase {
 
     <footer class="ng-scope"></footer>
         
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+	<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>

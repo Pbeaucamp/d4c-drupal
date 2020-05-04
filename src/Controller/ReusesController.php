@@ -146,9 +146,9 @@ class ReusesController extends ControllerBase {
         
 
     </div>
+    <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
     <script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
 	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-    <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
 	<script src="https://unpkg.com/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
 	<script>
 			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );

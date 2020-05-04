@@ -794,15 +794,20 @@ class Api{
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
-			
+
+			//We encode url again
 			$params = http_build_query($query_params);
+		}
+		else {
+			//We replace space here as we do not encode url again
+			$params = str_replace(" ", "+", $params);	 
 		}
 		
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
 		// drupal_set_message($callUrl);
-        //error_log('url check : ' . $callUrl);
+        error_log('url check : ' . $callUrl);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);

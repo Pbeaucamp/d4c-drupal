@@ -17,6 +17,7 @@ use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
+use Drupal\Core\Url;
 
 /**
  * Implements an example form.
@@ -67,7 +68,7 @@ class editMetaDataForm extends HelpFormBase
 	}
     
     public function buildForm(array $form, FormStateInterface $form_state){
-        $form = parent::buildForm($form, $form_state);
+		$form = parent::buildForm($form, $form_state);
       
 		// $form['#attached']['library'][] = 'ckan_admin/iconpicker.form';
 
@@ -110,7 +111,6 @@ class editMetaDataForm extends HelpFormBase
         $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
         $curlOrg = curl_init($callUrlOrg);
 		//error_log($callUrlOrg, true);
-		//error_log($cle, true);
         curl_setopt_array($curlOrg, $optionst);
         $orgs = curl_exec($curlOrg);
         curl_close($curlOrg);
@@ -243,6 +243,12 @@ class editMetaDataForm extends HelpFormBase
             '#resizable' => true,
             '#attributes' => array('style' => 'width: 50%;'),
 
+		);
+		
+		$form['date_dataset'] = array(
+            '#type' => 'date',
+            '#title' => $this->t('Date du jeu de données'),
+            '#date_date_format' => 'd/m/Y'
         );
         
         $form['tags'] = array(
@@ -698,6 +704,7 @@ class editMetaDataForm extends HelpFormBase
         $title = $form_state->getValue('title');
         $data_id = $form_state->getValue('selected_data_id');
         $description = $form_state->getValue('description');
+        $dateDataset = $form_state->getValue('date_dataset');
         $tags = $form_state->getValue('tags');
         $licence = $form_state->getValue('selected_lic');
         $organization = $form_state->getValue('selected_org');
@@ -922,6 +929,9 @@ class editMetaDataForm extends HelpFormBase
 				$extras[count($extras)]['key'] = 'default_visu';
 				$extras[(count($extras) - 1)]['value'] = $visu;
 				
+				$extras[count($extras)]['key'] = 'date_dataset';
+				$extras[(count($extras) - 1)]['value'] = $dateDataset;
+				
 				###### security #######
 				$idUser = "*".\Drupal::currentUser()->id()."*";
 				$users = \Drupal\user\Entity\User::loadMultiple();
@@ -1014,6 +1024,7 @@ class editMetaDataForm extends HelpFormBase
                         $dnt_viz_api = false;
                         $widget_ex = false;
 						$visu_ex = false;
+                        $date_dataset_ex = false;
                         
                         if ($cout_extras != 0) {
 
@@ -1117,6 +1128,11 @@ class editMetaDataForm extends HelpFormBase
                                     $widget_ex = true;
                                     $value[extras][$j]['value'] = $widget;
                                 }
+                                
+                                if ($value[extras][$j]['key'] == 'date_dataset') {
+                                    $date_dataset_ex = true;
+                                    $value[extras][$j]['value'] = $dateDataset;
+                                }
 
                             }
 
@@ -1178,6 +1194,11 @@ class editMetaDataForm extends HelpFormBase
                         if ($widget_ex == false && $widget!='') {
                             $value[extras][count($value[extras])]['key'] = 'widgets';
                             $value[extras][count($value[extras]) - 1]['value'] = $widget; 
+                        }
+
+                        if ($date_dataset_ex == false) {
+                            $value[extras][count($value[extras])]['key'] = 'date_dataset';
+                            $value[extras][count($value[extras]) - 1]['value'] = $dateDataset; 
                         }
                         
                         $value[title] = $title;
@@ -1295,7 +1316,7 @@ class editMetaDataForm extends HelpFormBase
 				try {
 					$filesize = filesize($root.''.$filepath);
 
-					error_log('Got file size ' .$root.''.$filepath.' of '.$filesize);
+					// error_log('Got file size ' .$root.''.$filepath.' of '.$filesize);
 				} catch (Exception $e) {
 					$filesize = 0;
 					error_log('Unable to get file size for ' .$root.''.$filepath);
@@ -1821,6 +1842,17 @@ class editMetaDataForm extends HelpFormBase
 					}
                 }
 			}
+
+			// $form_state->disableRedirect(true);
+			// $form_state->setRebuild(TRUE);
+
+			// set relative internal path
+			$redirect_path = "/admin/config/data4citizen/editMetaDataForm?id=" . $idNewData;
+			$url = url::fromUserInput($redirect_path);
+
+			// set redirect
+			$form_state->setRedirectUrl($url);
+			// $form_state->setRedirectUrl('/admin/config/data4citizen/editMetaDataForm?id=50d433fb-91d4-4fd8-a9a6-9f7cbf925887');
         }
     }
     
