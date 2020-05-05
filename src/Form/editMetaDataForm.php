@@ -1847,7 +1847,7 @@ class editMetaDataForm extends HelpFormBase
 			// $form_state->setRebuild(TRUE);
 
 			// set relative internal path
-			$redirect_path = "/admin/config/data4citizen/editMetaDataForm?id=" . $idNewData;
+			$redirect_path = "/admin/config/data4citizen/editMetaDataForm?id=" . $idDataset;
 			$url = url::fromUserInput($redirect_path);
 
 			// set redirect

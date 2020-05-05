@@ -453,6 +453,12 @@ function fillData(data) {
                 $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(' + num + ')">');
             }
         }
+
+        
+        // dataset date
+        if (data.extras[g].key == 'date_dataset') {
+            $('#edit-date-dataset').val(data.extras[g].value);
+        }
     }
 
     //    

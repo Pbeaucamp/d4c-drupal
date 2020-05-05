@@ -2154,7 +2154,7 @@ class Api{
 		//$data_array["metas"]["title"]=$result["result"]["name"];
 		$desc = str_replace(PHP_EOL, '<br>', $result["result"]["notes"]);
 		$data_array["metas"]["description"]= $desc;
-		$data_array["metas"]["modified"]= current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $result["result"]["metadata_modified"];
+		$data_array["metas"]["modified"] = $this->findMostRecentDate(current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"], $result["result"]["metadata_modified"]);
 		$data_array["metas"]["visibility"]="domain";
 		$data_array["metas"]["metadata_processed"]=$result["result"]["metadata_created"];
 		$data_array["metas"]["license"]=$data_array["metas"]["license_title"];
@@ -2204,6 +2204,18 @@ class Api{
 		}*/
         
 		return $data_array;
+	}
+
+	public function findMostRecentDate($firstDateStr, $lastDateStr) {
+		if ($firstDateStr) {
+			$firstDate = strtotime($firstDateStr);
+			$lastDate = strtotime($lastDateStr);
+			if ($firstDate > $lastDate) {
+				return $firstDateStr;
+			}
+		}
+
+		return $lastDateStr;
 	}
 
 	public function callPackageShow2($datasetid,$params) {
