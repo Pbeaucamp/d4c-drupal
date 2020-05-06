@@ -1440,18 +1440,20 @@ class editMetaDataForm extends HelpFormBase
 				}
 				//sleep(20);
 			}
+
+			// 20200506 - For now we remove the call to datastore and add back the sleep that were there before because it loads data twice in datastore
+			// The next step is to verify the datapusher's job and wait for it to finish
 			if($has_csv == TRUE){
 				//call datastore to make sure everything is loaded correctly
 				//error_log($idres);
-				// $urlDatapusher = 'http://localhost:8800/job';
-				$api->callDatapusher($idres);
+				//$api->callDatapusher($idres);
 				
-				// if($nbColumns > 30) {
-					// sleep(40);
-				// }
-				// else {
-					// sleep(20);
-				// }
+				if ($nbColumns > 30) {
+					sleep(40);
+				}
+				else {
+					sleep(20);
+				}
 			}
 			$api->calculateVisualisations($idNewData);
 			
