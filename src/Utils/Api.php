@@ -873,8 +873,8 @@ class Api{
 		//echo $params . "\r\n";
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id']);
-		//echo json_encode($fields);
+		$fields = $this->getAllFields($query_params['resource_id'], true);
+
 		$fieldCoordinates="";
 		$fieldGeometries="";
 		$fieldId = "_id";
@@ -884,11 +884,20 @@ class Api{
 				break;
 			} 
 		}*/
+		
+		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
 		$coordinatesAlreadyDefined = false;
+		foreach ($fields as $value) {
+			foreach($value["annotations"] as $annotation){
+				if($annotation["name"] == "is_geoloc"){
+					$fieldCoordinates = $value['name'];
+					$coordinatesAlreadyDefined = true;
+				}
+			}
+		}
+
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
-			echo $value['annotations'];
-
 			//echo $value['id'];
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
 			if($value['id'] == "geo_shape") $fieldGeometries = "cast(geo_shape::json->'type' as text)";
@@ -905,7 +914,6 @@ class Api{
 				$geometriesAlreadyDefined = true;
 			}
 		}
-		//echo $fieldCoordinates;
 
 
 		if(array_key_exists('rows', $query_params)){
@@ -1381,10 +1389,14 @@ class Api{
        
         
 
-		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
+		$fields = $this->getAllFields($query_params['resource_id'], true, FALSE);
 		//echo json_encode($fields);
-		$fieldId = "_id";$reqFields="";
-		$fieldCoordinates='';$fieldGeometries='';
+		$fieldId = "_id";
+		$reqFields="";
+
+		$fieldCoordinates='';
+		$fieldGeometries='';
+
 		$reqQfilter;
 		/*foreach ($fields as $value) {
 			if(preg_match("/id|num|code|siren/i",$value['name'])){
@@ -1392,7 +1404,18 @@ class Api{
 				break;
 			} 
 		}*/
+
+		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
 		$coordinatesAlreadyDefined = false;
+		foreach ($fields as $value) {
+			foreach($value["annotations"] as $annotation){
+				if($annotation["name"] == "is_geoloc"){
+					$fieldCoordinates = $value['name'];
+					$coordinatesAlreadyDefined = true;
+				}
+			}
+		}
+
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
