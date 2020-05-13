@@ -194,6 +194,10 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('DATE ET HEURE'),
 					':action' => 'checkAll("-dateTime","checkboxDateEtHeure")'])
 				),
+				"isGeoloc" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxIsGeoloc" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Gestion géolocalisation'),
+					':action' => 'checkAll("-isGeoloc","checkboxIsGeoloc")'])
+				),
 				"description" => $this->t("Description"),
 				"libelleFriseChrono" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxLibelleFriseChrono" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('Libellé de Frise Chronologique'),
@@ -280,6 +284,11 @@ class typeColumnsForm extends HelpFormBase {
 		
 			//date 
 			$form['table'][$i]['datetime'] = array(
+				'#type' => 'checkbox',
+			); 
+		
+			//isGeoloc 
+			$form['table'][$i]['isGeoloc'] = array(
 				'#type' => 'checkbox',
 			); 
 	 
@@ -564,6 +573,13 @@ class typeColumnsForm extends HelpFormBase {
 //              else{
 //                  $notes=$notes.'';
 //              }
+            }
+
+            if ($table_data[$i][isGeoloc]){
+                $isGeoloc = $table_data[$i][isGeoloc];
+                if($isGeoloc==1){
+                    $notes=$notes.'<!--is_geoloc-->,';
+                }
             }
             
             if ($table_data[$i][intitule_facette]){

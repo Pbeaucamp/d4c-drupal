@@ -887,6 +887,8 @@ class Api{
 		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
+			echo $value['annotations'];
+
 			//echo $value['id'];
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
 			if($value['id'] == "geo_shape") $fieldGeometries = "cast(geo_shape::json->'type' as text)";
@@ -1197,6 +1199,10 @@ class Api{
 				}
                 if(preg_match("/<!--.*date_timeLine.*-->/i",$description)) {
 					$annotations[] = array("name" => "date_timeLine");
+					//$hasFacet = true; //echo "1";
+				}
+                if(preg_match("/<!--.*is_geoloc.*-->/i",$description)) {
+					$annotations[] = array("name" => "is_geoloc");
 					//$hasFacet = true; //echo "1";
 				}
 				
