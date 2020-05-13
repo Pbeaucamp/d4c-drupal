@@ -6,10 +6,9 @@
 
 namespace Drupal\ckan_admin\Form;
 
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ckan_admin\Utils\HelpFormBase;
-use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\GeolocHelper;
 
 /**
  * Implements an example form.
@@ -111,8 +110,8 @@ class GeolocForm extends HelpFormBase
 
 		$form['separator'] = array(
 			'#type' => 'textfield',
-			'#title' => $this->t('Séparateur (; par défaut):'),
-			'#default_value' => t(';'),
+			'#title' => $this->t('Séparateur (, par défaut):'),
+			'#default_value' => t(','),
 		);
 
 		$form['encoding'] = array(
@@ -195,6 +194,27 @@ class GeolocForm extends HelpFormBase
 		$form['div_latlong_end'] = array(
 			'#markup' => '</div>',
 		);
+		
+		$form['div_one_geoloc_column'] = array(
+			'#markup' => '<div id="div_one_geoloc_column">',
+		);
+		
+		$form['selected_geoloc'] = array(
+			'#type' => 'select',
+			'#title' => t('Colonne géolocalisation:'),
+			'#empty_option' => t('----'),
+			'#validated' => TRUE,
+		);
+		
+		$form['geoloc_separator'] = array(
+			'#type' => 'textfield',
+			'#title' => $this->t('Séparateur géolocalisation (, par défaut):'),
+			'#default_value' => t(','),
+		);
+		
+		$form['div_one_geoloc_column_end'] = array(
+			'#markup' => '</div>',
+		);
 
 		$form['apply'] = array(
 			'#type' => 'submit',
@@ -208,7 +228,6 @@ class GeolocForm extends HelpFormBase
 	{
 		$selectedDataset = $form_state->getValue('selected_dataset');
 		$selectedResource = $form_state->getValue('selected_resource');
-		$selectedTypeMap = $form_state->getValue('selected_type_map');
 
 		$typeGeoloc = $form_state->getValue('type_geoloc');
 
@@ -220,13 +239,13 @@ class GeolocForm extends HelpFormBase
 		$selectedVille = $form_state->getValue('selected_ville');
 		$selectedLat = $form_state->getValue('selected_lat');
 		$selectedLong = $form_state->getValue('selected_long');
+		
+		$selectedGeoloc = $form_state->getValue('selected_geoloc');
+		$selectedGeolocSeparator = $form_state->getValue('geoloc_separator');
 
 		if ($selectedDataset == '') {
 			$form_state->setErrorByName('selected_dataset', $this->t('Ce champ est obligatoire.'));
 		}
-//        if ($selectedTypeMap  == '') {
-//			$form_state->setErrorByName('selected_type_map', $this->t('Ce champ est obligatoire.2'));
-//		}
 		if ($selectedResource == '') {
 			$form_state->setErrorByName('selected_resource', $this->t('Ce champ est obligatoire.'));
 		}
@@ -235,7 +254,9 @@ class GeolocForm extends HelpFormBase
 		}
 		
 		if($typeGeoloc == 'address') {
-			
+			if($selectedAddress == '') {
+				$form_state->setErrorByName('selected_address', $this->t('Ce champ est obligatoire.'));
+			}
 		}
 		else if($typeGeoloc == 'latlong') {
 			if($selectedLat == '') {
@@ -243,6 +264,14 @@ class GeolocForm extends HelpFormBase
 			}
 			if($selectedLong == '') {
 				$form_state->setErrorByName('selected_long', $this->t('Ce champ est obligatoire.'));
+			}
+		}
+		else if($typeGeoloc == 'geoloc') {
+			if($selectedGeoloc == '') {
+				$form_state->setErrorByName('selected_geoloc', $this->t('Ce champ est obligatoire.'));
+			}
+			if($selectedGeolocSeparator == '') {
+				$form_state->setErrorByName('geoloc_separator', $this->t('Ce champ est obligatoire.'));
 			}
 		}
 		
@@ -256,41 +285,37 @@ class GeolocForm extends HelpFormBase
 		// }
 	}
 
-	public function submitForm(array &$form, FormStateInterface $form_state)
-	{
+	public function submitForm(array &$form, FormStateInterface $form_state) {
 
 		$selectedDataset = $form_state->getValue('selected_dataset');
 		$selectedResource = $form_state->getValue('selected_resource');
-		$selectedTypeMap = $form_state->getValue('selected_type_map');
 
 		$selectedSeparator = $form_state->getValue('separator');
 		$selectedEncoding = $form_state->getValue('encoding');
 
 		$typeGeoloc = $form_state->getValue('type_geoloc');
 
-		$selectedAddress = $form_state->getValue('selected_address');
-		$selectedPostalCode = $form_state->getValue('selected_postalcode');
-		$numero = $form_state->getValue('selected_numero');
-		$rue = $form_state->getValue('selected_rue');
-		$ville = $form_state->getValue('selected_ville');
-		$lat = $form_state->getValue('selected_lat');
-		$long = $form_state->getValue('selected_long');
+		$colAdress = $form_state->getValue('selected_address');
+		$colPostalCode = $form_state->getValue('selected_postalcode');
+		$colNum = $form_state->getValue('selected_numero');
+		$colStreet = $form_state->getValue('selected_rue');
+		$colCity = $form_state->getValue('selected_ville');
+		$colLat = $form_state->getValue('selected_lat');
+		$colLon = $form_state->getValue('selected_long');
 
-		$buildGeoloc = ($typeGeoloc == 'address') ? '1' : '0';
-		if($buildGeoloc == '0') {
-			$buildGeoloc = ($typeGeoloc == 'latlong') ? '2' : '0';
-		}
+		$onlyOneAddress = $colPostalCode == '';
+		
+		$colCoordinate = $form_state->getValue('selected_geoloc');
+		$coordinateSeparator = $form_state->getValue('geoloc_separator');
+
+		$buildGeolocType = ($typeGeoloc == 'address') ? '1' : (($typeGeoloc == 'latlong') ? '2' : '0');
+
+		
+		$geolocHelper = new GeolocHelper();
+		$geolocHelper->buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon);
 		
 		// $nodeUrl = 'https://localhost:1337/';
-		$pathUserClient = '/home/user-client';
-		$pathUserClientData = $pathUserClient . '/data';
-		$onlyOneAddress = 'false';
-        
-        
-        
-        
-		// $minimumScore = 60;
-		// $pathTempFile = $pathUserClientData . '/temp';
+		// $pathUserClient = '/home/user-client';
 
 		// $command = '/usr/bin/java -jar ' . $pathUserClientData . '/bpm.geoloc.creator_1.0.0.jar 
 		// 	-g ' . $buildGeoloc . ' 
@@ -308,38 +333,34 @@ class GeolocForm extends HelpFormBase
 		// 	-s ' . $minimumScore . ' 
 		// 	-f "' . $pathTempFile . '"';
 		// ' -g $g -n $n -np $np -d $d -k $k -pid $pid -rid $rid -rs "$rs" -re "$re" -oa $oa -a "$a" -p "$p" -s $s -f $f'
-		$command = '/usr/bin/java -jar /home/user-client/data/bpm.geoloc.creator_1.0.0.jar -g "' . $buildGeoloc . '" -n "https://localhost:1337/" -np "/home/user-client/data/clusters" -d "' . $this->urlCkan . '" -k "' . $this->config->ckan->api_key . '" -pid "' . $selectedDataset . '" -rid "' . $selectedResource . '" -rs "' . $selectedSeparator . '" -re "' . $selectedEncoding . '" -f "/home/user-client/data/temp" -s "10"';
+		// $command = '/usr/bin/java -jar /home/user-client/data/bpm.geoloc.creator_1.0.0.jar -g "' . $buildGeoloc . '" -n "https://localhost:1337/" -np "/home/user-client/data/clusters" -d "' . $this->urlCkan . '" -k "' . $this->config->ckan->api_key . '" -pid "' . $selectedDataset . '" -rid "' . $selectedResource . '" -rs "' . $selectedSeparator . '" -re "' . $selectedEncoding . '" -f "/home/user-client/data/temp" -s "10"';
 		
-		if($buildGeoloc == '1') {
-			if($selectedPostalCode == '') {
-				$onlyOneAddress = 'true';
-				$command = $command . ' -p "' . $selectedPostalCode . '"';
-			}
-			$command = $command . ' -a "' . $numero . ' ' . $rue . ' ' . $ville . ' ' . $selectedAddress . '"';
-		}
-		else if($buildGeoloc == '2') {
-			$command = $command . ' -lat "' . $lat . '" -lon "' . $long . '"';
-		}
+		// if($buildGeoloc == '1') {
+		// 	if($selectedPostalCode == '') {
+		// 		$command = $command . ' -p "' . $selectedPostalCode . '"';
+		// 	}
+		// 	$command = $command . ' -a "' . $numero . ' ' . $rue . ' ' . $ville . ' ' . $selectedAddress . '"';
+		// }
+		// else if($buildGeoloc == '2') {
+		// 	$command = $command . ' -lat "' . $lat . '" -lon "' . $long . '"';
+		// }
 		
-		drupal_set_message($command);
+		// drupal_set_message($command);
 
-		// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $selectedDataset . '" "' . $selectedResource . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
-		// //error_log($command);
-
-		$output = shell_exec($command);
+		// $output = shell_exec($command);
         
         
-        $validOutput = explode(" ", $output);
+        // $validOutput = explode(" ", $output);
         
-        if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
-            drupal_set_message($output, 'error');
-        }
-        else{
-            drupal_set_message($output, 'status', false);
-			sleep(20);
-			$api = new Api();
-			$api->calculateVisualisations($selectedDataset);
-        }
+        // if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
+        //     drupal_set_message($output, 'error');
+        // }
+        // else{
+        //     drupal_set_message($output, 'status', false);
+		// 	sleep(20);
+		// 	$api = new Api();
+		// 	$api->calculateVisualisations($selectedDataset);
+        // }
         
 		
 	}

@@ -1151,25 +1151,26 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$return = $api->updateRequest($callUrluptres, $resource, "POST");
 					$this->renderResourceLog($resource["name"], $return);
 					
-					$pathUserClient = '/home/user-client';
-					$pathUserClientData = $pathUserClient . '/data';
-					$buildGeoloc = 'false';
-					$selectedSeparator = ";";
-					$selectedEncoding = "UTF-8";
-					$onlyOneAddress = 'false';
-					$selectedAddress = "";
-					$selectedPostalCode = "";
-					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+					// Deactivated for now
+					// $pathUserClient = '/home/user-client';
+					// $pathUserClientData = $pathUserClient . '/data';
+					// $buildGeoloc = 'false';
+					// $selectedSeparator = ";";
+					// $selectedEncoding = "UTF-8";
+					// $onlyOneAddress = 'false';
+					// $selectedAddress = "";
+					// $selectedPostalCode = "";
+					// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 					
 				}
 				
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
-				if($command != NULL){
-					error_log($command);
-					$output = shell_exec($command);
-					error_log($output);
-				}
+				// if($command != NULL){
+				// 	error_log($command);
+				// 	$output = shell_exec($command);
+				// 	error_log($output);
+				// }
 			}
         }
         else if($site_search=='Public_OpenDataSoft_com'){
@@ -2352,15 +2353,16 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 					$return = json_decode($return, true);
 					
-					$pathUserClient = '/home/user-client';
-					$pathUserClientData = $pathUserClient . '/data';
-					$buildGeoloc = 'false';
-					$selectedSeparator = ";";
-					$selectedEncoding = "UTF-8";
-					$onlyOneAddress = 'false';
-					$selectedAddress = "";
-					$selectedPostalCode = "";
-					$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+					// Deactivated for now
+					// $pathUserClient = '/home/user-client';
+					// $pathUserClientData = $pathUserClient . '/data';
+					// $buildGeoloc = 'false';
+					// $selectedSeparator = ";";
+					// $selectedEncoding = "UTF-8";
+					// $onlyOneAddress = 'false';
+					// $selectedAddress = "";
+					// $selectedPostalCode = "";
+					// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $NewName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 					
 					
 				} else {

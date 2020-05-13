@@ -160,14 +160,17 @@ function updateUI() {
   if(valueGeoloc == 'address') {
 	  $('#div_adress').css('display', 'block');
 	  $('#div_latlong').css('display', 'none');
+	  $('#div_one_geoloc_column').css('display', 'none');
   }
   else if(valueGeoloc == 'latlong') {
 	  $('#div_adress').css('display', 'none');
 	  $('#div_latlong').css('display', 'block');
+	  $('#div_one_geoloc_column').css('display', 'none');
   }
   else {
 	  $('#div_adress').css('display', 'none');
 	  $('#div_latlong').css('display', 'none');
+	  $('#div_one_geoloc_column').css('display', 'block');
   }
 
   // let showFields = resourceId != "" && value == 'address';

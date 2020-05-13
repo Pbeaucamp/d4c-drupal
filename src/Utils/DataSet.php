@@ -1741,15 +1741,16 @@ class DataSet{
 					$return = $api->updateResourceAndPushDatastore($resources);
 				}
 				
-				$pathUserClient = '/home/user-client';
-				$pathUserClientData = $pathUserClient . '/data';
-				$buildGeoloc = 'false';
-				$selectedSeparator = ";";
-				$selectedEncoding = "UTF-8";
-				$onlyOneAddress = 'false';
-				$selectedAddress = "";
-				$selectedPostalCode = "";
-				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2["name"] . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				# Deactivated for now
+				// $pathUserClient = '/home/user-client';
+				// $pathUserClientData = $pathUserClient . '/data';
+				// $buildGeoloc = 'false';
+				// $selectedSeparator = ",";
+				// $selectedEncoding = "UTF-8";
+				// $onlyOneAddress = 'false';
+				// $selectedAddress = "";
+				// $selectedPostalCode = "";
+				// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2["name"] . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
 				
 				sleep(20);
 			}
@@ -2892,19 +2893,20 @@ class DataSet{
 				}
 				$return = json_decode($return, true);
 				
-				$pathUserClient = '/home/user-client';
-				$pathUserClientData = $pathUserClient . '/data';
-				$buildGeoloc = 'false';
-				$selectedSeparator = ";";
-				$selectedEncoding = "UTF-8";
-				$onlyOneAddress = 'false';
-				$selectedAddress = "";
-				$selectedPostalCode = "";
-				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2->name . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
-				error_log($command);
-				sleep (15); 
-				$output = shell_exec($command);
-				error_log($output);
+				// Deactivated for now
+				// $pathUserClient = '/home/user-client';
+				// $pathUserClientData = $pathUserClient . '/data';
+				// $buildGeoloc = 'false';
+				// $selectedSeparator = ";";
+				// $selectedEncoding = "UTF-8";
+				// $onlyOneAddress = 'false';
+				// $selectedAddress = "";
+				// $selectedPostalCode = "";
+				// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2->name . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				// error_log($command);
+				// sleep (15); 
+				// $output = shell_exec($command);
+				// error_log($output);
 			} else {
 				
 				$editId = null;

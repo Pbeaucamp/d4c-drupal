@@ -339,7 +339,15 @@ class editMetaDataForm extends HelpFormBase
 		$form['generate_cols'] = array(
 			'#type' => 'checkbox',
 			'#title' => $this->t('Générer des noms de colonnes (pour CSV ou XLS)'),
-		);
+		); 
+		
+        $form['encoding'] = array(
+            '#type' => 'textfield',
+			'#title' => $this->t('Encoding :'),
+            '#default_value' => t('UTF-8'),
+            '#attributes' => array('style' => 'width: 50%;'),
+			'#required' => FALSE
+        );
         
 		// $form['#suffix'] = '</div>';
         
@@ -445,6 +453,7 @@ class editMetaDataForm extends HelpFormBase
                 $this->t('Titre'),
                 $this->t('Description'),
                 $this->t('Données'),
+                $this->t('Encoding'),
                 $this->t('Mettre à jour'),
                 $this->t('Supprimer'),
             ),
@@ -473,6 +482,12 @@ class editMetaDataForm extends HelpFormBase
             $form['table'][$i]['donnees'] = array(
                 '#type' => 'textarea',
                 '#attributes' => array('style' => 'height: 2em;width: 19em;'),
+            );
+
+
+            $form['table'][$i]['encoding'] = array(
+                '#type' => 'textfield',
+                '#size' => 30
             );
 			
 
@@ -1356,15 +1371,25 @@ class editMetaDataForm extends HelpFormBase
 					}
 				
 					if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+
+						$encoding = $form_state->getValue('encoding');
 				  
 						array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
-						
+
 						$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+						if ($encoding) {
+							error_log("Setting encoding to " . $encoding);
+							$reader->setInputEncoding($encoding);
+						}
 						$spreadsheet = $reader->load($root.''.$filepath);
 						//$arr = $spreadsheet->getActiveSheet()->toArray();
 						$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 						$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-						$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+
+						//We have an issue with number format. This line transform coordinate and it's not good. We comment it for now
+						//Maybe we have to do the same for XLS, XLSX
+						//$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+
 						$nbColumns = $this->lettersToNumber($highestColumn);
 						$existingCols = array();
 						$genCols = $form_state->getValue('generate_cols');
@@ -1396,12 +1421,14 @@ class editMetaDataForm extends HelpFormBase
 						}
 						
 						$writer = new Csv($spreadsheet);
+						//$reader->setInputEncoding('CP1252');
 						if($genCols) {
 							$filepath = str_ireplace('.csv', '_gencol.csv', $filepath);
 							$url_res = 'https://'.$host.''.$filepath;
 						}
 						
 						$writer->save($root.''.$filepath);
+						error_log('URL : ' . $root.''.$filepath);
 						$has_csv = true;
 					}
 				}
@@ -1548,6 +1575,8 @@ class editMetaDataForm extends HelpFormBase
 							}
 					
 							if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+
+								$encoding = $table_data[$i][encoding];
 						  
 								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
 								// error_log('cccc' . $i . json_encode($table_data[$i]));
@@ -1569,11 +1598,19 @@ class editMetaDataForm extends HelpFormBase
 								// file_put_contents($root.''.$filepath, implode($arr));
 								
 								$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+								if ($encoding) {
+									error_log("Setting encoding to " . $encoding);
+									$reader->setInputEncoding($encoding);
+								}
 								$spreadsheet = $reader->load($root.''.$filepath);
 								//$arr = $spreadsheet->getActiveSheet()->toArray();
 								$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-								$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+								
+								//We have an issue with number format. This line transform coordinate and it's not good. We comment it for now
+								//Maybe we have to do the same for XLS, XLSX
+								// $spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+
 								$nbColumns = $this->lettersToNumber($highestColumn);
 								$existingCols = array();
 								$oldname = $table_data[$i][donnees_old];
@@ -1781,16 +1818,37 @@ class editMetaDataForm extends HelpFormBase
 				$api->callDatapusher($idres);
 				$api->calculateVisualisations($idDataset);
 				
-				
-				$pathUserClient = '/home/user-client';
-				$pathUserClientData = $pathUserClient . '/data';
-				$buildGeoloc = 'false';
-				$selectedSeparator = ";";
-				$selectedEncoding = "UTF-8";
-				$onlyOneAddress = 'false';
-				$selectedAddress = "";
-				$selectedPostalCode = "";
-				$command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $this->urlCkan . '" "' . $this->config->ckan->api_key . '" "' . $datasetName . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+				# Deactivated for now
+				# g = True if we need to get geolocalisation from the API BAN
+				# n = Node URL (Define in geoloc.sh)
+				# np = Node path (Define in geoloc.sh)
+				# d = URL to D4C
+				# k = D4C API KEY
+				# pid = Package Name
+				# rid = Resource ID
+				# rs = Resource separator (Default is ';')
+				# re = Resource encoding (Default is 'UTF-8')
+				# oa = True if the address is only in one column
+				# coor = Coordinate column name
+				# cs = Coordinate column separator (Default is '" + DEFAULT_COORDINATE_SEPARATOR + "')");	
+				# a = Address column name
+				# p = Postal code column name
+				# s = Minimum score to accept geolocalisation (Between 0 and 100) (Default is '60')
+				# f = Temp file path
+				// $g = 'false';
+				// $d = $this->urlCkan;
+				// $k = $this->config->ckan->api_key;
+				// $pid = $datasetName;
+				// $rid = $return["result"]["id"];
+				// $rs = ",";
+				// $re = "UTF-8";
+				// $oa = 'false';
+				// $a = "";
+				// $p = "";
+
+				// $pathUserClient = '/home/user-client';
+				// $pathUserClientData = $pathUserClient . '/data';
+				// $command = $pathUserClientData . '/geoloc.sh "' . $g . '" "' . $d . '" "' . $k . '" "' . $pid . '" "' . $rid . '" "' . $rs . '" "' . $re . '" "' . $oa . '" "' . $a . '" "' . $p . '"';
 				
 			}
 			

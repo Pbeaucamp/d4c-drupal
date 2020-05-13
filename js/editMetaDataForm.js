@@ -323,6 +323,10 @@ function fillData(data) {
 						<div class="form-textarea-wrapper edit"> ` + upload + `
 							<textarea data-drupal-selector="edit-table-` + num + `-donnees" id="edit-table-` + num + `-donnees" name="table[` + num + `][donnees]" rows="5" cols="60" class="form-textarea resize-vertical" style="height: 2em;width: 19em;">` + data.resources[i].url + `</textarea>
 						</div>`;
+        let encoding = `<span class="label" id="label-table-` + num + `-encoding"> / </span>
+                    <div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-` + num + `-encoding form-item-table-` + num + `-encoding form-no-label edit">
+                        <input data-drupal-selector="edit-table-` + num + `-encoding" type="text" id="edit-table-` + num + `-encoding" name="table[` + num + `][encoding]" value="UTF-8" size="30" maxlength="128" class="form-text">
+                    </div>`;
 						
 		let donnees_old = `<a class="label" id="label-table-` + num + `-donnees_old" href="`+ data.resources[i].url +`" style="display:none;">` + data.resources[i].url + `</a>
 						<div class="form-textarea-wrapper edit" style="display:none;"> ` + upload + `
@@ -349,6 +353,7 @@ function fillData(data) {
 														<td>` + titre + `</td>
 														<td>` + description + `</td>
 														<td>` + donnes + `</td>
+														<td>` + encoding + `</td>
 														<td>` + editer + `</td>
 														<td>` + supprimer + status + `</td>
 														<td>` + donnees_old + `</td>
