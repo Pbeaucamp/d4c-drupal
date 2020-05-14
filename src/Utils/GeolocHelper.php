@@ -17,7 +17,8 @@ class GeolocHelper {
         # g = 0 if we don't need it, 1 if we need to get geolocalisation from the API BAN, 2 if we need to merge two coordinate column
         # n = Node URL
         # np = Node path
-        # d = URL to D4C
+        # d4c = URL to D4C
+        # d = URL to CKAN
         # k = D4C API KEY
         # pid = Package Name
         # rid = Resource ID
@@ -49,6 +50,7 @@ class GeolocHelper {
         $g = $buildGeolocType;
         $n = $nodeUrl;
         $np = $nodePath;
+        $d4c = (isset($_SERVER['HTTPS']) ? "https" : "https") . "://$_SERVER[HTTP_HOST]";
         $d = $this->urlCkan;
         $k = $this->config->ckan->api_key;
         $pid = $selectedDataset;
@@ -81,7 +83,9 @@ class GeolocHelper {
 			$geolocParams = ' -lat "' . $colLat . '" -lon "' . $colLon . '"';
         }
 
-		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '"';
+        Logger::logMessage("D4C URL " . $d4c);
+
+		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d4c "' . $d4c . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '"';
         Logger::logMessage($command);
 
 		$output = shell_exec($command);
@@ -95,6 +99,7 @@ class GeolocHelper {
             return "SUCCESS";
         }
         else {
+            Logger::logMessage($output);
             return $output;
         }
         
