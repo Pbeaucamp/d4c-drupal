@@ -312,8 +312,16 @@ class GeolocForm extends HelpFormBase
 
 		
 		$geolocHelper = new GeolocHelper();
-		$geolocHelper->buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon);
+		$result = $geolocHelper->buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon);
 		
+
+		if ($result == 'SUCCESS'){
+            drupal_set_message("La création de la carte a réussie.", 'status', false);
+        }
+        else {
+            drupal_set_message($result, 'error');
+        }
+
 		// $nodeUrl = 'https://localhost:1337/';
 		// $pathUserClient = '/home/user-client';
 

@@ -143,14 +143,18 @@ function fillFields(data) {
   
   $('#edit-selected-long').empty();
   $('#edit-selected-long').append($('<option>').text("----"));
+  
+  $('#edit-selected-geoloc').empty();
+  $('#edit-selected-geoloc').append($('<option>').text("----"));
   for (let i = 0; i < data.length; i++) {
     $('#edit-selected-address').append($('<option>').text(data[i].label).attr('value', data[i].name));
     $('#edit-selected-postalcode').append($('<option>').text(data[i].label).attr('value', data[i].name));
-	$('#edit-selected-numero').append($('<option>').text(data[i].label).attr('value', data[i].name));
-	$('#edit-selected-rue').append($('<option>').text(data[i].label).attr('value', data[i].name));
-	$('#edit-selected-ville').append($('<option>').text(data[i].label).attr('value', data[i].name));
-	$('#edit-selected-lat').append($('<option>').text(data[i].label).attr('value', data[i].name));
-	$('#edit-selected-long').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	  $('#edit-selected-numero').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	  $('#edit-selected-rue').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	  $('#edit-selected-ville').append($('<option>').text(data[i].label).attr('value', data[i].name));
+  	$('#edit-selected-lat').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	  $('#edit-selected-long').append($('<option>').text(data[i].label).attr('value', data[i].name));
+	  $('#edit-selected-geoloc').append($('<option>').text(data[i].label).attr('value', data[i].name));
   }
 }
 
