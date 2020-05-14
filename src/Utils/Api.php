@@ -873,7 +873,7 @@ class Api{
 		//echo $params . "\r\n";
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id'], true);
+		$fields = $this->getAllFields($query_params['resource_id']);
 
 		$fieldCoordinates="";
 		$fieldGeometries="";
@@ -885,17 +885,19 @@ class Api{
 			} 
 		}*/
 		
+		//This is not working we decided to move the geoloc column during csv creation
 		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
-		$coordinatesAlreadyDefined = false;
-		foreach ($fields as $value) {
-			foreach($value["annotations"] as $annotation){
-				if($annotation["name"] == "is_geoloc"){
-					$fieldCoordinates = $value['name'];
-					$coordinatesAlreadyDefined = true;
-				}
-			}
-		}
+		// $coordinatesAlreadyDefined = false;
+		// foreach ($fields as $value) {
+		// 	foreach($value["annotations"] as $annotation){
+		// 		if($annotation["name"] == "is_geoloc"){
+		// 			$fieldCoordinates = $value['name'];
+		// 			$coordinatesAlreadyDefined = true;
+		// 		}
+		// 	}
+		// }
 
+		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
 			//echo $value['id'];
@@ -1209,10 +1211,6 @@ class Api{
 					$annotations[] = array("name" => "date_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
-                if(preg_match("/<!--.*is_geoloc.*-->/i",$description)) {
-					$annotations[] = array("name" => "is_geoloc");
-					//$hasFacet = true; //echo "1";
-				}
 				
 				$descriptionLabel = $description;
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
@@ -1389,7 +1387,7 @@ class Api{
        
         
 
-		$fields = $this->getAllFields($query_params['resource_id'], true, FALSE);
+		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 		//echo json_encode($fields);
 		$fieldId = "_id";
 		$reqFields="";
@@ -1405,17 +1403,19 @@ class Api{
 			} 
 		}*/
 
+		//This is not working we decided to move the geoloc column during csv creation
 		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
-		$coordinatesAlreadyDefined = false;
-		foreach ($fields as $value) {
-			foreach($value["annotations"] as $annotation){
-				if($annotation["name"] == "is_geoloc"){
-					$fieldCoordinates = $value['name'];
-					$coordinatesAlreadyDefined = true;
-				}
-			}
-		}
+		// $coordinatesAlreadyDefined = false;
+		// foreach ($fields as $value) {
+		// 	foreach($value["annotations"] as $annotation){
+		// 		if($annotation["name"] == "is_geoloc"){
+		// 			$fieldCoordinates = $value['name'];
+		// 			$coordinatesAlreadyDefined = true;
+		// 		}
+		// 	}
+		// }
 
+		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];

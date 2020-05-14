@@ -154,7 +154,6 @@ function addDataInTable(data){
         let wordcountnumber='<input data-drupal-selector="edit-table-'+i+'-wordcountnumber" type="checkbox" id="edit-table-'+i+'-wordcountnumber" name="table['+i+'][wordCountNumber]" value="1" class="form-checkbox">';
        
         let dateTime='<input data-drupal-selector="edit-table-'+i+'-dateTime" type="checkbox" id="edit-table-'+i+'-dateTime" name="table['+i+'][dateTime]" value="1" class="form-checkbox">';
-        let isGeoloc='<input data-drupal-selector="edit-table-'+i+'-isGeoloc" type="checkbox" id="edit-table-'+i+'-isGeoloc" name="table['+i+'][isGeoloc]" value="1" class="form-checkbox">';
         //
         let title_for_timeLine='<input data-drupal-selector="edit-table-'+i+'-title_for_timeLine" type="checkbox" id="edit-table-'+i+'-title_for_timeLine" name="table['+i+'][title_for_timeLine]" value="1" class="form-checkbox" onclick="cleare_column(`title_for_timeLine`, '+data.result.fields.length+', '+i+');">';
         
@@ -192,8 +191,6 @@ function addDataInTable(data){
         
         let dateTime_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-wordcountnumber form-item-table-'+i+'-dateTime form-no-label">'+dateTime+'</div>';
         
-		let isGeoloc_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-isGeoloc form-item-table-'+i+'-isGeoloc form-no-label">'+isGeoloc+'</div>';
-        
         let intit_facet='<input data-drupal-selector="edit-table-'+i+'-intitule_facette" type="text" id="edit-table-'+i+'-intitule_facette" name="table['+i+'][intitule_facette]" value="" size="15" maxlength="128" class="form-text">';
         
         let description='<input data-drupal-selector="edit-table-'+i+'-description" type="text" id="edit-table-'+i+'-description" name="table['+i+'][description]" value="" size="15" maxlength="128" class="form-text">';
@@ -214,7 +211,7 @@ function addDataInTable(data){
 		$('#edit-table > thead > tr > th').first().css('max-width','100px');
 		$('#edit-table > thead > tr > th').first().css('left','0px');
 		$('#edit-table > thead > tr > th').first().css('background-color','white');
-        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+isGeoloc_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
+        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
         //'<td>'+image_url_div+'</td>'+
         
         if(data.result.fields[i].info.notes){
@@ -272,10 +269,6 @@ function addDataInTable(data){
                 if(notes[j]=='<!--wordcountNumber-->'){                
                    $('#edit-table-'+i+'-wordcountnumber').attr('checked', 'checked');
 				   }
-				   
-				if(notes[j]=='<!--is_geoloc-->'){                
-					$('#edit-table-'+i+'-isGeoloc').attr('checked', 'checked');
-				}
 
                 if(notes[j]=='<!--timeserie_precision-->'){                
                    $('#edit-table-'+i+'-dateTime').attr('checked', 'checked');
@@ -549,7 +542,7 @@ function baba(){
 }
 
 function uncheckAllHeader() {
-	var headers = ['checkboxFacet','checkboxFacetM','checkboxTableau','checkboxTri','checkboxDatePonctuel','checkboxDateDebut','checkboxDateFin','checkboxImages','checkboxNuageDeMot','checkboxNuageDeMotNombre','checkboxDateEtHeure','checkboxIsGeoloc','checkboxLibelleFriseChrono','checkboxDescriptionFriseChrono','checkboxDateFriseChrono'];
+	var headers = ['checkboxFacet','checkboxFacetM','checkboxTableau','checkboxTri','checkboxDatePonctuel','checkboxDateDebut','checkboxDateFin','checkboxImages','checkboxNuageDeMot','checkboxNuageDeMotNombre','checkboxDateEtHeure','checkboxLibelleFriseChrono','checkboxDescriptionFriseChrono','checkboxDateFriseChrono'];
 
 	for (let j = 0; j < headers.length; j++) {
 		document.getElementById(headers[j]).checked = false;
