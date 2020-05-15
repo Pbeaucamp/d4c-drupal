@@ -61,7 +61,7 @@ class GeolocHelper {
         $f = $pathTempFile;
 
 		if ($buildGeolocType == '0') {
-            $geolocParams = ' -coor ' . $colCoordinate . ' -cs ' . $coordinateSeparator;
+            $geolocParams = ' -coor "' . $colCoordinate . '" -cs "' . $coordinateSeparator + '"';
         }
 		else if ($buildGeolocType == '1') {
             $geolocParams = ' -oa ' . $onlyOneAddress . ' -a ' . $colAdress . '"';
