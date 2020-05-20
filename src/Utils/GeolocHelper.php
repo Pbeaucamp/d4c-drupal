@@ -61,7 +61,7 @@ class GeolocHelper {
         $f = $pathTempFile;
 
 		if ($buildGeolocType == '0') {
-            $geolocParams = ' -coor "' . $colCoordinate . '" -cs "' . $coordinateSeparator + '"';
+            $geolocParams = ' -coor "' . $colCoordinate . '" -cs "' . $coordinateSeparator . '"';
         }
 		else if ($buildGeolocType == '1') {
             $geolocParams = ' -oa ' . $onlyOneAddress . ' -a ' . $colAdress . '"';
@@ -83,7 +83,7 @@ class GeolocHelper {
 			$geolocParams = ' -lat "' . $colLat . '" -lon "' . $colLon . '"';
         }
 
-        Logger::logMessage("D4C URL " . $d4c);
+        Logger::logMessage("D4C URL " . $d4c ."\r\n");
 
 		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d4c "' . $d4c . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '"';
         Logger::logMessage($command);
