@@ -18,6 +18,7 @@ use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Drupal\Core\Url;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Implements an example form.
@@ -367,7 +368,10 @@ class editMetaDataForm extends HelpFormBase
 		$layers = $api->getMapLayers("tile");
 		$overlays = $api->getMapLayers("layer");
 		$values = array();
-		foreach($layers as $layer){
+
+		Logger::logMessage("Loading map tiles \r\n");
+		foreach($layers['layers'] as $layer){
+			Logger::logMessage("Load tile " . $layer["label"] ."\r\n");
 			$values[$layer["name"]] = $layer["label"];
 		}
         $form['selected_type_map'] = array(
@@ -382,7 +386,9 @@ class editMetaDataForm extends HelpFormBase
 		);
 		
 		$values = array();
-		foreach($overlays as $layer){
+		Logger::logMessage("Loading map layers \r\n");
+		foreach($overlays['layers'] as $layer){
+			Logger::logMessage("Load layer " . $layer["label"] ."\r\n");
 			$values[$layer["name"]] = $layer["label"];
 		}
         $form['authorized_overlays_map'] = array(
@@ -1378,7 +1384,7 @@ class editMetaDataForm extends HelpFormBase
 
 						$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 						if ($encoding) {
-							error_log("Setting encoding to " . $encoding);
+							Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
 							$reader->setInputEncoding($encoding);
 						}
 						$spreadsheet = $reader->load($root.''.$filepath);
@@ -1599,7 +1605,7 @@ class editMetaDataForm extends HelpFormBase
 								
 								$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 								if ($encoding) {
-									error_log("Setting encoding to " . $encoding);
+									Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
 									$reader->setInputEncoding($encoding);
 								}
 								$spreadsheet = $reader->load($root.''.$filepath);
@@ -1784,9 +1790,14 @@ class editMetaDataForm extends HelpFormBase
 						}
 					}
 				}
+
+				Logger::logMessage("Check if resource need to be updated \r\n");
 				
 				$return;
 				if($update != null){
+
+					Logger::logMessage("Update is not null. We update " . $update[id] . " and push to datastore \r\n");
+
 					$resources = [
 						//"package_id" => $data_id,
 						"id" => $update[id],
@@ -1799,8 +1810,14 @@ class editMetaDataForm extends HelpFormBase
 					];
 					
 					$return = $api->updateResourceAndPushDatastore($resources);
-					$return = json_decode($return, true); 
+				
+					Logger::logMessage("Return of update request = " . $return . " \r\n");
+
+					$return = json_decode($return, true);
 				} else {
+
+					Logger::logMessage("We update " . $idDataset . " and push to datastore \r\n");
+
 					$resource = [     
 						"package_id" => $idDataset,
 						"url" => $urlCsv,
@@ -1811,13 +1828,22 @@ class editMetaDataForm extends HelpFormBase
 
 					$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 					$return = $api->updateRequest($callUrluptres, $resource, "POST");
-					$return = json_decode($return, true); 
-				}
 				
+					Logger::logMessage("Return of update request = " . $return . " \r\n");
+
+					$return = json_decode($return, true);
+				}
+
+				
+				Logger::logMessage("We call the datapusher and calculate visualisation \r\n");
+
 				$idres = $return["result"]["id"];
 				$api->callDatapusher($idres);
 				$api->calculateVisualisations($idDataset);
 				
+				
+				Logger::logMessage("End of datapusher and visualisation calculation \r\n");
+
 				# Deactivated for now
 				# g = True if we need to get geolocalisation from the API BAN
 				# n = Node URL (Define in geoloc.sh)
@@ -1853,13 +1879,13 @@ class editMetaDataForm extends HelpFormBase
 			}
 			
 			
-			if($command != NULL){
-				sleep(20);
-				$api->calculateVisualisations($idNewData);
-				error_log($command);
-				$output = shell_exec($command);
-				error_log($output);
-			}
+			// if($command != NULL){
+			// 	sleep(20);
+			// 	$api->calculateVisualisations($idNewData);
+			// 	error_log($command);
+			// 	$output = shell_exec($command);
+			// 	error_log($output);
+			// }
 			
 			// validata
 			$optionst = array(
@@ -1907,6 +1933,7 @@ class editMetaDataForm extends HelpFormBase
 			// $form_state->setRebuild(TRUE);
 
 			// set relative internal path
+			Logger::logMessage("We redirect user \r\n");
 			$redirect_path = "/admin/config/data4citizen/editMetaDataForm?id=" . $idDataset;
 			$url = url::fromUserInput($redirect_path);
 

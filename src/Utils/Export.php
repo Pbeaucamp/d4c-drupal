@@ -1,6 +1,7 @@
 <?php
 
 namespace Drupal\ckan_admin\Utils;
+use Drupal\ckan_admin\Utils\Logger;
 
 
 ini_set('memory_limit', '2048M'); // or you could use 1G
@@ -149,6 +150,8 @@ class Export{
 			return "";
 		}
 		
+		Logger::logMessage("Json to convert : " . $json ."\r\n");
+		
 		// If passed a string, turn it into an array
 		if (is_array($json) === false) {
 			//$json = utf8_encode($json);
@@ -156,6 +159,7 @@ class Export{
 			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 			//$json = json_decode($json, true);
 		}
+		
 		if($json["type"] != "FeatureCollection"){
 			return "";
 		}
@@ -228,7 +232,7 @@ class Export{
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
 		//$res = Export::convert_bad_characters($res);
-		$res = iconv("UTF-8", "Windows-1252//TRANSLIT", $res);
+		//$res = iconv("UTF-8", "Windows-1252//TRANSLIT", $res);
 		return $res;
 	}
 	

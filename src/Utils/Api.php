@@ -17,6 +17,7 @@ use Box\Spout\Writer\Style\StyleBuilder;
 use Box\Spout\Writer\Style\CellAlignment;
 use SplFileObject;
 use finfo;
+use Drupal\ckan_admin\Utils\Logger;
 
 
 
@@ -916,6 +917,8 @@ class Api{
 				$geometriesAlreadyDefined = true;
 			}
 		}
+        Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
+        Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
 
 
 		if(array_key_exists('rows', $query_params)){
@@ -934,6 +937,8 @@ class Api{
 			$reqQfilter = $this->constructReqQToSQL($query_params['q']);
 		}
 		foreach($query_params as $key => $value) {
+			Logger::logMessage("Found parameter " . $key ." with value " . $value . "\r\n");
+
 		    if (preg_match($patternRefine,$key)){
 		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
 
@@ -962,6 +967,8 @@ class Api{
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
 				if($key == "geofilter.bbox"){
+					Logger::logMessage("Build query for geofilter.bbox \r\n");
+
 					$bbox = explode(',', $value);
 					$minlat = $bbox[0];
 					$minlong = $bbox[1];
@@ -972,6 +979,8 @@ class Api{
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
 					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.distance"){
+					Logger::logMessage("Build query for geofilter.distance \r\n");
+
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
@@ -996,9 +1005,13 @@ class Api{
 					
 					//$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geofilter.polygon"){
+					Logger::logMessage("Build query for geofilter.polygon \r\n");
+
 					//polygon(path '((0,0),(1,1),(2,0))')
 					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
 				} else {
+					Logger::logMessage("Build query without parameter \r\n");
+
 					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
 						$where .= $key . "=" . $value . " and ";
 					} else if(is_array($value)){ 
@@ -1039,6 +1052,7 @@ class Api{
 		}
   
 		//echo $req['sql'];
+        Logger::logMessage("Query : " . $req['sql'] ."\r\n");
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		
@@ -1046,6 +1060,7 @@ class Api{
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
+        Logger::logMessage("Result query coordinate : " . $result ."\r\n");
 		//echo $result . "\r\n";
 		curl_close($curl);
 		$result = json_decode($result,true);
@@ -3975,6 +3990,7 @@ class Api{
     <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/embed-dataset.js"></script>
 
    <script>
+   			$("head").append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/> ");
 			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
 			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
 			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
@@ -4480,11 +4496,17 @@ class Api{
 	}
 	
 	public function getMapLayers($type = null) {
+		$jsonTiles = json_encode($this->config->map_tiles);
+
 		$data_array = array();
-		$tiles = json_decode(json_encode($this->config->map_tiles), true);
+		$tiles = json_decode($jsonTiles, true);
+
 		if($type != null){
 			foreach($tiles as $tile){
 				if($tile["type"] == $type){
+
+					Logger::logMessage("Found tile of type " . $type . " : " . json_encode($tile) ."\r\n");
+					
 					$data_array["layers"][] = $tile;
 				}
 			}
@@ -4499,6 +4521,7 @@ class Api{
 			$data_array["default_bbox"] = null;
 		}
 		
+		Logger::logMessage("Layers result " . json_encode($data_array) ."\r\n");
 		return $data_array;
 	}
 	
@@ -5699,6 +5722,8 @@ class Api{
 	
 	function calculateVisualisations($id, $blockDateModification=FALSE){
 		//error_log($id);
+
+		Logger::logMessage("Calculate visualisation for " . $id . "\r\n");
 		
 		$features = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud", timeline]
 		$records_count = 0;
@@ -5707,6 +5732,9 @@ class Api{
 		//if($dataset == null){
 			$dataset = $this->getPackageShow("id=".$id);
 			$dataset = $dataset["result"];
+
+			
+			Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
 		//}
 		//$id = $dataset["id"];
 		
@@ -5721,6 +5749,9 @@ class Api{
 				$fields = $this->getAllFields($resourcesid, TRUE);
 				$records_result = $this->getDatastoreApi("resource_id=".$resourcesid."&limit=0");
 				$records_count = str_pad($records_result["result"]["total"], 10, "0", STR_PAD_LEFT);
+
+				
+				Logger::logMessage("Found ressource with id " .$resourcesid . " with record count = " . $records_count . "\r\n");
 			}
 		//}
 	
@@ -5729,6 +5760,8 @@ class Api{
 		//$features[] = "analyze"; //tab chart
 
 		if(count($fields)>0){
+			Logger::logMessage("Search features" . "\r\n");
+
 			$colStart = null;$colEnd = null;$colWordCount = null;$colTimeline=null;$colGeo=null;
 			foreach($fields as $f){
 				foreach($f["annotations"] as $a){
@@ -5791,6 +5824,8 @@ class Api{
 		
 		$customView = $this->getCustomView($dataset['id']);
 		if($customView){
+			Logger::logMessage("Found custom view" . "\r\n");
+
 			$features[] = "custom_view";
 		}
 		
@@ -5843,6 +5878,9 @@ class Api{
 		if($blockDateModification){
 			$dataset["modified_date_forced"] = true;
 		}
+
+		
+		Logger::logMessage("Update package" . "\r\n");
 		
 		$callUrl = $this->urlCkan . "api/action/package_update";
 		$this->updateRequest($callUrl, $dataset, "POST");
