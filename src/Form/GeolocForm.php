@@ -9,6 +9,7 @@ namespace Drupal\ckan_admin\Form;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\ckan_admin\Utils\GeolocHelper;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Implements an example form.
@@ -303,8 +304,8 @@ class GeolocForm extends HelpFormBase
 		$colLat = $form_state->getValue('selected_lat');
 		$colLon = $form_state->getValue('selected_long');
 
-		$onlyOneAddress = $colPostalCode == '';
-		
+		$onlyOneAddress = ($colPostalCode == '' || $colPostalCode == '----') ? 'true' : 'false';
+
 		$colCoordinate = $form_state->getValue('selected_geoloc');
 		$coordinateSeparator = $form_state->getValue('geoloc_separator');
 
@@ -319,7 +320,7 @@ class GeolocForm extends HelpFormBase
             drupal_set_message("La création de la carte a réussie.", 'status', false);
         }
         else {
-            drupal_set_message($result, 'error');
+            drupal_set_message("Une erreur est survenue durant la création de la carte (Code ou message d'erreur = " . $result . ")", 'error');
         }
 
 		// $nodeUrl = 'https://localhost:1337/';

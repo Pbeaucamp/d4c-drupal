@@ -64,35 +64,41 @@ class GeolocHelper {
             $geolocParams = ' -coor "' . $colCoordinate . '" -cs "' . $coordinateSeparator . '"';
         }
 		else if ($buildGeolocType == '1') {
-            $geolocParams = ' -oa ' . $onlyOneAddress . ' -a ' . $colAdress . '"';
-            if (!$onlyOneAddress) {
-                if ($colNum != '') {
-                    $geolocParams = $geolocParams + ' -num "' . $colNum . '"';
-                }
-                if ($colStreet != '') {
-                    $geolocParams = $geolocParams + ' -rue "' . $colStreet . '"';
-                }
-                if ($colCity != '') {
-                    $geolocParams = $geolocParams + ' -v "' . $colCity . '"';
-                }
+            Logger::logMessage("Ony one adress =  " . $onlyOneAddress ."\r\n");
+            Logger::logMessage("Col adress =  " . $colAdress ."\r\n");
+            Logger::logMessage("Col num =  " . $colNum ."\r\n");
+            Logger::logMessage("Col street =  " . $colStreet ."\r\n");
+            Logger::logMessage("Col city =  " . $colCity ."\r\n");
+            Logger::logMessage("Col postal code =  " . $colPostalCode ."\r\n");
 
-                $geolocParams = $geolocParams + ' -p "' . $colPostalCode . '"';
+            $geolocParams = ' -oa "' . $onlyOneAddress . '" -a "' . $colAdress . '"';
+            if ($colNum != '' && $colNum != '----') {
+                $geolocParams .= ' -num "' . $colNum . '"';
+            }
+            if ($colStreet != '' && $colStreet != '----') {
+                $geolocParams .= ' -rue "' . $colStreet . '"';
+            }
+            if ($colCity != '' && $colCity != '----') {
+                $geolocParams .= ' -v "' . $colCity . '"';
+            }
+            if ($onlyOneAddress == 'false' && $colPostalCode != '' && $colPostalCode != '----') {
+                $geolocParams .= ' -p "' . $colPostalCode . '"';
             }
 		}
 		else if($buildGeolocType == '2') {
 			$geolocParams = ' -lat "' . $colLat . '" -lon "' . $colLon . '"';
         }
 
+        Logger::logMessage("Geoloc params =  " . $geolocParams ."\r\n");
         Logger::logMessage("D4C URL " . $d4c ."\r\n");
 
 		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d4c "' . $d4c . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '"';
         Logger::logMessage($command);
 
 		$output = shell_exec($command);
-        // $validOutput = explode(" ", $output);
 
         if (strpos($output, 'GEOLOC END WITH SUCCESS') !== false) {
-            Logger::logMessage("Geoloc success");
+            Logger::logMessage("Geoloc success \r\n");
 			sleep(20);
 			$api = new Api();
             $api->calculateVisualisations($selectedDataset);
