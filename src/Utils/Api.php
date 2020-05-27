@@ -1984,6 +1984,7 @@ class Api{
 		$visu['map_tooltip_html'] = $this->getMapTooltip(false, null);
 		$visu['image_tooltip_html_enabled'] = false;
 		$visu['map_marker_color'] = "#0e7ce3";//"#df0ee3";
+
 		/*if($result['result']['name'] == 'observatoire_2g_3g_4g' || $result['result']['name'] == 'observatoire-2g'){
 			$visu['map_tooltip_html_enabled'] = true; //true si page d'accueil, false sinon
 		} else {
@@ -2030,8 +2031,12 @@ class Api{
 			if($value["key"] == "Picto"){
 				$visu['map_marker_picto'] = $value["value"];
 			}
+			if($value["key"] == "FieldColor" && $value["value"] != ''){
+				$visu['map_marker_color'] = array();
+				$visu['map_marker_color']['type'] = "field";
+				$visu['map_marker_color']['field'] = $value["value"];
+			}
 		}
-		
 		
 		if($resourcesid == ""){
 			$visu['table_fields'] =  array();

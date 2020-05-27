@@ -16,6 +16,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\Component\Render\FormattableMarkup; 
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Implements an example form.
@@ -404,6 +405,23 @@ class typeColumnsForm extends HelpFormBase {
 						<p>Tout widget, lié ou non au jeu de données, peut être intégré à l\'infobulle.</p>
 						<p>Note : les rapports Vanilla liés au jeu de données seront automatiquement intégrés en fin de l\'infobulle.</p></div></div>'
 		);
+
+		// Couleur des points sur la carte en fonction d'un champ
+		$form['T2'] = array(
+			'#markup' => '<h2 class="title">'.t('Configuration des couleurs des points sur la carte par champ').'</h2>',
+		);
+		
+		$form['colorfield'] = array(
+			'#type' => 'container',
+			'#title' => t(''),
+		);
+		
+		$form['colorfield']["selected_field"] = array(
+			'#type' => 'select',
+			'#title' => t('Colonne couleur:'),
+			'#empty_option' => t('----'),
+			'#validated' => TRUE,
+		);
 		
 
 		$form['valider'] = array(
@@ -653,8 +671,40 @@ class typeColumnsForm extends HelpFormBase {
 			$extras[count($extras)]['key'] = 'tooltip';
 			$extras[(count($extras) - 1)]['value'] = $json;
 		}
-		$oldDataset["extras"] = $extras;
+
+		//Couleur des points
+		$selectedFieldColor = $form_state->getValue('selected_field');
+
+		Logger::logMessage("Selected Field Color " . $selectedFieldColor . "\r\n");
+
+		$found = false;
+		foreach($extras as &$e){
+			if($e["key"] == "FieldColor"){
+				if (!($selectedFieldColor == '' || $selectedFieldColor == '----')) {
+					Logger::logMessage("Setting field color " . $selectedFieldColor . "\r\n");
+
+					$e["value"] = $selectedFieldColor;
+				}
+				else {
+					Logger::logMessage("Clearing field color \r\n");
+
+					$e["value"] = '';
+				}
+				$found = true;
+				break;
+			}
+		}
+		if(!$found && !($selectedFieldColor == '' || $selectedFieldColor == '----')) {
+			Logger::logMessage("Setting field color " . $selectedFieldColor . "\r\n");
+			
+			$extras[count($extras)]['key'] = 'FieldColor';
+			$extras[(count($extras) - 1)]['value'] = $selectedFieldColor;
+		}
 		
+		$oldDataset["extras"] = $extras;
+
+		// Logger::logMessage("Old dataset " . json_encode($oldDataset) . "r\n");
+
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
    

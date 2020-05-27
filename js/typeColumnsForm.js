@@ -317,14 +317,14 @@ function cleare_column(name_col, col_row, row_selected){
 }
 
 function loadTooltip(idDataset, dataFields){
-	$.ajax('/api/datasets/2.0/DATASETID/id='+idDataset,
+	$.ajax('/api/datasets/1.0/'+idDataset,
 	{
 		type: 'POST',
 		dataType: 'json',
 		cache : true,
 		success: function (result) {
-			if(result.success){
-				var dataset = result.result;
+			if(result){
+				var dataset = result.metas;
 				var edit = false;
 				var config; 
 				datasetName = dataset.name;
@@ -464,6 +464,29 @@ function loadTooltip(idDataset, dataFields){
 			'<strong>{{field}}</strong> : {{record.fields[field]}}</li>\n'+
 			'</ul>');
 				}
+
+
+				//Map point configuration
+				$('#edit-selected-field').html("");
+				$('#edit-selected-field').append($('<option>').text("----"))
+				$.each(cols, function (i, item) {
+					$('#edit-selected-field').append($('<option>', { 
+						value: item,
+						text : item 
+					}));
+				});
+				
+				mapMarkerColor = result.extra_metas && result.extra_metas.visualization ? result.extra_metas.visualization.map_marker_color : '';
+				if (angular.isString(mapMarkerColor)) {
+					$("#edit-selected-field").val("");
+				} 
+				else if (mapMarkerColor.type === 'field') {
+					mapMarkerField = mapMarkerColor.field;
+					$("#edit-selected-field").val(mapMarkerField);
+                }
+				else {
+					$("#edit-selected-field").val("");
+				}
 			}
 			else{
 				alert(JSON.stringify(result.error));
@@ -476,8 +499,11 @@ function loadTooltip(idDataset, dataFields){
 			console.log("ERROR: ", e);
 		}
 	});
-	
-	
+}
+
+function extractFields(data) {
+  data = data.fields;
+  return data;
 }
 
 function preview(){
