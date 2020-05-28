@@ -165,16 +165,24 @@ class Export{
 		}
 		//construction du csv
 		$cols = array();
+		$colNames = array();
 		$data_csv = array();
 		$sample = $json["features"][0];
+
+		$index = 0;
 		foreach($sample["properties"] as $key => $val){
 			$cols[] = $key;
+			$colNames[] = Export::clearGeoProperties($key, $index);
+			$index++;
 		}
 		if($sample["geometry"]["type"] == "Point"){
 			$cols[] = "geo_point_2d";
+			$colNames[] = "geo_point_2d";
 		} else {
 			$cols[] = "coordinates";
 			$cols[] = "geo_shape";
+			$colNames[] = "coordinates";
+			$colNames[] = "geo_shape";
 		}
 		
 		$crs = $json["crs"]["properties"]["name"];
@@ -223,7 +231,7 @@ class Export{
 			$row = implode($row, ";");
 		}
 		
-		$data_csv = strtolower(implode($cols, ";"));
+		$data_csv = strtolower(implode($colNames, ";"));
 		//$data_csv = array_merge($data_csv, $rows);
 		array_unshift($rows, $data_csv);
 		error_log("count ". (count($rows)));
@@ -234,6 +242,15 @@ class Export{
 		//$res = Export::convert_bad_characters($res);
 		//$res = iconv("UTF-8", "Windows-1252//TRANSLIT", $res);
 		return $res;
+	}
+
+	static function clearGeoProperties($colName, $index) {
+		if(preg_match("/geo_point|coordin|coordon|geopoint|geoPoint|pav_positiont2d|geoloc|wgs84|equgpsy_x|geoban|codegeo|geometry/i",$colName)){
+			return "colonne_renomme_" . $index;
+		}
+		else {
+			return $colName;
+		}
 	}
 	
 	static function isNumericColumn($json, $colName) {
