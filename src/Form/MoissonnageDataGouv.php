@@ -22,6 +22,7 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\ckan_admin\Utils\Logger;
 
 	
 
@@ -156,7 +157,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
         }
         //drupal_set_message(json_encode($this->config->site));
-		if(isset($this->config->site) && count($this->config->site) > 0){
+		if(isset($this->config->sitesSearch) && count($this->config->sitesSearch) > 0){
 			//drupal_set_message("ok ");
 			$form['domaine'] = array(
 				'#markup' => '<div id="domaine">'. $this->config->client->domain .'</div>',
@@ -241,6 +242,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 		}
 		$security = json_encode(array("roles" => array("administrator"), "users" => $userlist));
 		#######################
+
+		Logger::logMessage("Harvest dataset from '" . $site_search . "' \r\n");
         
         if($site_search=='InfoCom94'){
         
@@ -268,6 +271,8 @@ class MoissonnageDataGouv extends HelpFormBase {
             $selectedDatasets = array_filter($form_state->getValue('ids'));
 
             foreach($selectedDatasets as &$value){
+
+				Logger::logMessage("Manage dataset '" . $value[0] . "' \r\n");
             
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
                 $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
@@ -277,7 +282,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 
                 $value= explode("|", $value);
 
-                $query = Query::callSolrServer($value[1]."api/datasets/2.0/searchdatasetres/id=".$value[0]);
+				$callSolrUrl = $value[1]."api/datasets/2.0/searchdatasetres/id=".$value[0];
+				Logger::logMessage("Searching resource " . $callSolrUrl . "\r\n");
+				$query = Query::callSolrServer($callSolrUrl);
+
                 $results = json_decode($query);
                 $results = $results->result;
                 $private = true;
@@ -287,6 +295,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $ex_Ftp=false;
 				$ex_dmlm=false;
 				$ex_dmc=false;
+				$ex_sec=false;
                 for($i= 0; $i<count($extras); $i++ ){
                     if($extras[$i]->key == 'FTP_API'){
                         $ex_Ftp=true;
@@ -297,6 +306,10 @@ class MoissonnageDataGouv extends HelpFormBase {
                     }
 					if($extras[$i]->key == 'date_moissonnage_creation'){
                         $ex_dmc=true;
+                    }
+					if($extras[$i]->key == 'edition_security'){
+                        $ex_sec=true;
+                        $extras[$i]->value  == $security; 
                     }
                 }
                 
@@ -312,10 +325,11 @@ class MoissonnageDataGouv extends HelpFormBase {
                     $extras[count($extras)]['key'] = 'date_moissonnage_creation';
 					$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
                 }
-				
-				$extras[count($extras)]['key'] = 'edition_security';
-				$extras[(count($extras) - 1)]['value'] = $security;
-                
+				if ($ex_sec == false) {
+					$extras[count($extras)]['key'] = 'edition_security';
+					$extras[(count($extras) - 1)]['value'] = $security;
+				}
+
                 $newData = [
 					"name" => $results->name,
 					"title" => $results->title,
@@ -382,15 +396,8 @@ class MoissonnageDataGouv extends HelpFormBase {
                 foreach($results->resources as &$res){
             
 					$host = $_SERVER['HTTP_HOST']; 
-           
-					if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-						$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-						$url_res = 'http://'.$host.'/sites/default/files/dataset/';
-					}
-					else{
-						$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-						$url_res = 'https://'.$host.'/sites/default/files/dataset/';
-					}
+					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
+					$url_res = 'https://'.$host.'/sites/default/files/dataset/';
             
 					if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
 						$add_tres=true;
@@ -402,10 +409,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$filepathN =urldecode($filepathN);  
 						$filepathN = strtolower($filepathN);
                   
-						$url_res = $res->url;
+						//$url_res = $res->url;
 						if($res->format == 'csv' || $res->format == 'CSV') {
 							  
 							//$filepathN = explode(".",$filepathN)[0].'.csv';
+							// $filepathN = explode(".",$filepathN)[0].'.csv';
+							// $url_res = $url_res.''.$filepathN;
 							$url_res = $url_res.''.$filepathN;
 							
 							   // read into array

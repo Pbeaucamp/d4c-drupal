@@ -818,3 +818,11 @@ ckan_admin.calldatapuhser:
     _title: ''
   requirements:
     _permission: 'access content'
+
+ckan_admin.calldatapuhserjobstatus:
+  path: '/api/datapusher/job/{jobId}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatapusherJobStatus'
+    _title: ''
+  requirements:
+    _permission: 'access content'

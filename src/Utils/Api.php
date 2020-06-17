@@ -4912,11 +4912,15 @@ class Api{
 //        'https://marolles.data4citizen.com/'*/
 //            
 //        ];
+
+		Logger::logMessage("Searching in other Data4Citizen sites linked \r\n");
        
         $result=array();
         foreach($siteSearch as &$val){
-             
-            $t = Query::callSolrServer($val."api/datasets/2.0/search/q=".$params);
+			
+			$callSolrUrl = $val . "api/datasets/2.0/search/q=" . $params;
+			Logger::logMessage("Call '" . $callSolrUrl . "' \r\n");
+            $t = Query::callSolrServer($callSolrUrl);
             $t = json_decode($t);
             
             foreach($t->result->results as &$dataset){
@@ -4941,13 +4945,9 @@ class Api{
 
 				for($i=0; $i<count($dataset->resources); $i++){
 					
-					if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-						$res= Query::callSolrServer("http://infocom94.data4citizen.com/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
-					}
-					else{
-						$res= Query::callSolrServer("https://infocom94.data4citizen.com/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
-					}
-					
+					$callUrl = $val . "/datasets/update/getresourcebyid/".$dataset->resources[$i]->id;
+					$res= Query::callSolrServer($callUrl);
+
 					$dataset->resources[$i]->url = json_decode($res);	
 				}  
                 
@@ -5444,8 +5444,86 @@ class Api{
 				}
 			}
 		}
+	}
+	
+	function callDatapusherJobStatus($jobId) {
+		$callUrl = 'http://127.0.0.1:8800/job/' .$jobId;
+
+		$cle = $this->config->ckan->api_key; 
+		$url = $this->config->ckan->url; 
+
+		// $binaryData['api_key'] = $cle;
+		// $binaryData['job_type'] = 'push_to_datastore';
+		// $binaryData['metadata']['resource_id'] = $resourceId;
+		// $binaryData['metadata']['ckan_url'] = $url;
+		// $binaryData['api_key'] = $cle;
+		// // error_log(json_encode( $binaryData ));
+		// $jsonData = json_encode( $binaryData );
+        
+		$options = array (
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => 'GET',
+				// CURLOPT_POSTFIELDS => $jsonData,
+				// CURLOPT_HTTPHEADER => array (
+				// 	'Content-type:application/json',
+				// 	'Content-Length: ' . strlen ( $jsonData )
+				// )
+		);
+	
+		$curl = curl_init ( $callUrl );
+		curl_setopt_array ( $curl, $options );
+		$result = curl_exec ( $curl );
+		curl_close ( $curl );
+
 		
+		$response = new Response();
+        $response->setContent($result);
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+
 		
+		// $resp = json_decode($result);
+		// // error_log($result);
+		// $jobId = $resp->job_id;
+		// $jobKey = $resp->job_key;
+		// $i = 0;
+		// while(true) {
+		// 	$i = $i + 1;
+		// 	if($i > 300) {
+		// 		break;
+		// 	}
+		// 	sleep(1);
+		// 	$options = array (
+		// 		CURLOPT_RETURNTRANSFER => true,
+		// 		CURLOPT_CUSTOMREQUEST => 'GET',
+		// 		CURLOPT_HTTPHEADER => array (
+		// 			'Authorization:  ' .$jobKey 
+		// 		)
+		// 	);
+		// 	$curl = curl_init ( $callUrl . '/' . $jobId );
+		// 	curl_setopt_array ( $curl, $options );
+		// 	$result = curl_exec ( $curl );
+		// 	curl_close ( $curl );
+			
+		// 	$resp = json_decode($result);
+		// 	if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
+		// 		break;
+		// 	}
+		// 	else {
+		// 		$finished = false;
+		// 		foreach ($resp->logs as $value) {
+		// 			// error_log($value-> message);
+		// 			$pos = strpos($value-> message, 'Saving chunk');
+		// 			if($pos) {
+		// 				$finished = true;
+		// 				break;
+		// 			}
+		// 		}
+		// 		if($finished) {
+		// 			break;
+		// 		}
+		// 	}
+		// }
 	}
 
     function sortDatasetbyKey($key){

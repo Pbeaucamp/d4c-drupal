@@ -11,6 +11,7 @@ use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Drupal\ckan_admin\Utils\Logger;
 
 
 class DataSet{
@@ -242,7 +243,7 @@ class DataSet{
 				error_log('FOUND DATASET  8  ' . print_r($dataset[8], true));
 					if(DataSet::packageExist($dataset[8]))
 					{
-						$name_dataset = DataSet::updatePackage($dataset[0],$orga,$dataset[1],$dataset[3],$dataset[4],$dataset[5],$dataset[6],$dataset[7],$dataset[8]);
+						$name_dataset = DataSet::updatePackage($dataset[0],$orga,$dataset[1],$dataset[3],$dataset[5],$dataset[7],$dataset[8]);
 					}
 					else
 					{
@@ -293,7 +294,7 @@ class DataSet{
 			{	
 				if(DataSet::packageExist($dataset[8]))
 				{
-					$name_dataset = DataSet::updatePackage($dataset[0],$id,$dataset[1],$dataset[3],$dataset[4],$dataset[5],$dataset[6],$dataset[7],$dataset[8]);
+					$name_dataset = DataSet::updatePackage($dataset[0],$id,$dataset[1],$dataset[3],$dataset[4],$dataset[7],$dataset[8]);
 				}
 				else
 				{
@@ -529,8 +530,7 @@ class DataSet{
 		return $binaryData->name;
 	}
 	
-	static function updatePackage($name,$owner_id,$description,$license,$update,$tags,/*$spatial,*/$reuses,$id_dataset,$extras )
-	{
+	static function updatePackage($name, $owner_id, $description, $license, $tags, $id_dataset, $extras) {
         
 //		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 //		$ckan = $config->get('ckan');
@@ -867,13 +867,17 @@ class DataSet{
             
             $id_org=$value->id_org;
             foreach($value->datasets as &$dataset){
-                error_log(json_encode($dataset));
+				Logger::logMessage("Check harvest for dataset " . json_encode($dataset) ."\r\n");
+
 				$last_update = $dataset->last_update;
 				$periodic_update = $dataset->periodic_update;
                 
                 if($periodic_update==null||$periodic_update==""){
 
                     if(date("d")!=date("d",strtotime($last_update)) && date("H")==5){ 
+
+						Logger::logMessage("Harvest dataset because date '" . date("d") . "' not equal to '" . date("d",strtotime($last_update)) . "' and '" . date("H") . "' = 5 \r\n\r\n");
+
 						if($dataset->site_infocom){
 							$site_inf =$dataset->site_infocom;
 						}
@@ -886,6 +890,9 @@ class DataSet{
 						$dataset->periodic_update = "D;1;A";
 						$config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
                     }
+					else {
+						Logger::logMessage("We do not harvest dataset because '" . date("d") . "' is equal to '" . date("d",strtotime($last_update)) . "' or '" . date("H") . "' != 5 \r\n\r\n");
+					}
                 }
                 else{
                     $periodic_update=explode(";", $periodic_update);
@@ -926,6 +933,12 @@ class DataSet{
 						//error_log(print_r(strtotime("now"), true));
                       
 						if(strtotime("now") >= $next_update){
+					  
+							$nowLog = date('m/d/Y H:i:s', strtotime("now"));
+							$nextUpdateLog = date('m/d/Y H:i:s',$next_update);
+
+							Logger::logMessage("Harvest dataset because next update '" . $nextUpdateLog . "' is inferior to '" . $nowLog . "' \r\n\r\n");
+
 							if($dataset->site_infocom){
 								$site_inf =$dataset->site_infocom;
 							}
@@ -937,8 +950,12 @@ class DataSet{
                             $dataset->last_update = date("m/d/Y H:i:s");
                             $config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
 						}
-					  
-						$next_update= date('m/d/Y H:i:s',$next_update);
+						else {
+							$nowLog = date('m/d/Y H:i:s', strtotime("now"));
+							$nextUpdateLog = date('m/d/Y H:i:s',$next_update);
+
+							Logger::logMessage("We do not harvest dataset because next update '" . $nextUpdateLog . "' is superior to '" . $nowLog . "' \r\n\r\n");
+						}
 					}
                 }
 			}           
@@ -1341,429 +1358,7 @@ class DataSet{
              
         }
         else if($site=='Data_Gouv_fr'){
-
-            $query = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/".$id_dataset_gouv);
-			$results = json_decode($query);
-
-			$tagsData = array();
-			if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
-				$tagsData = [];
-			} 
-			else {
-				$tags = $results->tags;
-				for ($j = 0; $j < count($tags); $j++) {
-					if($tags[$j]!=''){
-						$val = DataSet::nettoyage($tags[$j]);
-						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
-					}
-				}  
-			}
-
-			$resources=array();
-
-			$extras =array();
-			
-			$result2 = $api->getPackageShow("id=".$id_dataset);		
-			$result2 = $result2["result"];
-			$extras = $result2[extras];
-			
-			$lastmod = $results->last_modified;
-			
-			$prevmod = "1970-01-01T00:00:00";
-			foreach($extras as &$ext){
-				if($ext['key'] == 'date_moissonnage_last_modification') {
-					$prevmod = $ext['value'];
-					break;
-				}
-			}
-			if($prevmod) {
-				//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
-				if(strtotime($lastmod) <= strtotime($prevmod)) {
-					error_log('moissonage datagouv id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
-				}
-			}
-			//error_log('moissonage datagouv id : ' .$name . ' moissonnage');
-			if(count($extras)==0){
-				$extras[count($extras)]['key'] = 'LinkedDataSet';
-				$extras[(count($extras) - 1)]['value'] = '';
-
-				$extras[count($extras)]['key'] = 'theme';
-				$extras[(count($extras) - 1)]['value'] = 'default';
-
-				$extras[count($extras)]['key'] = 'label_theme';
-				$extras[(count($extras) - 1)]['value'] = 'Default';
-
-				//$extras[count($extras)]['key'] = 'type_map';
-				//$extras[(count($extras) - 1)]['value'] = 'osm';
-
-				$extras[count($extras)]['key'] = 'FTP_API';
-				$extras[(count($extras) - 1)]['value'] = 'https://www.data.gouv.fr/fr/datasets/'.$id_dataset_gouv.'/'; 
-			}
-
-			//set new date in extras
-			$exists = false;
-			error_log('extras');
-			foreach($extras as &$ext){
-				if($ext['key'] == 'date_moissonnage_last_modification') {
-					$ext['value'] = $lastmod;
-					error_log('extras found');
-					$exists = true;
-					break;
-				}
-			}
-			if(!$exists) {
-				error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = $lastmod; 
-			}
-			
-			$description = $results->description;
-				
-			$description = preg_replace("/\\n/", "<br>", $description);
-			$description = preg_replace("/(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:\/?#[\]@!\$&'\*\+,;=.]+/", "<a href='$0' target='_blank'>$0</a>", $description);
-				
-			
-            $query = DataSet::updatePackage($name,$id_org,$description,$results->license,$update,$tags,/*$spatial,*/array(),$id_dataset,$extras);
-
-			$idNewData=$id_dataset;
-			$old_resources = $result2[resources];
-			$add_tres=false;
-			$geo_res = array();
-            /////////////////////resources////////////
-			foreach($results->resources as &$res){
-				
-				$editId = null;
-				
-				
-				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-				}
-				else{
-					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-				}
-				$host = $_SERVER['HTTP_HOST'];
-
-                if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
-					$add_tres=true;
-
-					$filepathN = $res->url;
-					$filepathN = explode('/',$filepathN);
-					$filepathN = $filepathN[count($filepathN)-1];
-					$filepathN = explode('.',$filepathN)[0]; 
-					$filepathN =urldecode($filepathN);  
-					$filepathN = strtolower($filepathN);
-
-                    if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-                        $url_res = 'http://'.$host.'/sites/default/files/dataset/';
-                    }
-                    else{
-                        $url_res = 'https://'.$host.'/sites/default/files/dataset/';
-                    }        
-
-                    if( $res->format == 'XLS' || $res->format == 'XLSX'  || $res->format == 'xls' || $res->format == 'xlsx'){
-                        $title_f= $res->title.'_xls';
-                        switch ($res->format) {
-							case 'XLS':
-								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLS';
-								$filepathDell =  $filepathN;
-								$reader = new Xls();
-								break;
-							case 'XLSX':
-								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLSX';
-								$filepathDell =  $filepathN;
-								$reader = new Xlsx();
-								break;
-							case 'xls':
-								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xls';
-								$filepathDell =  $filepathN;
-								$reader = new Xls();
-								break;
-							case 'xlsx':
-								$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xlsx';
-								$filepathDell =  $filepathN;
-								$reader = new Xlsx();
-								break;                    
-						}
-
-                        $url_res = $url_res.'xls_'.$filepathN; 
-
-                        $file=$res->url;
-                        $host=$root.''.$filepathN;
-                        copy($file, $host);//copy file xls
-                        chmod($host, 0777);
-
-                        $xls_file = $root.''.$filepathN;
-
-                        $spreadsheet = $reader->load($xls_file);
-
-                        $loadedSheetNames = $spreadsheet->getSheetNames();
-
-                        $writer = new Csv($spreadsheet);
-
-						foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
-							$writer->setSheetIndex($sheetIndex);
-
-							$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.'xls_'.$filepathN);
-							$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
-							$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepathN);
-
-							$writer->save($csvpath);
-
-							$dell_old_xls = unlink($root.''.$filepathDell);
-
-							break;
-						}
-
-						$arr = file($url_res);
-						//$label = utf8_decode($arr[0]);
-						$label = $arr[0];
-
-						$label = DataSet::nettoyage($label);  
-						// edit first line
-						$arr[0] = $label;
-
-						// write back to file
-						file_put_contents($root.'xls_'.$fileName, implode($arr));
-
-						//$query = DataSet::createResource($idNewData,$url_res,$res->description, $title_f, 'csv','false');
-						foreach($old_resources as $oldRes){
-							if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == "csv"){
-								$editId = $oldRes["id"];
-								break;
-							}
-						}
-						
-						if($editId == null){
-							$resources = [
-								"package_id" => $idNewData,
-								"url" => $url_res,
-								"description" => $res->description,
-								"name" =>$res->id,
-								"format"=>'csv'
-							];
-							$callUrluptres = $ckan . "/api/action/resource_create";
-							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-						} else {
-							$resources = [
-								//"package_id" => $idNewData,
-								"id" => $editId,
-								"url" => $url_res,
-								"description" => $res->description,
-								"name" => $res->id,
-								"format" =>'csv',
-								"clear_upload" => true
-							];
-							
-							/*$callUrluptres = $ckan . "/api/action/resource_update";
-							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
-							$return = $api->updateResourceAndPushDatastore($resources);
-						}
-                    }
-
-                    if($res->format == 'csv' || $res->format == 'CSV') {
-
-                        $filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.csv';
-                        $url_res = $url_res.''.$filepathN;
-
-                        // read into array
-                        //$arr = file('/home/user-client/drupal-d4c'.$filepath);
-                        $arr = file($res->url);
-                        //$label = utf8_decode($arr[0]);
-                        $label = $arr[0];
-                        $label = DataSet::nettoyage($label);  
-
-                        // edit first line
-                        $arr[0] = $label;
-
-                        // write back to file
-                        file_put_contents($root.''. $filepathN, implode($arr));
-						
-						foreach($old_resources as $oldRes){
-							if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
-								$editId = $oldRes["id"];
-								break;
-							}
-						}
-
-						// $query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false'); 
-						
-						if($editId == null){
-							$resources = [
-								"package_id" => $idNewData,
-								"url" => $url_res,
-								"description" => $res->description,
-								"name" =>$res->id,
-								"format"=>$res->format
-							];
-							$callUrluptres = $ckan . "/api/action/resource_create";
-							$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-						} else {
-							$resources = [
-								//"package_id" => $idNewData,
-								"id" => $editId,
-								"url" => $url_res,
-								"description" => $res->description,
-								"name" => $res->id,
-								"format" =>$res->format,
-								"clear_upload" => true
-							];
-							
-							/*$callUrluptres = $ckan . "/api/action/resource_update";
-							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
-							$return = $api->updateResourceAndPushDatastore($resources);
-						}
-                        
-                    }
-				}
-                else{
-					$url_res = $res->url;
-					//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false');
-                  
-					foreach($old_resources as $oldRes){
-						if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
-							$editId = $oldRes["id"];
-							break;
-						}
-					}
-				  
-					
-					if($editId == null){
-						$resources = [
-							"package_id" => $idNewData,
-							"url" => $url_res,
-							"description" => $res->description,
-							"name" =>$res->id,
-							"format"=>$res->format
-						];
-						$callUrluptres = $ckan . "/api/action/resource_create";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-					} else {
-						$resources = [
-							//"package_id" => $idNewData,
-							"id" => $editId,
-							"url" => $url_res,
-							"description" => $res->description,
-							"name" => $res->id,
-							"format" =>$res->format,
-							//"clear_upload" => true
-						];
-						
-						$callUrluptres = $ckan . "/api/action/resource_update";
-						$return = $api->updateRequest($callUrluptres, $resources, "POST");
-					}
-					
-					if(strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || (strtolower($res->format) == 'json' && (strpos(strtolower($res->title), "export geojson") !== false || strpos(strtolower($res->description), "export geojson") !== false))) {
-						$geo_res[strtolower($res->format)] = $res->url;
-					}
-                }  
-            }
-				
-			$command = NULL;
-			if($add_tres){
-				sleep(20);
-			} else if($add_tres == FALSE && count($geo_res) > 0){
-				// on créé un csv
-				$name = $label;
-				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
-				$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
-				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
-				if($geo_res["geojson"] != null){
-					$url = $geo_res["geojson"];
-					$json = Query::callSolrServer($url);
-					$csv = Export::createCSVfromGeoJSON($json);
-					
-					file_put_contents($rootCsv, $csv);
-				} else if($geo_res["json"] != null){
-					$url = $geo_res["json"];
-					$json = Query::callSolrServer($url);
-					$csv = Export::createCSVfromGeoJSON($json);
-					
-					file_put_contents($rootCsv, $csv);
-				} else {
-					$url = $geo_res["kml"];
-					//We create a tmp file in which we write the result and an output file to convert
-					$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-					$fileInput = fopen($pathInput, 'w');
-					$kml = Query::callSolrServer($url);
-					fwrite($fileInput, $kml);
-					fclose($fileInput);
-
-					//Get current Php directory to call the script
-					$dir = dirname(__FILE__);
-					$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
-
-					$typeConvert = 'GeoJSON';
-				
-					$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
-					$message = shell_exec($command);
-					$json = file_get_contents ($rootJson);
-					$csv = Export::createCSVfromGeoJSON($json);
-					
-					file_put_contents($rootCsv, $csv);
-					
-					unlink ($pathInput);
-					unlink ($rootJson);
-				}
-				
-				foreach($old_resources as $oldRes){
-					if($oldRes["name"] == ($name.".csv") && strtolower($oldRes["format"]) == "csv"){
-						$editId = $oldRes["id"];
-						break;
-					}
-				}
-				
-				if($editId == null){
-					$resources = [
-						"package_id" => $idNewData,
-						"url" => $urlCsv,
-						"description" => '',
-						"name" =>$name.".csv",
-						"format"=>'csv'
-					];
-					$callUrluptres = $ckan . "/api/action/resource_create";
-					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
-					$this->renderResourceLog($resource["name"], $return);
-				} else {
-					$resources = [
-						//"package_id" => $idNewData,
-						"id" => $editId,
-						"url" => $urlCsv,
-						"description" => '',
-						"name" => $name.".csv",
-						"format" =>'csv',
-						"clear_upload" => true
-					];
-					
-					$callUrluptres = $ckan . "/api/action/resource_update";
-					/*$return = $api->updateRequest($callUrluptres, $resources, "POST");
-					$this->renderResourceLog($resource["name"], $return);*/
-					$return = $api->updateResourceAndPushDatastore($resources);
-				}
-				
-				# Deactivated for now
-				// $pathUserClient = '/home/user-client';
-				// $pathUserClientData = $pathUserClient . '/data';
-				// $buildGeoloc = 'false';
-				// $selectedSeparator = ",";
-				// $selectedEncoding = "UTF-8";
-				// $onlyOneAddress = 'false';
-				// $selectedAddress = "";
-				// $selectedPostalCode = "";
-				// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2["name"] . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
-				
-				sleep(20);
-			}
-			
-			$api->calculateVisualisations($idNewData);
-			
-			if($command != NULL){
-				error_log($command);
-				$output = shell_exec($command);
-				error_log($output);
-			}
-			
-            return $query;
+			return Dataset::harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org, $update, $resource);
         }
         else if($site=='Public_OpenDataSoft_com'){
             //drupal_set_message('<pre>Public_OpenDataSoft_com</pre>');
@@ -1781,7 +1376,7 @@ class DataSet{
 				$tags = $results->keyword;
 				for ($j = 0; $j < count($tags); $j++) {
 					if($tags[$j]!=''){
-						$val = $this->nettoyage($tags[$j]);
+						$val = Dataset::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
 					}
 				}  
@@ -1924,7 +1519,7 @@ class DataSet{
 				$tags = $results->keyword;
 				for ($j = 0; $j < count($tags); $j++) {
 					if($tags[$j]!=''){
-						$val = $this->nettoyage($tags[$j]);
+						$val = Dataset::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
 					}
 				}  
@@ -2539,7 +2134,7 @@ class DataSet{
 				} 
 			}
 			
-			$query =  DataSet::updatePackage($datasetUpt->title,$datasetUpt->owner_org,$datasetUpt->notes,$datasetUpt->license_id, $update,$tagsData,array(),$datasetUpt->id,array());    
+			$query =  DataSet::updatePackage($datasetUpt->title, $datasetUpt->owner_org, $datasetUpt->notes, $datasetUpt->license_id, $tagsData, $datasetUpt->id, array());    
 			$idNewData = $id_dataset;  
             
 			$csv1='';
@@ -2959,9 +2554,508 @@ class DataSet{
        
                         
     }
+	
+	static function harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org) {
+		Logger::logMessage("Harvest DataGouvFR " . $id_dataset_gouv ."\r\n");
+
+		$query = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/".$id_dataset_gouv);
+		$results = json_decode($query);
+
+		Logger::logMessage(" -> Calling 'https://www.data.gouv.fr/api/1/datasets/". $id_dataset_gouv . "' ... \r\n");
+
+		$tagsData = array();
+		if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+			$tagsData = [];
+		} 
+		else {
+			$tags = $results->tags;
+			for ($j = 0; $j < count($tags); $j++) {
+				if($tags[$j]!=''){
+					$val = DataSet::nettoyage($tags[$j]);
+					array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
+				}
+			}  
+		}
+
+		Logger::logMessage(" -> Getting tags ... \r\n");
+
+		$resources=array();
+
+		$extras =array();
+		
+		$result2 = $api->getPackageShow("id=".$id_dataset);		
+		$result2 = $result2["result"];
+		$extras = $result2[extras];
+		
+		$lastmod = $results->last_modified;
+		$externalDatasetLastModificationLog = date('m/d/Y H:i:s', strtotime($lastmod));
+
+		Logger::logMessage(" -> Checking previous modification ... \r\n");
+		
+		$prevmod = "1970-01-01T00:00:00";
+		foreach($extras as &$ext){
+			if($ext['key'] == 'date_moissonnage_last_modification') {
+				$prevmod = $ext['value'];
+				break;
+			}
+		}
+		if($prevmod) {
+			//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
+			if (strtotime($lastmod) <= strtotime($prevmod)) {
+
+				$datasetLastModificationLog = date('m/d/Y H:i:s', strtotime($prevmod));
+				
+				Logger::logMessage(" -> Dataset last modification " . $datasetLastModificationLog ." is superior to external dataset modification '" . $externalDatasetLastModificationLog . "' \r\n");
+
+				$lastHarvest = "1970-01-01T00:00:00";
+				Logger::logMessage(" -> Checking extra harvest last update ... \r\n");
+				if ($results->extras && $results->extras->{'harvest:last_update'}) {
+					$lastHarvest = $results->extras->{'harvest:last_update'};
+				}
+
+				$lastmod = $lastHarvest;
+				$externalDatasetLastModificationLog = date('m/d/Y H:i:s', strtotime($lastmod));
+
+				Logger::logMessage(" -> Found last harvest '" . $externalDatasetLastModificationLog .  "' \r\n");
+
+				if (strtotime($lastmod) <= strtotime($prevmod)) {
+					Logger::logMessage(" -> We do not harvest the dataset because dataset last modification " . $datasetLastModificationLog ." is superior to external dataset modification '" . $externalDatasetLastModificationLog . "' and extra harvest:last_update '" . $externalDatasetLastModificationLog . "'\r\n\r\n");
+					return;
+				}
+			}
+		}
+		
+		Logger::logMessage(" -> Modification check is OK ... \r\n");
+
+		//error_log('moissonage datagouv id : ' .$name . ' moissonnage');
+		if(count($extras)==0){
+			$extras[count($extras)]['key'] = 'LinkedDataSet';
+			$extras[(count($extras) - 1)]['value'] = '';
+
+			$extras[count($extras)]['key'] = 'theme';
+			$extras[(count($extras) - 1)]['value'] = 'default';
+
+			$extras[count($extras)]['key'] = 'label_theme';
+			$extras[(count($extras) - 1)]['value'] = 'Default';
+
+			//$extras[count($extras)]['key'] = 'type_map';
+			//$extras[(count($extras) - 1)]['value'] = 'osm';
+
+			$extras[count($extras)]['key'] = 'FTP_API';
+			$extras[(count($extras) - 1)]['value'] = 'https://www.data.gouv.fr/fr/datasets/'.$id_dataset_gouv.'/'; 
+		}
+
+		//set new date in extras
+
+		Logger::logMessage(" -> Setting new date in extra ... \r\n");
+
+		$exists = false;
+		foreach($extras as &$ext){
+			if($ext['key'] == 'date_moissonnage_last_modification') {
+				$ext['value'] = $lastmod;
+				$exists = true;
+				
+				Logger::logMessage(" -> Extra found, we set it to '" . $externalDatasetLastModificationLog . "' \r\n");
+				break;
+			}
+		}
+		if(!$exists) {
+			Logger::logMessage(" -> Extra not found, we had it '" . $externalDatasetLastModificationLog . "' \r\n");
+			$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
+			$extras[(count($extras) - 1)]['value'] = $lastmod; 
+		}
+		
+		$description = $results->description;
+			
+		$description = preg_replace("/\\n/", "<br>", $description);
+		$description = preg_replace("/(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:\/?#[\]@!\$&'\*\+,;=.]+/", "<a href='$0' target='_blank'>$0</a>", $description);
+		
+		// FIXME: Should be done at the end because if something goes wrong the modification date is false
+		Logger::logMessage(" -> We update the package \r\n");
+		$query = DataSet::updatePackage($name, $id_org, $description, $results->license, $tags, $id_dataset, $extras);
+
+		$idNewData = $id_dataset;
+		$old_resources = $result2[resources];
+		$add_tres = false;
+		$geo_res = array();
+		/////////////////////resources////////////
+		foreach($results->resources as &$res){
+
+			Logger::logMessage(" -> Checking resource '" . $res->title . "' \r\n");
+			
+			$editId = null;
+			$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
+			$host = $_SERVER['HTTP_HOST'];
+
+			Logger::logMessage(" -> Resource format is '" . $res->format . "' \r\n");
+
+			if ($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
+
+				$add_tres=true;
+
+				$filepathN = $res->url;
+				$filepathN = explode('/',$filepathN);
+				$filepathN = $filepathN[count($filepathN)-1];
+				$filepathN = explode('.',$filepathN)[0]; 
+				$filepathN =urldecode($filepathN);  
+				$filepathN = strtolower($filepathN);
+
+				$url_res = 'https://'.$host.'/sites/default/files/dataset/';    
+
+				if( $res->format == 'XLS' || $res->format == 'XLSX'  || $res->format == 'xls' || $res->format == 'xlsx') {
+					
+					Logger::logMessage(" -> Managing XLS or XLSX \r\n");
+
+					$title_f= $res->title.'_xls';
+					switch ($res->format) {
+						case 'XLS':
+							$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLS';
+							$filepathDell =  $filepathN;
+							$reader = new Xls();
+							break;
+						case 'XLSX':
+							$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.XLSX';
+							$filepathDell =  $filepathN;
+							$reader = new Xlsx();
+							break;
+						case 'xls':
+							$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xls';
+							$filepathDell =  $filepathN;
+							$reader = new Xls();
+							break;
+						case 'xlsx':
+							$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.xlsx';
+							$filepathDell =  $filepathN;
+							$reader = new Xlsx();
+							break;                    
+					}
+
+					$url_res = $url_res.'xls_'.$filepathN; 
+
+					$file=$res->url;
+					$host=$root.''.$filepathN;
+					copy($file, $host);//copy file xls
+					chmod($host, 0777);
+
+					$xls_file = $root.''.$filepathN;
+
+					$spreadsheet = $reader->load($xls_file);
+
+					$loadedSheetNames = $spreadsheet->getSheetNames();
+
+					$writer = new Csv($spreadsheet);
+
+					foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
+						$writer->setSheetIndex($sheetIndex);
+
+						$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.'xls_'.$filepathN);
+						$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
+						$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepathN);
+
+						$writer->save($csvpath);
+
+						$dell_old_xls = unlink($root.''.$filepathDell);
+
+						break;
+					}
+
+					$arr = file($url_res);
+					//$label = utf8_decode($arr[0]);
+					$label = $arr[0];
+
+					$label = DataSet::nettoyage($label);  
+					// edit first line
+					$arr[0] = $label;
+
+					// write back to file
+					file_put_contents($root.'xls_'.$fileName, implode($arr));
+
+					Logger::logMessage(" -> Checking for correspondance with old resource \r\n");
+					//$query = DataSet::createResource($idNewData,$url_res,$res->description, $title_f, 'csv','false');
+					foreach($old_resources as $oldRes){
+						Logger::logMessage(" -> Checking old resource name '" . $oldRes["name"] . "' with '" . $res->id . "' and '" . strtolower($oldRes["format"]) . "' == csv ... \r\n");
+						if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == "csv"){
+							$editId = $oldRes["id"];
+							break;
+						}
+					}
+					
+					if($editId == null){
+						Logger::logMessage(" -> Edit ID is null, we call updateRequest() with resource_create \r\n");
+
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->id,
+							"format"=>'csv'
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						Logger::logMessage(" -> Edit ID is not null, we call updateResourceAndPushDatastore() \r\n");
+
+						$resources = [
+							//"package_id" => $idNewData,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->id,
+							"format" =>'csv',
+							"clear_upload" => true
+						];
+						
+						/*$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+						$return = $api->updateResourceAndPushDatastore($resources);
+					}
+				}
+				else if($res->format == 'csv' || $res->format == 'CSV') {
+
+					Logger::logMessage(" -> Managing CSV \r\n");
+
+					$filepathN = explode(".",$filepathN)[0]. "_" . uniqid().'.csv';
+					$url_res = $url_res.''.$filepathN;
+
+					// read into array
+					//$arr = file('/home/user-client/drupal-d4c'.$filepath);
+					$arr = file($res->url);
+					//$label = utf8_decode($arr[0]);
+					$label = $arr[0];
+					$label = DataSet::nettoyage($label);  
+
+					// edit first line
+					$arr[0] = $label;
+
+					// write back to file
+					file_put_contents($root.''. $filepathN, implode($arr));
+					
+					Logger::logMessage(" -> Checking for correspondance with old resource \r\n");
+					foreach($old_resources as $oldRes){
+						Logger::logMessage(" -> Checking old resource name '" . $oldRes["name"] . "' with '" . $res->id . "' and old format '" . strtolower($oldRes["format"]) . "' = '" . strtolower($res->format) . "' ... \r\n");
+						if($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
+							$editId = $oldRes["id"];
+							break;
+						}
+					}
+
+					// $query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false'); 
+					
+					if($editId == null) {
+						Logger::logMessage(" -> Edit ID is null, we call updateRequest() with resource_create \r\n");
+
+						$resources = [
+							"package_id" => $idNewData,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" =>$res->id,
+							"format"=>$res->format
+						];
+						$callUrluptres = $ckan . "/api/action/resource_create";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+					} else {
+						Logger::logMessage(" -> Edit ID is not null, we call updateResourceAndPushDatastore() \r\n");
+
+						$resources = [
+							//"package_id" => $idNewData,
+							"id" => $editId,
+							"url" => $url_res,
+							"description" => $res->description,
+							"name" => $res->id,
+							"format" =>$res->format,
+							"clear_upload" => true
+						];
+						
+						/*$callUrluptres = $ckan . "/api/action/resource_update";
+						$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+						$return = $api->updateResourceAndPushDatastore($resources);
+					}
+					
+				}
+			}
+			else {
+				Logger::logMessage(" -> Managing other format \r\n");
+
+				$url_res = $res->url;
+				//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->title, $res->format,'false');
+			  
+				Logger::logMessage(" -> Checking for correspondance with old resource \r\n");
+				foreach($old_resources as $oldRes){
+					Logger::logMessage(" -> Checking old resource name '" . $oldRes["name"] . "' with '" . $res->id . "' and old format '" . strtolower($oldRes["format"]) . "' = '" . strtolower($res->format) . "' ... \r\n");
+					if ($oldRes["name"] == $res->id && strtolower($oldRes["format"]) == strtolower($res->format)){
+						$editId = $oldRes["id"];
+						break;
+					}
+				}
+			  
+				
+				if($editId == null){
+					Logger::logMessage(" -> Edit ID is null, we call updateRequest() with resource_create \r\n");
+
+					$resources = [
+						"package_id" => $idNewData,
+						"url" => $url_res,
+						"description" => $res->description,
+						"name" =>$res->id,
+						"format"=>$res->format
+					];
+					$callUrluptres = $ckan . "/api/action/resource_create";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+				} else {
+					Logger::logMessage(" -> Edit ID is not null, we call updateRequest() with resource_update \r\n");
+
+					$resources = [
+						//"package_id" => $idNewData,
+						"id" => $editId,
+						"url" => $url_res,
+						"description" => $res->description,
+						"name" => $res->id,
+						"format" =>$res->format,
+						//"clear_upload" => true
+					];
+					
+					$callUrluptres = $ckan . "/api/action/resource_update";
+					$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				}
+				
+				if (strtolower($res->format) == 'geojson' || strtolower($res->format) == 'kml' || (strtolower($res->format) == 'json' && (strpos(strtolower($res->title), "export geojson") !== false || strpos(strtolower($res->description), "export geojson") !== false))) {
+					
+					Logger::logMessage(" -> Format is a geo format so we add it to geo_res array \r\n");
+
+					$geo_res[strtolower($res->format)] = $res->url;
+				}
+			}  
+		}
+			
+		$command = NULL;
+		if($add_tres){
+			Logger::logMessage(" -> Add ressource, we wait 20 sec \r\n");
+
+			sleep(20);
+		}
+		else if($add_tres == FALSE && count($geo_res) > 0){
+			Logger::logMessage(" -> We do not add classic resource and we have a geo resource. We create a CSV \r\n");
+
+			// We create a CSV
+			$name = $label;
+			$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
+			$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
+			$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
+			if($geo_res["geojson"] != null){
+				$url = $geo_res["geojson"];
+				$json = Query::callSolrServer($url);
+				$csv = Export::createCSVfromGeoJSON($json);
+				
+				file_put_contents($rootCsv, $csv);
+			}
+			else if($geo_res["json"] != null){
+				$url = $geo_res["json"];
+				$json = Query::callSolrServer($url);
+				$csv = Export::createCSVfromGeoJSON($json);
+				
+				file_put_contents($rootCsv, $csv);
+			}
+			else {
+				$url = $geo_res["kml"];
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				$kml = Query::callSolrServer($url);
+				fwrite($fileInput, $kml);
+				fclose($fileInput);
+
+				//Get current Php directory to call the script
+				$dir = dirname(__FILE__);
+				$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
+
+				$typeConvert = 'GeoJSON';
+			
+				$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
+				$message = shell_exec($command);
+				$json = file_get_contents ($rootJson);
+				$csv = Export::createCSVfromGeoJSON($json);
+				
+				file_put_contents($rootCsv, $csv);
+				
+				unlink ($pathInput);
+				unlink ($rootJson);
+			}
+			
+			Logger::logMessage(" -> Checking for correspondance with old resource \r\n");
+			foreach($old_resources as $oldRes){
+				Logger::logMessage(" -> Checking old resource name '" . $oldRes["name"] . "' with '" . $res->id . "' and old format '" . strtolower($oldRes["format"]) . "' = csv ... \r\n");
+				if($oldRes["name"] == ($name.".csv") && strtolower($oldRes["format"]) == "csv"){
+					$editId = $oldRes["id"];
+					break;
+				}
+			}
+			
+			if($editId == null){
+				Logger::logMessage(" -> Edit ID is null, we call updateRequest() with resource_create \r\n");
+
+				$resources = [
+					"package_id" => $idNewData,
+					"url" => $urlCsv,
+					"description" => '',
+					"name" =>$name.".csv",
+					"format"=>'csv'
+				];
+				$callUrluptres = $ckan . "/api/action/resource_create";
+				$return = $api->updateRequest($callUrluptres, $resources, "POST"); 
+				// $this->renderResourceLog($resource["name"], $return);
+			}
+			else {
+				Logger::logMessage(" -> Edit ID is not null, we call updateResourceAndPushDatastore() \r\n");
+
+				$resources = [
+					//"package_id" => $idNewData,
+					"id" => $editId,
+					"url" => $urlCsv,
+					"description" => '',
+					"name" => $name.".csv",
+					"format" =>'csv',
+					"clear_upload" => true
+				];
+				
+				$callUrluptres = $ckan . "/api/action/resource_update";
+				/*$return = $api->updateRequest($callUrluptres, $resources, "POST");
+				$this->renderResourceLog($resource["name"], $return);*/
+				$return = $api->updateResourceAndPushDatastore($resources);
+			}
+			
+			# Deactivated for now
+			// $pathUserClient = '/home/user-client';
+			// $pathUserClientData = $pathUserClient . '/data';
+			// $buildGeoloc = 'false';
+			// $selectedSeparator = ",";
+			// $selectedEncoding = "UTF-8";
+			// $onlyOneAddress = 'false';
+			// $selectedAddress = "";
+			// $selectedPostalCode = "";
+			// $command = $pathUserClientData . '/geoloc.sh "' . $buildGeoloc . '" "' . $ckan . '" "' . $config_file->ckan->api_key . '" "' . $result2["name"] . '" "' . $return["result"]["id"] . '" "' . $selectedSeparator . '" "' . $selectedEncoding . '" "' . $onlyOneAddress . '" "' . $selectedAddress . '" "' . $selectedPostalCode . '"';
+			
+			Logger::logMessage(" -> We wait 20 sec \r\n");
+
+			sleep(20);
+		}
+		
+		Logger::logMessage(" -> Visualisation calculation ... \r\n");
+
+		$api->calculateVisualisations($idNewData);
+		
+		Logger::logMessage(" -> DataGouv dataset management ended. \r\n\r\n\r\n");
+		
+		# Deactivated for now
+		// if($command != NULL){
+		// 	error_log($command);
+		// 	$output = shell_exec($command);
+		// 	error_log($output);
+		// }
+		
+		return $query;
+	}
     
-    
-    function nettoyage( $str, $charset='utf-8' ) {
+    static function nettoyage( $str, $charset='utf-8' ) {
           
 		//$str = utf8_decode($str);
 			 
