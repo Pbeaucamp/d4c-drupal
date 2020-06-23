@@ -22,11 +22,6 @@ theme.form:
 custom_views.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/customViewsForm.js: {}
   dependencies:
     - core/jquery
@@ -34,11 +29,6 @@ custom_views.form:
 addThemeInDatasetForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/addThemeInDatasetForm.js: {}
   dependencies:
     - core/jquery    
@@ -114,7 +104,6 @@ VanillaForm.form:
     theme:
       css/vanilla.css: {}
 
-
 MoissonnageDataGouv.form:
   version: VERSION
   js:
@@ -136,20 +125,9 @@ MoissonnageDataGouv.form:
 updateControlForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/updateControlForm.js: {}
   dependencies:
     - core/jquery
-  css:
-    theme:
-      /sites/default/files/api/portail_d4c/css/visualisation.css: {}
-      /sites/default/files/api/portail_d4c/css/font-awesome.min.css: {}
-    base:
-      css/modal.css: {}
     
 GeolocForm.form:
   version: VERSION
@@ -161,11 +139,6 @@ GeolocForm.form:
 ckanForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/ckanForm.js: {}
   dependencies:
     - core/jquery
@@ -173,11 +146,6 @@ ckanForm.form:
 controDataslForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/controDataslForm.js: {}
   dependencies:
     - core/jquery
@@ -209,11 +177,6 @@ leaflet:
 joinDatasetsForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/joinDatasetsForm.js: {}
   dependencies:
     - core/jquery
@@ -238,11 +201,6 @@ helpForm:
 datasetsBoardForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/DatasetsBoardForm.js: {}
   dependencies:
     - core/jquery
@@ -250,11 +208,6 @@ datasetsBoardForm.form:
 reusesForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/reusesForm.js: {}
   dependencies:
     - core/jquery

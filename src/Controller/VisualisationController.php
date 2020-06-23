@@ -40,13 +40,6 @@ class VisualisationController extends ControllerBase {
 		return $this->myPage2($id, $tab);
 	}
 
-
-	public function getUrlSite(Request $request, $tab) {
-		$id = $request->query->get('id');
-		echo" hey" ;die;
-		return $this->myPage2($id, $tab);
-	} 
-
 	/**
 	 * Returns a simple page.
 	 *
@@ -67,8 +60,6 @@ class VisualisationController extends ControllerBase {
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
 		
-
-
 		
 		$url = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
 		$dateModified = $dataset["metas"]["modified"];
@@ -154,8 +145,6 @@ class VisualisationController extends ControllerBase {
         $theme=false;
 		$visu = 1;
         for($i=0; $i < count($met); $i++){
-
-        	/*var_dump($met[$i]);die;*/
             if($met[$i]['key']=='LinkedDataSet'){
                 $links = $met[$i][value];
                 $links = explode(";", $links);

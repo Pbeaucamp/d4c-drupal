@@ -25,15 +25,12 @@ class ckanForm extends HelpFormBase {
 		return 'ckanForm';
 	}
 
-
-
 	/**
 	 * {@inheritdoc}
 	 */
 public function buildForm(array $form, FormStateInterface $form_state) {
-
         $form = parent::buildForm($form, $form_state);
-           
+        
         
         $form['#attached']['library'][] = 'ckan_admin/ckanForm.form';
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
@@ -138,7 +135,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
     
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
-           
         
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
