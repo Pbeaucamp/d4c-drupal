@@ -69,8 +69,6 @@ class editMetaDataForm extends HelpFormBase
 	}
     
     public function buildForm(array $form, FormStateInterface $form_state){
-
-
 		$form = parent::buildForm($form, $form_state);
       
 		// $form['#attached']['library'][] = 'ckan_admin/iconpicker.form';
@@ -86,12 +84,9 @@ class editMetaDataForm extends HelpFormBase
 		
      
         $dataSet = $dataSet->getContent();
-
-
         $dataSet2 = json_encode($dataSet, true);
         $dataSet = json_decode($dataSet, true);
         $dataSet = $dataSet[result][results];
-
 		
 		uasort($dataSet, function($a, $b) {
 			$res =  strcasecmp($a['title'], $b['title']);
@@ -139,15 +134,11 @@ class editMetaDataForm extends HelpFormBase
 
         $ids = array();
 
-
-
 		$ids["new"] = "Сréer un jeu de données";
    
         foreach($dataSet as &$ds) {
             $ids[$ds[id]] = $ds[title];
         }
-
-         
 
         $organizationList = array();
         $organizationList2 = array();
@@ -156,8 +147,6 @@ class editMetaDataForm extends HelpFormBase
             $organizationList[$value[id]] = $value[display_name];
             $organizationList2[$value[name]] = $value[display_name];
         }
-
-
 		
         $licList = array();
 
@@ -183,12 +172,11 @@ class editMetaDataForm extends HelpFormBase
             $valuesForSelect[$value->title.'%'.$value->label] = $value->label;
         }
         
-	
+		
         
 		$form['m0'] = array(
 			'#markup' => '<div id="filters">',
 		);  
-
 		
         $form['filtr_org'] = array(
             //'#prefix' =>'',
@@ -202,8 +190,6 @@ class editMetaDataForm extends HelpFormBase
                 'wrapper'   => 'selected_data',
 			],
         );
-
-        
         
 		$form['selected_data'] = array(
             '#type' => 'select',
@@ -260,9 +246,6 @@ class editMetaDataForm extends HelpFormBase
 
 		);
 		
-
-
-
 		$form['date_dataset'] = array(
             '#type' => 'date',
             '#title' => $this->t('Date du jeu de données'),
@@ -341,11 +324,6 @@ class editMetaDataForm extends HelpFormBase
 			'#type' => 'checkbox',
 			'#title' => $this->t('Ne pas afficher les API'),
 		);
-
-        $form['checkbox_test_form'] = array(
-            '#type' => 'checkbox',
-            '#title' => $this->t('Test checkbox'),
-        );
 
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
@@ -507,9 +485,6 @@ class editMetaDataForm extends HelpFormBase
             );
 
 
-            
-
-
             $form['table'][$i]['donnees'] = array(
                 '#type' => 'textarea',
                 '#attributes' => array('style' => 'height: 2em;width: 19em;'),
@@ -612,8 +587,6 @@ class editMetaDataForm extends HelpFormBase
                 '#attributes' => array('style' => 'height: 5em;width: 25em;'),
                 '#maxlength' => null,
             );
-
-
             
             $form['table_widgets'][$i]['widget'] = array(
             '#type' => 'textarea',
@@ -739,8 +712,6 @@ class editMetaDataForm extends HelpFormBase
 
     public function submitForm(array &$form, FormStateInterface $form_state){
 
-       
-
         $validataCurl = array();
         $idNewData = '';
         $api = new Api;
@@ -776,13 +747,10 @@ class editMetaDataForm extends HelpFormBase
 			} 
         }
         
-        
         $widget = substr($widget_html, 0, -11);
         
         $analize_false = $form_state->getValue('analize_false');
         $api_false = $form_state->getValue('api_false');
-        $checkbox_test_form= $form_state->getValue('checkbox_test_form');
-
         $dont_visualize_tab='';
         
         if($api_false==1){
@@ -790,14 +758,9 @@ class editMetaDataForm extends HelpFormBase
 		}
         
         if($analize_false==1){
-			$dont_visualize_tab=$dont_visualize_tab.'checkbox_test_form;';
+			$dont_visualize_tab=$dont_visualize_tab.'analize;';
 		}
-
-        if($analize_false==1){
-
-            $dont_visualize_tab=$dont_visualize_tab.'analize;';
-        }
-       
+        
         $them = $form_state->getValue('selected_theme');
         $them = explode("%",$them);
         $them_label =$them[1];
@@ -875,13 +838,10 @@ class editMetaDataForm extends HelpFormBase
 			}
         }
         else{
-       
 
 			$Dataset_lies_table = $form_state->getValue('Dataset_lies_table');
 			$string_dataset_lies = '';
             
-   
-
 			foreach ($Dataset_lies_table as $key => &$val) {
 				if ($val[dt] == 1) {
 					$string_dataset_lies = $string_dataset_lies . ';' . $key;
@@ -891,7 +851,6 @@ class editMetaDataForm extends HelpFormBase
 			$string_dataset_lies = substr($string_dataset_lies, 1);
             
 			if ($private == '1') {
-
 				$private = true;
 			} 
 			else {
@@ -900,10 +859,8 @@ class editMetaDataForm extends HelpFormBase
 
 			$datasetName = null;
 			$editDataset = null;
-
-
 			if ($data_id == 'new') {
-          
+                
 				$tagsData = array();
 				if ($tags == '') {
 
@@ -983,8 +940,6 @@ class editMetaDataForm extends HelpFormBase
 				
 				$extras[count($extras)]['key'] = 'dont_visualize_tab';
 				$extras[(count($extras) - 1)]['value'] = $dont_visualize_tab;
-
-
 				
 				$extras[count($extras)]['key'] = 'FTP_API';
 				$extras[(count($extras) - 1)]['value'] = 'FTP';
@@ -1071,12 +1026,9 @@ class editMetaDataForm extends HelpFormBase
 				//$api->calculateVisualisations($idNewData);
             }    
 			else {
-      
 				$check=false;
-
 				foreach ($dataSet as &$value) {
                     if ($value[id] == $data_id) {
-
                         $check=true;
                         $datasetName = $value[name];
 						$editDataset = $value;
@@ -1131,7 +1083,6 @@ class editMetaDataForm extends HelpFormBase
                             } 
 
                             for ($j = 0; $j < count($value[extras]); $j++) {
-                              
                                 //$theme_label_ex = false;
                                 if ($value[extras][$j]['key'] == 'Picto') {
                                     $pict = true;
@@ -1154,17 +1105,14 @@ class editMetaDataForm extends HelpFormBase
 									}
                                 }
                                 
-
                                 if ($value[extras][$j]['key'] == 'LinkedDataSet') {
                                     $dataset_lies = true;
                                     $value[extras][$j]['value'] = $string_dataset_lies;
                                 }
                                 
                                 if ($value[extras][$j]['key'] == 'dont_visualize_tab') {
-                                     
                                     $dnt_viz_api = true;
                                     $value[extras][$j]['value'] = $dont_visualize_tab;
-
                                 }
                                 								
                                 if ($value[extras][$j]['key'] == 'theme') {
@@ -1210,7 +1158,7 @@ class editMetaDataForm extends HelpFormBase
                             }
 
                         }
-                       
+                        
                         if ($pict == false) {
 
                             $value[extras][count($value[extras])]['key'] = 'Picto';
@@ -1233,11 +1181,6 @@ class editMetaDataForm extends HelpFormBase
                             $value[extras][count($value[extras])]['key'] = 'dont_visualize_tab';
                             $value[extras][count($value[extras]) - 1]['value'] = $dont_visualize_tab;
                         }
-
-
-                       
-                        
-
                         
                         if($theme_label_ex==false){
 							$value[extras][count($value[extras])]['key'] = 'label_theme';
@@ -1328,7 +1271,7 @@ class editMetaDataForm extends HelpFormBase
                 
 				}
             }
-
+        
 
 ////////////////////////////////////////resources////////////////////////////////////////////////////////////////
 
@@ -1944,9 +1887,6 @@ class editMetaDataForm extends HelpFormBase
 			// 	error_log($output);
 			// }
 			
-
-
-   
 			// validata
 			$optionst = array(
 				CURLOPT_RETURNTRANSFER => true,
@@ -1996,8 +1936,6 @@ class editMetaDataForm extends HelpFormBase
 			Logger::logMessage("We redirect user \r\n");
 			$redirect_path = "/admin/config/data4citizen/editMetaDataForm?id=" . $idDataset;
 			$url = url::fromUserInput($redirect_path);
-
-
 
 			// set redirect
 			$form_state->setRedirectUrl($url);
@@ -2341,7 +2279,6 @@ class editMetaDataForm extends HelpFormBase
     public function datasetCallback(array &$form, FormStateInterface $form_state){
 		//drupal_set_message('<pre>'. print_r($_SESSION, true) .'</pre>'); 
     
-
         $api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');

@@ -1926,8 +1926,6 @@ class Api{
 
 
 	public function getPackageShow2($datasetid,$params, $callCkan = true) {
-
-
         
         $result = '';
         
