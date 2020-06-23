@@ -209,3 +209,6 @@ html[dir=rtl] .d4cui-style:before,
 html[dir=rtl] .d4cui-tooltips:before {
   transform: scale(-1, 1);
 }
+.classishere {
+  background-color: #2db614!important;
+}
