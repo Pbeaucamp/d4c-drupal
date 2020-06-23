@@ -71,7 +71,6 @@ class editMetaDataForm extends HelpFormBase
     public function buildForm(array $form, FormStateInterface $form_state){
 
 
-
 		$form = parent::buildForm($form, $form_state);
       
 		// $form['#attached']['library'][] = 'ckan_admin/iconpicker.form';

@@ -138,7 +138,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
     
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
-           var_dump("hey ");die;
+           
         
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;

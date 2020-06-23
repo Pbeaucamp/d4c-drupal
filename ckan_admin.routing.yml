@@ -102,6 +102,19 @@ ckan_admin.visualisation:
     _title: ''
   requirements:
     _permission: 'access content'
+
+ckan_admin.visualisationurlsite:
+  path: '/visualisation/urlsite/{tab}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\VisualisationController::getUrlSite'
+    tab: 'table'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+
+
+
     
 ckan_admin.carte:
   path: '/carte'
