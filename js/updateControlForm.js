@@ -461,7 +461,7 @@ console.log(data.length);
            
                     if(JSON.stringify(datasets[i].parameters)  && JSON.stringify(datasets[i].parameters) != null && JSON.stringify(datasets[i].parameters) != "null" && JSON.stringify(datasets[i].parameters) != undefined) {
 
-                        $(".span_"+i).addClass("classishere");
+                        $(".span_"+i).addClass("buttonDetailsActif");
                         
                     }
                     
@@ -542,7 +542,7 @@ function openModalFilter(elem){
         elem.attr("data-parameters", JSON.stringify(parameters));
         elem.data("nhits", nhits);
        
-         elem.parent().find("span").addClass("classishere");
+         elem.parent().find("span").addClass("buttonDetailsActif");
 
         var value = document.getElementById("valuedetails_span_"+id).value;
 

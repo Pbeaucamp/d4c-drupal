@@ -85,8 +85,8 @@ class updateControlForm extends HelpFormBase {
   
         
         // drupal_set_message('<pre>'+print_r($dataForUpdateDatasets,true)+'</pre>');
-        $siteurlarrayvalue = null;
-        $siteurlarray = null;
+        $siteUrlArrayValue = null;
+        $siteUrlArray = null;
         $foo = array('bar' => 'baz');
         foreach($dataForUpdateDatasets as &$value){
                
@@ -107,7 +107,7 @@ class updateControlForm extends HelpFormBase {
                     if($met[$i]['key']=='FTP_API'){
                               if($met[$i][value]!='FTP'){
                                
-                                $siteurlarrayvalue[$value2->id_data] =  $met[$i][value];
+                                $siteUrlArrayValue[$value2->id_data] =  $met[$i][value];
                                 
                                 } 
                     }
@@ -115,7 +115,7 @@ class updateControlForm extends HelpFormBase {
                
                 }
            
-            $siteurlarray[$value->id_org] = $siteurlarrayvalue;
+            $siteUrlArray[$value->id_org] = $siteUrlArrayValue;
             
         }
 
@@ -152,20 +152,18 @@ class updateControlForm extends HelpFormBase {
         $form['m1'] = array(
         '#markup' => '<div id="formModal"></div>',
       );  
-        
-        if(isset($this->config->site) && count($this->config->site) > 0){
-      //drupal_set_message("ok ");
+
       $form['domaine'] = array(
         '#markup' => '<div id="domaine">'. $this->config->client->domain .'</div>',
         '#type' => 'container',
          '#attributes' => array('style' => 'display: none;'),
       );
-    }
+
 
  
 
 
-    $siteurlarray = json_encode($siteurlarray, true);
+    $siteUrlArray = json_encode($siteUrlArray, true);
 
 
     $form['selected_org'] = array(
@@ -173,7 +171,7 @@ class updateControlForm extends HelpFormBase {
             '#title' => t('Organisation :'),
             '#options' => $option_org,
             '#empty_option' => t('----'),
-            '#attributes' => array('onchange'=>'fillTable('.$dataForUpdateDatasets2.','.$siteurlarray.');'),
+            '#attributes' => array('onchange'=>'fillTable('.$dataForUpdateDatasets2.','.$siteUrlArray.');'),
             
         );
 
@@ -257,16 +255,6 @@ $form['table'][$i]['details'] = array(
 }   
         
 
-    $form['type_rech'] = array(
-            '#markup' => '',
-            '#type' => 'textfield',
-             '#attributes' => array('style' => 'display: none;'),
-        );
-        
-        $form['id_org'] = array(
-            '#type' => 'textarea',
-            '#attributes' => array('style' => 'display: none;'),
-        );
 
     $form['search'] = array(
         '#type' => 'submit',

@@ -22,11 +22,6 @@ theme.form:
 custom_views.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/customViewsForm.js: {}
   dependencies:
     - core/jquery
@@ -161,11 +156,6 @@ GeolocForm.form:
 ckanForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/ckanForm.js: {}
   dependencies:
     - core/jquery
@@ -209,11 +199,6 @@ leaflet:
 joinDatasetsForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/joinDatasetsForm.js: {}
   dependencies:
     - core/jquery
@@ -238,11 +223,6 @@ helpForm:
 datasetsBoardForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/DatasetsBoardForm.js: {}
   dependencies:
     - core/jquery
@@ -250,11 +230,6 @@ datasetsBoardForm.form:
 reusesForm.form:
   version: VERSION
   js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/reusesForm.js: {}
   dependencies:
     - core/jquery

@@ -41,12 +41,6 @@ class VisualisationController extends ControllerBase {
 	}
 
 
-	public function getUrlSite(Request $request, $tab) {
-		$id = $request->query->get('id');
-		echo" hey" ;die;
-		return $this->myPage2($id, $tab);
-	} 
-
 	/**
 	 * Returns a simple page.
 	 *

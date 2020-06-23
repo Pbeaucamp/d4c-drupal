@@ -342,10 +342,7 @@ class editMetaDataForm extends HelpFormBase
 			'#title' => $this->t('Ne pas afficher les API'),
 		);
 
-        $form['checkbox_test_form'] = array(
-            '#type' => 'checkbox',
-            '#title' => $this->t('Test checkbox'),
-        );
+     
 
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
@@ -781,7 +778,7 @@ class editMetaDataForm extends HelpFormBase
         
         $analize_false = $form_state->getValue('analize_false');
         $api_false = $form_state->getValue('api_false');
-        $checkbox_test_form= $form_state->getValue('checkbox_test_form');
+        
 
         $dont_visualize_tab='';
         
@@ -789,9 +786,6 @@ class editMetaDataForm extends HelpFormBase
 			$dont_visualize_tab= $dont_visualize_tab.'api;';
 		}
         
-        if($analize_false==1){
-			$dont_visualize_tab=$dont_visualize_tab.'checkbox_test_form;';
-		}
 
         if($analize_false==1){
 

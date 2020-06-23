@@ -211,7 +211,7 @@ function clear() {
     $("td>div").removeAttr("style");
     $("#edit-analize-false").removeAttr("checked");
     $("#edit-api-false").removeAttr("checked");
-    $("#edit-checkbox-test-form").removeAttr("checked");
+ 
 
     //$("#edit-table-widgets ").remove();
 
@@ -426,9 +426,7 @@ function fillData(data) {
                 } else if (dnt_vis[f] == 'analize') {
                     $("#edit-analize-false").attr("checked", "checked");
                 }
-                else if (dnt_vis[f] == 'checkbox_test_form') {
-                    $("#edit-checkbox-test-form").attr("checked", "checked");
-                }
+                
             }
         }
 
