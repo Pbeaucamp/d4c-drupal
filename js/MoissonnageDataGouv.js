@@ -32,9 +32,13 @@ $ = jQuery;
 
 document.addEventListener('DOMContentLoaded', function() {
 
+
+
     //modalButtons = document.querySelectorAll('.js-open-modal'),
      var  overlay      = document.querySelector('.js-overlay-modal'),
        closeButtons = document.querySelectorAll('.js-modal-close');
+
+
 
    closeButtons.forEach(function(item){
 
@@ -49,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     document.body.addEventListener('keyup', function (e) {
+
         var key = e.keyCode;
 
         if (key == 27) {
@@ -60,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     overlay.addEventListener('click', function() {
+
         document.querySelector('.modal.active').classList.remove('active');
         this.classList.remove('active');
     });
@@ -131,8 +137,10 @@ $('#edit-ids div').empty();
 
 function controlSiteSearch() {
     //hide_param();
-    
+    console.log("here we are");
     let siteSearch = $('input[name=search_on_site]:checked').val();
+
+    console.log(siteSearch);
 
 
     if (siteSearch == 'Data_Gouv_fr') {
@@ -404,7 +412,7 @@ function getOrganization() {
 // dataset gouvfr 
 function getDataset() {
 
-
+console.log(" ********************************** get data set ***********************");
     let wh = window.innerHeight;
     wh = wh / 1.55;
 
@@ -515,6 +523,8 @@ function getDataset() {
 // search dataset&org dataset gouvfr 
 function addDatasetCheckBox() {
 
+
+console.log("add data set ");
     let wh = window.innerHeight;
     wh = wh / 1.8;
 
@@ -625,7 +635,7 @@ function addDatasetCheckBox() {
 function checkDatasetResources(event) {
 
 
-
+console.log("check data set");
     let allVals = [];
 
     $('#edit-ids :checked').each(function () {
@@ -688,7 +698,7 @@ function checkDatasetResources(event) {
 
 function goSearch_InfoCom94() {
 
-
+console.log(" go search info ");
 
     let wh = window.innerHeight;
     wh = wh / 1.55;
@@ -831,6 +841,7 @@ function goSearch_InfoCom94() {
 ////////////////Opendatasoft/////////////////////////
 
 function goSearch_Opendatasoft() {
+
     let wh = window.innerHeight;
     wh = wh / 1.55;
 
@@ -873,10 +884,13 @@ function goSearch_Opendatasoft() {
                 })
 
                 for (let f = 0; f < result.length; f++) {
+
+                    console.log(" ****** datasets info ");
+                    console.log(result[f]);
                     let url_res =result[f].datasetid;
                     let type_res ='csv';
                     let type_site ='Public.OpenDataSoft.com';
-                  
+                    
                     $(`#edit-ids`).append(`
 					<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-` + result[f].datasetid+` form-item-ids-` + result[f].datasetid+ `">
 						<input data-drupal-selector="edit-ids-` + result[f].datasetid+ `" type="checkbox" id="edit-ids-` + result[f].datasetid+ `" name="ids[` + result[f].datasetid+ `]" value='{"id":"` + result[f].datasetid+ `"}' class="form-checkbox">
@@ -908,6 +922,8 @@ function goSearch_Opendatasoft() {
 ////////////////Opendatasoft_all_site/////////////////////////
 
 function goSearch_Opendatasoft_all_site() {
+
+    console.log("Opendatasoft_all_site");
 
 	let pat = /^https?:\/\//i,
         pat2 = /^http?:\/\//i,
@@ -1003,6 +1019,7 @@ function goSearch_Opendatasoft_all_site() {
 
 function goSearch_socrata(){
     
+    console.log("Socrata");
     
      let pat = /^https?:\/\//i,
         pat2 = /^http?:\/\//i,
@@ -1122,7 +1139,7 @@ function goSearch_socrata(){
 ///////////////CKan////////////////////////////
 function search_ckan(){
     
-    
+    console.log("CKan");
     //alert();
     
     let pat = /^https?:\/\//i,
@@ -1273,6 +1290,7 @@ function search_ckan(){
 
 function search_d4c(){
     
+    console.log("D4C")
     let pat = /^https?:\/\//i,
         pat2 = /^http?:\/\//i,
         parser = document.createElement('a'),
@@ -1317,6 +1335,8 @@ function search_d4c(){
         success: function (result) {
             console.log(result);
 
+            console.log(" here we are");
+
             if (result.length != 0) {
                 result.sort(function (a, b) {
                     var textA = a.title.toLowerCase(),
@@ -1343,7 +1363,8 @@ function search_d4c(){
 								
 								type_res='csv',
 								type_site='D4C'; 
-							  // console.log(url_res); 
+                                console.log("url");
+							   console.log(url); 
 							 
 								$(`#edit-ids`).append(`
 								<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-` + result[f].id+` form-item-ids-` + result[f].id+ `">
@@ -1474,7 +1495,9 @@ function goSearch_ArcGIS() {
 
 
 function createTablePrew(resUrl,type_file,type_site){
-// console.log(resUrl);
+
+
+console.log(resUrl);
  resUrl = resUrl.replace(/\//g,'!');
 
 $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
@@ -1571,6 +1594,9 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 }
 
 function openModalFilter(elem){
+
+    console.log(" /////////:: elem param ////////////////");
+    console.log(elem.attr("data-parameters"));
 	var site_url = elem.data("url");
 	var type_site = elem.data("type");
 	var id = elem.data("id");
@@ -1582,8 +1608,13 @@ function openModalFilter(elem){
 			parameters = {};
 		}
 	}
+
+    console.log(" /////////:: after elem param ////////////////");
+    console.log(parameters);
+
 	//parameters.uuid = id;
 	var nhits = elem.data("nhits");
+
 	
 	var scope = angular.element("#filterPlace .d4c-dataset-selection-list__records").scope();
 	scope.externalcontext.type = type_site;
@@ -1600,17 +1631,23 @@ function openModalFilter(elem){
 	};
 	
 	scope.selectDataset = function (dataset, parameters, nhits) {
+
 		elem.attr("data-parameters", JSON.stringify(parameters));
 		elem.data("nhits", nhits);
 		var value = elem.parent().find("input").val();
+
+        console.log(elem.parent().find("input"));
 		value = JSON.parse(value);
+
+        console.log(" value");
+        console.log(elem.parent().find("input"));
 		value.params = parameters;
 		value.url = site_url;
 		elem.parent().find("input").val(JSON.stringify(value));
 		scope.cancel();
 		//console.log(parameters);
 	};
-	
+
 
 	scope.reset();
 	$("#edit-imgback").val("")
