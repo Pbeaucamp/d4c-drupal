@@ -102,7 +102,7 @@ ckan_admin.visualisation:
     _title: ''
   requirements:
     _permission: 'access content'
-    
+ 
 ckan_admin.carte:
   path: '/carte'
   defaults:

@@ -211,6 +211,7 @@ function clear() {
     $("td>div").removeAttr("style");
     $("#edit-analize-false").removeAttr("checked");
     $("#edit-api-false").removeAttr("checked");
+ 
 
     //$("#edit-table-widgets ").remove();
 
@@ -425,6 +426,7 @@ function fillData(data) {
                 } else if (dnt_vis[f] == 'analize') {
                     $("#edit-analize-false").attr("checked", "checked");
                 }
+                
             }
         }
 

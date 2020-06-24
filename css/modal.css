@@ -100,3 +100,7 @@ a.js-open-modal:hover {
 	display: inline-block;
 	max-width: 350px;
 }
+
+.buttonDetailsActif {
+   background-color: #2db614!important;
+}
