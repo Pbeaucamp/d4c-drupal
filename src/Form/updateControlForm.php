@@ -153,14 +153,6 @@ class updateControlForm extends HelpFormBase {
         '#markup' => '<div id="formModal"></div>',
       );  
 
-      $form['domaine'] = array(
-        '#markup' => '<div id="domaine">'. $this->config->client->domain .'</div>',
-        '#type' => 'container',
-         '#attributes' => array('style' => 'display: none;'),
-      );
-
-
- 
 
 
     $siteUrlArray = json_encode($siteUrlArray, true);
