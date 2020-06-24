@@ -2032,9 +2032,20 @@ class Api{
 				$visu['map_marker_picto'] = $value["value"];
 			}
 			if($value["key"] == "FieldColor" && $value["value"] != ''){
+
 				$visu['map_marker_color'] = array();
 				$visu['map_marker_color']['type'] = "field";
 				$visu['map_marker_color']['field'] = $value["value"];
+
+				// $ranges = array();
+				// $ranges["10"] = "aqua";
+				// $ranges["20"] = "coral";
+				// $ranges["10000"] = "chartreuse";
+
+				// $visu['map_marker_color'] = array();
+				// $visu['map_marker_color']['type'] = "choropleth";
+				// $visu['map_marker_color']['field'] = $value["value"];
+				// $visu['map_marker_color']['ranges'] = $ranges;
 			}
 		}
 		
@@ -4724,6 +4735,7 @@ class Api{
     }
     
     function getCsvXls($params){
+
         $params = explode(";", $params);
         $url = $params[0];
 		$url =str_replace('!', '/', $url);
@@ -4750,13 +4762,13 @@ class Api{
                 $url = preg_replace("(^https?://)", "http://", $url );
             }
         }
-        //|| $site=='DataGouvfr'
+
+		Logger::logMessage("Getting CSV / XLS with URL '" . $url . "' \r\n");
         
         $arr=array();
         if($format=='csv'|| $format=='CSV'){
                  
             $delimiter = $this->getFileDelimiter($url);
-            
            
             $arr1 =file($url);
             $arr = array();
@@ -4768,36 +4780,23 @@ class Api{
 
             for($i=0; $i<$a; $i++){
 
-                //$arr[$i] = utf8_decode($arr1[$i]);
-                //$arr[$i] = array_map("utf8_encode", $arr1[$i]));
-                $arr[$i] = utf8_decode(iconv("UTF-8", "ISO-8859-1//IGNORE", $arr1[$i]));
+				$text = $arr1[$i];
+				//Trying to detect encoding to convert automatically to UTF-8
+				$arr[$i] = iconv(mb_detect_encoding($text, mb_detect_order(), true), "UTF-8", $text);
+
+				// OLD way to keep track in case
+				// $arr[$i] = utf8_decode(iconv("UTF-8", "ISO-8859-1//IGNORE", $arr1[$i]));
             }
-//        $fh = fopen($url, 'r');
-//            
-//
-//            $a=0;
-//            while (($data = fgetcsv($fh, 0))!== FALSE && $a<15) {
-//            $arr[]= strval($data);
-//                
-//            $a++;    
-//        }
-   
-            
+
             if($arr[0]==null || $arr[0]==''){
 				$arr[0]="Pas d'accès de ligne ou de colonne aux tables non tabulaires";
-            }
-        
+			}
             $arr=array('delimiter'=>$delimiter, 'data'=>$arr);
-            //error_log(print_r($arr,true));
-
         }
-        
-        
         else if($format=='XLS'|| $format=='xls' || $format=='XLSX'|| $format=='xlsx' ){
                 
         }
-        
-        
+
         $response = new Response();
 		$response->setContent(json_encode($arr));
 		$response->headers->set('Content-Type', 'application/json');
@@ -5374,84 +5373,20 @@ class Api{
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
+
+	/**
+	 * This method reload all resources from a Dataset in the Datastore
+	 */
 	function callDatapusher($resourceId) {
-		$callUrl = 'http://127.0.0.1:8800/job';
-		$cle = $this->config->ckan->api_key; 
-		$url = $this->config->ckan->url; 
-		$binaryData['api_key'] = $cle;
-		$binaryData['job_type'] = 'push_to_datastore';
-		$binaryData['metadata']['resource_id'] = $resourceId;
-		$binaryData['metadata']['ckan_url'] = $url;
-		$binaryData['api_key'] = $cle;
-		// error_log(json_encode( $binaryData ));
-		$jsonData = json_encode( $binaryData );
-        
-		$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => 'POST',
-				CURLOPT_POSTFIELDS => $jsonData,
-				CURLOPT_HTTPHEADER => array (
-					'Content-type:application/json',
-					'Content-Length: ' . strlen ( $jsonData )
-				)
-		);
-	
-		$curl = curl_init ( $callUrl );
-		curl_setopt_array ( $curl, $options );
-		$result = curl_exec ( $curl );
-		curl_close ( $curl );
-		
-		$resp = json_decode($result);
-		// error_log($result);
-		$jobId = $resp->job_id;
-		$jobKey = $resp->job_key;
-		$i = 0;
-		while(true) {
-			$i = $i + 1;
-			if($i > 300) {
-				break;
-			}
-			sleep(1);
-			$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => 'GET',
-				CURLOPT_HTTPHEADER => array (
-					'Authorization:  ' .$jobKey 
-				)
-			);
-			$curl = curl_init ( $callUrl . '/' . $jobId );
-			curl_setopt_array ( $curl, $options );
-			$result = curl_exec ( $curl );
-			curl_close ( $curl );
-			
-			$resp = json_decode($result);
-			if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
-				break;
-			}
-			else {
-				$finished = false;
-				foreach ($resp->logs as $value) {
-					// error_log($value-> message);
-					$pos = strpos($value-> message, 'Saving chunk');
-					if($pos) {
-						$finished = true;
-						break;
-					}
-				}
-				if($finished) {
-					break;
-				}
-			}
-		}
-	}
-	
-	function callDatapusherJobStatus($jobId) {
-		$callUrl = 'http://127.0.0.1:8800/job/' .$jobId;
+		$command = '/usr/lib/ckan/default/bin/paster --plugin=ckan datapusher submit_resource ' . $resourceId . ' -c /etc/ckan/default/production.ini';
+        Logger::logMessage($command);
 
-		$cle = $this->config->ckan->api_key; 
-		$url = $this->config->ckan->url; 
+		$output = shell_exec($command);
+        Logger::logMessage("Output " . $output);
 
+		// $callUrl = 'http://127.0.0.1:8800/job';
+		// $cle = $this->config->ckan->api_key; 
+		// $url = $this->config->ckan->url; 
 		// $binaryData['api_key'] = $cle;
 		// $binaryData['job_type'] = 'push_to_datastore';
 		// $binaryData['metadata']['resource_id'] = $resourceId;
@@ -5460,27 +5395,20 @@ class Api{
 		// // error_log(json_encode( $binaryData ));
 		// $jsonData = json_encode( $binaryData );
         
-		$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => 'GET',
-				// CURLOPT_POSTFIELDS => $jsonData,
-				// CURLOPT_HTTPHEADER => array (
-				// 	'Content-type:application/json',
-				// 	'Content-Length: ' . strlen ( $jsonData )
-				// )
-		);
+		// $options = array (
+		// 		CURLOPT_RETURNTRANSFER => true,
+		// 		CURLOPT_CUSTOMREQUEST => 'POST',
+		// 		CURLOPT_POSTFIELDS => $jsonData,
+		// 		CURLOPT_HTTPHEADER => array (
+		// 			'Content-type:application/json',
+		// 			'Content-Length: ' . strlen ( $jsonData )
+		// 		)
+		// );
 	
-		$curl = curl_init ( $callUrl );
-		curl_setopt_array ( $curl, $options );
-		$result = curl_exec ( $curl );
-		curl_close ( $curl );
-
-		
-		$response = new Response();
-        $response->setContent($result);
-		$response->headers->set('Content-Type', 'application/json');
-		return $response;
-
+		// $curl = curl_init ( $callUrl );
+		// curl_setopt_array ( $curl, $options );
+		// $result = curl_exec ( $curl );
+		// curl_close ( $curl );
 		
 		// $resp = json_decode($result);
 		// // error_log($result);
@@ -5524,6 +5452,122 @@ class Api{
 		// 		}
 		// 	}
 		// }
+	}
+	
+	// Old method keep for keeping tracks
+	// function callDatapusher($resourceId) {
+	// 	$callUrl = 'http://127.0.0.1:8800/job';
+	// 	$cle = $this->config->ckan->api_key; 
+	// 	$url = $this->config->ckan->url; 
+	// 	$binaryData['api_key'] = $cle;
+	// 	$binaryData['job_type'] = 'push_to_datastore';
+	// 	$binaryData['metadata']['resource_id'] = $resourceId;
+	// 	$binaryData['metadata']['ckan_url'] = $url;
+	// 	$binaryData['api_key'] = $cle;
+	// 	// error_log(json_encode( $binaryData ));
+	// 	$jsonData = json_encode( $binaryData );
+        
+	// 	$options = array (
+	// 			CURLOPT_RETURNTRANSFER => true,
+	// 			CURLOPT_CUSTOMREQUEST => 'POST',
+	// 			CURLOPT_POSTFIELDS => $jsonData,
+	// 			CURLOPT_HTTPHEADER => array (
+	// 				'Content-type:application/json',
+	// 				'Content-Length: ' . strlen ( $jsonData )
+	// 			)
+	// 	);
+	
+	// 	$curl = curl_init ( $callUrl );
+	// 	curl_setopt_array ( $curl, $options );
+	// 	$result = curl_exec ( $curl );
+	// 	curl_close ( $curl );
+		
+	// 	$resp = json_decode($result);
+	// 	// error_log($result);
+	// 	$jobId = $resp->job_id;
+	// 	$jobKey = $resp->job_key;
+	// 	$i = 0;
+	// 	while(true) {
+	// 		$i = $i + 1;
+	// 		if($i > 300) {
+	// 			break;
+	// 		}
+	// 		sleep(1);
+	// 		$options = array (
+	// 			CURLOPT_RETURNTRANSFER => true,
+	// 			CURLOPT_CUSTOMREQUEST => 'GET',
+	// 			CURLOPT_HTTPHEADER => array (
+	// 				'Authorization:  ' .$jobKey 
+	// 			)
+	// 		);
+	// 		$curl = curl_init ( $callUrl . '/' . $jobId );
+	// 		curl_setopt_array ( $curl, $options );
+	// 		$result = curl_exec ( $curl );
+	// 		curl_close ( $curl );
+			
+	// 		$resp = json_decode($result);
+	// 		if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
+	// 			break;
+	// 		}
+	// 		else {
+	// 			$finished = false;
+	// 			foreach ($resp->logs as $value) {
+	// 				// error_log($value-> message);
+	// 				$pos = strpos($value-> message, 'Saving chunk');
+	// 				if($pos) {
+	// 					$finished = true;
+	// 					break;
+	// 				}
+	// 			}
+	// 			if($finished) {
+	// 				break;
+	// 			}
+	// 		}
+	// 	}
+	// }
+	
+	function callDatapusherJobStatus($resourceId) {
+		$result = $this->getDatapusherJobStatus($resourceId);
+
+		echo json_encode($result);
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
+
+	function getDatapusherJobStatus($resourceId) {
+		Logger::logMessage("Get datapusher status for resource '" . $resourceId . "' \r\n");
+
+		$database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
+		$query = $database->query("SELECT id, entity_id, value, state, error FROM task_status WHERE entity_id = '" . $resourceId . "' and task_type = 'datapusher'");
+		$task = $query->fetchAssoc();
+
+		if ($task) {
+			$jobValue = json_decode($task["value"], true);
+			$jobId = $jobValue["job_id"];
+
+			$callUrl = 'http://127.0.0.1:8800/job/' .$jobId;
+			Logger::logMessage("Getting datapusher infos '" . $callUrl . "' \r\n");
+	
+			$cle = $this->config->ckan->datapusher_key; 
+			$url = $this->config->ckan->url; 
+	
+			$options = array (
+					CURLOPT_RETURNTRANSFER => true,
+					CURLOPT_CUSTOMREQUEST => 'GET',
+					// CURLOPT_POSTFIELDS => $jsonData,
+					CURLOPT_HTTPHEADER => array (
+						'Authorization: ' . $cle
+					)
+			);
+	
+			$curl = curl_init ( $callUrl );
+			curl_setopt_array ( $curl, $options );
+			$result = curl_exec ( $curl );
+			curl_close ( $curl );
+		}
+
+		return $result;
 	}
 
     function sortDatasetbyKey($key){

@@ -369,9 +369,7 @@ class editMetaDataForm extends HelpFormBase
 		$overlays = $api->getMapLayers("layer");
 		$values = array();
 
-		Logger::logMessage("Loading map tiles \r\n");
 		foreach($layers['layers'] as $layer){
-			Logger::logMessage("Load tile " . $layer["label"] ."\r\n");
 			$values[$layer["name"]] = $layer["label"];
 		}
         $form['selected_type_map'] = array(
@@ -386,9 +384,7 @@ class editMetaDataForm extends HelpFormBase
 		);
 		
 		$values = array();
-		Logger::logMessage("Loading map layers \r\n");
 		foreach($overlays['layers'] as $layer){
-			Logger::logMessage("Load layer " . $layer["label"] ."\r\n");
 			$values[$layer["name"]] = $layer["label"];
 		}
         $form['authorized_overlays_map'] = array(
@@ -1711,16 +1707,19 @@ class editMetaDataForm extends HelpFormBase
 						}
 					}
 				}
+
+				
+				// 20200506 - For now we remove the call to datastore and add back the sleep that were there before because it loads data twice in datastore
+				// The next step is to verify the datapusher's job and wait for it to finish
 				if($is_csv == TRUE){
+					//$api->callDatapusher($idres);
 					
-					$api->callDatapusher($idres);
-					
-					// if($nbColumns > 30) {
-						// sleep(40);
-					// }
-					// else {
-						// sleep(20);
-					// }
+					if($nbColumns > 30) {
+						sleep(40);
+					}
+					else {
+						sleep(20);
+					}
 				}
 				$api->calculateVisualisations($data_id);
 			}
@@ -1835,14 +1834,17 @@ class editMetaDataForm extends HelpFormBase
 				}
 
 				
-				Logger::logMessage("We call the datapusher and calculate visualisation \r\n");
+				Logger::logMessage("We call the datapusher and calculate visualisation (not calling datapusher anymore, check code) \r\n");
 
 				$idres = $return["result"]["id"];
-				$api->callDatapusher($idres);
+				
+				// 20200506 - For now we remove the call to datastore and add back the sleep that were there before because it loads data twice in datastore
+				// The next step is to verify the datapusher's job and wait for it to finish
+				//$api->callDatapusher($idres);
 				$api->calculateVisualisations($idDataset);
 				
 				
-				Logger::logMessage("End of datapusher and visualisation calculation \r\n");
+				Logger::logMessage("End of datapusher (not calling datapusher anymore, check code) and visualisation calculation \r\n");
 
 				# Deactivated for now
 				# g = True if we need to get geolocalisation from the API BAN

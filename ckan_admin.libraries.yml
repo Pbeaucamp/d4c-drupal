@@ -204,6 +204,14 @@ datasetsBoardForm.form:
     js/DatasetsBoardForm.js: {}
   dependencies:
     - core/jquery
+
+datasetDatapusherForm.form:
+  version: VERSION
+  js:
+    js/DatasetDatapusherForm.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings
     
 reusesForm.form:
   version: VERSION

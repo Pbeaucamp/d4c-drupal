@@ -106,6 +106,7 @@ class DatasetsBoardForm extends HelpFormBase {
 			"orga" => $this->t('Organisation'),
 			"last_modif" => $this->t("Dernière Modification"),
 			"display" => $this->t("Visibilité"),
+			"datapusher" => $this->t(''),
 			"edit" => $this->t(''),
 			"view" => $this->t(''),    
 		);
@@ -150,7 +151,10 @@ class DatasetsBoardForm extends HelpFormBase {
 				
 				
 				
-				
+				'datapusher' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;">@name</a>', 
+					[':link' => "/admin/config/data4citizen/datasetsManagement/datasetDatapusher?datasetId=".$row["id"], 
+					'@name' => $this->t('Datapusher')])
+				),
 				'edit' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
 					[':link' => "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
 					'@name' => $this->t('Editer')])

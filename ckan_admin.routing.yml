@@ -826,3 +826,11 @@ ckan_admin.calldatapuhserjobstatus:
     _title: ''
   requirements:
     _permission: 'access content'
+    
+ckan_admin.dataset_datapusher:
+  path: '/admin/config/data4citizen/datasetsManagement/datasetDatapusher'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\DatasetDatapusherForm'
+    _title: 'Tableau de contrôle du datapusher'
+  requirements:
+    _permission: 'access dataset_board'
