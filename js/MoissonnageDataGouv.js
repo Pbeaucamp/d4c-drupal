@@ -429,10 +429,10 @@ function getDataset() {
 
 
 
-
+    console.log($('#edit-chercher').val());
     //$.getJSON('https://www.data.gouv.fr/api/1/organizations/?page_size=10000&q='+$('#edit-chercher').val(), function(result){
     $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q=' + $('#edit-chercher').val(), function (result) {
-		//console.log(result.data.length);
+		console.log(result);
         if (result.data.length != 0) {
 
 
@@ -454,8 +454,9 @@ function getDataset() {
             for (let f = 0; f < result.data.length; f++) {
                 //console.log(result.data[f]);
                 let res_valid = false;
-
+                console.log(result.data[f]);
                 for (let g = 0; g < result.data[f].resources.length; g++) {
+
 
                     if (result.data[f].resources[g].format == 'CSV' || result.data[f].resources[g].format == 'XLS' || result.data[f].resources[g].format == 'XLSX' || result.data[f].resources[g].format == 'csv' || result.data[f].resources[g].format == 'xls' || result.data[f].resources[g].format == 'xlsx') {
                         res_valid = true;
@@ -466,10 +467,7 @@ function getDataset() {
                         let url_res=result.data[f].resources[g].url,
                             type_res='csv',
                             type_site='DataGouvfr'; 
-                            
-                            
-                            
-                            
+               
                             
                             $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
                               //console.log(result.data[f].resources[g].url);
@@ -766,7 +764,7 @@ function goSearch_InfoCom94() {
                             type_res='csv',
                             type_site='InfoCom94'; 
 
-
+                            
                     $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + ' form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" type="checkbox" id="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" name="ids[' + result[f].id + '|' + result[f].siteOfDataset + ']" value="' + result[f].id + '|' + result[f].siteOfDataset + '" class="form-checkbox"> &nbsp;<a href="' + result[f].url + '" target="_blank">' + result[f].title + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
                         
                         
@@ -1082,7 +1080,7 @@ function goSearch_socrata(){
                         type_site='socrata:'+result[f].resource.id;
                     
                    //console.log(result);
-                
+                        
                      $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].resource.id + '|' + urlSocrata + ' form-item-ids-' + result[f].resource.id + '|' + urlSocrata + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" type="checkbox" id="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" name="ids[' + result[f].resource.id + '|' + urlSocrata + ']" value="' + result[f].resource.id + '|' + urlSocrata + '" class="form-checkbox"> &nbsp;<a href="' + result[f].link + '" target="_blank">' + result[f].resource.name + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
                     
 

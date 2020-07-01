@@ -81,8 +81,7 @@ class updateControlForm extends HelpFormBase {
         $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
         $option_org=array();
         $datasets=array();
-        
-  
+      
         
         // drupal_set_message('<pre>'+print_r($dataForUpdateDatasets,true)+'</pre>');
         $siteUrlArrayValue = null;
