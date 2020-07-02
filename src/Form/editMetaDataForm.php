@@ -1395,13 +1395,15 @@ class editMetaDataForm extends HelpFormBase
 					
 					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
 						$xls_file = $root.''.$filepath;
-				  
+
+						Logger::logMessage("Uploading XLSX resource");
+						
 						$reader = new Xlsx();
 					
 						if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
 							$reader = new Xls();
 						}
-				
+						$reader->setReadDataOnly(true);
 						$spreadsheet = $reader->load($xls_file);
 
 						$loadedSheetNames = $spreadsheet->getSheetNames();
@@ -1417,6 +1419,9 @@ class editMetaDataForm extends HelpFormBase
 							$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
 							$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
 							$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+							
+							Logger::logMessage("Saving CSV for sheet at index " . $sheetIndex . " with path '" . $csvpath . "'");
+
 							$writer->save($csvpath);
 							break;
 						}
