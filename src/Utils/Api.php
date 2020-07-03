@@ -4484,6 +4484,8 @@ class Api{
 	}
 	
 	public function getMaps($idUser, $idMap) {
+        Logger::logMessage("Getting maps for user : " . $idUser ."\r\n");
+
 		$table = "d4c_maps";
 		$query = \Drupal::database()->select($table, 'map');
 
