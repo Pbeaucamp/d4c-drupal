@@ -1390,7 +1390,7 @@ class Api{
 		
 	}
 
-	public function getRecordsDownload($params) {
+	public function getRecordsDownload($params, $field = null) {
 		$patternId = '/id|num|code|siren/i';
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
@@ -1635,7 +1635,65 @@ class Api{
 		}
 
 		$first = true;
-		foreach ($fields as $value) {
+
+		
+		
+
+
+		if($field != null ) {
+
+			foreach ($field as $key => $value) {
+			if($key == "result"){
+			
+			
+			foreach ($value["fields"] as $key2 => $value2) {
+			
+				
+				foreach ($value2 as $key3 => $value3) {
+
+					if($key3 == "info"){
+						$fieldsHeader = "Id";
+
+					}
+					
+					
+				}
+			}
+			}
+		}
+
+			if($fieldsHeader == "Id") {
+				foreach ($field as $key => $value) {
+			if($key == "result"){
+			
+			
+			foreach ($value["fields"] as $key2 => $value2) {
+			
+				
+				foreach ($value2 as $key3 => $value3) {
+
+					if($key3 == "info"){
+						
+					if ($value3["label"] == "Id" || $value3["label"] == "id") {
+							continue;
+						}
+
+					$fieldsHeader .= (!$first ? ";" : "" ) . $value3["label"];
+					}
+				}
+			}
+			}
+			$first = false;
+		}
+			}
+
+			
+		}
+
+
+		
+		if($fieldsHeader =="" || $fieldsHeader == null ){
+			foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
@@ -1651,6 +1709,10 @@ class Api{
 			}
 			$first = false;
 		}
+
+		}
+
+
 		$fieldsHeader .= "\n";
 
 		$ids = array();
@@ -1745,7 +1807,9 @@ class Api{
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
 		}
 
-		$result = $this->getRecordsDownload($params);
+		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+
+		$result = $this->getRecordsDownload($params, $fields);
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
 		} else if ($format == "xls") {
