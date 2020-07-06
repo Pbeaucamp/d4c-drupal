@@ -1390,7 +1390,7 @@ class Api{
 		
 	}
 
-	public function getRecordsDownload($params, $field = null) {
+	public function getRecordsDownload($params) {
 		$patternId = '/id|num|code|siren/i';
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
@@ -1400,8 +1400,14 @@ class Api{
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
        
-        
 
+        if($query_params['user_defined_fields']) {
+			array_pop($query_params);
+			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+			
+		}
+		
+		 
 		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 		//echo json_encode($fields);
 		$fieldId = "_id";
@@ -1640,59 +1646,61 @@ class Api{
 		
 
 
-		if($field != null ) {
+		if($exportUserField  != null ) {
 
-			foreach ($field as $key => $value) {
-			if($key == "result"){
-			
-			
-			foreach ($value["fields"] as $key2 => $value2) {
-			
+			foreach ($exportUserField  as $key => $value) {
+				if($key == "result"){
 				
-				foreach ($value2 as $key3 => $value3) {
-
-					if($key3 == "info"){
-						$fieldsHeader = "Id";
-
-					}
-					
-					
-				}
-			}
-			}
-		}
-
-			if($fieldsHeader == "Id") {
-				foreach ($field as $key => $value) {
-			if($key == "result"){
-			
-			
-			foreach ($value["fields"] as $key2 => $value2) {
-			
 				
-				foreach ($value2 as $key3 => $value3) {
-
-					if($key3 == "info"){
+						foreach ($value["fields"] as $key2 => $value2) {
 						
-					if ($value3["label"] == "Id" || $value3["label"] == "id") {
-							continue;
-						}
+							
+							foreach ($value2 as $key3 => $value3) {
 
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value3["label"];
-					}
+								if($key3 == "info"){
+									$fieldsHeader = "Id";
+
+								}
+								
+								
+							}
+						}
 				}
 			}
-			}
-			$first = false;
-		}
+
+
+				if($fieldsHeader == "Id") {
+
+						foreach ($exportUserField as $key => $value) {
+
+							if($key == "result"){
+							
+									foreach ($value["fields"] as $key2 => $value2) {
+									
+										
+										foreach ($value2 as $key3 => $value3) {
+
+											if($key3 == "info"){
+												
+													if ($value3["label"] == "Id" || $value3["label"] == "id") {
+															continue;
+														}
+
+													$fieldsHeader .= (!$first ? ";" : "" ) . $value3["label"];
+											}
+										}
+									}
+							}
+					$first = false;
+				}
 			}
 
 			
 		}
 
-
-		
+	
 		if($fieldsHeader =="" || $fieldsHeader == null ){
+			
 			foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
@@ -1708,7 +1716,7 @@ class Api{
 				$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
 			}
 			$first = false;
-		}
+			}
 
 		}
 
@@ -1724,12 +1732,17 @@ class Api{
 			$records = array();
 		}
 		
+
+		
 		foreach ($chunk as $_ids){
 			$query_params['filters'] = json_encode(array($fieldId => $_ids));
 			if($reqFields != ""){$query_params['fields'] = $reqFields;}
 			$query_params['records_format'] = $format;
 			if(!array_key_exists('limit', $query_params)){
 				$query_params['limit'] = 100000000;
+			}
+			if($query_params['user_defined_fields']) {
+				$query_params = array_pop($query_params);
 			}
 			$url2 = http_build_query($query_params);
 			//echo $url2;
@@ -1752,6 +1765,8 @@ class Api{
 			}
 		
 		}
+
+		
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -1761,7 +1776,7 @@ class Api{
 			return 	$records;
 		}
 		
-
+		var_dump("jhf");die;
 //		$response = new Response();
 //		$response->setContent(json_encode($result));
 //		$response->headers->set('Content-Type', 'application/octet-stream');
@@ -1780,8 +1795,11 @@ class Api{
 	}
 
 	public function callDatastoreApiDownloadFile($params) {
+		
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
+
+		
 
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
@@ -1809,7 +1827,7 @@ class Api{
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
-		$result = $this->getRecordsDownload($params, $fields);
+		$result = $this->getRecordsDownload($params);
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
 		} else if ($format == "xls") {
