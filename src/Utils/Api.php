@@ -1776,7 +1776,7 @@ class Api{
 			return 	$records;
 		}
 		
-		var_dump("jhf");die;
+		
 //		$response = new Response();
 //		$response->setContent(json_encode($result));
 //		$response->headers->set('Content-Type', 'application/octet-stream');
