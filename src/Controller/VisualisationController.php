@@ -89,19 +89,19 @@ class VisualisationController extends ControllerBase {
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "CSV";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&user_defined_fields=true&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "JSON";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=json&user_defined_fields=true&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "Excel";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=xls&user_defined_fields=true&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			if($isGeo){
@@ -147,8 +147,6 @@ class VisualisationController extends ControllerBase {
         $theme_label_ex=false;
         $theme=false;
 		$visu = 1;
-
-
         for($i=0; $i < count($met); $i++){
 
         	/*var_dump($met[$i]);die;*/
@@ -224,8 +222,6 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-
-
         // drupal_set_message($visu);
 		if($visu == 0) {
 			$tab = 'information';
@@ -268,7 +264,6 @@ class VisualisationController extends ControllerBase {
         }
         
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
-		
 		$element = array(
 			'example one' => [
 				'#type' => 'inline_template',
