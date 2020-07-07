@@ -1642,64 +1642,24 @@ class Api{
 
 		$first = true;
 
-		
-		
-
+		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
 
 		if($exportUserField  != null ) {
 
-			foreach ($exportUserField  as $key => $value) {
-				if($key == "result"){
-				
-				
-						foreach ($value["fields"] as $key2 => $value2) {
-						
-							
-							foreach ($value2 as $key3 => $value3) {
+			/* get all fields from exportuserfield */
+			foreach ($exportUserField["result"]["fields"] as $key => $value) {
 
-								if($key3 == "info"){
-									$fieldsHeader = "Id";
+					if($value["info"] != null && ($value["info"]["label"] != null or $value["info"]["label"]!= "") ){
 
-								}
-								
-								
-							}
-						}
-				}
+					 	/* Get name of ever field user and assign it to fields Header */
+					 	$fieldsHeader .= (!$first ? ";" : "" ) . $value["info"]["label"];
+						$first = false;
+					}
 			}
-
-
-				if($fieldsHeader == "Id") {
-
-						foreach ($exportUserField as $key => $value) {
-
-							if($key == "result"){
-							
-									foreach ($value["fields"] as $key2 => $value2) {
-									
-										
-										foreach ($value2 as $key3 => $value3) {
-
-											if($key3 == "info"){
-												
-													if ($value3["label"] == "Id" || $value3["label"] == "id") {
-															continue;
-														}
-
-													$fieldsHeader .= (!$first ? ";" : "" ) . $value3["label"];
-											}
-										}
-									}
-							}
-					$first = false;
-				}
-			}
-
-			
 		}
 
-	
-		if($fieldsHeader =="" || $fieldsHeader == null ){
+		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
+		if($fieldsHeader =="" || $fieldsHeader == null && $exportUserField  == null){
 			
 			foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
