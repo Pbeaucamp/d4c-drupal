@@ -150,7 +150,7 @@ class Export{
 			return "";
 		}
 		
-		Logger::logMessage("Json to convert : " . $json ."\r\n");
+		Logger::logMessage("Creating CSV from GeoJson");
 		
 		// If passed a string, turn it into an array
 		if (is_array($json) === false) {
@@ -167,26 +167,61 @@ class Export{
 		$cols = array();
 		$colNames = array();
 		$data_csv = array();
-		$sample = $json["features"][0];
 
+		// $sample = $json["features"][0];
+		// $index = 0;
+		// foreach($sample["properties"] as $key => $val){
+		// 	$cols[] = $key;
+		// 	$colNames[] = Export::clearGeoProperties($key, $index);
+		// 	$index++;
+		// }
+		// if ($sample["geometry"]["type"] == "Point") {
+		// 	$cols[] = "geo_point_2d";
+		// 	$colNames[] = "geo_point_2d";
+		// }
+		// else {
+		// 	$cols[] = "coordinates";
+		// 	$cols[] = "geo_shape";
+		// 	$colNames[] = "coordinates";
+		// 	$colNames[] = "geo_shape";
+		// }
+
+		//Previously we were getting only the columns for the first feature but we could miss a lot of informations
+		//We now go through all features but we have to check if it not too much time consuming
+		$hasShapes = false;
 		$index = 0;
-		foreach($sample["properties"] as $key => $val){
-			$cols[] = $key;
-			$colNames[] = Export::clearGeoProperties($key, $index);
-			$index++;
+		foreach($json["features"] as $feat) {
+			foreach($feat["properties"] as $key => $val){
+
+				//We check if the key already exist
+				if (!in_array($key, $cols)) {
+
+					// Logger::logMessage("Checking column " . json_encode($cols));
+					Logger::logMessage("Found column " . $key);
+
+					$cols[] = $key;
+					$colNames[] = Export::clearGeoProperties($key, $index);
+					$index++;
+				}
+			}
+			Logger::logMessage("Found geometry of type " . $feat["geometry"]["type"]);
+			if ($feat["geometry"]["type"] != "Point") {
+				Logger::logMessage("Found geometry of type shape");
+				$hasShapes = true;
+			}
 		}
-		if($sample["geometry"]["type"] == "Point"){
-			$cols[] = "geo_point_2d";
-			$colNames[] = "geo_point_2d";
-		} else {
+		if ($hasShapes) {
 			$cols[] = "coordinates";
 			$cols[] = "geo_shape";
 			$colNames[] = "coordinates";
 			$colNames[] = "geo_shape";
 		}
+		else {
+			$cols[] = "geo_point_2d";
+			$colNames[] = "geo_point_2d";
+		}
 		
-		$crs = $json["crs"]["properties"]["name"];
-		$test = '';
+		// $crs = $json["crs"]["properties"]["name"];
 		$rows = array();
 		$colsTypes = array();
 		foreach($json["features"] as $feat){
@@ -200,20 +235,28 @@ class Export{
 				} else if($col == "geo_shape") {
 					$str = json_encode($feat["geometry"]);
 					preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
-					$coord = '"'.$match[2] .",". $match[1].'"';
+					$coord = '"' . $match[2] . "," . $match[1] . '"';
+
+					//We replace " by "" to escape them
+					$str = str_replace('"', "\"\"", $str);
+
 					$row[] = $coord;
-					$row[] = $str;
+					$row[] = '"' . $str . '"';
 				} else if($col == "coordinates"){
 					continue;
 				}	
 				else {
+					$value = $feat["properties"][$col];
 					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !Export::isNumericColumn($json,$col)){
-						$row[] = '"'.$feat["properties"][$col].'"';
+						//We replace " by "" to escape them
+						$value = str_replace('"', "\"\"", $value);
+
+						$row[] = '"' . $value . '"';
 						if(!isset($colsTypes[$col])){
 							$colsTypes[$col] = "text";
 						}
 					} else {
-						$row[] = $feat["properties"][$col];
+						$row[] = $value;
 						if(!isset($colsTypes[$col])){
 							$colsTypes[$col] = "float";
 						}
@@ -228,10 +271,10 @@ class Export{
 			if(count($row) < count($cols)){
 				$row = array_pad($row, count($cols), "");
 			}
-			$row = implode($row, ";");
+			$row = implode($row, ",");
 		}
 		
-		$data_csv = strtolower(implode($colNames, ";"));
+		$data_csv = strtolower(implode($colNames, ","));
 		//$data_csv = array_merge($data_csv, $rows);
 		array_unshift($rows, $data_csv);
 		error_log("count ". (count($rows)));

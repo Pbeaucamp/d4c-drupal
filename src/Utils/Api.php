@@ -1051,17 +1051,16 @@ class Api{
 			$req['sql'] = $sql;
 		}
   
-		//echo $req['sql'];
-        Logger::logMessage("Query : " . $req['sql'] ."\r\n");
+		Logger::logMessage("Query : " . $req['sql']);
+		
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-		
-		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-        Logger::logMessage("Result query coordinate : " . $result ."\r\n");
-		//echo $result . "\r\n";
+
+		Logger::logMessage("Result query coordinate : " . $result);
+		
 		curl_close($curl);
 		$result = json_decode($result,true);
 
@@ -1072,14 +1071,19 @@ class Api{
 				$where = " where ".$fieldGeometries." not in ('', ',')";
 			}
 			$sql = "Select cast(".$fieldGeometries."::json->'type' as text) as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where ." group by type_geom";
+			// $sql = "Select " . $fieldGeometries . " as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where ." group by type_geom";
 			$req['sql'] = $sql;
-			//echo $sql;
+
+			Logger::logMessage("Geometry query : " . $req['sql']);
+		
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
 			$result2 = curl_exec($curl);
-			//echo $result2 . "\r\n";
+
+			// Logger::logMessage("Result query geometry : " . $result2);
+			
 			curl_close($curl);
 			$result2 = json_decode($result2,true);
 		} else {
@@ -2778,29 +2782,77 @@ class Api{
 
 		$where = $this->getSQLWhereRecordsDownload($params);
 		$req = array();
+		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$sql = "Select ".$fieldGeometries." as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
-		//echo $sql;
+
+		Logger::logMessage("Geopreview query : " . $req['sql']);
+
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-		
-		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		//echo $result . "\r\n";
+		
 		curl_close($curl);
 		$result = json_decode($result,true);
 		
 		
 		$data_array = array();
 		foreach ($result["result"]["records"] as $value) {
+		
+			// $res = array();
+			// foreach ($value as $key => $val) {
+			// 	if ($key == 'geo') {
+			// 		Logger::logMessage("Found value : " . $val);
+			// 		Logger::logMessage("Encode value : " . json_decode($val) . "\r\n");
+
+			// 		$error = '';
+			// 		switch (json_last_error()) {
+			// 			case JSON_ERROR_NONE:
+			// 				$error = ' - No errors';
+			// 			break;
+			// 			case JSON_ERROR_DEPTH:
+			// 				$error = ' - Maximum stack depth exceeded';
+			// 			break;
+			// 			case JSON_ERROR_STATE_MISMATCH:
+			// 				$error = ' - Underflow or the modes mismatch';
+			// 			break;
+			// 			case JSON_ERROR_CTRL_CHAR:
+			// 				$error = ' - Unexpected control character found';
+			// 			break;
+			// 			case JSON_ERROR_SYNTAX:
+			// 				$error = ' - Syntax error, malformed JSON';
+			// 			break;
+			// 			case JSON_ERROR_UTF8:
+			// 				$error = ' - Malformed UTF-8 characters, possibly incorrectly encoded';
+			// 			break;
+			// 			default:
+			// 				$error = ' - Unknown error';
+			// 			break;
+			// 		}
+
+			// 		Logger::logMessage("Error : " . $error . "\r\n");
+			// 		$res['geo_digest'] = md5($val); //3566411980376893035
+			// 		// try{
+			// 		// 	Logger::logMessage("Found geo : " . $val);
+		
+			// 		// 	$res['geometry'] = json_decode($val, true); 
+			// 		// } catch(Exception $e){
+			// 		// 	Logger::logMessage("Found geo with cast error : " . $val);
+		
+			// 			$res['geometry'] = $val; 
+			// 		// }
+			// 	}
+			// }
 			$res = array();
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
 			try{
+				Logger::logMessage("Found geo  : " . $value["geo"]);
 			    $res['geometry'] = json_decode($value["geo"], true); 
 			} catch(Exception $e){
+				Logger::logMessage("Found geo with cast error : " . $value["geo"]);
 			    $res['geometry'] = $value["geo"]; 
 			}
 			
@@ -4524,9 +4576,6 @@ class Api{
 		if($type != null){
 			foreach($tiles as $tile){
 				if($tile["type"] == $type){
-
-					Logger::logMessage("Found tile of type " . $type . " : " . json_encode($tile) ."\r\n");
-					
 					$data_array["layers"][] = $tile;
 				}
 			}
@@ -4541,7 +4590,6 @@ class Api{
 			$data_array["default_bbox"] = null;
 		}
 		
-		Logger::logMessage("Layers result " . json_encode($data_array) ."\r\n");
 		return $data_array;
 	}
 	

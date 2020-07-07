@@ -4,6 +4,7 @@ namespace Drupal\ckan_admin\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Provides route responses for the Example module.
@@ -247,7 +248,10 @@ class VisualisationController extends ControllerBase {
 		else if($visu == 7) {
 			$tab = 'wordcloud';
 		}
-		
+
+		Logger::logMessage("Launching visu = " . $visu);
+		Logger::logMessage("Displaying tab = " . $tab);
+
 		if(!isset($tab)) {
 			$tab = 'table';
 		}
