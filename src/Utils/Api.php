@@ -917,8 +917,8 @@ class Api{
 				$geometriesAlreadyDefined = true;
 			}
 		}
-        Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
-        Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
+        // Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
+        // Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
 
 
 		if(array_key_exists('rows', $query_params)){
@@ -2849,10 +2849,10 @@ class Api{
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
 			try{
-				Logger::logMessage("Found geo  : " . $value["geo"]);
+				// Logger::logMessage("Found geo  : " . $value["geo"]);
 			    $res['geometry'] = json_decode($value["geo"], true); 
 			} catch(Exception $e){
-				Logger::logMessage("Found geo with cast error : " . $value["geo"]);
+				// Logger::logMessage("Found geo with cast error : " . $value["geo"]);
 			    $res['geometry'] = $value["geo"]; 
 			}
 			
@@ -5913,7 +5913,7 @@ class Api{
 			$dataset = $dataset["result"];
 
 			
-			Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
+			//Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
 		//}
 		//$id = $dataset["id"];
 		

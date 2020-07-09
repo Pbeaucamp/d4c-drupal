@@ -53,6 +53,9 @@ function openLogPopup(event){
 	var html = "<div>";
 	if (datapusher != ""){
 		var logs = JSON.parse(datapusher[id]);
+		if (logs.status == 'error') {
+			html += "<div class='errorDatapusher'>" + logs.error.Response + "</div>";
+		}
 		for(var log of logs.logs){
 			html += "<p>" + log.message + "</p>";
 		}

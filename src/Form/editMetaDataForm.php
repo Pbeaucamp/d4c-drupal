@@ -757,20 +757,23 @@ class editMetaDataForm extends HelpFormBase
 		// drupal_set_message($visu);
         
         $widget = $form_state->getValue('table_widgets');
-        $widget_html='';
-        
+		
+		$widget_html='';
+		$hasWidget = false;
         foreach($widget as $key =>$val){
             if($val[name]!='' && $val[widget]!=''){
 				$off ='';  
 				if($val[offWidjet]==1){
 					$off = '<.off.>'; 
 				}
+
+				$hasWidget = true;
 				$widget_html = $widget_html .$val[name].'<.info.>'.$val[description].'<.info.> '.$val[widget].' '.$off.'<.explode.>';            
 			} 
         }
         
         
-        $widget = substr($widget_html, 0, -11);
+        $widget = $hasWidget ? substr($widget_html, 0, -11) : null;
         
         $analize_false = $form_state->getValue('analize_false');
         $api_false = $form_state->getValue('api_false');
@@ -1058,7 +1061,7 @@ class editMetaDataForm extends HelpFormBase
                 $idNewData= $this->saveData($newData, $coll);
                 $idNewData= $idNewData[1];
 				$datasetName = $label;
-				//$api->calculateVisualisations($idNewData);
+				$api->calculateVisualisations($idNewData);
             }    
 			else {
       
@@ -1936,10 +1939,9 @@ class editMetaDataForm extends HelpFormBase
 				
 			}
 			
-			
+			sleep(20);
+			$api->calculateVisualisations($idNewData);
 			// if($command != NULL){
-			// 	sleep(20);
-			// 	$api->calculateVisualisations($idNewData);
 			// 	error_log($command);
 			// 	$output = shell_exec($command);
 			// 	error_log($output);

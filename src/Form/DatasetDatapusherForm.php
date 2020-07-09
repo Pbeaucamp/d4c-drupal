@@ -68,7 +68,7 @@ class DatasetDatapusherForm extends HelpFormBase {
 			Logger::logMessage("Found resource '" . $datapusherResult . "' \r\n");
 
 			//If the format is manageable by the datastore we display the options
-			if(($format == 'CSV' || $format == 'XLS' || $format == 'XLSX') && $row["datastore_active"] == true){
+			if(($format == 'CSV' || $format == 'XLS' || $format == 'XLSX')){
 
 				$form['#attached']['drupalSettings']['ckan'][$title] = $datapusherResult;
 
