@@ -1404,8 +1404,14 @@ class Api{
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
        
-        
 
+        if($query_params['user_defined_fields']) {
+			array_pop($query_params);
+			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+			
+		}
+		
+		 
 		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 		//echo json_encode($fields);
 		$fieldId = "_id";
@@ -1639,22 +1645,70 @@ class Api{
 		}
 
 		$first = true;
+
+		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
+
+
+$stack = array();
+
+
+if($exportUserField  != null ) {
+
+	foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+		if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
+			array_push($stack, $valuefields["id"]);
+		}
+		
+		
+	}
+}
+
+
+		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
+			
 		foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
 			}
 
-			if (isset($reqFieldsArray)) {
-				if (in_array($value['name'], $reqFieldsArray)) {
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+
+			if($exportUserField  != null ) {
+
+			/* get all fields from exportuserfield */
+			if (in_array( $value['name'], $stack) ) {
+					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+
+						if( $valuefields["id"] == $value['name'] ){
+							 	/* Get name of ever field user and assign it to fields Header*/ 
+							 	$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+								$first = false;
+								break;
+						}
+					}
+			}
+			else{
+						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						$first = false;
+						}
 				}
-			}
+
 			else {
-				$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+					if (isset($reqFieldsArray)) {
+								if (in_array($value['name'], $reqFieldsArray)) {
+									$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+								}
+						}
+					else {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						}
+				$first = false;
 			}
-			$first = false;
-		}
+			}
+				
+
+
+
 		$fieldsHeader .= "\n";
 
 		$ids = array();
@@ -1666,12 +1720,17 @@ class Api{
 			$records = array();
 		}
 		
+
+		
 		foreach ($chunk as $_ids){
 			$query_params['filters'] = json_encode(array($fieldId => $_ids));
 			if($reqFields != ""){$query_params['fields'] = $reqFields;}
 			$query_params['records_format'] = $format;
 			if(!array_key_exists('limit', $query_params)){
 				$query_params['limit'] = 100000000;
+			}
+			if($query_params['user_defined_fields']) {
+				$query_params = array_pop($query_params);
 			}
 			$url2 = http_build_query($query_params);
 			//echo $url2;
@@ -1694,6 +1753,8 @@ class Api{
 			}
 		
 		}
+
+		
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -1703,7 +1764,7 @@ class Api{
 			return 	$records;
 		}
 		
-
+		
 //		$response = new Response();
 //		$response->setContent(json_encode($result));
 //		$response->headers->set('Content-Type', 'application/octet-stream');
@@ -1722,8 +1783,11 @@ class Api{
 	}
 
 	public function callDatastoreApiDownloadFile($params) {
+		
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
+
+		
 
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
@@ -1748,6 +1812,8 @@ class Api{
 			header('Content-Type:application/json');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
 		}
+
+		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
 		$result = $this->getRecordsDownload($params);
 		if ($format == "csv" || $format == "json" || $format == "geojson") {

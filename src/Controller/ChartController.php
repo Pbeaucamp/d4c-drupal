@@ -38,6 +38,8 @@ class ChartController extends ControllerBase {
 
 	public function myPage(Request $request) {
 
+		
+
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$api = new Api();
 		
@@ -114,6 +116,7 @@ class ChartController extends ControllerBase {
 	}
 	
 	public function myFrame(Request $request) {
+
 
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));		
 				

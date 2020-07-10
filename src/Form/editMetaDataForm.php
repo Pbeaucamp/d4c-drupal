@@ -401,6 +401,7 @@ class editMetaDataForm extends HelpFormBase
             '#attributes' => array('style' => 'width: 50%;'),
             
 		);
+
 		
 		$values = array();
 		foreach($overlays['layers'] as $layer){
@@ -438,6 +439,14 @@ class editMetaDataForm extends HelpFormBase
 						</script>',
 			'#allowed_tags' => ['label', 'div', 'd4c-pictopicker', 'br', 'script']
 		);
+        
+
+
+         $form['disable_fields_map'] = array(
+            '#type' => 'checkbox',
+            '#id'=> 'disable_fields_empty',
+            '#title' => $this->t('Cacher les champs vides'),
+        );
         
         
 		//$form['#suffix'] = '</div>';   
@@ -753,6 +762,8 @@ class editMetaDataForm extends HelpFormBase
         $organization = $form_state->getValue('selected_org');
         $private = $form_state->getValue('selected_private');
 		$visu = $form_state->getValue('selected_visu');
+        $disableFieldsEmpty = $form_state->getValue('disable_fields_map');
+        
 		
 		// drupal_set_message($visu);
         
@@ -990,6 +1001,9 @@ class editMetaDataForm extends HelpFormBase
 				
 				$extras[count($extras)]['key'] = 'date_dataset';
 				$extras[(count($extras) - 1)]['value'] = $dateDataset;
+
+                $extras[count($extras)]['key'] = 'disable_fields_empty';
+                $extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
 				
 				###### security #######
 				$idUser = "*".\Drupal::currentUser()->id()."*";
@@ -1064,7 +1078,7 @@ class editMetaDataForm extends HelpFormBase
 				$api->calculateVisualisations($idNewData);
             }    
 			else {
-      
+                
 				$check=false;
 
 				foreach ($dataSet as &$value) {
@@ -1087,6 +1101,7 @@ class editMetaDataForm extends HelpFormBase
                         $widget_ex = false;
 						$visu_ex = false;
                         $date_dataset_ex = false;
+                        $disableFieldsEmptyEx = false;
                         
                         if ($cout_extras != 0) {
 
@@ -1200,6 +1215,12 @@ class editMetaDataForm extends HelpFormBase
                                     $value[extras][$j]['value'] = $dateDataset;
                                 }
 
+                                if ($value[extras][$j]['key'] == 'disable_fields_empty') {
+                                    $disableFieldsEmptyEx  = true;
+                                    $value[extras][$j]['value'] = $disableFieldsEmpty;
+                                }
+
+
                             }
 
                         }
@@ -1271,6 +1292,12 @@ class editMetaDataForm extends HelpFormBase
                             $value[extras][count($value[extras])]['key'] = 'date_dataset';
                             $value[extras][count($value[extras]) - 1]['value'] = $dateDataset; 
                         }
+                        if ($disableFieldsEmptyEx  == false) {
+                            $value[extras][count($value[extras])]['key'] = 'disable_fields_empty';
+                            $value[extras][count($value[extras]) - 1]['value'] = $disableFieldsEmpty; 
+                        }
+
+                        
                         
                         $value[title] = $title;
                         $value[notes] = $description;
