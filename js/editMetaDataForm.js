@@ -176,7 +176,7 @@ function addData(result) {
 
     } else {
 
-
+        console.log(result);
         let data = getDataByID(result, data_id);
         fillData(data);
 
@@ -211,6 +211,7 @@ function clear() {
     $("td>div").removeAttr("style");
     $("#edit-analize-false").removeAttr("checked");
     $("#edit-api-false").removeAttr("checked");
+    $('#disable_fields_empty').prop("checked", true);
  
 
     //$("#edit-table-widgets ").remove();
@@ -260,6 +261,7 @@ function getDataByID(data, id) {
     return data;
 }
 
+
 function fillData(data) {
 
     $('#id_row_' + data.id).attr('style', 'display: none;');
@@ -303,6 +305,8 @@ function fillData(data) {
 	
     $('#edit-table tbody tr').remove();
     let num = 0;
+
+    console.log(data.resources);
     for (let i = 0; i < data.resources.length; i++) {
         //console.log(data.resources[i]);
         num = i + 1;
@@ -367,6 +371,7 @@ function fillData(data) {
 		$('#up-' + num).append($('[id^=edit-table-'+num+'-file]').first().parent().parent());
     }
 
+    let hasHideFieldsProp = false;
     for (let g = 0; g < data.extras.length; g++) {
         if (data.extras[g].key == 'Picto') {
 			var path = data.extras[g].value;
@@ -466,6 +471,20 @@ function fillData(data) {
         if (data.extras[g].key == 'date_dataset') {
             $('#edit-date-dataset').val(data.extras[g].value);
         }
+
+        if (data.extras[g].key == 'disable_fields_empty') {
+            hasHideFieldsProp = true;
+            if(data.extras[g].value == 1 ) {
+                $('#disable_fields_empty').prop("checked", true);
+            }
+            else {
+                $('#disable_fields_empty').prop("checked", false);
+            }
+        }
+    }
+
+    if (!hasHideFieldsProp) {
+        $('#disable_fields_empty').prop("checked", false);
     }
 
     //    
