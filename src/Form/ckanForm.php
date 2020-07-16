@@ -237,6 +237,9 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $time_up_value = $form_state->getValue('time_up_value');
         $id_org = $form_state->getValue('selected_org');
         $id_dataset = $form_state->getValue('id_dataset_selected');
+        
+        $saveTimeZone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Paris');
     
         foreach($dataForUpdate as &$value){
             if($value->id_org==$org){
@@ -267,6 +270,8 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                 }
 			}
         }
+        
+        date_default_timezone_set($saveTimeZone);
 
 		$config->set('dataForUpdateDatasets', json_encode($dataForUpdate))->save(); 
 		$query = DataSet::updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org,$site,$site_infocom, $title_data, $parameters);

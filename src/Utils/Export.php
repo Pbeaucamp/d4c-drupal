@@ -204,9 +204,9 @@ class Export{
 					$index++;
 				}
 			}
-			Logger::logMessage("Found geometry of type " . $feat["geometry"]["type"]);
+			// Logger::logMessage("Found geometry of type " . $feat["geometry"]["type"]);
 			if ($feat["geometry"]["type"] != "Point") {
-				Logger::logMessage("Found geometry of type shape");
+				// Logger::logMessage("Found geometry of type shape");
 				$hasShapes = true;
 			}
 		}

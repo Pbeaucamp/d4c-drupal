@@ -3283,5 +3283,85 @@ class DataSet{
 		return json_encode($exCible);
 	}
 	
+	static function getHarvestDatasets() {
+        $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
+		return $config->get('dataForUpdateDatasets');
+	}
 	
+	static function getHarvestDatasetInformations() {
+		$api = new Api();
+
+		$harvestDatasetJson = Dataset::getHarvestDatasets();
+		$harvestDatasets = json_decode($harvestDatasetJson);
+		
+        foreach($harvestDatasets as &$harvestDataset) {
+
+              foreach ($harvestDataset->datasets as $key2 => &$dataset) {
+				
+				//Getting harvest's URL
+                $datasetInfos = $api->getPackageShow2($dataset->id_data, "");
+                $met = $datasetInfos[metas][extras];
+				for($i=0; $i < count($met); $i++){
+                    if($met[$i]['key']=='FTP_API'){
+						if($met[$i][value]!='FTP'){
+                        	$dataset->siteUrl =  $met[$i][value];
+                        } 
+					}
+				}
+
+				//Retrieve last update date and next execution
+				$last_update = $dataset->last_update;
+				$periodic_update = $dataset->periodic_update;
+                
+                if ($periodic_update == null || $periodic_update == "") {
+					//The dataset is updated every day at 5
+					$dataset->next_update = date("Y-m-d H:i:s", mktime(5,0,0, date('n'), date('j')+1, date('Y')));
+                }
+                else{
+                    $periodic_update = explode(";", $periodic_update);
+           
+					if($periodic_update[2]=='A'){
+						$date=1;
+						if($periodic_update[1] == ''){
+							$periodic_update[1] = 1;
+						}
+					  
+						switch ($periodic_update[0]) {
+						case 'Mi':
+							$date = $periodic_update[1] * 60;
+							break;
+						case 'H':
+							$date = $periodic_update[1] * 3600;
+							break;
+						case 'D':
+							$date = $periodic_update[1] * 86400;
+							break;
+						case 'W':
+							$date = $periodic_update[1] * 604800;
+							break;
+						case 'M':
+							$date = $periodic_update[1] * 2592000;
+							break;
+						case 'Y':
+							$date = $periodic_update[1] * 31536000;
+							break;
+						default:
+							$date=0;
+						}
+					  
+						//Calculate next update
+						$last_update = strtotime($last_update);
+						$next_update = $last_update + $date;
+
+						$dataset->next_update = date("m/d/Y H:i:s", $next_update);
+					}
+                }
+            }
+
+			Logger::logMessage("Get harvest datasets : ");
+			Logger::logMessage(json_encode($harvestDataset));
+		}
+
+		return $harvestDatasets;
+	}
 }
