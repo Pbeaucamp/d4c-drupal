@@ -7,6 +7,7 @@
 namespace Drupal\ckan_admin\Form;
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\Export;
 use Drupal\Core\Form\FormBase;
@@ -1422,7 +1423,6 @@ class editMetaDataForm extends HelpFormBase
 				
 				//if files > 50MB we don't do the treatments.
 				if($filesize < 50000000) {
-					Logger::logMessage("Uploading filename " .$fileName);
 					
 					if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
 						$xls_file = $root.''.$filepath;
@@ -1544,11 +1544,9 @@ class editMetaDataForm extends HelpFormBase
 				if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
 					$json_match = false;
 					if(strtolower(explode(".", $fileName)[1]) == 'json'){
-						Logger::logMessage("File is JSON, we try to define if it is a GEO file.");
 						$json = file_get_contents($url_res);
 						$json = json_decode($json, true);
 						if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
-							Logger::logMessage("Has type = FeatureCollection.");
 							$json_match = true;
 						}
 					}
@@ -1812,12 +1810,18 @@ class editMetaDataForm extends HelpFormBase
 				}
 				$api->calculateVisualisations($data_id);
 			}
+
+			
+			$resourceManager = new ResourceManager;
+			//Manage ZIP File
+			if (explode(".", $fileName)[1]  === 'zip') {
+				$csv = $resourceManager->manageFile('', '', $filepath);
+			}
 			
 			$command = NULL;
-			Logger::logMessage("Has CSV = " . $hascsv . " and Count geo = " . count($geo_res));
 			if($hascsv == FALSE && count($geo_res) > 0){
 				// on créé un csv
-				Logger::logMessage("We create a CSV");
+				error_log("on créée un csv");
 				$csv = null;
 				$id = null;
 				if($geo_res["geojson"] != null){
