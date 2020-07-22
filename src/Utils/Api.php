@@ -917,8 +917,8 @@ class Api{
 				$geometriesAlreadyDefined = true;
 			}
 		}
-        // Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
-        // Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
+        Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
+        Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
 
 
 		if(array_key_exists('rows', $query_params)){
@@ -1270,7 +1270,7 @@ class Api{
 						$geoPointnb = 1;
 					// }
 				//$field['type'] = "geo_point_2d";
-			} else if(preg_match("/geo_shape/i",$value['id']) || preg_match("/geom/i",$value['id']) || preg_match("/geojson/i",$value['id'])) {
+			} else if(preg_match("/geo_shape/i",$value['id']) || preg_match("/geome/i",$value['id']) || preg_match("/geojson/i",$value['id'])) {
 				$field['type'] = "geo_shape";
 			} else if($value['type'] == "timestamp"){
 				$field['type'] = "datetime";
