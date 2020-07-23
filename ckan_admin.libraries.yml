@@ -241,3 +241,22 @@ reusesForm.form:
     js/reusesForm.js: {}
   dependencies:
     - core/jquery
+
+
+
+#add libraries to package extension page
+PackagesForm.form:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/packageExtension.js: {}
+    /sites/default/files/api/portail_d4c/js/export_popup_script.js: {}
+  css:
+    theme:
+      http://ajax.aspnetcdn.com/ajax/jquery.ui/1.8.9/themes/blitzer/jquery-ui.css: {}
+  dependencies:
+    - core/jquery
+
+
+
+

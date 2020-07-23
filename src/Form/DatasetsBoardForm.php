@@ -97,8 +97,6 @@ class DatasetsBoardForm extends HelpFormBase {
         $result = json_decode($result, true)[result];
         $datasets = $result[results];
 		
-		
-		
 		pager_default_initialize($result["count"], $num_per_page);
 		
 		$header =  array(
@@ -159,7 +157,7 @@ class DatasetsBoardForm extends HelpFormBase {
 					[':link' => "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
 					'@name' => $this->t('Editer')])
 				),
-				'view' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
+				'view' => array('data' => new FormattableMarkup('<a data-toggle="modal" data-target="#myModal" href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
 					[':link' => $viewLink, 
 					'@name' => ($row["private"] ? $this->t('Prévisualiser') : $this->t('Visualiser'))])
 				),
@@ -296,6 +294,7 @@ class DatasetsBoardForm extends HelpFormBase {
 		$form['modal'] = array(
 			'#markup' => '<div id="visibilityModal"></div>',
 		); 
+
 
 		$form['modalSecurity'] = array(
 			'#markup' => '<div id="securityModal"></div>',
