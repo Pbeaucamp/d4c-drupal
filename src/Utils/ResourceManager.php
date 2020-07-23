@@ -9,27 +9,56 @@ use Drupal\ckan_admin\Utils\Logger;
 class ResourceManager {
 
 	function manageFiles($id, $url, $filesDirectory) {
-		Logger::logMesssage("Managing files in '" . $filesDirectory . "'");
+		Logger::logMessage("Managing files in '" . $filesDirectory . "'");
 
-		$files = scandir($filesDirectory);
+		// $files = scandir($filesDirectory);
+		$files = $this->getDirContents($filesDirectory);
 		foreach($files as $file) {
-			$this->manageFile($id, $url, $file);
+			$csv = $this->manageFile($id, $url, $file);
+			if ($csv != null) {
+				return $csv;
+			}
 		}
 	}
 
+	function getDirContents($dir, &$results = array()) {
+		$files = scandir($dir);
+	
+		foreach ($files as $key => $value) {
+			$path = realpath($dir . DIRECTORY_SEPARATOR . $value);
+			if (!is_dir($path)) {
+				$results[] = $path;
+			}
+			else if ($value != "." && $value != "..") {
+				$this->getDirContents($path, $results);
+				$results[] = $path;
+			}
+		}
+	
+		return $results;
+	}
+
 	function manageFile($id, $url, $filePath) {
-		$type = $this->extractFormat($filePath);
-		if ($type = 'csv') {
+		Logger::logMessage("Managing file '" . $filePath . "'");
+
+		try {
+			$type = $this->extractFormat($filePath);
+		} catch (Exception $e) {
+			Logger::logMessage("Impossible de récupérer le format du fichier (" . $e->getMessage() . ")");
+		}
+		Logger::logMessage("Found format " . $type);
+		if ($type == 'csv') {
 
 		}
-		else if ($type = 'zip') {
-			$this->manageZip($id, $url, $filePath);
+		else if ($type == 'zip') {
+			return $this->manageZip($id, $url, $filePath);
 		}
-		else if ($type = 'json' || $type = 'geojson' || $type = 'kml' || $type = 'shp') {
-			$this->manageGeoFiles($type, $id, $url, $filePath);
+		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
+			return $this->manageGeoFiles($type, $id, $url, $filePath);
 		}
 		else {
-			Logger::logMesssage("We do not process the file '" . $filePath . "'");
+			Logger::logMessage("We do not process the file '" . $filePath . "'");
+			return null;
 		}
 	}
 
@@ -103,7 +132,7 @@ class ResourceManager {
 	}
 	
 	function manageZip($id, $url, $filePath) {
-		Logger::logMesssage("Manage zip file");
+		Logger::logMessage("Manage zip file");
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_'.uniqid().'';
@@ -115,7 +144,7 @@ class ResourceManager {
 			$zip->extractTo($outputDirectory);
 			$zip->close();
 
-			$this->manageFiles($id, $url, $outputDirectory);
+			return $this->manageFiles($id, $url, $outputDirectory);
 		}
 		else {
 			throw new Exception('Le fichier ne peut pas être extrait.');
@@ -131,9 +160,9 @@ class ResourceManager {
 	 * 
 	 */
 	function manageGeoFiles($type, $id, $url, $filePath) {
-		Logger::logMesssage("Manage " . $type . " file");
+		Logger::logMessage("Manage " . $type . " file");
 
-		Logger::logMesssage("Retrieving file '" . $url + "'");
+		Logger::logMessage("Retrieving file '" . $url + "'");
 		$fileContent = Query::callSolrServer($url);
 
 		if ($type == 'geojson' || $type == 'json'){
@@ -155,7 +184,7 @@ class ResourceManager {
 			$message = shell_exec($command);
 			$json = file_get_contents ($rootJson);
 
-			$csv = Export::createCSVfromGeoJSON($json);
+			$csv = $this->buildCSVFromGeojson($json);
 			unlink ($rootJson);
 		}
 		else {
@@ -165,6 +194,7 @@ class ResourceManager {
 		// $outputCsvPath = '/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.csv';
 		// file_put_contents($outputCsvPath, $csv);
 
+		Logger::logMessage("Returning CSV");
 		return $csv;
 	}
 	

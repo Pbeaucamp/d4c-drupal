@@ -350,7 +350,7 @@ class editMetaDataForm extends HelpFormBase
 			'#type' => 'managed_file',
 			'#upload_location' => 'public://dataset/',
 			'#upload_validators' => array(
-				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson'),
+				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip'),
 			),
 			'#size' => 10,
             '#suffix' => '</div>',
@@ -530,7 +530,7 @@ class editMetaDataForm extends HelpFormBase
 				'#type' => 'managed_file',
 				'#upload_location' => 'public://dataset/',
 				'#upload_validators' => array(
-					'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson'),
+					'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip'),
 				),
 				'#size' => 1,
             );
@@ -1811,67 +1811,74 @@ class editMetaDataForm extends HelpFormBase
 				$api->calculateVisualisations($data_id);
 			}
 
+			Logger::logMessage("Managing file with format " . explode(".", $fileName)[1]);
 			
 			$resourceManager = new ResourceManager;
 			//Manage ZIP File
 			if (explode(".", $fileName)[1]  === 'zip') {
-				$csv = $resourceManager->manageFile('', '', $filepath);
+				Logger::logMessage("Managing zip file");
+				$csv = $resourceManager->manageFile('', '', $root . $filepath);
 			}
 			
 			$command = NULL;
-			if($hascsv == FALSE && count($geo_res) > 0){
-				// on créé un csv
-				error_log("on créée un csv");
-				$csv = null;
-				$id = null;
-				if($geo_res["geojson"] != null){
-					error_log("la source est un geojson");
-					$url = $geo_res["geojson"]["url"];
-					$id = $geo_res["geojson"]["id"];
-					$json = Query::callSolrServer($url);
-					error_log("fichier récuperé");
-					$csv = Export::createCSVfromGeoJSON($json);
-					error_log("fichier converti");
-					file_put_contents($rootCsv, $csv);
-				} else if($geo_res["json"] != null){
-					error_log("la source est un json");
-					$url = $geo_res["json"]["url"];
-					$id = $geo_res["json"]["id"];
-					$json = Query::callSolrServer($url);
-					error_log("fichier récuperé");
-					$csv = Export::createCSVfromGeoJSON($json);
-					error_log("fichier converti");
-					file_put_contents($rootCsv, $csv);
-				} else {
-					$url = $geo_res["kml"]["url"];
-					$id = $geo_res["kml"]["id"];
-					//We create a tmp file in which we write the result and an output file to convert
-					$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-					$fileInput = fopen($pathInput, 'w');
-					$kml = Query::callSolrServer($url);
-					fwrite($fileInput, $kml);
-					fclose($fileInput);
+			if($csv || ($hascsv == FALSE && count($geo_res) > 0)){
 
-					//Get current Php directory to call the script
-					$dir = dirname(__FILE__);
-					$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
-
-					$typeConvert = 'GeoJSON';
-					
-					$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
-					$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
-					$message = shell_exec($command);
-					$json = file_get_contents ($rootJson);
-					$csv = Export::createCSVfromGeoJSON($json);
-					
-					
-					
-					unlink ($pathInput);
-					unlink ($rootJson);
+				if (!$csv) {
+					// on créé un csv
+					error_log("on créée un csv");
+					$csv = null;
+					$id = null;
+					if($geo_res["geojson"] != null){
+						error_log("la source est un geojson");
+						$url = $geo_res["geojson"]["url"];
+						$id = $geo_res["geojson"]["id"];
+						$json = Query::callSolrServer($url);
+						error_log("fichier récuperé");
+						$csv = Export::createCSVfromGeoJSON($json);
+						error_log("fichier converti");
+						file_put_contents($rootCsv, $csv);
+					} else if($geo_res["json"] != null){
+						error_log("la source est un json");
+						$url = $geo_res["json"]["url"];
+						$id = $geo_res["json"]["id"];
+						$json = Query::callSolrServer($url);
+						error_log("fichier récuperé");
+						$csv = Export::createCSVfromGeoJSON($json);
+						error_log("fichier converti");
+						file_put_contents($rootCsv, $csv);
+					} else {
+						$url = $geo_res["kml"]["url"];
+						$id = $geo_res["kml"]["id"];
+						//We create a tmp file in which we write the result and an output file to convert
+						$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+						$fileInput = fopen($pathInput, 'w');
+						$kml = Query::callSolrServer($url);
+						fwrite($fileInput, $kml);
+						fclose($fileInput);
+	
+						//Get current Php directory to call the script
+						$dir = dirname(__FILE__);
+						$scriptPath = $dir.'/../Utils/convert_geo_files_ogr2ogr.sh';
+	
+						$typeConvert = 'GeoJSON';
+						
+						$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
+						$command = $scriptPath." 2>&1 '".$typeConvert."' ".$rootJson." ".$pathInput."";
+						$message = shell_exec($command);
+						$json = file_get_contents ($rootJson);
+						$csv = Export::createCSVfromGeoJSON($json);
+						
+						
+						
+						unlink ($pathInput);
+						unlink ($rootJson);
+					}
 				}
+
 				$name = "csv_gen_" . $id . "_" . uniqid();
-				$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
-				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+				Logger::logMessage("Writing '" . $name . "'");
+				$rootCsv = '/home/user-client/drupal-d4c/sites/default/files/dataset/' . $name . '.csv';
+				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/' . $name . '.csv';
 				file_put_contents($rootCsv, $csv);
 				
 				$update = null;
