@@ -2,6 +2,7 @@ $ = jQuery;
 var users;
 var currentuser;
 
+
 $(document).ready(function(){
 	$("#edit-roles-list-administrator").attr("disabled", "disabled");
 	for (let [key, user] of Object.entries(users)) {
@@ -70,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     }); // end foreach
+
+
+
 	
 	$("#edit-roles-list").css("column-count", 2);
 	$("#edit-roles-list .form-type-checkbox").css("display", "inline-block");
@@ -89,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 }); // end ready   
+
+
 $('#visibilityModal').after(`<div style="width:25em;" class="modal" data-modal="1">
 							<div id="title" style="color: cornflowerblue;">
 								<h2>Confirmation</h2>
@@ -139,6 +145,8 @@ function confirm(event){
 	modalElem.classList.add('active');
 	overlay.classList.add('active');
 }
+
+
 
 function openecurityPopup(event){
 	$("#edit-security").css("display","block");
@@ -203,3 +211,4 @@ function saveSecurity(){
 	currentuser = drupalSettings.currentuser;
 	// console.log(currentuser);
 })(jQuery, Drupal, drupalSettings);
+

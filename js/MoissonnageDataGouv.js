@@ -1469,6 +1469,17 @@ function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
 
+ console.log(resUrl);
+ console.log(type_file);
+ console.log(type_site);
+
+ if(resUrl.includes("?")) {
+      var res = resUrl.split("?");
+      resUrl = res[0];
+ }
+
+
+console.log(resUrl);
 $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',

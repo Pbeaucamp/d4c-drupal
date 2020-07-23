@@ -834,3 +834,32 @@ ckan_admin.dataset_datapusher:
     _title: 'Tableau de contrôle du datapusher'
   requirements:
     _permission: 'access dataset_board'
+
+
+
+ckan_admin.exportdataset:
+  path: '/package/exportdataset/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\PackageManager::createPackageZip'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+
+# add package data4citizen route
+ckan_admin.extension_package_data4citizen:
+  path: '/admin/config/data4citizen/packages'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\PackagesForm'
+    _title: 'Packages Data4Citizen'
+  requirements:
+    _permission: 'access content'
+
+# add package file XML route
+ckan_admin.extension_package_fileXML:
+  path: '/admin/config/data4citizen/package/fichiersXML'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\PackageXMLFileForm'
+    _title: 'Fichiers XML'
+  requirements:
+    _permission: 'access content'

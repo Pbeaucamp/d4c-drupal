@@ -101,7 +101,6 @@ class Api{
 
 
 	public function callDatastoreApi($params) {
-
 		$result = $this->getDatastoreApi($params);
 
 		echo json_encode($result);
@@ -964,6 +963,8 @@ class Api{
 		}
 		$where = "";
 		if(!empty($filters_init)){
+			Logger::logMessage("Filters exists");
+
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
 				if($key == "geofilter.bbox"){
@@ -1029,6 +1030,8 @@ class Api{
 			}
 		}
 		else if($reqQfilter != ""){
+			Logger::logMessage("Req filter is not empty '" . $reqQfilter . "' and we put '" . substr($reqQfilter, 5) . "'");
+
 			$where = " where " . substr($reqQfilter, 5);
 		}
 
@@ -1045,7 +1048,11 @@ class Api{
 			$sql = "Select count(*), min((point(".$fieldCoordinates."))[0]) as minLat, max((point(".$fieldCoordinates."))[0]) as maxLat, min((point(".$fieldCoordinates."))[1]) as minLong, max((point(".$fieldCoordinates."))[1]) as maxLong from \"" . $query_params['resource_id'] . "\"";
 			if(!empty($filters_init)){
 				$sql = $sql . $where. " and ".$fieldCoordinates." not in ('', ',')";
-			} else {
+			} 
+			else if($reqQfilter != ""){
+				$sql = $sql . $where. " and ".$fieldCoordinates." not in ('', ',')";
+			}
+			else {
 				$sql = $sql . " where ".$fieldCoordinates." not in ('', ',')";
 			}
 			$req['sql'] = $sql;
@@ -4854,14 +4861,20 @@ if($exportUserField  != null ) {
     
     function getCsvXls($params){
 
+
+
         $params = explode(";", $params);
         $url = $params[0];
 		$url =str_replace('!', '/', $url);
+
+	
+
         
         $format = $params[1];
         $site = $params[2];
         
         $site_2 = explode(":", $site);
+   
         
         if($site=='Public.OpenDataSoft.com'){
            $url = 'https://public.opendatasoft.com/explore/dataset/'.$url.'/download/?format=csv&timezone=Europe/Madrid&use_labels_for_header=true'; 

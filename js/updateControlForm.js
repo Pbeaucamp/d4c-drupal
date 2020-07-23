@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
 $('#formModal').after('<div class="modal" data-modal="1"><svg class="modal__cross js-modal-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23.954 21.03l-9.184-9.095 9.092-9.174-2.832-2.807-9.09 9.179-9.176-9.088-2.81 2.81 9.186 9.105-9.095 9.184 2.81 2.81 9.112-9.192 9.18 9.1z"/></svg><div id="tablePlace" style="overflow:scroll; height:35em; "></div></div><div class="overlay js-overlay-modal"></div>');
 
-hide_param();
 var validation_resurce = [];
 
 /////////////modal/////////////
@@ -78,186 +77,8 @@ window.addEventListener("keypress", function (e) {
 });
 
 
+function fillTable(data, data2) {
 
-
-
-function hide_param() {
-    $('#param_dataGouv').attr('style', 'display:none;');
-    $('#div_ckan').attr('style', 'display:none;');
-    $('#div_d4c').attr('style', 'display:none;');
-    $('#div_odsall').attr('style', 'display:none;');
-    $('#div_arcgis').attr('style', 'display:none;');
-    $('#div_socrata').attr('style', 'display:none;');
-$('#edit-ids').empty();
-
-
-
-
-    let siteSearch = $('input[name=search_on_site]:checked').val();
-   
-
-    if (siteSearch == 'Data_Gouv_fr') {
-
-        $('#param_dataGouv').removeAttr('style');
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('Data_Gouv_fr');
-        $('#edit-chercher').show('');
-
-    } else if (siteSearch == 'InfoCom94') {
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('InfoCom94');
-        $('#edit-chercher').show('');
-
-    } else if (siteSearch == 'Public_OpenDataSoft_com') {
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('Public_OpenDataSoft_com');
-        $('#edit-chercher').show('');
-
-    }
-    else if (siteSearch == 'socrata') {
-        //alert();
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('socrata');
-        $('#div_socrata').removeAttr('style');
-        $('#edit-chercher').show('');
-    } 
-    else if (siteSearch == 'dckan') {
-        //alert();
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('ckan'); 
-        $('#div_ckan').removeAttr('style');
-        $('#edit-chercher').show('');
-    }
-    else if (siteSearch == 'd4c') {
-        //alert();
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('d4c'); 
-        $('#div_d4c').removeAttr('style');
-        $('#edit-chercher').show('');
-    }
-    else if (siteSearch == 'odsall') {
-        //alert();
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('odsall'); 
-        $('#div_odsall').removeAttr('style');
-        $('#edit-chercher').show('');
-    }
-    else if (siteSearch == 'arcgis') {
-        //alert();
-        $('#edit-site-search').val('');
-        $('#edit-site-search').val('arcgis'); 
-        $('#div_arcgis').removeAttr('style');
-        $('#edit-chercher').val('');
-        $('#edit-chercher').hide('');
-    }
-
-}
-////////////////ArcGIS/////////////////////////
-
-
-function createTablePrew(resUrl,type_file,type_site){
-// console.log(resUrl);
- resUrl = resUrl.replace(/\//g,'!');
-
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
-
-        type: 'POST',
-        dataType: 'json',
-        cache: true,
-        beforeSend: function () {
-            $('html,body').attr('style', 'cursor:wait !important;');
-            $('input[type="submit"]').attr('disabled', true);
-            $('#tablePlace').contents().remove();
-        },
-        complete: function () {
-            $('html,body').removeAttr("style");
-            $('input[type="submit"]').attr('disabled', false);
-            $('#org_div').attr('style', 'width: 50%;');
-           
-            
-        },
-        success: function (result) {
-
-            console.log(result);
-            
-            let delimeter=result.delimiter;
-            if(delimeter =='\\t') delimeter='\t';
-            
-            result = result.data;
-            
-            
-            let thead ='';
-            let tbody ='';
-            let count_prew;
-            
-            
-            //console.log(result);
-            
-            if(result.length>=15){
-                
-               count_prew =15;
-                
-            }
-            else{
-               count_prew = result.length; 
-            }
-            
-            for(let i = 0; i < count_prew; i++){
-                
-                if(i == 0){
-                    let title = result[i].toString().split(delimeter);
-                    
-                    for(let j=0; j<title.length; j++){
-                        
-                      thead = thead+'<th>'+title[j]+'<th>'; 
-                        
-                    }
-                    
-                    thead = '<thead><tr>'+thead+'</tr></thead>';
-                    
-                }
-                else{
-                    let text = result[i].toString().split(delimeter);
-                    let tbody_str='';
-                    for(let j=0; j<text.length; j++){
-                        
-                      tbody_str = tbody_str+'<td>'+text[j]+'<td>'; 
-                        
-                    }
-                    
-                    tbody  = tbody+'<tr>'+tbody_str+'</tr>';  
-                }
-                   
-            }
-            
-            tbody = '<tbody>'+tbody+'</tbody>';
-            
-            $('#tablePlace').append('<table data-drupal-selector="edit-table" id="edit-table" class="responsive-enabled" data-striping="1">'+thead+tbody+'</table>');
-
-           
-
-
-        },
-        error: function (e) {
-            console.log("ERROR: ", e);
-            alert('Error');
-            
-        },
-
-    });
- let overlay  = document.querySelector('.js-overlay-modal');
-            let modalElem = document.querySelector('.modal[data-modal="1"]');
-            modalElem.classList.add('active');
-            overlay.classList.add('active');   
-        
-}
-
-
-
-
-
-
-function fillTable(data) {
     clear();
     /*console.log($('#edit-selected-org').val());*/
 
@@ -487,6 +308,11 @@ function getFirstRessource(result) {
 function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
+   if(resUrl.includes("?")) {
+      var res = resUrl.split("?");
+      resUrl = res[0];
+ }
+
 
 $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 

@@ -81,3 +81,17 @@ map_tiles.tab_harvest:
   weight: 20
 
 
+# Create tab in Packages extension page
+extension_package.tab_manage:
+  route_name: ckan_admin.extension_package_data4citizen
+  title: 'Packages Data4Citizen'
+  base_route: ckan_admin.extension_package_data4citizen
+  weight: 20
+  
+extension_package.tab_harvest:
+  route_name: ckan_admin.extension_package_fileXML
+  title: 'Fichiers XML'
+  base_route: ckan_admin.extension_package_data4citizen
+  weight: 20
+
+
