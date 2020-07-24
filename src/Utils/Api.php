@@ -6768,7 +6768,7 @@ if($exportUserField  != null ) {
 		$req = array();
 
 		$where ="";
-		if($_POST['colonne_filtre'] && $_POST['valeur_filtre']) {
+		if($_POST['colonne_filtre'] && $_POST['valeur_filtre'] && $_POST['colonne_filtre']!= null && $_POST['valeur_filtre']!= null ) {
 			$where = " where ";
 			$where .= $_POST['colonne_filtre']." IN ( '".$_POST['valeur_filtre']. "' )";
 		}
