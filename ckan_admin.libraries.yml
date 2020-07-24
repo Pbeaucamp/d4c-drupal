@@ -224,6 +224,7 @@ datasetsBoardForm.form:
   version: VERSION
   js:
     js/DatasetsBoardForm.js: {}
+    /sites/default/files/api/portail_d4c/js/widget-card-dataset.js: {}
   dependencies:
     - core/jquery
 

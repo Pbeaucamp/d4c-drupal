@@ -62,8 +62,6 @@ class VisualisationController extends ControllerBase {
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
 		
-
-
 		
 		$url = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
 		$dateModified = $dataset["metas"]["modified"];

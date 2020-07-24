@@ -13,7 +13,7 @@ $(document).ready(function(){
 			$("#edit-users-list-" + user.id).attr("disabled", "disabled");
 		}
 	}
-	
+	CalculMontantPaye("d4d0431b-9839-481a-8b1e-f94fe08a8c8a", "meli_montttc_va", "statut", "payed", "sum");
 });
 
 /////////////modal/////////////

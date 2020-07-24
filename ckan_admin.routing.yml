@@ -834,3 +834,13 @@ ckan_admin.dataset_datapusher:
     _title: 'Tableau de contrôle du datapusher'
   requirements:
     _permission: 'access dataset_board'
+
+
+
+ckan_admin.fondSolidarite:
+  path: '/api/fondsolidarite'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::calculFondSolidarite'
+    _title: ''
+  requirements:
+    _permission: 'access content'

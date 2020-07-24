@@ -501,7 +501,6 @@ function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
 
-//check if url contains any params
 if(resUrl.includes("?")) {
       var res = resUrl.split("?");
       resUrl = res[0];
