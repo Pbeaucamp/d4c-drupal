@@ -22,8 +22,7 @@ use Drupal\Core\Url;
 use Drupal\ckan_admin\Utils\Logger;
 
 /**
- * Implements an example form.
- 
+ * 
  This file uses a library under MIT Licence :
 
 ods-widgets -- https://github.com/opendatasoft/ods-widgets
@@ -49,19 +48,11 @@ SOFTWARE.
  
  */
 
-class editMetaDataForm extends HelpFormBase
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function getFormId()
-    {
+class editMetaDataForm extends HelpFormBase {
+
+    public function getFormId() {
         return 'editMetaDataForm';
     }
-
-    /**
-     * {@inheritdoc}
-     */
 
     function dummy_preprocess_page(&$variables) {
 		if (\Drupal::service('path.matcher')->isFrontPage()) {
@@ -96,11 +87,8 @@ class editMetaDataForm extends HelpFormBase
 		
 		uasort($dataSet, function($a, $b) {
 			$res =  strcasecmp($a['title'], $b['title']);
-			// drupal_set_message(json_encode($a) . ' ------- ' . $b . '-----' .$res);
 			return $res;
 		});
-		
-		//$dataSet = array();
 		
 		///////////////////////////////organization_list////
 
@@ -495,13 +483,13 @@ class editMetaDataForm extends HelpFormBase
         );
 
         for ($i = 1; $i <= 20; $i++) {
-//titre
+			//titre
             $form['table'][$i]['name'] = array(
                 '#type' => 'textfield',
                 '#size' => 30,
                 '#maxlength' => null,
             );
-//description
+			//description
             $form['table'][$i]['description'] = array(
                 '#type' => 'textarea',
                 '#attributes' => array('style' => 'height: 5em;width: 25em;'),
@@ -542,7 +530,7 @@ class editMetaDataForm extends HelpFormBase
 
             );
 
-// supprimer
+			// supprimer
             $form['table'][$i]['status'][1] = array(
                 '#type' => 'checkbox',
                 '#maxlength' => null,
@@ -567,49 +555,50 @@ class editMetaDataForm extends HelpFormBase
 
         }        
         
-   $form['m3_2'] = array(
-      '#markup' => '</div>',
-    );         
+		$form['m3_2'] = array(
+			'#markup' => '</div>',
+		);         
         
-////////////////RESSOURCES ET VALIDATION///////////////////////////////////////        
+		////////////////RESSOURCES ET VALIDATION///////////////////////////////////////        
 
         
         
         
-////////////////CONFIGURATION///////////////////////////////////////
+		////////////////CONFIGURATION///////////////////////////////////////
       
-  $form['oku'] = array(
-      '#markup' => '<div id="formModal"></div>',
-    );              
+		$form['oku'] = array(
+			'#markup' => '<div id="formModal"></div>',
+		);              
         
         
- $form['m4'] = array(
-      '#markup' => '<div id="configurationTab">',
-    );     
-        $form['table_widgets'] = array(
-            
-            //'#prefix' =>'<div id="ConfigurationTab">',
-            '#type' => 'table',
-            '#header' => array(
-                $this->t('Titre'),
-                $this->t('Description'),
-                $this->t('Widget/URL'),
-                $this->t('Désactiver'),
-                $this->t('Supprimer')  
-            ),
-            //'#suffix' => '</div>',
-
-        );
+		$form['m4'] = array(
+			'#markup' => '<div id="configurationTab">',
+		);
+	  
+		$form['table_widgets'] = array(
+			
+			//'#prefix' =>'<div id="ConfigurationTab">',
+			'#type' => 'table',
+			'#header' => array(
+				$this->t('Titre'),
+				$this->t('Description'),
+				$this->t('Widget/URL'),
+				$this->t('Désactiver'),
+				$this->t('Supprimer')  
+			),
+			//'#suffix' => '</div>',
+		);
         
         
         for ($i = 1; $i <= 1; $i++) {
-//titre
+			//titre
             $form['table_widgets'][$i]['name'] = array(
                 '#type' => 'textfield',
                 '#size' => 30,
                 '#maxlength' => null,
-            );
-//description
+			);
+			
+			//description
             $form['table_widgets'][$i]['description'] = array(
                 '#type' => 'textarea',
                 '#attributes' => array('style' => 'height: 5em;width: 25em;'),
@@ -623,126 +612,469 @@ class editMetaDataForm extends HelpFormBase
                 '#attributes' => array('style' => 'height: 5em;width: 25em;'),
                 '#maxlength' => null,
 
-        );
+        	);
             
             $form['table_widgets'][$i]['offWidjet'] = array(
                 '#type' => 'checkbox',
             );
             
             $form['table_widgets'][$i]['del'] = array(
-            //'#type' => 'textarea',
-        );
-            
-        }
+            	//'#type' => 'textarea',
+        	);
+    	}
         
-  $form['m4_2'] = array(
-      '#markup' => '</div>',
-    );       
+		$form['m4_2'] = array(
+		'#markup' => '</div>',
+		);       
            
-////////////////CONFIGURATION/////////////////////////////////////// 
+		////////////////CONFIGURATION/////////////////////////////////////// 
         
         
-////////////////Jeux de donnees lies///////////////////////////////////////
+		////////////////Jeux de donnees lies///////////////////////////////////////
 
-   $form['m5'] = array(
-      '#markup' => '<div id="datasetLies" >',
-    ); 
+		$form['m5'] = array(
+			'#markup' => '<div id="datasetLies" >',
+    	); 
         
-         $form['dataset_lies'] = array(
-            '#type' => 'textfield',
-            //'#title' => $this->t('Dataset liés:'),
-            '#attributes' => array('style' => 'width: 50%; display: none;'),
-        );
+		$form['dataset_lies'] = array(
+			'#type' => 'textfield',
+			//'#title' => $this->t('Dataset liés:'),
+			'#attributes' => array('style' => 'width: 50%; display: none;'),
+		);
 
-        $form['Dataset_lies_table'] = array(
-            '#type' => 'table',
-            //'#prefix' => '<div id="datasetLies" >',
-            '#header' => array(
-                $this->t('Jeux de données liés'),
-            ),
-            '#attributes' => array('style' => 'width: 100%;'),
-            //'#attributes' => array('style' =>'display: none'),
-//            '#suffix' => '</div>',
-            
+		$form['Dataset_lies_table'] = array(
+			'#type' => 'table',
+			//'#prefix' => '<div id="datasetLies" >',
+			'#header' => array(
+				$this->t('Jeux de données liés'),
+			),
+			'#attributes' => array('style' => 'width: 100%;'),
+			//'#attributes' => array('style' =>'display: none'),
+			//            '#suffix' => '</div>',
+		);
 
-        );
+		foreach ($dataSet as &$value) {
+			$form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
+				'#prefix' => '<div id="id_row_'.$value[id].'" >',
+				'#type' => 'checkbox',
+				'#title' => $this->t($value[title]),
+				'#suffix' => '</div>',
 
-        foreach ($dataSet as &$value) {
-
-            $form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
-                '#prefix' => '<div id="id_row_'.$value[id].'" >',
-                '#type' => 'checkbox',
-                '#title' => $this->t($value[title]),
-                '#suffix' => '</div>',
-
-            );
-
-        }
+			);
+		}
         
         
-    $form['m5_2'] = array(
-      '#markup' => '</div>',
-    ); 
+		$form['m5_2'] = array(
+		'#markup' => '</div>',
+		); 
         
    
-////////////////Jeux de donnees lies///////////////////////////////////////        
-        
-        
+		////////////////Jeux de donnees lies///////////////////////////////////////        
+		$form['valider'] = array(
+			'#type' => 'submit',
+			'#value' => $this->t('Valider'),
+		);
+		
+		$form['del_button_dataset'] = array(
+			'#type' => 'submit',
+			'#value' => $this->t('Supprimer'),
+			'#attributes' => array('style' => 'color: #fcfcfa; background:#e1070799;'),
+		);
+		
+		
+		$form['del_dataset'] = array(
+				'#type' => 'checkbox',
+				'#attributes' => array('style' => 'display: none;'),
+		);
 
-        $form['valider'] = array(
-            '#type' => 'submit',
-            '#value' => $this->t('Valider'),
-        );
-        
-        $form['del_button_dataset'] = array(
-            '#type' => 'submit',
-            '#value' => $this->t('Supprimer'),
-            '#attributes' => array('style' => 'color: #fcfcfa; background:#e1070799;'),
-        );
-        
-        
-        $form['del_dataset'] = array(
-                '#type' => 'checkbox',
-                '#attributes' => array('style' => 'display: none;'),
-            );
+		$form['imgBack'] = array(
 
+			'#type' => 'textarea',
+			'#attributes' => [
+				'style' => 'display: none',
+			],
 
-        /*$directory = "sites/default/files/api/portail_d4c/img/set-v2/";
-        $images = glob($directory . "*.svg");
-        $imgs = '';
-        
-    
-        foreach ($images as $image) {
-            $imgs = $imgs . ';' . $image;
-        }
-    
-     
-    $form['imgimg'] = array(
-
-            '#type' => 'textarea',
-            '#attributes' => [
-                'value' => $imgs,
-                'style' => 'display: none',
-            ],
-            '#default_value' => $imgs,
-
-        );*/
-
-        $form['imgBack'] = array(
-
-            '#type' => 'textarea',
-            '#attributes' => [
-                'style' => 'display: none',
-            ],
-
-        );
+		);
 
         return $form;
-    }
+	}
 
-    public function submitForm(array &$form, FormStateInterface $form_state){
+    public function submitForm(array &$form, FormStateInterface $form_state) {
+		$userId = "*" . \Drupal::currentUser()->id() . "*";
+		$users = \Drupal\user\Entity\User::loadMultiple();
 
-       
+		$api = new Api;
+		$resourceManager = new ResourceManager;
+        
+        $title = $form_state->getValue('title');
+        $datasetId = $form_state->getValue('selected_data_id');
+        $description = $form_state->getValue('description');
+        $dateDataset = $form_state->getValue('date_dataset');
+        $tags = $form_state->getValue('tags');
+        $licence = $form_state->getValue('selected_lic');
+        $organization = $form_state->getValue('selected_org');
+        $private = $form_state->getValue('selected_private');
+		$visu = $form_state->getValue('selected_visu');
+		$disableFieldsEmpty = $form_state->getValue('disable_fields_map');
+		$imgBack = $form_state->getValue('imgBack');
+		$encoding = $form_state->getValue('encoding');
+		$generateColumns = $form_state->getValue('generate_cols');
+		
+		// Resources part
+		$table_data = $form_state->getValue('table');
+		$validata = $form_state->getValue('validata');
+		$resources = $form_state->getValue('resours', 0);
+
+		// Define Dataset name
+		$datasetName = $resourceManager->defineDatasetName($title);
+
+		// Define picto
+		$imgPicto = $form_state->getValue('img_picto');
+		$imgPicto = $resourceManager->definePicto($imgPicto, $imgBack);
+		
+		// Define background
+		$imgBackground = $form_state->getValue('img_backgr');
+		$imgBackground = $resourceManager->defineBackground($imgBackground);
+		
+		// Define widgets
+		$widgets = $form_state->getValue('table_widgets');
+		$widgets = $resourceManager->defineWidget($widgets);
+		
+		// Define analyse and API
+        $analize_false = $form_state->getValue('analize_false');
+        $api_false = $form_state->getValue('api_false');
+
+        $dont_visualize_tab = '';
+        if ($api_false == 1) {
+			$dont_visualize_tab = $dont_visualize_tab . 'api;';
+		}
+        if ($analize_false == 1) {
+            $dont_visualize_tab = $dont_visualize_tab . 'analize;';
+		}
+
+		$analyseDefault = $form_state->getValue('analyse_default');
+		$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
+		
+		// Define theme
+        $theme = $form_state->getValue('selected_theme');
+        $theme = explode("%", $theme);
+        $themeLabel = $theme[1];
+		$theme = $theme[0];
+		
+		// Define maps and overlays
+        $selectedTypeMap = $form_state->getValue('selected_type_map');
+		$selectedOverlays = "";
+		if ($form_state->getValue('authorized_overlays_map') != NULL) {
+			$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+		}
+
+		// Define link dataset
+		$linkDatasets = $form_state->getValue('Dataset_lies_table');
+		$linkDatasets = $resourceManager->defineLinkDatasets($linkDatasets);
+
+		// Define if it is private
+		if ($private == '1') {
+			$isPrivate = true;
+		} 
+		else {
+			$isPrivate = false;
+		}
+
+		// Define tags
+		$tags = $resourceManager->defineTags($tags);
+
+		// Define security
+		$security = $resourceManager->defineSecurity($userId, $users);
+
+		try {
+			$deleteDataset = $form_state->getValue('del_dataset');
+			if ($deleteDataset) {
+				if ($resourceManager->deleteDataset($datasetId)) {
+					drupal_set_message(t('Le jeu de données a été supprimé!'), 'warning');
+					$datasetId = null;
+				}
+			}
+			else {
+				if ($datasetId == 'new') {
+					// We build extras
+					$extras = $resourceManager->defineExtras($imgPicto, $imgBackground, $linkDatasets, $theme, $themeLabel,
+						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
+						$dateDataset, $disableFieldsEmpty, $security);
+					
+					$resourceManager->createDataset($datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $resources);
+				}
+				else {
+					//Fow now we use the old system but after we should look the dataset by ID
+					$dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
+					$dataSet = $dataSet->getContent();
+					$dataSet = json_decode($dataSet, true);
+					$dataSet = $dataSet[result][results];
+
+				}
+
+			}
+			
+			$redirect_path = "/admin/config/data4citizen/editMetaDataForm" . ($datasetId != null ? '?id=' . $datasetId : '');
+			$url = url::fromUserInput($redirect_path);
+
+			// set redirect
+			$form_state->setRedirectUrl($url);
+
+
+
+
+
+
+
+
+			////////resurce file/////
+			$idres = '';
+			
+			if($data_id != "new"){
+				$is_csv = false;
+				$idres = '';
+				for ($i = 1; $i <= count($table_data); $i++) {
+					// del res
+					// error_log('aaaa' . $i . json_encode($table_data[$i]));
+					//error_log("fuck ".json_encode($table_data[$i]));
+					if ($table_data[$i][status][1] == 1) {
+
+						$delRes = [
+							"id" => $table_data[$i][status][3],
+							"force" => "True",
+						];
+
+						$callUrldelres = $this->urlCkan . "/api/action/resource_delete";
+						$return = $api->updateRequest($callUrldelres, $delRes, "POST");
+
+						
+					} 
+					
+					
+					else if ($table_data[$i][status][2] == 1) {
+				   
+						//error_log("update2 ".$table_data[$i][donnees_old]);
+						//error_log("update2 ".json_encode($table_data[$i]));
+						
+						$url = "";
+						$url = $table_data[$i][donnees];
+						if($url != ""){
+							// error_log('bbbb' . $i . json_encode($table_data[$i]));
+							$fileName = parse_url($url);
+							$host=$fileName[host];
+							$fileName = $fileName[path];
+							$filepath = $fileName;
+							
+							$fileName= strtolower($fileName);
+							$fileName =urldecode($fileName);
+							$fileName = $this->nettoyage2($fileName);
+							
+								
+							$fileName =explode("/", $fileName);
+							$fileName = $fileName[(count($fileName)-1)];
+							//$table_data[$i][status][3] = $fileName;
+							
+							$url_res = $url;
+							$url_res = str_replace('http:', 'https:', $url_res);
+								
+							//$filepathN = strtolower($filepath);
+
+							$filepathN = urldecode($filepath);
+							$filepathN = $this->nettoyagePath($filepathN);
+							$filepathN = explode(".", $filepathN)[0] . uniqid() .".". explode(".", $filepathN)[1];
+
+							rename($root.''.urldecode($filepath), $root.''.$filepathN);
+							$filepath=$filepathN;
+							
+							$url_res = 'https://'.$host.''.$filepath;
+						
+							if(explode(".", $fileName)[1]  === 'xls' || explode(".", $fileName)[1] === 'XLS' || explode(".", $fileName)[1]  === 'xlsx' || explode(".", $fileName)[1] === 'XLSX') {
+								
+								$xls_file = $root.''.$filepath;
+							
+								$reader = new Xlsx();
+							
+								if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
+									$reader = new Xls();
+								}
+						
+								$spreadsheet = $reader->load($xls_file);
+								$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+								$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+								$loadedSheetNames = $spreadsheet->getSheetNames();
+	
+								$writer = new Csv($spreadsheet);
+
+								foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
+									$writer->setSheetIndex($sheetIndex);
+									
+									$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root.''.$filepath);
+									$url_res = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $url_res);
+									$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
+									$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+									$writer->save($csvpath);
+									break;
+								}
+								$has_csv = true;
+								$is_csv = true;
+							}
+					
+							if(explode(".", $fileName)[1]  === 'csv' ||explode(".", $fileName)[1] === 'CSV') {
+
+								$encoding = $table_data[$i][encoding];
+						  
+								array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url='.$url_res );
+								// error_log('cccc' . $i . json_encode($table_data[$i]));
+								// read into array
+								//$arr = file('/home/user-client/drupal-d4c'.$filepath);
+								// $arr = file($root.''.$filepath);
+								// //$label = utf8_decode($arr[0]);
+								// $label = $arr[0];
+								// $label = str_replace(" ", "_", $label);
+								// $label = $this->nettoyage($label);
+								// $label = strtolower($label);
+								// $label = str_replace("?", "", $label);
+						
+								// // edit first line
+								// $arr[0] = $label;
+						
+								// // write back to file
+								// //file_put_contents('/home/user-client/drupal-d4c'.$filepath, implode($arr));
+								// file_put_contents($root.''.$filepath, implode($arr));
+								
+								$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+								if ($encoding) {
+									Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
+									$reader->setInputEncoding($encoding);
+								}
+								$spreadsheet = $reader->load($root.''.$filepath);
+								//$arr = $spreadsheet->getActiveSheet()->toArray();
+								$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+								$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+								
+								//We have an issue with number format. This line transform coordinate and it's not good. We comment it for now
+								//Maybe we have to do the same for XLS, XLSX
+								// $spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+
+								$nbColumns = $this->lettersToNumber($highestColumn);
+								$existingCols = array();
+								$oldname = $table_data[$i][donnees_old];
+								$genCols = strpos($oldname, '_gencol.csv') !== false;
+								
+								if($genCols) {
+									$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
+								}
+								for($j=1; $j<= $this->lettersToNumber($highestColumn) ; $j++){
+									if($genCols) {
+										$label = 'colonne_' . $j;
+									}
+									else {
+										$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($j) . '1')->getValue();
+									}
+									// error_log('value : ' . $label);
+									//$label = utf8_decode($label);
+									//error_log('utf8dec : ' . $label);
+									$label = $this->nettoyage($label);
+									// error_log('clean : ' . $label);
+									//$label = strtolower($label);
+									//$label = str_replace("?", "", $label);
+									//$label = preg_replace("/\r|\n/", "", $label);
+									if(in_array($label, $existingCols)) {
+										$label = $label . $i;
+									}
+									$existingCols[] = $label;
+									
+									$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($j) . '1')->setValue($label);
+								}
+								
+								$writer = new Csv($spreadsheet);
+								
+								if($genCols) {
+									$filepath = str_ireplace('.csv', '_gencol.csv', $filepath);
+									$url_res = 'https://'.$host.''.$filepath;
+								}
+								
+								$writer->save($root.''.$filepath);
+								
+								
+								// error_log('dddd' . $i . json_encode($table_data[$i]));
+								
+								
+								$has_csv = true;
+								$is_csv = true;
+							}
+					
+							/*$resources = [     
+								"package_id" => $data_id,
+								"url" => $url_res,
+								"description" => '',
+								"name" =>$fileName,
+							];
+
+							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");
+							$return = json_decode($return, true);                
+							sleep(20);
+							*/
+							//error_log('tetstetstset' . $url_res);
+							$resources = [
+								//"package_id" => $data_id,
+								"id" => $table_data[$i][status][3],
+								"url" => $url_res,
+								//"upload" => curl_file_create($url_res),
+								"description" => $table_data[$i]['description'],
+								"name" => $table_data[$i]['name'],
+								"format" => strtoupper(explode(".", $fileName)[1]),
+								"clear_upload" => true
+							];
+							
+							// error_log('testetest' . json_encode($table_data[$i]));
+							//error_log(json_encode($resources));
+							/*$callUrluptres = $this->urlCkan . "/api/action/resource_update";
+							$return = $api->updateRequest($callUrluptres, $resources, "POST");*/
+							$return = $api->updateResourceAndPushDatastore($resources);
+							$idres = $table_data[$i][status][3];
+							if(strtolower(explode(".", $fileName)[1]) == 'geojson' || strtolower(explode(".", $fileName)[1]) == 'kml' || strtolower(explode(".", $fileName)[1]) == 'json') {
+								$json_match = false;
+								if(strtolower(explode(".", $fileName)[1]) == 'json'){
+									$json = file_get_contents($url_res);
+									$json = json_decode($json, true);
+									if(isset($json["type"]) && $json["type"] == "FeatureCollection"){
+										$json_match = true;
+									}
+								}
+								if(strtolower(explode(".", $fileName)[1]) != 'json' || $json_match == True){
+									$geo_res[strtolower(explode(".", $fileName)[1])] = array("url"=>$url_res, "id"=>$table_data[$i][status][3]);
+								}
+							}
+						}
+					}
+				}
+
+				
+				// 20200506 - For now we remove the call to datastore and add back the sleep that were there before because it loads data twice in datastore
+				// The next step is to verify the datapusher's job and wait for it to finish
+				if($is_csv == TRUE){
+					//$api->callDatapusher($idres);
+					
+					if($nbColumns > 30) {
+						sleep(40);
+					}
+					else {
+						sleep(20);
+					}
+				}
+				$api->calculateVisualisations($data_id);
+			}
+
+		} catch (Exception $e) {
+			Logger::logMessage($e->getMessage());
+			drupal_set_message(t($e->getMessage()), 'error');
+		}
+		
+
+
 
         $validataCurl = array();
         $idNewData = '';
@@ -753,17 +1085,6 @@ class editMetaDataForm extends HelpFormBase
         $dataSet = $dataSet[result][results];
 
         $callUrl = $this->urlCkan . "/api/action/package_update";
-        
-        $title = $form_state->getValue('title');
-        $data_id = $form_state->getValue('selected_data_id');
-        $description = $form_state->getValue('description');
-        $dateDataset = $form_state->getValue('date_dataset');
-        $tags = $form_state->getValue('tags');
-        $licence = $form_state->getValue('selected_lic');
-        $organization = $form_state->getValue('selected_org');
-        $private = $form_state->getValue('selected_private');
-		$visu = $form_state->getValue('selected_visu');
-        $disableFieldsEmpty = $form_state->getValue('disable_fields_map');
         
 		
 		// drupal_set_message($visu);
@@ -2172,184 +2493,6 @@ class editMetaDataForm extends HelpFormBase
 		  }
 		}
 	  }
-    
-    public function saveData($newData, $data){
-        $coll = $data[0];
-        
-        //drupal_set_message('<pre>'.$data[0].'</pre>');
-        //error_log(json_encode($newData));
-        $api = new Api;
-		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
-		$return = $api->updateRequest($callUrlNewData, $newData, "POST");
-                   
-		//drupal_set_message(print_r($return,true));
-                    
-		$resnew = json_decode($return);
-
-		$idNewData = $resnew->result->id;
-
-		if ($resnew->success == true) {
-			drupal_set_message('Les données ont été sauvegardées');
-			$idNewData = $resnew->result->id;
-		} 
-		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
-			$coll++;
-			
-			if($coll==1){
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];    
-			}
-			else if($coll>10){
-				$newData[name]=substr($newData[name],0, -3);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -3);
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];
-			}
-			else if($coll>100){
-				$newData[name]=substr($newData[name],0, -4);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -4);
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];    
-			}
-			else if($coll>1000){
-				$newData[name]=substr($newData[name],0, -5);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -5);
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];    
-			}
-			else if($coll>10000){
-				$newData[name]=substr($newData[name],0, -6);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -6);
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];
-			}
-			else{
-				$newData[name]=substr($newData[name],0, -2);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -2);
-				$newData[title]=$newData[title].' '.$coll;
-				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
-				$idNewData = $idNewData[1];
-			}
-		}
-		else {
-			//drupal_set_message(print_r($resnew,true));
-			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
-			drupal_set_message("Raison: " . json_encode($resnew->error->name));
-
-		}
-        
-        //console.log($idNewData);
-        //drupal_set_message('<pre>'.print_r($idNewData, true).'</pre>');
-        
-        return array('0'=>$coll, '1'=>$idNewData);
-    }
-
-    function nettoyage( $str, $charset='utf-8' ) {
-		//$str = utf8_decode($str);
-	   // $str = htmlentities( $str, ENT_NOQUOTES, $charset );
-		
-		//$str = utf8_decode($str);
-		
-		if(!mb_detect_encoding($str, 'UTF-8', true)) {
-			//error_log('utf8 -> iconv');
-			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
-		}
-		
-		//We remove whitespaces at the beggining and end of the label
-		$str = trim($str);
-		
-		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
-                            'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
-                            'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
-                            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
-                            'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
-		$str = strtr( $str, $unwanted_array );
-		
-		$str = str_replace("?", "", $str);   
-		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
-		$str = str_replace("`", "_", $str);
-		$str = str_replace("'", "_", $str);
-		$str = str_replace("-", "_", $str);
-		$str = str_replace(" ", "_", $str);
-		$str = str_replace("%", "", $str);
-		$str = str_replace("(", "", $str);
-		$str = str_replace(")", "", $str);
-		$str = str_replace("*", "", $str);
-		$str = str_replace("!", "", $str);
-		$str = str_replace("@", "", $str);
-		$str = str_replace("#", "", $str);
-		$str = str_replace("$", "", $str);
-		$str = str_replace("^", "", $str);
-		$str = str_replace("&", "", $str);
-		$str = str_replace("+", "", $str);
-		$str = str_replace(":", "", $str);
-		$str = str_replace(">", "", $str);
-		$str = str_replace("<", "", $str);
-		$str = str_replace('\'', "_", $str);
-		$str = str_replace("/", "_", $str);
-		$str = str_replace("|", "_", $str);
-		$str = strtolower($str);     
-		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
-		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
-		$str = preg_replace( '#&[^;]+;#', '', $str );      
-		
-			
-			
-		$str = str_replace("-", "_", $str); 
-		return $str;
-	}
-
-    function nettoyage2( $str, $charset='utf-8' ) {
-		$str = utf8_decode($str);
-		// $str = htmlentities( $str, ENT_NOQUOTES, $charset );
-		
-		$str = utf8_decode($str);
-			 
-		   
-		$str = str_replace("?", "", $str);   
-		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
-		$str = str_replace("`", "_", $str);
-		$str = str_replace("'", "_", $str);
-		$str = str_replace("-", "_", $str);
-		$str = str_replace(" ", "_", $str);
-		$str = str_replace("%", "1", $str);
-		$str = str_replace("(", "1", $str);
-		$str = str_replace(")", "1", $str);
-		$str = str_replace("*", "1", $str);
-		$str = str_replace("!", "1", $str);
-		$str = str_replace("@", "1", $str);
-		$str = str_replace("#", "1", $str);
-		$str = str_replace("$", "1", $str);
-		$str = str_replace("^", "1", $str);
-		$str = str_replace("&", "1", $str);
-		$str = str_replace("+", "1", $str);
-		$str = str_replace(":", "1", $str);
-		$str = str_replace(">", "1", $str);
-		$str = str_replace("<", "1", $str);
-	//    $str = str_replace('\'', "_", $str);
-	//    $str = str_replace("/", "_", $str);
-		$str = str_replace("|", "_", $str);
-		$str = strtolower($str);     
-		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
-		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
-		$str = preg_replace( '#&[^;]+;#', '', $str );      
-		
-			
-			
-		$str = str_replace("-", "_", $str);    
-		return $str;
-	}
 	
 	function nettoyagePath($str) {
 		$str = str_replace("?", "", $str);   

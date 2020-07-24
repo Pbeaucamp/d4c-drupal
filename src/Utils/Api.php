@@ -5427,15 +5427,7 @@ if($exportUserField  != null ) {
     }
     
     function updateRequest($callUrl, $binaryData, $requestType) {
-        
-        
-        // error_log($callUrl);
-		//error_log(json_encode( $binaryData ));
-		// error_log($requestType);
-		
 		$jsonData = json_encode( $binaryData );
-        //drupal_set_message('<pre>'. print_r($jsonData, true) .'</pre>');
-        //$cle = 'dc6d41ef-7721-4617-9669-9de423fe383f'; 
         $cle = $this->config->ckan->api_key; 
 		$options = array (
 				CURLOPT_RETURNTRANSFER => true,
@@ -5452,10 +5444,6 @@ if($exportUserField  != null ) {
 		curl_setopt_array ( $curl, $options );
 		$result = curl_exec ( $curl );
 		curl_close ( $curl );
-        //echo json_decode($result);
-        
-        //drupal_set_message('<pres>'.print_r($result, true).'</pre>');
-        
 		return $result;
 	}
 	
