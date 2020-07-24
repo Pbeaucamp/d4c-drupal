@@ -6763,7 +6763,7 @@ if($exportUserField  != null ) {
 		return $return;
 	}
 
-	public function calculFondSolidarite() {
+	public function calculValueFromFiltre() {
 
 		$req = array();
 

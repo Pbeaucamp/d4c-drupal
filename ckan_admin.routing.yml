@@ -837,10 +837,10 @@ ckan_admin.dataset_datapusher:
 
 
 
-ckan_admin.fondSolidarite:
-  path: '/api/fondsolidarite'
+ckan_admin.calculValueFiltre:
+  path: '/api/calculvaluefiltre'
   defaults:
-    _controller: '\Drupal\ckan_admin\Utils\Api::calculFondSolidarite'
+    _controller: '\Drupal\ckan_admin\Utils\Api::calculValueFromFiltre'
     _title: ''
   requirements:
     _permission: 'access content'
