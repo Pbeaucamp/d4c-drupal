@@ -173,7 +173,14 @@ class PackagesForm extends HelpFormBase {
 
 //-------------------------End filter form -------------------------------------------------------
 
-
+	$form['importer'] = array(
+            '#type' => 'submit',
+            '#value' => $this->t('Importer'),
+            '#attributes' => array(
+				'style' => "margin-bottom: 20px !important;",
+			),
+        );
+		
 
 // -------------------------------------Show all datasets in table------------------------------- 
 
@@ -236,17 +243,7 @@ class PackagesForm extends HelpFormBase {
 
 
 // -------------------------------------Add import button ------------------------------- 
-	$form['import'] = array(
-			'#title' => t('Importer : '),
-			'#type' => 'managed_file',
-			'#upload_location' => 'public://dataset/',
-			'#upload_validators' => array(
-				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip'),
-			),
-			'#size' => 100,
-            '#suffix' => '</div>',
 
-		);
 	$form['valider'] = array(
             '#type' => 'submit',
             '#value' => $this->t('Valider'),
