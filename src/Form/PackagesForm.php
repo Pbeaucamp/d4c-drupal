@@ -254,10 +254,7 @@ class PackagesForm extends HelpFormBase {
 		return $form;
 	}
 
-        function nettoyage2( $str, $charset='utf-8' ) {
-		$str = utf8_decode($str);
-		return $str;
-	}
+
     //submit form
 	public function submitForm(array &$form, FormStateInterface $form_state)
 	{
