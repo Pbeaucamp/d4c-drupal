@@ -14,7 +14,6 @@ $(document).ready(function(){
 			$("#edit-users-list-" + user.id).attr("disabled", "disabled");
 		}
 	}
-	
 });
 
 /////////////modal/////////////

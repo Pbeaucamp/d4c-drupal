@@ -6775,4 +6775,39 @@ if($exportUserField  != null ) {
 		
 		return $return;
 	}
+
+	public function calculValueFromFiltre() {
+
+		$req = array();
+
+		$where ="";
+		if($_POST['colonne_filtre'] && $_POST['valeur_filtre'] && $_POST['colonne_filtre']!= null && $_POST['valeur_filtre']!= null ) {
+			$where = " where ";
+			$where .= $_POST['colonne_filtre']." IN ( '".$_POST['valeur_filtre']. "' )";
+		}
+		
+		$sql = "Select ".$_POST['operation']."(".$_POST['colonne'].") as result from \"" . $_POST['idRes'] . "\"" .$where ;
+		
+		$req['sql'] = $sql;
+
+		$url2 = http_build_query($req);
+
+		
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$result = curl_exec($curl);
+
+		curl_close($curl);
+		$result = json_decode($result,true);
+
+		
+		$response = new Response(json_encode(array('result' =>$result["result"]["records"][0]["result"])));
+		
+
+
+		return $response;
+
+		
+	}
 }
