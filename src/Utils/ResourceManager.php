@@ -13,7 +13,20 @@ use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 class ResourceManager {
 
-	function createDataset($datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $resources) {
+	const ROOT = '/home/user-client/drupal-d4c/';
+	/**
+	 * This constant represent the maximum time the user can wait for the datapusher to load in the datastore (success or error)
+	 * In sec
+	 */
+	const DATAPUSHER_WAIT_TIME = 120;
+
+	function __construct() {
+
+        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->urlCkan = $this->config->ckan->url;
+	}
+
+	function createDataset($datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
 	
 		$urlRes = $this->urlCkan . "/dataset/" . $datasetName;
@@ -45,23 +58,51 @@ class ResourceManager {
 		$datasetId = $datasetId[1];
 
 		Logger::logMessage("New dataset has been saved with id '" . $datasetId . "'");
-
-		Logger::logMessage("Managing resources");
-		if (isset($resources[0]) && !empty($resources[0])) {
-			manageFile($resources[0]);
-		}
-
-		
 		return $datasetId;
 	}
 
-	function manageFiles($datasetId, $resourceUrl, $filesDirectory, $encoding) {
+	function updateDataset($datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
+		Logger::logMessage("Updating dataset '" . $datasetName . "'");
+		
+		$datasetToUpdate[title] = $title;
+		$datasetToUpdate[notes] = $description;
+		$datasetToUpdate[license_id] = $licence;
+		$datasetToUpdate['private'] = $isPrivate;
+		$datasetToUpdate[extras] = $extras;
+		$datasetToUpdate["tags"] = $tags;
+
+		$api = new Api;
+        $callUrl = $this->urlCkan . "/api/action/package_update";
+		$result = $api->updateRequest($callUrl, $datasetToUpdate, "POST");
+		$result = json_decode($result);
+		if ($result->success == true) {
+			$currentOrganization = $datasetToUpdate[organization][id];
+			Logger::logMessage("Comparing current organization '" . $currentOrganization . "' with selected organization '" . $organization . "'");
+
+			if ($currentOrganization != $organization) {
+				Logger::logMessage("Updating organization.");
+			
+				$callUrl = $this->urlCkan . "/api/action/package_owner_org_update";
+				$result = $api->updateRequest($callUrl, ["id" => $datasetToUpdate[id], "organization_id" => $organization], "POST");
+				
+				if ($result->success != true) {
+					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
+				}
+			}
+		}
+		else {
+			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
+		}
+	}
+
+	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $filesDirectory, $encoding) {
 		Logger::logMessage("Managing files in '" . $filesDirectory . "'");
 
 		// $files = scandir($filesDirectory);
 		$files = $this->getDirContents($filesDirectory);
 		foreach($files as $file) {
-			$csv = $this->manageFile($datasetId, $resourceUrl, $file, $encoding);
+			//TODO: Remake
+			$csv = $this->manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding);
 			if ($csv != null) {
 				return $csv;
 			}
@@ -85,61 +126,66 @@ class ResourceManager {
 		return $results;
 	}
 
-	function manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding) {
+	function manageFile($file) {
+		Logger::logMessage("Managing file from FORM POST");
+
 		$file = File::load($file);
 		$file->setPermanent();
 		$file->save();
 
-		$fileName = parse_url($file->url());
-
 		$resourceUrl = $file->url();
-		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
+		
+		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
+		return $resourceUrl;
 	}
 
-	function manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding) {
-		$api = new Api;
-		$root='/home/user-client/drupal-d4c/';
-
-		Logger::logMessage("Manage resource file");
-
-
-		// Getting filename
-
-		// To rewrite
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding) {
+		//Managing file (filepath and filename)
+		$fileName = parse_url($resourceUrl);
+		Logger::logMessage("TRM fileName " . $fileName);
 
 		$host = $fileName[host];
+		Logger::logMessage("TRM host " . $host);
 		$fileName = $fileName[path];
+		Logger::logMessage("TRM fileName " . $fileName);
 		$filePath = $fileName;
+		Logger::logMessage("TRM filePath " . $filePath);
 
 		$fileName = strtolower($fileName);
 		$fileName = urldecode($fileName);
 		$fileName = $this->nettoyage2($fileName);
 		$fileName = explode("/", $fileName);
 		$fileName = $fileName[(count($fileName)-1)];
+		Logger::logMessage("TRM fileName " . $fileName);
 
-		$filepathN = urldecode($filepath);
-		$filepathN = $this->nettoyage2($filepathN);
+		$filePathN = urldecode($filePath);
+		$filePathN = $this->nettoyage2($filePathN);
+		Logger::logMessage("TRM filePathN " . $filePathN);
 
-		rename($root.''.urldecode($filepath), $root.''.$filepathN); 
+		//Used (it was used for updating resource but not for new ones) ?
+		// $filePathN = explode(".", $filePathN)[0] . uniqid() .".". explode(".", $filePathN)[1];
+		Logger::logMessage("TRM filePathN " . $filePathN);
+
+		rename(self::ROOT . urldecode($filePath), self::ROOT . $filePathN); 
+		$filePath = $filePathN;
+		Logger::logMessage("TRM filePath " . $filePath);
+
+		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
+		Logger::logMessage("TRM resourceUrl " . $resourceUrl);
 		
-		$filepath = $filepathN;
-
-		try {
-			$filesize = filesize($root.''.$filepath);
-		} catch (Exception $e) {
-			$filesize = 0;
-			error_log('Unable to get file size for ' .$root.''.$filepath);
-		}
-		// END to rewrite
-
-
-
-
 		Logger::logMessage("Managing file '" . $filePath . "'");
+
+		$api = new Api;
+		try {
+			$filesize = filesize(self::ROOT . $filePath);
+		} catch (\Exception $e) {
+			$filesize = 0;
+			error_log('Unable to get file size for ' . self::ROOT . $filePath);
+		}
 
 		try {
 			$type = $this->extractFormat($filePath);
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer le format du fichier (" . $e->getMessage() . ")");
 		}
 		
@@ -148,16 +194,12 @@ class ResourceManager {
 
 			//if files > 50MB we don't do the treatments.
 			if ($filesize < 50000000) {
-			
-				$validataCurl = array();
-				array_push($validataCurl, 'https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=' . $resourceUrl);
-
 				$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 				if ($encoding) {
 					Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
 					$reader->setInputEncoding($encoding);
 				}
-				$spreadsheet = $reader->load($root.''.$filepath);
+				$spreadsheet = $reader->load(self::ROOT . $filePath);
 				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
 
@@ -193,55 +235,21 @@ class ResourceManager {
 					
 				$writer = new Csv($spreadsheet);
 				if ($generateColumns) {
-					$filepath = str_ireplace('.csv', '_gencol.csv', $filepath);
-					$resourceUrl = 'https://' . $host . $filepath;
+					$filePath = str_ireplace('.csv', '_gencol.csv', $filePath);
+					$resourceUrl = 'https://' . $host . $filePath;
 				}
-				$writer->save($root.''.$filepath);
+				$writer->save(self::ROOT . $filePath);
 			}
 
 
-
-			
-			if ($isUpdate) {
-	
-				Logger::logMessage("Update is not null. We update " . $resourceId . " and push to datastore \r\n");
-	
-				$resources = [
-					"id" => $resourceId,
-					"url" => $urlCsv,
-					"name" => $name,
-					"description" => $description,
-					"format" => "csv",
-					"clear_upload" => true
-				];
-				
-				$return = $api->updateResourceAndPushDatastore($resources);
-				$return = json_decode($return, true);
-			}
-			else {
-				Logger::logMessage("We update " . $datasetId . " and push to datastore \r\n");
-	
-				$resource = [     
-					"package_id" => $datasetId,
-					"url" => $urlCsv,
-					"description" => '',
-					"name" =>$name.".csv",
-					"format"=>'csv'
-				];
-	
-				$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-				$return = $api->updateRequest($callUrluptres, $resource, "POST");
-				$return = json_decode($return, true);
-			}
-
-			$resourceId = $this->uploadResourceAndPushToDatastore($datasetId, $fileName, $resourceUrl);
+			return $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description);
 		}
 		else if ($type == 'xls' || $type == 'xlsx') {
 
 			//if files > 50MB we don't do the treatments.
 			if ($filesize < 50000000) {
 
-				$xls_file = $root . $filepath;
+				$xls_file = self::ROOT . $filePath;
 				
 				$reader = new Xlsx();
 			
@@ -258,10 +266,10 @@ class ResourceManager {
 				$writer = new Csv($spreadsheet);
 
 					
-				$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $root . $filepath);
+				$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), self::ROOT . $filePath);
 				$resourceUrl = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $resourceUrl);
 				$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
-				$filepath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filepath);
+				$filePath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filePath);
 
 				foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
 					$writer->setSheetIndex($sheetIndex);
@@ -269,12 +277,15 @@ class ResourceManager {
 					$writer->save($csvpath);
 					break;
 				}
-			}
 
-			$resourceId = $this->uploadResourceAndPushToDatastore($datasetId, $fileName, $resourceUrl);
+				return $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
+			}
+			else {
+				return $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description);
+			}
 		}
 		else if ($type == 'zip') {
-			$this->manageZip($datasetId, $resourceUrl, $filePath, $encoding);
+			return $this->manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding);
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
 			$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
@@ -283,351 +294,544 @@ class ResourceManager {
 				$name = "csv_gen_" . $datasetId . "_" . uniqid();
 				Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "'");
 	
-				$rootCsv = '/home/user-client/drupal-d4c/sites/default/files/dataset/' . $name . '.csv';
-				// $urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/' . $name . '.csv';
+				$rootCsv = self::ROOT . 'sites/default/files/dataset/' . $name . '.csv';
+				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $name . '.csv';
 	
 				file_put_contents($rootCsv, $csv);
 
-				$this->manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding);
+				return $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
 			}
+
+			throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 		}
 		else {
 			Logger::logMessage("We do not process the file '" . $filePath . "'");
 		}
 	}
+	
+	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding) {
+		Logger::logMessage("Manage zip file");
+		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
-	function uploadResourceAndPushToDatastore($datasetId, $fileName, $resourceUrl) {
-		$api = new Api();
+		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();
 
-		$resources = [    
-			"package_id" => $datasetId,
-			"url" => $resourceUrl,
-			"description" => '',
-			"name" => $fileName,
+		$zip = new ZipArchive;
+		$res = $zip->open($filePath);
+		if ($res === TRUE) {
+			// extract it to the path we determined above
+			$zip->extractTo($outputDirectory);
+			$zip->close();
+
+			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceUrl, $outputDirectory, $encoding);
+		}
+		else {
+			throw new \Exception('Le fichier ne peut pas être extrait.');
+		}
+	}
+
+	/**
+	 * Generate a geojson file (if it does not exist) and a CSV file from various type of Geo format
+	 * 
+	 * $type can be geojson, json, kml and shp
+	 * $id of the file
+	 * $url of the file
+	 * 
+	 */
+	function manageGeoFiles($type, $resourceUrl, $filePath) {
+		Logger::logMessage("Manage " . $type . " file");
+
+		Logger::logMessage("Retrieving file '" . $resourceUrl + "'");
+		$fileContent = Query::callSolrServer($resourceUrl);
+
+		if ($type == 'geojson' || $type == 'json'){
+			$csv = $this->buildCSVFromGeojson($fileContent);
+		}
+		else if ($type == 'json') {
+			$json_match = false;
+			if ($type == 'json') {
+				$json = file_get_contents($resourceUrl);
+				$json = json_decode($json, true);
+				if (isset($json["type"]) && $json["type"] == "FeatureCollection") {
+					$json_match = true;
+				}
+			}
+
+			if ($json_match) {
+				$csv = $this->buildCSVFromGeojson($fileContent);
+			}
+			else {
+				Logger::logMessage("No CSV file generated from Geo File");
+				$csv = null;
+			}
+		}
+		else if ($type == 'kml' || $type == 'shp') {
+			//We create a tmp file in which we write the result and an output file to convert
+			// $pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+			// $fileInput = fopen($pathInput, 'w');
+			// fwrite($fileInput, $fileContent);
+			// fclose($fileInput);
+
+			$scriptPath = '/home/user-client/drupal-d4c/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
+
+			$typeConvert = 'GEOJSON';
+			
+			$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
+			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
+			$message = shell_exec($command);
+			$json = file_get_contents ($rootJson);
+
+			$csv = $this->buildCSVFromGeojson($json);
+			unlink ($rootJson);
+		}
+		else {
+			throw new \Exception('Le type de fichier ' . $type . ' is not supported.');
+		}
+
+		return $csv;
+	}
+
+	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description) {
+		
+		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource on CKAN and monitoring the datapusher");
+	
+		if ($isUpdate) {
+			$resource = [
+				"id" => $resourceId,
+				"url" => $resourceUrl,
+				"name" => $fileName,
+				"description" => $description,
+				//TODO: Add format
+				// "format" => "csv",
+				"clear_upload" => true,
+				"uuid" => uniqid()
+			];
+
+			Logger::logMessage("Keeping dictionnary backup.");
+			// Get dictionnary for dataset
+			$result = $api->getAllFieldsForTableParam($resourceId);
+			$fields = $result["result"]["fields"];
+			
+			// We update the resource
+			Logger::logMessage("Updating the resource.");
+			$callUrl =  $this->urlCkan . "/api/action/resource_update";
+			$return = $api->updateRequest($callUrl, $resource, "POST");
+
+			$fieldsWithoutId = array();
+			foreach ($fields as $field) {
+				if ($field["id"] != "_id") {
+					$fieldsWithoutId[] = $field;
+				}
+			}
+
+			// We monitore the datapusher
+			$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true);
+
+			// We reupload the dictionnary
+			Logger::logMessage("Reuploading dictionnary.");
+			$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+			$data = array();
+			$data["resource_id"] = $resourceId;
+			$data["force"] = true;
+			$data["fields"] = $fieldsWithoutId;
+			$data["uuid"] = uniqid();
+			$api->updateRequest($callUrl, $data, "POST");
+
+			return $datapusherResult;
+		}
+		else {
+			$resources = [    
+				"package_id" => $datasetId,
+				"url" => $resourceUrl,
+				"description" => '',
+				"name" => $fileName
+				// Put this ?
+				// "format" => 'csv'
+			];
+			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+			$return = $api->updateRequest($callUrluptres, $resources, "POST");
+			$return = json_decode($return);
+			if ($return->success == true) {
+				$resourceId = $return->result->id;
+				return $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true);
+			} 
+			else {
+				throw new \Exception("Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . json_encode($return->error->message) . ")");
+			}
+		}
+	}
+
+	/**
+	 * This method call the datapusher for a specified resource ID to get the status
+	 * According to the status, we do different action
+	 * 	> Pending : We wait for 5 secondes and we check the status again. If the processus take longer than the constant DATAPUSHER_WAIT_TIME, we return the status 'pending'
+	 *  > Error : If it is the first try, we try to push the file again in the datastore. If not we return the status 'error' and the associated message.
+	 *  > Success : We return the status 'success'
+	 * 
+	 */
+	function manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime) {
+		//place this before any script you want to calculate time
+		if ($startTime == null) {
+			$startTime = microtime(true);
+		}
+		$currentTime = microtime(true);
+
+		$result = array();
+
+		if ($startTime + self::DATAPUSHER_WAIT_TIME < $currentTime) {
+			Logger::logMessage("The datapusher has been running for more than " . self::DATAPUSHER_WAIT_TIME . " sec. We inform the user that the status is pending.");
+			$result[$resourceId]['filename'] = $fileName;
+			$result[$resourceId]['status'] = 'pending';
+			$result[$resourceId]['resourceUrl'] = $resourceUrl;
+			return $result;
+		}
+
+		// Check status datapusher
+		$datapusherStatus = $api->getDatapusherJobStatus($resourceId);
+		$datapusherStatus = json_decode($datapusherStatus);
+
+		if ($datapusherStatus->status == 'pending') {
+			sleep(5);
+			return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime);
+		}
+		else if ($datapusherStatus->status == 'error') {
+			if ($firstTime) {
+				Logger::logMessage("The datapusher had an error, we try to push the file again.");
+				$api->callDatapusher($resourceId);
+				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, false);
+			}
+			else {
+				Logger::logMessage("The datapusher had an error again (" . json_encode($datapusherStatus) . ").");
+				$result[$resourceId]['filename'] = $fileName;
+				$result[$resourceId]['status'] = 'error';
+				$result[$resourceId]['message'] = $datapusherStatus->error->message;
+				return $result;
+			}
+		}
+		else if ($datapusherStatus->status == 'complete') {
+			Logger::logMessage("The datapusher has inserted the file.");
+			$result[$resourceId]['filename'] = $fileName;
+			$result[$resourceId]['status'] = 'complete';
+			$result[$resourceId]['resourceUrl'] = $resourceUrl;
+			return $result;
+		}
+		else if ($datapusherStatus->status == null) {
+			Logger::logMessage("An error occured during status's checking, we try to check the status again.");
+			return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime);
+		}
+		else {
+			throw new \Exception("Le datapusher a renvoyé un status inconnu '" . json_encode($datapusherStatus->status) . "', veuillez relancer l'insertion dans le datapusher.");
+		}
+	}
+
+	function deleteResource($resourceId) {
+		$api = new Api;
+		
+		$delRes = [
+			"id" => $resourceId,
+			"force" => "True",
 		];
 
-		$callUrluptres = $this->urlCkan . "/api/action/resource_create";
-		$return = $api->updateRequest($callUrluptres, $resources, "POST");
-		$return = json_decode($return, true);      
-		return $return["result"]["id"]; 
+		$callUrl = $this->urlCkan . "/api/action/resource_delete";
+		$result = $api->updateRequest($callUrl, $delRes, "POST");
+
+		if ($result->success != true) {
+			throw new \Exception("La ressource n'a pas pu être supprimé ' (" . $result->error->message . ").");
+		}
 	}
 
-	function validateData() {
-		
-   
-			// validata
-			$optionst = array(
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => "GET",
-				CURLOPT_HTTPHEADER => array(
-					'Content-type:application/json',
-					'Content-Length: ' . strlen($jsonData),
-					'Authorization:  ' . $cle,
-				),
-			);
-        
-			if ($form_state->getValue('validata') != "non_valider") {
-            
-				for($v=0; $v < count($validataCurl); $v++ ){
-                
-					$curlValid = curl_init($validataCurl[$v]);
-					curl_setopt_array($curlValid, $optionst);
-					$valid = curl_exec($curlValid);
-					curl_close($curlValid);
-					$resValidata = json_decode($valid, true);
-					//drupal_set_message('<pre>'. print_r($resValidata, true) .'</pre>');
-                
-					$errorsValid = $resValidata[report][tables][0][errors];
+	/**
+	 * This method call a service to validate the data from a CSV
+	 */
+	function validateData($validataUrl) {
+		$optionst = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => "GET",
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData),
+				'Authorization:  ' . $cle,
+			),
+		);
 
-                
-					if ($resValidata[report][valid] == false) {
-						for ($i = 0; $i < count($errorsValid); $i++) {
-							
-							drupal_set_message(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
-							
-							if($i>5){
-							   break;
-							}
-						}
-                    } 
-					else if ($resValidata[report][valid] == true) {
-						drupal_set_message('Les données ont été validées');
-					}
-                }
-			}
+		$curlValid = curl_init($validataUrl);
+		curl_setopt_array($curlValid, $optionst);
+		
+		$valid = curl_exec($curlValid);
+		curl_close($curlValid);
+		return json_decode($valid, true);
 	}
 
-	function updateDataset() {
+	function updateDataset2() {
 		
-                
+        // TODO : Update dataset      
 		$check=false;
 
-		foreach ($dataSet as &$value) {
-			if ($value[id] == $data_id) {
+		// foreach ($dataSet as &$value) {
+		// 	if ($value[id] == $data_id) {
 
-				$check=true;
-				$datasetName = $value[name];
-				$editDataset = $value;
-				$extras = array();
-				$cout_extras = count($value[extras]);
-				$pict = false;
-				$pict2 = false;
-				$dataset_lies = false;
-				$them_t = false;
-				$theme_label_ex = false;
-				$analyse = false;
-				$typeMap_ex = false;
-				$overlaysMap_ex = false;
-				$dnt_viz_api = false;
-				$widget_ex = false;
-				$visu_ex = false;
-				$date_dataset_ex = false;
-				$disableFieldsEmptyEx = false;
+		// 		$check=true;
+		// 		$datasetName = $value[name];
+		// 		$editDataset = $value;
+		// 		$extras = array();
+		// 		$cout_extras = count($value[extras]);
+		// 		$pict = false;
+		// 		$pict2 = false;
+		// 		$dataset_lies = false;
+		// 		$them_t = false;
+		// 		$theme_label_ex = false;
+		// 		$analyse = false;
+		// 		$typeMap_ex = false;
+		// 		$overlaysMap_ex = false;
+		// 		$dnt_viz_api = false;
+		// 		$widget_ex = false;
+		// 		$visu_ex = false;
+		// 		$date_dataset_ex = false;
+		// 		$disableFieldsEmptyEx = false;
 				
-				if ($cout_extras != 0) {
+		// 		if ($cout_extras != 0) {
 
-					$url_pict = '';
+		// 			$url_pict = '';
 
-					$form_file = $form_state->getValue('img_picto');
+		// 			$form_file = $form_state->getValue('img_picto');
 
-					if (isset($form_file[0]) && !empty($form_file[0])) {
+		// 			if (isset($form_file[0]) && !empty($form_file[0])) {
 
-						$file = File::load($form_file[0]);
-						$file->setPermanent();
-						$file->save();
-						$url_t = parse_url($file->url());
-						$url_pict = $url_t["path"];
+		// 				$file = File::load($form_file[0]);
+		// 				$file->setPermanent();
+		// 				$file->save();
+		// 				$url_t = parse_url($file->url());
+		// 				$url_pict = $url_t["path"];
 
-						$url_pict = explode("/", $url_pict);
-						$url_pict = explode(".", $url_pict[(count($url_pict) - 1)]);
-						$url_pict = $url_pict[0];
-						$url_pict = "/sites/default/files/theme_logo/".$url_pict.".svg";
+		// 				$url_pict = explode("/", $url_pict);
+		// 				$url_pict = explode(".", $url_pict[(count($url_pict) - 1)]);
+		// 				$url_pict = $url_pict[0];
+		// 				$url_pict = "/sites/default/files/theme_logo/".$url_pict.".svg";
 
-					} 
-					else {
-						$url_pict = "d4c-".$form_state->getValue('imgBack');
-					}
+		// 			} 
+		// 			else {
+		// 				$url_pict = "d4c-".$form_state->getValue('imgBack');
+		// 			}
 					
-					$form_file = $form_state->getValue('img_backgr');
-					if (isset($form_file[0]) && !empty($form_file[0])) {
+		// 			$form_file = $form_state->getValue('img_backgr');
+		// 			if (isset($form_file[0]) && !empty($form_file[0])) {
 
-						$file = File::load($form_file[0]);
-						$file->setPermanent();
-						$file->save();
-						$url_t = parse_url($file->url());
-						$url_pict2 = $url_t["path"];
+		// 				$file = File::load($form_file[0]);
+		// 				$file->setPermanent();
+		// 				$file->save();
+		// 				$url_t = parse_url($file->url());
+		// 				$url_pict2 = $url_t["path"];
 
-					} 
+		// 			} 
 
-					for ($j = 0; $j < count($value[extras]); $j++) {
+		// 			for ($j = 0; $j < count($value[extras]); $j++) {
 					  
-						//$theme_label_ex = false;
-						if ($value[extras][$j]['key'] == 'Picto') {
-							$pict = true;
-							if ($url_pict != '') {
-								$value[extras][$j]['value'] = $url_pict;
-							}
-						}
+		// 				//$theme_label_ex = false;
+		// 				if ($value[extras][$j]['key'] == 'Picto') {
+		// 					$pict = true;
+		// 					if ($url_pict != '') {
+		// 						$value[extras][$j]['value'] = $url_pict;
+		// 					}
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'img_backgr') {
-							$del_img = $form_state->getValue('del_img');
-							if(isset($del_img)) {
-								unset($value[extras]);
-								// $j--;
-							}
-							else {
-								$pict2 = true;
-								if ($url_pict2 != '') {
-									$value[extras][$j]['value'] = $url_pict2;
-								}
-							}
-						}
+		// 				if ($value[extras][$j]['key'] == 'img_backgr') {
+		// 					$del_img = $form_state->getValue('del_img');
+		// 					if(isset($del_img)) {
+		// 						unset($value[extras]);
+		// 						// $j--;
+		// 					}
+		// 					else {
+		// 						$pict2 = true;
+		// 						if ($url_pict2 != '') {
+		// 							$value[extras][$j]['value'] = $url_pict2;
+		// 						}
+		// 					}
+		// 				}
 						
 
-						if ($value[extras][$j]['key'] == 'LinkedDataSet') {
-							$dataset_lies = true;
-							$value[extras][$j]['value'] = $string_dataset_lies;
-						}
+		// 				if ($value[extras][$j]['key'] == 'LinkedDataSet') {
+		// 					$dataset_lies = true;
+		// 					$value[extras][$j]['value'] = $string_dataset_lies;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'dont_visualize_tab') {
+		// 				if ($value[extras][$j]['key'] == 'dont_visualize_tab') {
 							 
-							$dnt_viz_api = true;
-							$value[extras][$j]['value'] = $dont_visualize_tab;
+		// 					$dnt_viz_api = true;
+		// 					$value[extras][$j]['value'] = $dont_visualize_tab;
 
-						}
+		// 				}
 														
-						if ($value[extras][$j]['key'] == 'theme') {
-							$them_t = true;
-							$value[extras][$j]['value'] = $them;
-						}
+		// 				if ($value[extras][$j]['key'] == 'theme') {
+		// 					$them_t = true;
+		// 					$value[extras][$j]['value'] = $them;
+		// 				}
 						
-						 if ($value[extras][$j]['key'] == 'default_visu') {
-							$visu_ex = true;
-							$value[extras][$j]['value'] = $visu;
-						}
+		// 				 if ($value[extras][$j]['key'] == 'default_visu') {
+		// 					$visu_ex = true;
+		// 					$value[extras][$j]['value'] = $visu;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'label_theme') {
-							$theme_label_ex = true;
-							$value[extras][$j]['value'] = $them_label;
-						}
+		// 				if ($value[extras][$j]['key'] == 'label_theme') {
+		// 					$theme_label_ex = true;
+		// 					$value[extras][$j]['value'] = $them_label;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'analyse_default') {
-							$analyse = true;
-							$value[extras][$j]['value'] = $analyse_default;
-						}
+		// 				if ($value[extras][$j]['key'] == 'analyse_default') {
+		// 					$analyse = true;
+		// 					$value[extras][$j]['value'] = $analyse_default;
+		// 				}
 							
-						if ($value[extras][$j]['key'] == 'type_map') {
-							$typeMap_ex = true;
-							$value[extras][$j]['value'] = $selectedTypeMap;
-						}
+		// 				if ($value[extras][$j]['key'] == 'type_map') {
+		// 					$typeMap_ex = true;
+		// 					$value[extras][$j]['value'] = $selectedTypeMap;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'overlays') {
-							$overlaysMap_ex = true;
-							$value[extras][$j]['value'] = $selectedOverlays;
-						}
+		// 				if ($value[extras][$j]['key'] == 'overlays') {
+		// 					$overlaysMap_ex = true;
+		// 					$value[extras][$j]['value'] = $selectedOverlays;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'widgets') {
-							$widget_ex = true;
-							$value[extras][$j]['value'] = $widget;
-						}
+		// 				if ($value[extras][$j]['key'] == 'widgets') {
+		// 					$widget_ex = true;
+		// 					$value[extras][$j]['value'] = $widget;
+		// 				}
 						
-						if ($value[extras][$j]['key'] == 'date_dataset') {
-							$date_dataset_ex = true;
-							$value[extras][$j]['value'] = $dateDataset;
-						}
+		// 				if ($value[extras][$j]['key'] == 'date_dataset') {
+		// 					$date_dataset_ex = true;
+		// 					$value[extras][$j]['value'] = $dateDataset;
+		// 				}
 
-						if ($value[extras][$j]['key'] == 'disable_fields_empty') {
-							$disableFieldsEmptyEx  = true;
-							$value[extras][$j]['value'] = $disableFieldsEmpty;
-						}
+		// 				if ($value[extras][$j]['key'] == 'disable_fields_empty') {
+		// 					$disableFieldsEmptyEx  = true;
+		// 					$value[extras][$j]['value'] = $disableFieldsEmpty;
+		// 				}
 
 
-					}
+		// 			}
 
-				}
+		// 		}
 			   
-				if ($pict == false) {
+		// 		if ($pict == false) {
 
-					$value[extras][count($value[extras])]['key'] = 'Picto';
-					$value[extras][count($value[extras]) - 1]['value'] = $url_pict;
-				}
+		// 			$value[extras][count($value[extras])]['key'] = 'Picto';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $url_pict;
+		// 		}
 				
-				if ($pict2 == false) {
-					if($url_pict2 || $url_pict2!='' || $url_pict2!=null){
-						$value[extras][count($value[extras])]['key'] = 'img_backgr';
-						$value[extras][count($value[extras]) - 1]['value'] = $url_pict2;
-					}
-				}
+		// 		if ($pict2 == false) {
+		// 			if($url_pict2 || $url_pict2!='' || $url_pict2!=null){
+		// 				$value[extras][count($value[extras])]['key'] = 'img_backgr';
+		// 				$value[extras][count($value[extras]) - 1]['value'] = $url_pict2;
+		// 			}
+		// 		}
 
-				if ($dataset_lies == false) {
-					$value[extras][count($value[extras])]['key'] = 'LinkedDataSet';
-					$value[extras][count($value[extras]) - 1]['value'] = $string_dataset_lies;
-				}
+		// 		if ($dataset_lies == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'LinkedDataSet';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $string_dataset_lies;
+		// 		}
 				
-				if ($dnt_viz_api == false) {
-					$value[extras][count($value[extras])]['key'] = 'dont_visualize_tab';
-					$value[extras][count($value[extras]) - 1]['value'] = $dont_visualize_tab;
-				}
+		// 		if ($dnt_viz_api == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'dont_visualize_tab';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $dont_visualize_tab;
+		// 		}
 
 
 			   
 				
 
 				
-				if($theme_label_ex==false){
-					$value[extras][count($value[extras])]['key'] = 'label_theme';
-					$value[extras][count($value[extras]) - 1]['value'] = $them_label;
-				}
+		// 		if($theme_label_ex==false){
+		// 			$value[extras][count($value[extras])]['key'] = 'label_theme';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $them_label;
+		// 		}
 
-				if ($them_t == false) {
-					$value[extras][count($value[extras])]['key'] = 'theme';
-					$value[extras][count($value[extras]) - 1]['value'] = $them; 
-				}
+		// 		if ($them_t == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'theme';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $them; 
+		// 		}
 				
-				if ($visu_ex == false) {
-					$value[extras][count($value[extras])]['key'] = 'default_visu';
-					$value[extras][count($value[extras]) - 1]['value'] = $visu; 
-				}
+		// 		if ($visu_ex == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'default_visu';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $visu; 
+		// 		}
 				
-				if ($analyse == false && $analyse_default!='') {
-					$value[extras][count($value[extras])]['key'] = 'analyse_default';
-					$value[extras][count($value[extras]) - 1]['value'] = $analyse_default; 
-				}
+		// 		if ($analyse == false && $analyse_default!='') {
+		// 			$value[extras][count($value[extras])]['key'] = 'analyse_default';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $analyse_default; 
+		// 		}
 				
-				if ($typeMap_ex == false && $selectedTypeMap!='') {
-					$value[extras][count($value[extras])]['key'] = 'type_map';
-					$value[extras][count($value[extras]) - 1]['value'] = $selectedTypeMap; 
-				} 
+		// 		if ($typeMap_ex == false && $selectedTypeMap!='') {
+		// 			$value[extras][count($value[extras])]['key'] = 'type_map';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $selectedTypeMap; 
+		// 		} 
 				
-				if ($overlaysMap_ex == false && $selectedOverlays!='') {
-					$value[extras][count($value[extras])]['key'] = 'overlays';
-					$value[extras][count($value[extras]) - 1]['value'] = $selectedOverlays; 
-				} 
+		// 		if ($overlaysMap_ex == false && $selectedOverlays!='') {
+		// 			$value[extras][count($value[extras])]['key'] = 'overlays';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $selectedOverlays; 
+		// 		} 
 				
-				if ($widget_ex == false && $widget!='') {
-					$value[extras][count($value[extras])]['key'] = 'widgets';
-					$value[extras][count($value[extras]) - 1]['value'] = $widget; 
-				}
+		// 		if ($widget_ex == false && $widget!='') {
+		// 			$value[extras][count($value[extras])]['key'] = 'widgets';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $widget; 
+		// 		}
 
-				if ($date_dataset_ex == false) {
-					$value[extras][count($value[extras])]['key'] = 'date_dataset';
-					$value[extras][count($value[extras]) - 1]['value'] = $dateDataset; 
-				}
-				if ($disableFieldsEmptyEx  == false) {
-					$value[extras][count($value[extras])]['key'] = 'disable_fields_empty';
-					$value[extras][count($value[extras]) - 1]['value'] = $disableFieldsEmpty; 
-				}
+		// 		if ($date_dataset_ex == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'date_dataset';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $dateDataset; 
+		// 		}
+		// 		if ($disableFieldsEmptyEx  == false) {
+		// 			$value[extras][count($value[extras])]['key'] = 'disable_fields_empty';
+		// 			$value[extras][count($value[extras]) - 1]['value'] = $disableFieldsEmpty; 
+		// 		}
 
 				
 				
-				$value[title] = $title;
-				$value[notes] = $description;
-				$value[license_id] = $licence;
-				$value['private'] = $private;
+		// 		$value[title] = $title;
+		// 		$value[notes] = $description;
+		// 		$value[license_id] = $licence;
+		// 		$value['private'] = $private;
 
-				//tags//
+		// 		//tags//
 				
-				$tagsFin = array();
-				if($tags!=null || $tags!='') {
-					$tagsFin = explode(",", $tags);
-				}
-				for ($j = 0; $j < count($tagsFin); $j++) {
-					$tagsData[$j] = ["vocabulary_id" => null, "state" => "active", "display_name" => $tagsFin[$j], "name" => $tagsFin[$j], "resources" => $resources];
-				} 
-				if($tagsData==null){
-					$tagsData=array();
-				}
-				$value["tags"] = $tagsData;
+		// 		$tagsFin = array();
+		// 		if($tags!=null || $tags!='') {
+		// 			$tagsFin = explode(",", $tags);
+		// 		}
+		// 		for ($j = 0; $j < count($tagsFin); $j++) {
+		// 			$tagsData[$j] = ["vocabulary_id" => null, "state" => "active", "display_name" => $tagsFin[$j], "name" => $tagsFin[$j], "resources" => $resources];
+		// 		} 
+		// 		if($tagsData==null){
+		// 			$tagsData=array();
+		// 		}
+		// 		$value["tags"] = $tagsData;
 				
 				
-				//tags end//
+		// 		//tags end//
 				
 
-				$return = $api->updateRequest($callUrl, $value, "POST");
-				$return = json_decode($return);
-				if ($return->success == true) {
-					drupal_set_message('Les données ont été sauvegardées');
+		// 		$return = $api->updateRequest($callUrl, $value, "POST");
+		// 		$return = json_decode($return);
+		// 		if ($return->success == true) {
+		// 			drupal_set_message('Les données ont été sauvegardées');
 					 
-				} else {
+		// 		} else {
 					 
 					
-					drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
-					drupal_set_message("Raison: " . $return->error->message);
-				}
+		// 			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
+		// 			drupal_set_message("Raison: " . $return->error->message);
+		// 		}
 				
-				$callUrluptOwner = $this->urlCkan . "/api/action/package_owner_org_update";
-				$return = $api->updateRequest($callUrluptOwner, ["id" => $data_id, "organization_id" => $organization], "POST");
+		// 		$callUrluptOwner = $this->urlCkan . "/api/action/package_owner_org_update";
+		// 		$return = $api->updateRequest($callUrluptOwner, ["id" => $data_id, "organization_id" => $organization], "POST");
 
 				
-				break;
-			}
+		// 		break;
+		// 	}
 
-		}
+		// }
 	
-		if($check==false){
-			// drupal_set_message(t('id not find'), 'error');
+		// if($check==false){
+		// 	// drupal_set_message(t('id not find'), 'error');
 		
-		}
+		// }
 	}
 
 	/**
@@ -731,7 +935,7 @@ class ResourceManager {
 
 	function defineTags($tags) {
 		$tagsData = array();
-		if ($tags == '') {
+		if ($tags == null || $tags == '') {
 			$tagsData = [];
 		} 
 		else {
@@ -762,56 +966,194 @@ class ResourceManager {
 		return array("roles" => array("administrator"), "users" => $userlist);
 	}
 	
-	function defineExtras($picto, $imgBackground, $linkDatasets, $theme, $themeLabel,
+	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $security) {
-		$extras = array();
-
-		$extras[count($extras)]['key'] = 'Picto';
-		$extras[(count($extras) - 1)]['value'] = $picto;
-
-		if ($imgBackground != null) {
-		$extras[count($extras)]['key'] = 'img_backgr';
-		$extras[(count($extras) - 1)]['value'] = $imgBackground;
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security) {
+		if ($extras == null) {
+			$extras = array();
 		}
+
+		$hasPicto = false;
+		$hasBackground = false;
+		$hasLinkDatasets = false;
+		$hasTheme = false;
+		$hasThemeLabel = false;
+		$hasTypeMap = false;
+		$hasOverlays = false;
+		$hasVisualizeTab = false;
+		$hasFTP = false;
+		$hasWidgets = false;
+		$hasVisu = false;
+		$hasDate = false;
+		$hasDisableFieldsEmpty = false;
+		$hasSecurity = false;
+		
+		if ($extras != null && count($extras) > 0) {
+	
+			for ($index = 0; $index < count($extras); $index++) {
+				if ($extras[$index]['key'] == 'Picto') {
+					$hasPicto = true;
+					$extras[$index]['value'] = $picto;
+				}
+				
+				if ($extras[$index]['key'] == 'img_backgr') {
+					if ($removeBackground) {
+						array_splice($extras, $index, 1);
+					}
+					else {
+						$hasBackground = true;
+						if ($imgBackground != null) {
+							$extras[$index]['value'] = $imgBackground;
+						}
+					}
+				}
+				
+				if ($extras[$index]['key'] == 'LinkedDataSet') {
+					$hasLinkDatasets = true;
+					$extras[$index]['value'] = $linkDatasets;
+				}
+												
+				if ($extras[$index]['key'] == 'theme') {
+					$hasTheme = true;
+					$extras[$index]['value'] = $theme;
+				}
+				
+				if ($extras[$index]['key'] == 'label_theme') {
+					$hasThemeLabel = true;
+					$extras[$index]['value'] = $themeLabel;
+				}
 					
-		$extras[count($extras)]['key'] = 'LinkedDataSet';
-		$extras[(count($extras) - 1)]['value'] = $linkDatasets;
+				if ($extras[$index]['key'] == 'type_map') {
+					$hasTypeMap = true;
+					$extras[$index]['value'] = $selectedTypeMap;
+				}
+				
+				if ($extras[$index]['key'] == 'overlays') {
+					if ($selectedOverlays == null || $selectedOverlays == ""){
+						array_splice($extras, $index, 1);
+					}
+					else {
+						$hasOverlays = true;
+						$extras[$index]['value'] = $selectedOverlays;
+					}
+				}
+				
+				if ($extras[$index]['key'] == 'dont_visualize_tab') {
+					$hasVisualizeTab = true;
+					$extras[$index]['value'] = $dont_visualize_tab;
+				}
+				
+				if ($extras[$index]['key'] == 'FTP_API') {
+					$hasFTP = true;
+				}
 
-		$extras[count($extras)]['key'] = 'theme';
-		$extras[(count($extras) - 1)]['value'] = $theme;
+				if ($extras[$index]['key'] == 'widgets') {
+					$hasWidgets = true;
+					$extras[$index]['value'] = $widgets;
+				}
+				
+				if ($extras[$index]['key'] == 'default_visu') {
+					$hasVisu = true;
+					$extras[$index]['value'] = $visu;
+				}
+				
+				if ($extras[$index]['key'] == 'date_dataset') {
+					$hasDate = true;
+					$extras[$index]['value'] = $dateDataset;
+				}
+	
+				if ($extras[$index]['key'] == 'disable_fields_empty') {
+					$hasDisableFieldsEmpty  = true;
+					$extras[$index]['value'] = $disableFieldsEmpty;
+				}
 
-		$extras[count($extras)]['key'] = 'label_theme';
-		$extras[(count($extras) - 1)]['value'] = $themeLabel;
-
-		$extras[count($extras)]['key'] = 'type_map';
-		$extras[(count($extras) - 1)]['value'] = $selectedTypeMap;
-
-		if ($selectedOverlays != ""){
-		$extras[count($extras)]['key'] = 'overlays';
-		$extras[(count($extras) - 1)]['value'] = $selectedOverlays;
+				if ($extras[$index]['key'] == 'edition_security') {
+					$hasSecurity = true;
+				}
+				
+				if ($extras[$index]['key'] == 'analyse_default') {
+					$hasAnalyse = true;
+					$extras[$index]['value'] = $analyseDefault;
+				}
+			}
 		}
 
-		$extras[count($extras)]['key'] = 'dont_visualize_tab';
-		$extras[(count($extras) - 1)]['value'] = $dont_visualize_tab;
+		if ($hasPicto == false) {
+			$extras[count($extras)]['key'] = 'Picto';
+			$extras[(count($extras) - 1)]['value'] = $picto;
+		}
 
-		$extras[count($extras)]['key'] = 'FTP_API';
-		$extras[(count($extras) - 1)]['value'] = 'FTP';
+		if ($hasBackground == false && $imgBackground && $imgBackground != null && $imgBackground != '') {
+			$extras[count($extras)]['key'] = 'img_backgr';
+			$extras[(count($extras) - 1)]['value'] = $imgBackground;
+		}
+			
+		if ($hasLinkDatasets == false) {		
+			$extras[count($extras)]['key'] = 'LinkedDataSet';
+			$extras[(count($extras) - 1)]['value'] = $linkDatasets;
+		}
 
-		$extras[count($extras)]['key'] = 'widgets';
-		$extras[(count($extras) - 1)]['value'] = $widgets;
+		if ($hasTheme == false) {
+			$extras[count($extras)]['key'] = 'theme';
+			$extras[(count($extras) - 1)]['value'] = $theme;
+		}
 
-		$extras[count($extras)]['key'] = 'default_visu';
-		$extras[(count($extras) - 1)]['value'] = $visu;
+		if ($hasThemeLabel == false) {
+			$extras[count($extras)]['key'] = 'label_theme';
+			$extras[(count($extras) - 1)]['value'] = $themeLabel;
+		}
 
-		$extras[count($extras)]['key'] = 'date_dataset';
-		$extras[(count($extras) - 1)]['value'] = $dateDataset;
+		if ($hasTypeMap == false && $selectedTypeMap != null && $selectedTypeMap != '') {
+			$extras[count($extras)]['key'] = 'type_map';
+			$extras[(count($extras) - 1)]['value'] = $selectedTypeMap;
+		}
 
-		$extras[count($extras)]['key'] = 'disable_fields_empty';
-		$extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
+		if ($hasOverlays == false && $selectedOverlays != null && $selectedOverlays != ""){
+			$extras[count($extras)]['key'] = 'overlays';
+			$extras[(count($extras) - 1)]['value'] = $selectedOverlays;
+		}
 
-		$extras[count($extras)]['key'] = 'edition_security';
-		$extras[(count($extras) - 1)]['value'] = json_encode($security);
+		if ($hasVisualizeTab == false) {
+			$extras[count($extras)]['key'] = 'dont_visualize_tab';
+			$extras[(count($extras) - 1)]['value'] = $dont_visualize_tab;
+		}
+
+		if ($hasFTP == false) {
+			$extras[count($extras)]['key'] = 'FTP_API';
+			$extras[(count($extras) - 1)]['value'] = 'FTP';
+		}
+
+		if ($hasWidgets == false && $widgets != null && $widgets != '') {
+			$extras[count($extras)]['key'] = 'widgets';
+			$extras[(count($extras) - 1)]['value'] = $widgets;
+		}
+
+		if ($hasVisu == false) {
+			$extras[count($extras)]['key'] = 'default_visu';
+			$extras[(count($extras) - 1)]['value'] = $visu;
+		}
+
+		if ($hasDate == false) {
+			$extras[count($extras)]['key'] = 'date_dataset';
+			$extras[(count($extras) - 1)]['value'] = $dateDataset;
+		}
+
+		if ($hasDisableFieldsEmpty  == false) {
+			$extras[count($extras)]['key'] = 'disable_fields_empty';
+			$extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
+		}
+		
+		if ($hasAnalyse == false && $analyseDefault != '') {
+			$extras[count($extras)]['key'] = 'analyse_default';
+			$extras[(count($extras) - 1)]['value'] = $analyseDefault; 
+		}
+
+		if ($hasSecurity == false) {
+			$extras[count($extras)]['key'] = 'edition_security';
+			$extras[(count($extras) - 1)]['value'] = json_encode($security);
+		}
+
+		return $extras;
 	}
 
 	/**
@@ -881,87 +1223,6 @@ class ResourceManager {
 			return 'zip';
 		}
 		return $format;
-	}
-	
-	function manageZip($datasetId, $resourceUrl, $filePath, $encoding) {
-		Logger::logMessage("Manage zip file");
-		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
-
-		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_'.uniqid().'';
-
-		$zip = new ZipArchive;
-		$res = $zip->open($filePath);
-		if ($res === TRUE) {
-			// extract it to the path we determined above
-			$zip->extractTo($outputDirectory);
-			$zip->close();
-
-			return $this->manageFiles($datasetId, $resourceUrl, $outputDirectory, $encoding);
-		}
-		else {
-			throw new Exception('Le fichier ne peut pas être extrait.');
-		}
-	}
-
-	/**
-	 * Generate a geojson file (if it does not exist) and a CSV file from various type of Geo format
-	 * 
-	 * $type can be geojson, json, kml and shp
-	 * $id of the file
-	 * $url of the file
-	 * 
-	 */
-	function manageGeoFiles($type, $resourceUrl, $filePath) {
-		Logger::logMessage("Manage " . $type . " file");
-
-		Logger::logMessage("Retrieving file '" . $resourceUrl + "'");
-		$fileContent = Query::callSolrServer($resourceUrl);
-
-		if ($type == 'geojson' || $type == 'json'){
-			$csv = $this->buildCSVFromGeojson($fileContent);
-		}
-		else if ($type == 'json') {
-			$json_match = false;
-			if ($type == 'json') {
-				$json = file_get_contents($resourceUrl);
-				$json = json_decode($json, true);
-				if (isset($json["type"]) && $json["type"] == "FeatureCollection") {
-					$json_match = true;
-				}
-			}
-
-			if ($json_match) {
-				$csv = $this->buildCSVFromGeojson($fileContent);
-			}
-			else {
-				Logger::logMessage("No CSV file generated from Geo File");
-				$csv = null;
-			}
-		}
-		else if ($type == 'kml' || $type == 'shp') {
-			//We create a tmp file in which we write the result and an output file to convert
-			// $pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			// $fileInput = fopen($pathInput, 'w');
-			// fwrite($fileInput, $fileContent);
-			// fclose($fileInput);
-
-			$scriptPath = '/home/user-client/drupal-d4c/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
-
-			$typeConvert = 'GEOJSON';
-			
-			$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
-			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
-			$message = shell_exec($command);
-			$json = file_get_contents ($rootJson);
-
-			$csv = $this->buildCSVFromGeojson($json);
-			unlink ($rootJson);
-		}
-		else {
-			throw new Exception('Le type de fichier ' . $type . ' is not supported.');
-		}
-
-		return $csv;
 	}
 	
 	function buildCSVFromGeojson($json) {
@@ -1078,7 +1339,6 @@ class ResourceManager {
 	}
 	
 	function isNumericColumn($json, $colName) {
-		
 		for($i=0; $i< 100; $i++){
 			$val = $json["features"][$i]["properties"][$col];
 			if( !is_numeric ($val)){
@@ -1107,8 +1367,9 @@ class ResourceManager {
 
 		$idNewData = $resnew->result->id;
 
+		//TODO Rework this
 		if ($resnew->success == true) {
-			drupal_set_message('Les données ont été sauvegardées');
+			// drupal_set_message('Les données ont été sauvegardées');
 			$idNewData = $resnew->result->id;
 		} 
 		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
@@ -1162,10 +1423,7 @@ class ResourceManager {
 			}
 		}
 		else {
-			//drupal_set_message(print_r($resnew,true));
-			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
-			drupal_set_message("Raison: " . json_encode($resnew->error->name));
-
+			throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error->message) . ")");
 		}
 
         return array('0'=>$coll, '1'=>$idNewData);
@@ -1188,7 +1446,7 @@ class ResourceManager {
 			return true;
 		}
 		else {
-			throw new Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
+			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
 		}
 	}
 	
@@ -1267,6 +1525,16 @@ class ResourceManager {
 		$str = preg_replace( '#&[^;]+;#', '', $str );
 		$str = str_replace("-", "_", $str);    
 		return $str;
+	}
+	
+	function lettersToNumber($letters){
+		$alphabet = range('A', 'Z');
+		$number = 0;
+
+		foreach(str_split(strrev($letters)) as $key=>$char){
+			$number = $number + (array_search($char,$alphabet)+1)*pow(count($alphabet),$key);
+		}
+		return $number;
 	}
 	
 	function numberToLetters($number) {

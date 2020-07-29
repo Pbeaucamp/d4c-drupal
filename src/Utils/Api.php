@@ -631,6 +631,8 @@ class Api{
 			$callUrl = str_replace('%3D', '=', $callUrl);
 			$callUrl = str_replace('%26', '&', $callUrl);
 		}
+
+		Logger::logMessage("Calling package search on CKAN '" . $callUrl . "'");
 		
 		/*$config = \Drupal::service('config.factory')->getEditable('ckan_admin.cacheapi');
         $hashing = hash('md5', $callUrl);
@@ -679,30 +681,39 @@ class Api{
 			curl_setopt_array($curlOrg, $this->getSimpleOptions());
 			$orgs = curl_exec($curlOrg);
 			curl_close($curlOrg);
+
 			$orgs = json_decode($orgs, true);
 			$orgs_private=[];
-			foreach($orgs["result"] as $org){
-				foreach($org["extra"] as $extra){
+			$orgsPrivateIndex = [];
+			for ( $i= 0 ; $i <= count($orgs["result"]) ; $i++ ) {
+				$org = $orgs["result"][$i];
+				foreach($org["extras"] as $extra){
 					if($extra["key"] == "private"){
 						if($extra["value"] == "true"){
-							$orgs_private[] = $org["id"];
+							$orgs_private[] = $org["name"];
+							$orgsPrivateIndex[] = $i;
+							// unset($orgs["result"][$key]);
 						}
 						break;
 					}
 				}
 			}
+			foreach($orgsPrivateIndex as $index){
+				array_splice($orgs, $index, 1);
+			}
+
 			if(count($orgs_private) > 0){
-				$orgs = implode($orgs_private, " OR ");
-				$req = "-organization:(".$orgs.")";
+				$queryOrgs = implode($orgs_private, " OR ");
+				$req = "-organization:(".$queryOrgs.")";
 				
 				if($query_params["fq"] == null){
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
-				
 			}
 		}
+
 		$url2 = http_build_query($query_params);
 		//echo $url2;
 		$result = $this->getPackageSearch($url2);
@@ -1301,20 +1312,13 @@ class Api{
 		return $data_array;
 	}
     
-    public function getAllFieldsForTableParam($id) {
-
-		$callUrl ="";
-
-        $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
-		
-		
-		//echo $callUrl;
+    public function getAllFieldsForTableParam($resourceId) {
+        $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		$result = json_decode($result,true);
-
 		return $result;
 	}
     
@@ -5671,9 +5675,11 @@ if($exportUserField  != null ) {
 			curl_setopt_array ( $curl, $options );
 			$result = curl_exec ( $curl );
 			curl_close ( $curl );
+
+			return $result;
 		}
 
-		return $result;
+		throw new \Exception("Impossible de trouver une tâche associée à la ressource '" . $resourceId . "'");
 	}
 
     function sortDatasetbyKey($key){
@@ -6712,7 +6718,6 @@ if($exportUserField  != null ) {
 		
 		return $response;
 	}
-	
 	
 	function updateResourceAndPushDatastore($resource){
 		
