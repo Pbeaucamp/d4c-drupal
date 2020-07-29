@@ -1047,6 +1047,7 @@ class editMetaDataForm extends HelpFormBase
 				$label = $this->nettoyage($label);
 				
 				$urlRes = $this->urlCkan ."/dataset/".$label;
+                var_dump($urlRes);die;
 				
 				$newData = ["name" => $label,
 					"title" => $title,

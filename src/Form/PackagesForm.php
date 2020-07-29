@@ -18,6 +18,7 @@ use Drupal\Core\Url;
 use Drupal\file\Entity\File;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Drupal\Component\Render\FormattableMarkup; 
+use Drupal\ckan_admin\Utils\Logger;
 
 
 
@@ -232,13 +233,35 @@ class PackagesForm extends HelpFormBase {
 		  '#submit' => array([$this, 'submitfiltering'])
 		];
 
+
+
+// -------------------------------------Add import button ------------------------------- 
+	$form['import'] = array(
+			'#title' => t('Importer : '),
+			'#type' => 'managed_file',
+			'#upload_location' => 'public://dataset/',
+			'#upload_validators' => array(
+				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip'),
+			),
+			'#size' => 100,
+            '#suffix' => '</div>',
+
+		);
+	$form['valider'] = array(
+            '#type' => 'submit',
+            '#value' => $this->t('Valider'),
+        );
 		return $form;
 	}
 
-    
+        function nettoyage2( $str, $charset='utf-8' ) {
+		$str = utf8_decode($str);
+		return $str;
+	}
     //submit form
 	public function submitForm(array &$form, FormStateInterface $form_state)
 	{
+
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api();
