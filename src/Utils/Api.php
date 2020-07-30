@@ -678,30 +678,40 @@ class Api{
 			curl_setopt_array($curlOrg, $this->getSimpleOptions());
 			$orgs = curl_exec($curlOrg);
 			curl_close($curlOrg);
+
 			$orgs = json_decode($orgs, true);
+
 			$orgs_private=[];
-			foreach($orgs["result"] as $org){
-				foreach($org["extra"] as $extra){
+			$orgsPrivateIndex = [];
+			for ( $i= 0 ; $i <= count($orgs["result"]) ; $i++ ) {
+				$org = $orgs["result"][$i];
+				foreach($org["extras"] as $extra){
 					if($extra["key"] == "private"){
 						if($extra["value"] == "true"){
-							$orgs_private[] = $org["id"];
+							$orgs_private[] = $org["name"];
+							$orgsPrivateIndex[] = $i;
+							// unset($orgs["result"][$key]);
 						}
 						break;
 					}
 				}
 			}
+			foreach($orgsPrivateIndex as $index){
+				array_splice($orgs["result"], $index, 1);
+			}
+
 			if(count($orgs_private) > 0){
-				$orgs = implode($orgs_private, " OR ");
-				$req = "-organization:(".$orgs.")";
+				$queryOrgs = implode($orgs_private, " OR ");
+				$req = "-organization:(".$queryOrgs.")";
 				
 				if($query_params["fq"] == null){
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
-				
 			}
 		}
+
 		$url2 = http_build_query($query_params);
 		//echo $url2;
 		$result = $this->getPackageSearch($url2);
