@@ -835,8 +835,14 @@ ckan_admin.dataset_datapusher:
   requirements:
     _permission: 'access dataset_board'
 
-
-
+ckan_admin.calculValueFiltre:
+  path: '/api/calculvaluefiltre'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::calculValueFromFiltre'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  
 ckan_admin.exportdataset:
   path: '/package/exportdataset/{id}'
   defaults:
@@ -844,7 +850,6 @@ ckan_admin.exportdataset:
     _title: ''
   requirements:
     _permission: 'access content'
-
 
 # add package data4citizen route
 ckan_admin.extension_package_data4citizen:

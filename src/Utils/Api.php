@@ -678,30 +678,40 @@ class Api{
 			curl_setopt_array($curlOrg, $this->getSimpleOptions());
 			$orgs = curl_exec($curlOrg);
 			curl_close($curlOrg);
+
 			$orgs = json_decode($orgs, true);
+
 			$orgs_private=[];
-			foreach($orgs["result"] as $org){
-				foreach($org["extra"] as $extra){
+			$orgsPrivateIndex = [];
+			for ( $i= 0 ; $i <= count($orgs["result"]) ; $i++ ) {
+				$org = $orgs["result"][$i];
+				foreach($org["extras"] as $extra){
 					if($extra["key"] == "private"){
 						if($extra["value"] == "true"){
-							$orgs_private[] = $org["id"];
+							$orgs_private[] = $org["name"];
+							$orgsPrivateIndex[] = $i;
+							// unset($orgs["result"][$key]);
 						}
 						break;
 					}
 				}
 			}
+			foreach($orgsPrivateIndex as $index){
+				array_splice($orgs["result"], $index, 1);
+			}
+
 			if(count($orgs_private) > 0){
-				$orgs = implode($orgs_private, " OR ");
-				$req = "-organization:(".$orgs.")";
+				$queryOrgs = implode($orgs_private, " OR ");
+				$req = "-organization:(".$queryOrgs.")";
 				
 				if($query_params["fq"] == null){
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
-				
 			}
 		}
+
 		$url2 = http_build_query($query_params);
 		//echo $url2;
 		$result = $this->getPackageSearch($url2);
@@ -6774,5 +6784,40 @@ if($exportUserField  != null ) {
 		
 		
 		return $return;
+	}
+
+	public function calculValueFromFiltre() {
+
+		$req = array();
+
+		$where ="";
+		if($_POST['colonne_filtre'] && $_POST['valeur_filtre'] && $_POST['colonne_filtre']!= null && $_POST['valeur_filtre']!= null ) {
+			$where = " where ";
+			$where .= $_POST['colonne_filtre']." IN ( '".$_POST['valeur_filtre']. "' )";
+		}
+		
+		$sql = "Select ".$_POST['operation']."(".$_POST['colonne'].") as result from \"" . $_POST['idRes'] . "\"" .$where ;
+		
+		$req['sql'] = $sql;
+
+		$url2 = http_build_query($req);
+
+		
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$result = curl_exec($curl);
+
+		curl_close($curl);
+		$result = json_decode($result,true);
+
+		
+		$response = new Response(json_encode(array('result' =>$result["result"]["records"][0]["result"])));
+		
+
+
+		return $response;
+
+		
 	}
 }
