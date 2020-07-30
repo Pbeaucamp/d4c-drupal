@@ -110,7 +110,7 @@ class organizationsManagementForm extends HelpFormBase
             '#title' => t('*Visibilité :'),
             '#options' => array('Privée', 'Publique'),
             '#attributes' => array('style' => 'width: 50%;'),
-        );  
+        );
         
         $form['valider'] = array(
             '#type' => 'submit',
@@ -121,6 +121,12 @@ class organizationsManagementForm extends HelpFormBase
             '#type' => 'submit',
             '#value' => $this->t('Supprimer'),
 			'#submit' => array('::deleteOrga'),
+        );
+
+        $form['marque_blanche'] = array(
+            '#markup' => '',
+            '#type' => 'textarea',
+            '#title' => t('Widget Marque Blanche:'),
         );
 
         return $form;
