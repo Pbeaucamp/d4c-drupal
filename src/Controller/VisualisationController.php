@@ -50,6 +50,7 @@ class VisualisationController extends ControllerBase {
 	 */
 	public function myPage2($id, $tab) {
 
+		
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
@@ -71,7 +72,8 @@ class VisualisationController extends ControllerBase {
 		$license = $dataset["metas"]["license"];
 		$resources = array();
 		$resourcesid = "";
-      
+
+
 		foreach($dataset["metas"]["resources"] as $value){
             if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
 		 		$resourcesid = $value['id'];
@@ -267,6 +269,65 @@ class VisualisationController extends ControllerBase {
                                 </div>';
         }
         
+
+
+	    $resourcesContent = ""; 
+	    $MapDetail = ""; 
+	    $featureCatalog = ""; 
+
+	    $xmlfile =false;
+	    foreach($dataset["metas"]["resources"] as $key=>$value){
+	    	
+	    	if($value["format"] == "csw") {
+	    		$xmlfile = true;
+	    	$xml = file_get_contents($value['url']); 
+
+			file_put_contents($_SERVER['DOCUMENT_ROOT']."/testxml.xml", $xml);
+			if (file_exists($_SERVER['DOCUMENT_ROOT']."/testxml.xml")) {
+			    $str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/testxml.xml"));
+
+				$fp=fopen($_SERVER['DOCUMENT_ROOT']."/testxml.xml",'w');
+				$str=str_replace('&','??',$str);
+				$str=str_replace(':','',$str);
+				fwrite($fp,$str,strlen($str));
+			} else {
+			    exit('Echec lors de l\'ouverture du fichier test.xml.');
+			}
+			break;
+	    }
+
+	    }
+
+
+
+	    if(sizeof($dataset["metas"]["resources"]) > 0 ) {
+	    	$resourcesContent = '<h4>Download and links</h4>';
+
+	    foreach($dataset["metas"]["resources"] as $key=>$value){
+	 
+	 		if (strpos($value["resource_locator_protocol"], 'download') !== false or strpos($value["resource_locator_protocol"], 'DOWNLOAD') !== false) {
+			    $resourcesContent .= '<div class="row" style="width:80% !impotant; padding: 10px;border: 1px solid;"><div class="col-sm-9"> <i style="margin-right: 12px; font-size: 20px" class="fa fa-download" fa-4x></i>'.$value["name"].' <br><a target="_blank" href="'.$value["url"].'">'.$value["url"].'</a></div>';
+			}
+			else {
+				$resourcesContent .= '<div class="row" style="width:80% !impotant; 	padding: 10px;border: 1px solid;"><div class="col-sm-9"> <i style="margin-right: 12px; font-size: 20px" class="fa fa-link" fa-4x></i>'.$value["name"].'<br><a target="_blank" href="'.$value["url"].'">'.$value["url"].'</a></div>';
+			}
+
+	    	
+
+	    if (strpos($value["resource_locator_protocol"], 'download') !== false or strpos($value["resource_locator_protocol"], 'DOWNLOAD') !== false) {
+			    $resourcesContent .= '<div class="col-sm-3"><a class="btn btn-info" role="button" target="_blank" href="'.$value["url"].'" >Download</a></div>
+							</div>';
+			}
+
+			else {
+			    $resourcesContent .= '<div class="col-sm-3" ><a class="btn btn-info" role="button" target="_blank" href="'.$value["url"].'" >Open link</a></div>
+							</div>';
+			}
+
+			}
+			$resourcesContent .="<br><br><br> ";
+	    }
+	
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 		$element = array(
 			'example one' => [
@@ -349,11 +410,14 @@ class VisualisationController extends ControllerBase {
 						</h1>
 					</div>
 					<d4c-tabs sync-to-url="true" sync-to-url-mode="path" name="main" default-tab="'.$tab.'">
+
+				
 						<d4c-pane pane-auto-unload="true" title="Information" icon="info-circle" translate="title" slug="information">
 
-							<div>'.$description.'</div>
-
 							<div class="row">
+								<div class="col-sm-8">
+									<div class="row"> <div>'.$description.'</div></div>
+									<div class="row">
 								<div class="col-sm-12"
 									 ng-if="basicTemplate && interopTemplates">
 
@@ -423,8 +487,15 @@ class VisualisationController extends ControllerBase {
 
 								</div>
 							</div>
+
+							
 							'.$visWidget.'
+							'.$resourcesContent.'
+							'.$featureCatalog.'
+							
 							<d4c-dataset-attachments dataset="ctx.dataset"></d4c-dataset-attachments>
+
+
 
 							<d4c-collapsible ng-if="ctx.dataset.has_records"
 											 class="d4c-dataset-visualization__schema">
@@ -454,8 +525,19 @@ class VisualisationController extends ControllerBase {
                                                 anonymous-reuse="true"
                                                 logged-in="'.$loggedIn.'" recaptcha-pub-key="6LecPMcUAAAAADTDNPWerqMD2Es7g9CFAG2R0u7R" dataset-title="'.$name.'"
                                                 config="{&#39;is_unique&#39;: True, &#39;max_width&#39;: 4096, &#39;max_height&#39;: 4096, &#39;resize_width&#39;: 200, &#39;resize_height&#39;: 200, &#39;asset_type&#39;: &#39;image&#39;, &#39;max_size&#39;: 2097152}"></d4c-dataset-reuses>
+								</div>
+
+							<div class="col-sm-4">
+							'.$MapDetail.'
+
+
+							</div>
+
+
+							</div>
 							
 						</d4c-pane>
+						
                 
 						<d4c-pane pane-auto-unload="true" title="Table" icon="table" translate="title" slug="table">
 							<d4c-table context="ctx" auto-resize="true" dataset-feedback="true"></d4c-table>
