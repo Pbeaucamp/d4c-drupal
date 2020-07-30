@@ -107,12 +107,6 @@ ckan_admin.reuses_dashboard:
   description: "Gestion, validation, suppression des réutilisations"
   route_name: ckan_admin.form.reuses
   parent: ckan_admin_config_data4citizen
-
-ckan_admin.reuses_dashboard:
-  title: Gestion des réutilisations
-  description: "Gestion, validation, suppression des réutilisations"
-  route_name: ckan_admin.form.reuses
-  parent: ckan_admin_config_data4citizen
   weight: 7
 
 ckan_admin.export_package:
