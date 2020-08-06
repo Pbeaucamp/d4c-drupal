@@ -666,6 +666,7 @@ class Api{
 	
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/){
 		$query_params = $this->proper_parse_str($params);
+
 		$orgs;
 		//error_log($params);
 		if($query_params["sort"] != null){
@@ -690,6 +691,7 @@ class Api{
 					}
 				}
 			}
+
 			if(count($orgs_private) > 0){
 				$orgs = implode($orgs_private, " OR ");
 				$req = "-organization:(".$orgs.")";
@@ -702,7 +704,10 @@ class Api{
 				
 			}
 		}
+
+
 		$url2 = http_build_query($query_params);
+
 		//echo $url2;
 		$result = $this->getPackageSearch($url2);
 		$result["all_organizations"] = $orgs["result"];
@@ -712,12 +717,62 @@ class Api{
 	}
 
 	public function callPackageSearch($params) {
+
 		$arrFac;
 		$arrFacSearch;
 		$arr = array();
         //$hasFacetFeature = false;
+
+        $coordmap ="";
+		if(strpos($params, "coordReq") != false ) {
+			$fqParams =  $params;
+			$fqParams = explode("coordReq", $fqParams);
+			$params = $fqParams[0];
+			$coordmap = $fqParams[1];
+
+		}
+
         $result = $this->getExtendedPackageSearch($params);
-		
+
+        
+        $resultContent =array();
+        foreach($result["result"]["results"] as $key =>$dataset) {
+
+        		$fieldCoordinates =array();
+        		if($coordmap != "") {
+        			foreach ($dataset["resources"] as  $value) {
+        			$fields = $this->getAllFields($value['id']);
+	        			foreach ($fields as  $value2) {
+	        				if($value2["type"] == "geo_point_2d") {
+	        					if (!in_array($value2["name"], $fieldCoordinates)) {
+
+								    array_push($fieldCoordinates, $value2["name"]);
+								}
+	        				}
+	        				
+	        			}
+
+        			}
+        		}
+ 
+
+        		if($coordmap != "" && count($fieldCoordinates) <=0) {
+        			//unset($result["result"]["results"][$key]);
+        			$result["result"]["count"]-=1;
+        		}
+        		if($coordmap != "" && count($fieldCoordinates) >0) {
+        			//unset($result["result"]["results"][$key]);
+        			array_push($resultContent, $dataset);
+        			
+        		}
+
+        }
+
+        if($coordmap != "") {
+        	$result["result"]["results"] = $resultContent;
+        }
+        
+       
 		$hasFacetFeature = array_key_exists("features",$result["result"]["facets"]);
 		
 		unset($result["help"]);//echo count($result["result"]["results"]);
@@ -753,7 +808,7 @@ class Api{
 					$arr = array_merge($arr, explode(",", $key));
 				}
 			}
-			
+			/*$result["result"]["count"] = count($result["result"]["results"]);*/
 			$result["result"]["facets"]["features"] = array_count_values($arr);
 			unset($result["result"]["facets"]["features"]["api"]);
 			unset($result["result"]["facets"]["features"]["table"]);
@@ -768,10 +823,11 @@ class Api{
 				);
 			}
 		}
-
 		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
+		/*echo "<pre>";
+		var_dump($result);echo "</pre>";die;*/
 		return $response;
 	}
     
