@@ -877,3 +877,12 @@ ckan_admin.extension_package_fileXML:
     _title: 'Fichiers XML'
   requirements:
     _permission: 'access content'
+    
+    
+ckan_admin.userstory:
+  path: '/admin/config/data4citizen/userstory'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\UserStory'
+    _title: 'Fichiers XML'
+  requirements:
+    _permission: 'access content'

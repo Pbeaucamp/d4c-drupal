@@ -73,40 +73,6 @@ class PackageManager {
     	$dataset = $api->getDataSetById($id);
         $contentdataset = json_decode($dataset->getContent(),true);
 
-        //Create json file 
-         /*$datasetJson= [
-		  "dataset" => [
-		    'license_title' => $contentdataset["result"]["license_title"],
-		    'maintainer' => $contentdataset["result"]["maintainer"],
-		    'relationships_as_object' => $contentdataset["result"]["relationships_as_object"],
-		    'private' => $contentdataset["result"]["private"],
-		    'maintainer_email' => $contentdataset["result"]["maintainer_email"],
-		    'num_tags' => $contentdataset["result"]["num_tags"],
-		    'id' => $contentdataset["result"]["id"],
-		    'metadata_created' => $contentdataset["result"]["metadata_created"],
-		    'metadata_modified' => $contentdataset["result"]["metadata_modified"],
-		    'author' => $contentdataset["result"]["author"],
-		    'author_email' => $contentdataset["result"]["author_email"],
-		    'state' => $contentdataset["result"]["state"],
-		    'version' => $contentdataset["result"]["version"],
-		    'creator_user_id' => $contentdataset["result"]["creator_user_id"],
-		    'type' => $contentdataset["result"]["type"],
-		    'num_resources' => $contentdataset["result"]["num_resources"],
-		    'tags' => $contentdataset["result"]["tags"],
-		    'groups' => $contentdataset["result"]["groups"],
-		    'license_id' => $contentdataset["result"]["license_id"],
-		    'relationships_as_subject' => $contentdataset["result"]["relationships_as_subject"],
-		    'organization' => $contentdataset["result"]["organization"],
-		    'name' => $contentdataset["result"]["name"],
-		    'isopen' => $contentdataset["result"]["isopen"],
-		    'url' => $contentdataset["result"]["url"],
-		    'notes' => $contentdataset["result"]["notes"],
-		    'owner_org' => $contentdataset["result"]["owner_org"],
-		    'extras' => $contentdataset["result"]["extras"],
-		    'title' => $contentdataset["result"]["title"],
-		    'revision_id' => $contentdataset["result"]["revision_id"],
-		  ]
-		];*/
 
         return $dataset;
 
@@ -136,10 +102,8 @@ class PackageManager {
 
 		$api = new Api();
 
-		/*****       create datasetinfo json file   *****/
-       // search dataset data by id in array of all datasets 
+		// search dataset data by id in array of all datasets 
         $datasetinfo = $this->getDatasetInformations($id);
-
         if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id)) {
         	
 		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id, 0777, true);
@@ -148,6 +112,240 @@ class PackageManager {
         	
 		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources", 0777, true);
 		}
+
+
+		if(isset($_GET['xml']) && $_GET['xml'] == "true") {
+			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
+
+        	$contentdataset = json_decode($datasetinfo->getContent(),true);
+
+			$dataset = new \SimpleXMLElement('<Dataset></Dataset>');
+			$dataset->addAttribute('url', 'https://kmo-backoffice.data4citizen.com/api/3/action/help_show?name=package_show');
+			$dataset->addAttribute('type', 'dataset');
+
+			$results = $dataset->addChild('results');
+			if(array_key_exists('license_title', $contentdataset["result"])) {
+				$results->addChild('license_title', $contentdataset["result"]["license_title"]);
+			}
+			if(array_key_exists('maintainer', $contentdataset["result"])) {
+				if($contentdataset["result"]["maintainer"]) 
+					$maintainer =$contentdataset["result"]["maintainer"];
+				else 
+					$maintainer='""';
+				$results->addChild('maintainer', $maintainer);
+			}
+			if(array_key_exists('relationships_as_object', $contentdataset["result"])) {
+				
+				if(sizeof($contentdataset["result"]["relationships_as_object"]) > 0 ) {
+
+				}
+				else {
+					$relationships_as_object ="[]";
+				}
+				$results->addChild('relationships_as_object', $relationships_as_object);
+			}
+		
+			if(array_key_exists('private', $contentdataset["result"])) {
+				if($contentdataset["result"]["private"]) 
+					$private = "true";
+				else
+					$private ="false";
+				$results->addChild('private', $private);
+			}
+
+			if(array_key_exists('maintainer_email', $contentdataset["result"])) {
+				if($contentdataset["result"]["maintainer_email"]) 
+					$maintainer_email =$contentdataset["result"]["maintainer_email"];
+				else 
+					$maintainer_email='""';
+				$results->addChild('maintainer', $maintainer_email);
+			}
+
+			if(array_key_exists('num_tags', $contentdataset["result"])) {
+
+				$results->addChild('num_tags', $contentdataset["result"]["num_tags"]);
+			}
+			if(array_key_exists('id', $contentdataset["result"])) {
+
+				$results->addChild('id', $contentdataset["result"]["id"]);
+			}
+			if(array_key_exists('metadata_created', $contentdataset["result"])) {
+
+				$results->addChild('metadata_created', $contentdataset["result"]["metadata_created"]);
+			}
+
+			if(array_key_exists('metadata_modified', $contentdataset["result"])) {
+
+				$results->addChild('metadata_modified', $contentdataset["result"]["metadata_modified"]);
+			}
+			if(array_key_exists('author', $contentdataset["result"])) {
+				if($contentdataset["result"]["author"]) 
+					$author =$contentdataset["result"]["author"];
+				else 
+					$author='""';
+				$results->addChild('author', $author);
+			}
+
+			if(array_key_exists('author_email', $contentdataset["result"])) {
+				if($contentdataset["result"]["author_email"]) 
+					$author_email =$contentdataset["result"]["author_email"];
+				else 
+					$author_email='""';
+				$results->addChild('author_email', $author_email);
+			}
+
+			if(array_key_exists('state', $contentdataset["result"])) {
+
+				$results->addChild('state', $contentdataset["result"]["state"]);
+			}
+
+			if(array_key_exists('version', $contentdataset["result"])) {
+				if($contentdataset["result"]["version"]) 
+					$version =$contentdataset["result"]["version"];
+				else 
+					$version='""';
+				$results->addChild('version', $version);
+			}
+
+			if(array_key_exists('creator_user_id', $contentdataset["result"])) {
+
+				$results->addChild('creator_user_id', $contentdataset["result"]["creator_user_id"]);
+			}
+			if(array_key_exists('type', $contentdataset["result"])) {
+
+				$results->addChild('type', $contentdataset["result"]["type"]);
+			}
+
+			if(array_key_exists('resources', $contentdataset["result"])) {
+				
+				$resources = $results->addChild('resources');
+				foreach ($contentdataset["result"]['resources'] as $key => $value) {
+					$contentresource  = $resources->addChild('resource_'.$key);
+					foreach ($value as $key2 => $value2) {
+						
+						$contentresource->addChild($key2 , $value2);
+						
+					}
+				}
+			}
+
+			if(array_key_exists('num_resources', $contentdataset["result"])) {
+
+				$results->addChild('num_resources', $contentdataset["result"]["num_resources"]);
+			}
+
+			if(array_key_exists('tags', $contentdataset["result"])) {
+				
+				$tags = $results->addChild('tags');
+				foreach ($contentdataset["result"]['tags'] as $key => $value) {
+					$contenttag  = $tags->addChild('tag_'.$key);
+					foreach ($value as $key2 => $value2) {
+						
+						$contenttag->addChild($key2 , $value2);
+						
+					}
+				}
+			}
+
+			if(array_key_exists('groups', $contentdataset["result"])) {
+				
+				$groups = $results->addChild('groups');
+				foreach ($contentdataset["result"]['groups'] as $key => $value) {
+					$contentgroup  = $groups->addChild('group_'.$key);
+					foreach ($value as $key2 => $value2) {
+						
+						$contentgroup->addChild($key2 , $value2);
+						
+					}
+				}
+			}
+
+			if(array_key_exists('license_id', $contentdataset["result"])) {
+
+				$results->addChild('license_id', $contentdataset["result"]["license_id"]);
+			}
+
+			if(array_key_exists('relationships_as_subject', $contentdataset["result"])) {
+				
+				$relationships_as_subject = $results->addChild('relationships_as_subject');
+				foreach ($contentdataset["result"]['relationships_as_subject'] as $key => $value) {
+					$contentrelationships_as_subject  = $relationships_as_subject->addChild('relation_'.$key);
+					foreach ($value as $key2 => $value2) {
+						
+						$contentrelationships_as_subject->addChild($key2 , $value2);
+						
+					}
+				}
+			}
+
+			if(array_key_exists('organization', $contentdataset["result"])) {
+			
+				$organization = $results->addChild('organization');
+				foreach ($contentdataset["result"]['organization'] as $key => $value) {
+
+						$organization->addChild($key , $value);
+					
+				}
+			}
+
+			if(array_key_exists('name', $contentdataset["result"])) {
+
+				$results->addChild('name', $contentdataset["result"]["name"]);
+			}
+			if(array_key_exists('isopen', $contentdataset["result"])) {
+				if($contentdataset["result"]["isopen"]) {
+					$isopen ="true";
+				}
+				$isopen ="false";
+				$results->addChild('isopen', $isopen);
+			}
+
+			if(array_key_exists('url', $contentdataset["result"])) {
+
+				$results->addChild('url', $contentdataset["result"]["url"]);
+			}
+
+			if(array_key_exists('notes', $contentdataset["result"])) {
+				if($contentdataset["result"]["notes"]) 
+					$notes =$contentdataset["result"]["notes"];
+				else 
+					$notes='""';
+				$results->addChild('notes', $notes);
+			}
+
+			if(array_key_exists('owner_org', $contentdataset["result"])) {
+
+				$results->addChild('owner_org', $contentdataset["result"]["owner_org"]);
+			}
+
+			if(array_key_exists('extras', $contentdataset["result"])) {
+				
+				$relationships_as_subject = $results->addChild('extras');
+				foreach ($contentdataset["result"]['extras'] as $key => $value) {
+					$contentextras  = $relationships_as_subject->addChild('extra_'.$key);
+					foreach ($value as $key2 => $value2) {
+						
+						$contentextras->addChild($key2 , $value2);
+						
+					}
+				}
+			}
+			if(array_key_exists('title', $contentdataset["result"])) {
+
+				$results->addChild('title', $contentdataset["result"]["title"]);
+			}
+			if(array_key_exists('revision_id', $contentdataset["result"])) {
+
+				$results->addChild('revision_id', $contentdataset["result"]["revision_id"]);
+			}
+			
+			 Header('Content-type: text/xml');
+			 file_put_contents($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml", $dataset->asXML());
+
+			 $response = new Response(json_encode(array('filename' => "/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml")));
+		} else {
+			/*****       create datasetinfo json file   *****/
+       
 
 		 // create archive
 		$zip = new ZipArchive();
@@ -208,9 +406,10 @@ class PackageManager {
 
 
 		$response = new Response(json_encode(array('filename' => "/packageDataset/".$id.".zip")));
-	
+		}
 
 		return $response;
+		
 
 	}
 

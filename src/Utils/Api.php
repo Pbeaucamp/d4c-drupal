@@ -620,48 +620,162 @@ class Api{
 		return $result;
 	}
 	
-	public function getPackageSearch($params){
+	public function getPackageSearch($params, $additionnalParameters = null){
 		//$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
-		$callUrl =  $this->urlCkan . "api/action/package_search";	
-		
+		$callUrl =  $this->urlCkan . "api/action/package_search";
+
+
 		if(!is_null($params)){
 			$params = str_replace('&defType=edismax', '', $params);
 			$callUrl .= "?" . $params;
 			$callUrl = str_replace('%3D', '=', $callUrl);
 			$callUrl = str_replace('%26', '&', $callUrl);
 		}
-		
-		/*$config = \Drupal::service('config.factory')->getEditable('ckan_admin.cacheapi');
-        $hashing = hash('md5', $callUrl);
-        $cachedVals = $config->get($hashing);//$callUrl);
-        //error_log('url : ' . $callUrl . ' cachedVals : ' . print_r($cachedVals, true));
-		$maxTime = $this->config->client->cache_time;
-		if($maxTime == null || $maxTime == ''){
-			$maxTime = 10800;  //60*60*3 =3 h
-		}
-        if($cachedVals != null && (microtime(true) - $cachedVals[0]) < $maxTime) {
-            //error_log('cache found');
-            //$response = new Response();
-            //$response->setContent($cachedVals[1]);
-			// $response->headers->set('Content-Type', 'application/json');
-			// return $response;
-			return $cachedVals[1];
-        } else {*/
-			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getSimpleOptions());
-			$result = curl_exec($curl);
-			//echo $callUrl;
-			curl_close($curl);
-			//error_log($result);
-			$result = json_decode($result,true);
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getSimpleOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+
+		$result = json_decode($result,true);
+
+		//Here we have the result from CKAN
+		//We need to filter those result according to the selected map area (if there is a selection)
+
+		//First we get the coordinate from the map
+		$coordmap ="";
+		if($additionnalParameters) {
+
+			$coordmap = $additionnalParameters;
+
+			//We put the coordinates in an array. Very ugly way to do but no time. To remake
+			$coordmap = str_replace('%28', '(', $coordmap);
+			$coordmap = str_replace('%29', ')', $coordmap);
+			$coordmap = str_replace('%2C', ',', $coordmap);
+			$coordinates = explode("),", $coordmap);
+
+			for($i = 0; $i < count($coordinates); ++$i) {
+				$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
+				$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+			}
+
+			Logger::logMessage("COORDINATES " . json_encode($coordinates));
+			$dataSetscontent = [];
+
+			//var_dump($result["result"]["results"]);die;
 			
-			/*$toCache = json_encode($result);
-			$cachedVals[0] = microtime(true);
-			$cachedVals[1] = $toCache;
-			$config->set($hashing, $cachedVals)->save();*/
-			return $result;
-		/*}*/
-				
+
+			// We browse the resources of all the dataset found to see if it contains a geoloc field
+			foreach($result["result"]["results"] as $keydataset=>$dataset) {
+
+				$resourceId = null;
+				$fieldCoordinates = null;
+				foreach ($dataset["resources"] as $value) {
+					//We get the field for the dataset
+					$fields = $this->getAllFields($value['id']);
+
+					foreach ($fields as $field) {
+						if($field['type'] == "geo_point_2d") {
+							$fieldCoordinates = $field['name'];
+							break;
+						}
+					}
+
+					//If there is a coordinate field, we 
+					if ($fieldCoordinates) {
+						$resourceId = $value['id'];
+						break;
+					}
+				}
+			
+				//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+				if ($fieldCoordinates) {
+					Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $dataset['id'] . "'");
+
+					$polygon = '';
+					$first = true;
+					
+					$coord = explode(',', $coordinates);
+					if(sizeof($coordinates) <= 3) {
+						if($coord == null ) {
+							$coord = explode(',', $coordinates[0]);
+						}
+						$lat = $coord[0];
+						$long = $coord[1];
+						
+						
+						if(count($coord)> 2){
+									$dist = $coord[2];
+									
+							
+									$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+									$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.")  ";
+									
+								}
+
+					} else {
+						foreach ($coordinates as $coordinate) {
+						if (!$first) {
+							$polygon .= ",";
+						}
+						$first = false;
+						$polygon .= "(" . $coordinate . ")";
+						}
+
+						$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+						$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
+					}
+					
+
+					
+
+					$req['sql'] = $sql;
+
+					$sqlUrl = http_build_query($req);
+					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $sqlUrl;
+					$curl = curl_init($callUrl);
+					curl_setopt_array($curl, $this->getStoreOptions());
+					$resultSql = curl_exec($curl);
+
+					Logger::logMessage("Result SQL " . $resultSql);
+
+					curl_close($curl);
+					$resultSql = json_decode($resultSql, true);
+
+					if((int)$resultSql["result"]["records"][0]["count"] > 0 ) {
+						if(!in_array($dataset, $dataSetscontent)) {
+							array_push($dataSetscontent, $dataset);
+						}
+						
+					}else {
+						
+						unset($result["result"]["results"][$keydataset]);
+						$result["result"]["count"] -= 1;
+					}
+					//array_push($dataSetscontent, $dataset);
+					//TODO : LEAVE THE DATASET OR REMOVE ACCORDING TO THE RESULT
+				}
+				//If not we remove the dataset from the result
+				else {
+					
+					$result["result"]["count"] -= 1;
+					
+					unset($result["result"]["results"][$keydataset]);
+					
+
+					//TODO : REMOVE THE DATASET
+				}
+			
+			}
+			if ($fieldCoordinates) {
+			$result["result"]["results"] = $dataSetscontent;
+			$result["result"]["count"] = sizeof( $dataSetscontent);
+			}
+		
+			
+		}
+			
+		return $result;
 	}
 	
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/){
@@ -671,6 +785,12 @@ class Api{
 		//error_log($params);
 		if($query_params["sort"] != null){
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
+		}
+
+		$coordinateParam = null;
+		if(array_key_exists('coordReq', $query_params)){
+			$coordinateParam = $query_params['coordReq'];
+			unset($query_params['coordReq']);
 		}
 		
 		if($exclude_private_orgas){
@@ -705,11 +825,10 @@ class Api{
 			}
 		}
 
-
 		$url2 = http_build_query($query_params);
 
 		//echo $url2;
-		$result = $this->getPackageSearch($url2);
+		$result = $this->getPackageSearch($url2, $coordinateParam);
 		$result["all_organizations"] = $orgs["result"];
 		error_log($result["result"]["count"]);
 		return $result;
@@ -717,62 +836,12 @@ class Api{
 	}
 
 	public function callPackageSearch($params) {
-
 		$arrFac;
 		$arrFacSearch;
 		$arr = array();
         //$hasFacetFeature = false;
-
-        $coordmap ="";
-		if(strpos($params, "coordReq") != false ) {
-			$fqParams =  $params;
-			$fqParams = explode("coordReq", $fqParams);
-			$params = $fqParams[0];
-			$coordmap = $fqParams[1];
-
-		}
-
         $result = $this->getExtendedPackageSearch($params);
-
-        
-        $resultContent =array();
-        foreach($result["result"]["results"] as $key =>$dataset) {
-
-        		$fieldCoordinates =array();
-        		if($coordmap != "") {
-        			foreach ($dataset["resources"] as  $value) {
-        			$fields = $this->getAllFields($value['id']);
-	        			foreach ($fields as  $value2) {
-	        				if($value2["type"] == "geo_point_2d") {
-	        					if (!in_array($value2["name"], $fieldCoordinates)) {
-
-								    array_push($fieldCoordinates, $value2["name"]);
-								}
-	        				}
-	        				
-	        			}
-
-        			}
-        		}
- 
-
-        		if($coordmap != "" && count($fieldCoordinates) <=0) {
-        			//unset($result["result"]["results"][$key]);
-        			$result["result"]["count"]-=1;
-        		}
-        		if($coordmap != "" && count($fieldCoordinates) >0) {
-        			//unset($result["result"]["results"][$key]);
-        			array_push($resultContent, $dataset);
-        			
-        		}
-
-        }
-
-        if($coordmap != "") {
-        	$result["result"]["results"] = $resultContent;
-        }
-        
-       
+		
 		$hasFacetFeature = array_key_exists("features",$result["result"]["facets"]);
 		
 		unset($result["help"]);//echo count($result["result"]["results"]);
@@ -808,7 +877,7 @@ class Api{
 					$arr = array_merge($arr, explode(",", $key));
 				}
 			}
-			/*$result["result"]["count"] = count($result["result"]["results"]);*/
+			
 			$result["result"]["facets"]["features"] = array_count_values($arr);
 			unset($result["result"]["facets"]["features"]["api"]);
 			unset($result["result"]["facets"]["features"]["table"]);
@@ -823,11 +892,10 @@ class Api{
 				);
 			}
 		}
+
 		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		/*echo "<pre>";
-		var_dump($result);echo "</pre>";die;*/
 		return $response;
 	}
     

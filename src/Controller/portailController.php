@@ -35,12 +35,12 @@ class portailController extends ControllerBase {
 						    margin-bottom: 0 !important; 
 						}
 						.d4cwidget-map__map {
-						    height: 228px !important;
+						    height: 238px !important;
 						    min-height: 100px !important;
 						}
 
 						.d4cwidget-map {
-						    height: 228px !important;
+						    height: 238px !important;
     						min-height: 100px !important;
 						}
 
@@ -50,7 +50,7 @@ class portailController extends ControllerBase {
 						
 						</style><div id ="main" class="widget-opendata">
 						
-		 
+		 <a href="/admin/config/data4citizen/userstory"  class="btn btn-info" role="button"> button test </a>
 
         <div id="filter" class="col-md-2 content-body" >
         <div class="ng-scope" ng-app="d4c-widgets">
@@ -60,7 +60,7 @@ class portailController extends ControllerBase {
 										
 										<div class="col-md-12 col-sm-4">
 											<div class="d4c-box d4c-map-wp">
-											<d4c-map basemap="osm" context="communesinfocom94contour" location="11,48.58392,7.74553" provider="osm" scroll-wheel-zoom="false" class="ng-isolate-scope">
+											<d4c-map basemap="osm" context="communesinfocom94contour" location="11,14.63554,-61.02281" provider="osm" scroll-wheel-zoom="false" class="ng-isolate-scope">
 
 													<d4c-map-layer border-color="#FFFFFF" border-opacity="1" border-pattern="solid" border-size="1" caption="false" color="#0e7ce3" context="communesinfocom94contour" exclude-from-refit="false"  picto="d4c-" show-marker="false" size-function="linear"> 
 													</d4c-map-layer> 
@@ -196,7 +196,7 @@ class portailController extends ControllerBase {
 <script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
 
-<script type="text/javascript" src="/modules/ckan_admin/js/libraries-map.js"></script>
+<script type="text/javascript" src="/modules/ckan_admin/js/libraries.js"></script>
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
