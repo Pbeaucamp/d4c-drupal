@@ -85,7 +85,8 @@ class Api{
 			CURLOPT_POST=>true,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_SSL_VERIFYPEER => false,
-			CURLOPT_SSL_VERIFYHOST =>  0
+			CURLOPT_SSL_VERIFYHOST =>  0,
+			CURLOPT_POSTFIELDS => array()
 		);
 		return $options;
 	}
@@ -166,6 +167,32 @@ class Api{
 
 
 		return $result;
+	}
+
+	/**
+	 * 
+	 * This method is specifically made for CR Reunion
+	 * The server does not react the same as the proxmox instance
+	 * 
+	 * We need to call that for the majority of the methods
+	 * 
+	 */
+	function retrieveParameters($params) {
+		$isReunion = false;
+		if ($isReunion) {
+			if ($params == '') {
+				$params = $_SERVER['QUERY_STRING'];
+
+				//We decode parameters (replace %3D by = and + by a space)
+				$params = str_replace('%3D', '=', $params);
+				$params = str_replace('+', ' ', $params);
+			}
+			else {
+				$params;
+			}
+		}
+
+		return $params;
 	}
 
 	function proper_parse_str($str) {
@@ -313,6 +340,8 @@ class Api{
 
 
 	public function callDatastoreApiFacet($params) {
+		$params = $this->retrieveParameters($params);
+	
 		//error_log('params = ' . $params);
 		$query_params = $this->proper_parse_str($params);
 		if(array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
@@ -863,6 +892,8 @@ class Api{
     
 
 	public function callDatastoreApiBoundingBox($params) {
+		$params = $this->retrieveParameters($params);
+
 
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
@@ -2368,6 +2399,9 @@ if($exportUserField  != null ) {
 	}	   
   
 	public function callDatastoreApiGeoClusterOld($params) {
+		
+		$params = $this->retrieveParameters($params);
+
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
 		/*$patternBbox = '/geofilter.bbox/i';*/

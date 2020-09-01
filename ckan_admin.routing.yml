@@ -292,6 +292,7 @@ ckan_admin.api.record.boundingbox:
   path: '/api/records/1.0/boundingbox/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiBoundingBox'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
@@ -300,6 +301,7 @@ ckan_admin.api.record.download:
   path: '/api/records/2.0/download/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiDownload'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
@@ -342,6 +344,7 @@ ckan_admin.api.record.geocluster:
   path: '/api/records/1.0/geocluster/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoClusterOld'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
@@ -350,6 +353,7 @@ ckan_admin.api.record.geoPreview:
   path: '/api/records/1.0/geopreview/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoPreview'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
