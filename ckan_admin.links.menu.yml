@@ -115,12 +115,3 @@ ckan_admin.export_package:
   route_name: ckan_admin.extension_package_data4citizen
   parent: ckan_admin_config_data4citizen
   weight: 8
-
-
-ckan_admin.storytelling_dashboard:
-  title: O. Histoire de données
-  description: "Mise en place des Users Story dans Data4Citizen"
-  route_name: ckan_admin.userstory
-  parent: ckan_admin_config_data4citizen
-  weight: 9
-
