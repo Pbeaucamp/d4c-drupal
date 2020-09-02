@@ -272,25 +272,24 @@ class VisualisationController extends ControllerBase {
 	    $resourcesContent = ""; 
 	    $MapDetail = ""; 
 	    $featureCatalog = ""; 
+	    $DateDetail="";
+	    $dateUpdated ="";
+	    $shareSocialMedia="";
+	    $associatedResources ="";
 
 	    $xmlfile =false;
 	    foreach($dataset["metas"]["resources"] as $key=>$value){
 	    	
-	    	if($value["format"] == "csw") {
+	    	if($value["format"] == "csw" || strpos($value["name"], "Vue XML des métadonnées")== true) {
+
 	    		$xmlfile = true;
 	    	$xml = file_get_contents($value['url']); 
 
-			file_put_contents($_SERVER['DOCUMENT_ROOT']."/testxml.xml", $xml);
-			if (file_exists($_SERVER['DOCUMENT_ROOT']."/testxml.xml")) {
-			    $str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/testxml.xml"));
-
-				$fp=fopen($_SERVER['DOCUMENT_ROOT']."/testxml.xml",'w');
-				$str=str_replace('&','??',$str);
-				$str=str_replace(':','',$str);
-				fwrite($fp,$str,strlen($str));
-			} else {
-			    exit('Echec lors de l\'ouverture du fichier test.xml.');
+	    	if (!file_exists($_SERVER['DOCUMENT_ROOT']."/". $id)) {
+		    	mkdir($_SERVER['DOCUMENT_ROOT']."/". $id, 0777, true);
 			}
+			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml", $xml);
+			
 			break;
 	    }
 
@@ -298,8 +297,200 @@ class VisualisationController extends ControllerBase {
 
 
 
+	    if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml")) {
+
+			    $str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml"));
+
+
+				$fp=fopen($_SERVER['DOCUMENT_ROOT']."/".$id."/metadata_xml_view.xml",'w');
+				$str=str_replace('&','??',$str);
+				$str=str_replace(':','',$str);
+				fwrite($fp,$str,strlen($str));
+
+				$xml = simplexml_load_file($id."/metadata_xml_view.xml");
+
+				 /*foreach ($xml as $key => $value) {
+				 	echo "<pre>";
+				 	var_dump($value->gmdcontact);
+
+				 	echo "</pre>";
+				 }die;*/
+
+	    foreach ($xml as $key => $value) {
+	     	$MapDetail='<section class="gn-md-side-extent ng-scope" > 
+						<h2 style="font-size: 16px;"> <i class="fa fa-fw fa-map-marker"></i> 
+						<span data-translate="" class="ng-scope" >Extension spatiale</span>
+	 					</h2> ';
+
+	 		$MapDetail.='<ul> <li >'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString().'</li></ul> ';
+	 		$MapDetail.='<img class="gn-img-thumbnail img-thumbnail gn-img-extent" alt="Spatial extent" aria-label="Spatial extent" data-ng-src="https://www.geograndest.fr/geonetwork/srv/eng/region.getmap.png?mapsrs=EPSG:3857&width=250&background=settings&geomsrs=EPSG:4326&geom=Polygon(('.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString().'%20'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString().','.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString().'%20'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString().','.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString().'%20'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString().',8.23029041290283203125%2050.16764068603515625,8.23029041290283203125%2047.42026519775390625))" src="https://www.geograndest.fr/geonetwork/srv/eng/region.getmap.png?mapsrs=EPSG:3857&width=250&background=settings&geomsrs=EPSG:4326&geom=Polygon((8.23029041290283203125%2047.42026519775390625,3.3840906620025634765625%2047.42026519775390625,3.3840906620025634765625%2050.16764068603515625,8.23029041290283203125%2050.16764068603515625,8.23029041290283203125%2047.42026519775390625))">';
+
+	 		$MapDetail.="</section>";
+
+
+
+	 		$DateDetail='<section class="gn-md-side-dates ng-scope" > <h2> <i class="fa fa-fw fa-clock-o" style="font-size: 16px;"></i> <span data-translate="" class="ng-scope" style="font-size: 16px;">Étendue temporelle</span> </h2> <p> </p>';
+					
+					foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as  $valuedate) {
+						
+						if($valuedate->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "publication") {
+							$DateDetail.='<dl > <dt data-translate="" class="ng-scope">La date de publication</dt>';
+
+						}
+
+						if($valuedate->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "revision") {
+							$DateDetail.='<dl > <dt data-translate="" class="ng-scope">La date de révision</dt>';
+							
+						}
+						$DateDetail.='<dd data-gn-humanize-time="'.$valuedate->gmdCI_Date->gmddate->gcoDate->__toString().'" data-format="YYYY-MM-DD" class="ng-scope ng-isolate-scope"><span title="3 months ago" class="ng-binding">'.$valuedate->gmdCI_Date->gmddate->gcoDate->__toString().'</span></dd> </dl>';
+					}
+					$DateDetail.='</section>';
+
+
+
+
+
+			$datestamps = explode("T", $value->gmddateStamp->gcoDateTime->__toString());
+
+			$dateUpdated='<section class="gn-md-side-calendar"> <h2 style="font-size:16px"> <i class="fa fa-fw fa-calendar"></i><span data-translate="" class="ng-scope">Modifié: </span> </h2>';
+			$now = time(); 
+			$your_date = strtotime($datestamps[0]);
+			$datediff = $now - $your_date - 1;
+			$days = round($datediff / (60 * 60 * 24)) - 1;
+
+			$dateUpdated.='<p><span data-gn-humanize-time="'.$value->gmddateStamp->gcoDateTime->__toString().'" data-from-now="" class="ng-isolate-scope"><span title="'.$value->gmddateStamp->gcoDateTime->__toString().'" class="ng-binding"> Il y a '.$days.' jour(s)</span></span> </p>';
+
+			$dateUpdated.='</section>';
+
+
+			$shareSocialMedia ='<section class="gn-md-side-social" style="margin-top: 20px" > <h2 style="font-size: 16px"> <i class="fa fa-fw fa-share-square-o"></i> <span data-translate="" class="ng-scope">Partager</span> </h2> 
+	<a data-ng-href="#" title="Share on Twitter" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-twitter"></i></a>
+	<a data-ng-href="#" title="Share on Facebook" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-facebook"></i></a> <a data-ng-href="#" title="Share on LinkedIn" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-linkedin"></i></a> <a data-ng-href="#" title="Share by email" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-envelope-o"></i></a> <a data-ng-click="mdService.getPermalink(md)" title="Permalink" class="btn btn-default"><i class="fa fa-fw fa-link"></i></a> </section>';
+
+
+			$featureCatalog ='<div><h2 style="font-size: 16px" class="ng-binding">À propos de cette ressource</h2></div>';
+			$associatedResources =" <div>";
+			$associatedResources .='<table class="table table-striped"><tbody> ';
+			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
+				
+				if($value2->gmdMD_Keywords->gmdthesaurusName) {
+					$associatedResources .='<tr > <th data-translate="" class="ng-scope">INSPIRE themes</th><td> <button data-ng-click="search({\'inspirethemewithac\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})" class="btn btn-sm btn-default ps ps-en" title="Click to filter on  Sites protégés"> <i class="fa fa-download" style="color: #95c11f"></i> </button> </td>
+		  		</tr>';
+				} 
+
+				
+			}
+
+			if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->__toString() ) {
+					$associatedResources .='<tr> <th data-translate="" class="ng-scope">Categories</th> <td><button data-ng-click="search({\'topicCat\': cat})" class="btn btn-sm btn-default ng-binding ng-scope" title="Click to filter on  Environment"> <span class="fa gn-icon-environment topic-color"></span>&nbsp; Environment </button> </td> </tr>';
+
+				}
+			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
+				if($value2->gmdMD_Keywords->gmdthesaurusName) {
+						$associatedResources .='<tr > <th data-translate="" class="ng-scope">'.$value2->gmdMD_Keywords->gmdthesaurusName->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString().'</th><td><ul> 
+		  	 				<li > <span class="ng-binding">'.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'</span> <a  href="" title="Click to filter on  Sites protégés" aria-label="Click to filter on  Sites protégés" data-ng-click="search({\'keyword\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})"> <i class="fa fa-search"></i> </a> </li></ul></td>
+		  		</tr>';
+				}
+			}
+
+			$associatedResources .='<tr > <th data-translate="" class="ng-scope">Autres mots-clés</th><td>';
+			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
+				if(!$value2->gmdMD_Keywords->gmdthesaurusName) {
+
+					$associatedResources .='<ul style="list-style-type: disc;"> 
+		  	 				<li > <span class="ng-binding">'.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'</span> <a  href="" title="Click to filter on  Sites protégés" aria-label="Click to filter on  Sites protégés" data-ng-click="search({\'keyword\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})"> <i class="fa fa-search"></i> </a> </li></ul>
+		  		';
+				}
+			}
+			$associatedResources .='</td></tr>';
+
+			$associatedResources .='<tr > <th data-translate="" class="ng-scope">Langue</th><td><ul> 
+		  	 				<li > <span class="ng-binding">'.$value->gmdlanguage->gmdLanguageCode->__toString().'</span> </li></ul></td>
+		  		</tr>';
+
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Identificateur de ressource</th><td><ul> 
+		  	 				<li > <span class="ng-binding">'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdidentifier->gmdRS_Identifier->gmdcode->gcoCharacterString->__toString().'</span> </li></ul></td>
+		  		</tr>';
+
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Contraintes légales</th><td>'; 
+		  	foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+		  		if($value2->gmdMD_LegalConstraints->gmdotherConstraints != null){
+		  			$associatedResources .='<p>'.$value2->gmdMD_LegalConstraints->gmdotherConstraints->gcoCharacterString->__toString().'<p>';
+		  		}
+		  			foreach ($value2->gmdMD_LegalConstraints->gmduseLimitation as $value3) {
+		  				$associatedResources .='<p>'.$value3->gcoCharacterString->__toString().'<p>';
+
+		  			}
+
+
+						
+					}
+		  	$associatedResources .='</td></tr>';
+		  	
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Contact pour la ressource</th><td><adresse> 
+		  	 				 <strong><i class="fa fa-envelope" style="margin-right: 10px"></i> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString().'</strong> </adresse>
+		  	 				 <p>'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcountry->gcoCharacterString->__toString().'</p> <ul style="list-style-type: disc;"><li> <strong>Point de contact: </strong><a href="mailto:'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'"> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+		  		
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Statut</th><td>
+		  	 				  <ul style="list-style-type: disc;"><li>  '.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdstatus->gmdMD_ProgressCode->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+
+			$associatedResources .='</tbody> </table>';
+
+			$associatedResources .='<h4>Informations techniques</h4>';
+			$associatedResources .='<table class="table table-striped"><tbody> ';
+
+		
+			$associatedResources .='<tr > <th data-translate="" class="ng-scope">Score</th><td>
+		  	 				  <ul style="list-style-type: disc;"><li>  '.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdspatialResolution->gmdMD_Resolution->gmdequivalentScale->gmdMD_RepresentativeFraction->gmddenominator->gcoInteger->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Format</th><td>
+		  	 				  <ul style="list-style-type: disc;"><li>  '.$value->gmddistributionInfo->gmdMD_Distribution->gmddistributionFormat->gmdMD_Format->gmdname->gcoCharacterString->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+
+		  	$associatedResources .='<tr > <th data-translate="" class="ng-scope">Lignée</th><td>
+		  	 				  <ul style="list-style-type: disc;"><li>  '.$value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+
+
+
+			$associatedResources .='</tbody> </table>';
+
+			$associatedResources .='<h4>Metadata information</h4>';
+			$associatedResources .='<table class="table table-striped"><tbody> ';
+
+			$associatedResources .='<tr > <th data-translate="" class="ng-scope"><a class="btn btn-default gn-margin-bottom" href="../api/records/fr-120066022-jdd-d90ac948-9e07-47a6-9c1b-471888dbefd4/formatters/xml"> <i class="fa fa-fw fa-file-code-o"></i> <span data-translate="" class="ng-scope">Download metadata</span> </a></th>
+		  		</tr>';
+
+		  		$associatedResources .='<tr > <th data-translate="" class="ng-scope"><strong> Contact </strong> </th><td><adresse> 
+		  	 				 <strong><i class="fa fa-envelope" style="margin-right: 10px"></i> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString().'</strong> </adresse>
+		  	 				 <p>'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcountry->gcoCharacterString->__toString().'</p> <ul style="list-style-type: disc;"><li> <strong>Point de contact: </strong><a href="mailto:'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'"> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'</a></li></ul>
+		  	 				 </td>
+		  		</tr>';
+
+			$associatedResources .='</tbody> </table>';
+
+			$associatedResources .=" </div>";
+
+		/*	echo "<pre>";
+			var_dump();
+			echo "</pre>";*/
+
+
+	     }
+
+
+			} 
+			//die;
 	    if(sizeof($dataset["metas"]["resources"]) > 0 ) {
-	    	$resourcesContent = '<h4>Download and links</h4>';
+	    	$resourcesContent = '<h4>Téléchargements et liens</h4>';
 
 	    foreach($dataset["metas"]["resources"] as $key=>$value){
 	 
@@ -318,7 +509,7 @@ class VisualisationController extends ControllerBase {
 			}
 
 			else {
-			    $resourcesContent .= '<div class="col-sm-3" ><a class="btn btn-info" role="button" target="_blank" href="'.$value["url"].'" >Open link</a></div>
+			    $resourcesContent .= '<div class="col-sm-3" ><a class="btn btn-info" role="button" target="_blank" href="'.$value["url"].'" >Consulter</a></div>
 							</div>';
 			}
 
@@ -326,7 +517,9 @@ class VisualisationController extends ControllerBase {
 			$resourcesContent .="<br><br><br> ";
 	    }
 	
+
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
+		
 		$element = array(
 			'example one' => [
 				'#type' => 'inline_template',
@@ -458,17 +651,6 @@ class VisualisationController extends ControllerBase {
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\']"></d4c-dataset-metadata-block>
 
 										'.$LinkedDataSet.'
-										<!--    <div class="d4c-dataset-metadata-block">
-												<div class="d4c-dataset-metadata-block__metadata">
-													<div class="d4c-dataset-metadata-block__metadata-name" translate>Follow</div>
-													<div class="d4c-dataset-metadata-block__metadata-value">
-														<d4c-dataset-subscription preset="false"
-																				  dataset-id="ctx.dataset.metas.name"
-																				  logged-in="true"></d4c-dataset-subscription>
-													</div>
-												</div>
-											</div>
-										-->
 									
 									
 									 <div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
@@ -490,6 +672,7 @@ class VisualisationController extends ControllerBase {
 							'.$visWidget.'
 							'.$resourcesContent.'
 							'.$featureCatalog.'
+							'.$associatedResources.'
 							
 							<d4c-dataset-attachments dataset="ctx.dataset"></d4c-dataset-attachments>
 
@@ -525,8 +708,12 @@ class VisualisationController extends ControllerBase {
                                                 config="{&#39;is_unique&#39;: True, &#39;max_width&#39;: 4096, &#39;max_height&#39;: 4096, &#39;resize_width&#39;: 200, &#39;resize_height&#39;: 200, &#39;asset_type&#39;: &#39;image&#39;, &#39;max_size&#39;: 2097152}"></d4c-dataset-reuses>
 								</div>
 
-							<div class="col-sm-4">
+							<div class="col-sm-4 gn-md-side" >
 							'.$MapDetail.'
+							'.$DateDetail.'
+							'.$dateUpdated.'
+							'.$shareSocialMedia.'
+							
 
 
 							</div>

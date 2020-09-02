@@ -620,56 +620,202 @@ class Api{
 		return $result;
 	}
 	
-	public function getPackageSearch($params){
+	public function getPackageSearch($params, $additionnalParameters = null, $rows = null, $start = null){
 		//$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
-		$callUrl =  $this->urlCkan . "api/action/package_search";	
-		
+		$callUrl =  $this->urlCkan . "api/action/package_search";
+
+
 		if(!is_null($params)){
 			$params = str_replace('&defType=edismax', '', $params);
 			$callUrl .= "?" . $params;
 			$callUrl = str_replace('%3D', '=', $callUrl);
 			$callUrl = str_replace('%26', '&', $callUrl);
 		}
-		
-		/*$config = \Drupal::service('config.factory')->getEditable('ckan_admin.cacheapi');
-        $hashing = hash('md5', $callUrl);
-        $cachedVals = $config->get($hashing);//$callUrl);
-        //error_log('url : ' . $callUrl . ' cachedVals : ' . print_r($cachedVals, true));
-		$maxTime = $this->config->client->cache_time;
-		if($maxTime == null || $maxTime == ''){
-			$maxTime = 10800;  //60*60*3 =3 h
+
+		if ($additionnalParameters) {
+			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
-        if($cachedVals != null && (microtime(true) - $cachedVals[0]) < $maxTime) {
-            //error_log('cache found');
-            //$response = new Response();
-            //$response->setContent($cachedVals[1]);
-			// $response->headers->set('Content-Type', 'application/json');
-			// return $response;
-			return $cachedVals[1];
-        } else {*/
-			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getSimpleOptions());
-			$result = curl_exec($curl);
-			//echo $callUrl;
-			curl_close($curl);
-			//error_log($result);
-			$result = json_decode($result,true);
+
+		Logger::logMessage("Call search " . $callUrl);
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getSimpleOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+
+		$result = json_decode($result,true);
+
+		Logger::logMessage("Found " . count($result["result"]["results"]) . " datasets");
+
+		//Here we have the result from CKAN
+		//We need to filter those result according to the selected map area (if there is a selection)
+
+		//First we get the coordinate from the map
+		$coordmap ="";
+		if($additionnalParameters) {
+
+			$coordmap = $additionnalParameters;
+
+			//We put the coordinates in an array. Very ugly way to do but no time. To remake
+			$coordmap = str_replace('%28', '(', $coordmap);
+			$coordmap = str_replace('%29', ')', $coordmap);
+			$coordmap = str_replace('%2C', ',', $coordmap);
+			$coordinates = explode("),", $coordmap);
+
+			for($i = 0; $i < count($coordinates); ++$i) {
+				$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
+				$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+			}
+
+			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
+			$dataSetscontent = [];
+
+			//var_dump($result["result"]["results"]);die;
 			
-			/*$toCache = json_encode($result);
-			$cachedVals[0] = microtime(true);
-			$cachedVals[1] = $toCache;
-			$config->set($hashing, $cachedVals)->save();*/
-			return $result;
-		/*}*/
-				
+
+			// We browse the resources of all the dataset found to see if it contains a geoloc field
+			foreach($result["result"]["results"] as $keydataset=>$dataset) {
+
+				$resourceId = null;
+				$fieldCoordinates = null;
+				foreach ($dataset["resources"] as $value) {
+					//We get the field for the dataset
+					$fields = $this->getAllFields($value['id']);
+					// Logger::logMessage("Dataset      " . $dataset['id'] . "    with resource     " . $value['id']);
+
+					foreach ($fields as $field) {
+						if($field['type'] == "geo_point_2d") {
+							$fieldCoordinates = $field['name'];
+							break;
+						}
+					}
+
+					//If there is a coordinate field, we 
+					if ($fieldCoordinates) {
+						$resourceId = $value['id'];
+						break;
+					}
+				}
+			
+				//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+				if ($fieldCoordinates) {
+					Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $dataset['id'] . "'");
+
+					$polygon = '';
+					$first = true;
+					
+					$coord = explode(',', $coordinates);
+					if(sizeof($coordinates) <= 3) {
+						if($coord == null ) {
+							$coord = explode(',', $coordinates[0]);
+						}
+						$lat = $coord[0];
+						$long = $coord[1];
+						
+						
+						if(count($coord)> 2){
+									$dist = $coord[2];
+									
+							
+									$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+									$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.")  ";
+									
+								}
+
+					} else {
+						foreach ($coordinates as $coordinate) {
+						if (!$first) {
+							$polygon .= ",";
+						}
+						$first = false;
+						$polygon .= "(" . $coordinate . ")";
+						}
+
+						$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+						$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
+					}
+					
+
+					
+
+					$req['sql'] = $sql;
+
+					$sqlUrl = http_build_query($req);
+					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $sqlUrl;
+					$curl = curl_init($callUrl);
+					curl_setopt_array($curl, $this->getStoreOptions());
+					$resultSql = curl_exec($curl);
+
+					// Logger::logMessage("Result SQL " . $resultSql);
+
+					curl_close($curl);
+					$resultSql = json_decode($resultSql, true);
+
+					if((int)$resultSql["result"]["records"][0]["count"] > 0 ) {
+						if(!in_array($dataset, $dataSetscontent)) {
+							array_push($dataSetscontent, $dataset);
+						}
+						
+					}else {
+						
+						unset($result["result"]["results"][$keydataset]);
+						$result["result"]["count"] -= 1;
+					}
+					//array_push($dataSetscontent, $dataset);
+					//TODO : LEAVE THE DATASET OR REMOVE ACCORDING TO THE RESULT
+				}
+				//If not we remove the dataset from the result
+				else {
+					
+					$result["result"]["count"] -= 1;
+					
+					unset($result["result"]["results"][$keydataset]);
+					
+
+					//TODO : REMOVE THE DATASET
+				}
+			
+			}
+			if ($fieldCoordinates) {
+			$result["result"]["results"] = $dataSetscontent;
+			$result["result"]["count"] = sizeof( $dataSetscontent);
+			}
+		
+			
+		}
+			
+		return $result;
 	}
 	
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/){
 		$query_params = $this->proper_parse_str($params);
+
 		$orgs;
 		//error_log($params);
 		if($query_params["sort"] != null){
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
+		}
+
+		$coordinateParam = null;
+		if(array_key_exists('coordReq', $query_params)){
+			$coordinateParam = $query_params['coordReq'];
+			unset($query_params['coordReq']);
+
+			//We replace the rows and start to get all the dataset
+			$rows = $query_params['rows'];
+			unset($query_params['rows']);
+
+			$start = $query_params['start'];
+			unset($query_params['rows']);
+
+			$query_params["rows"] = 1000;
+			
+			if ($query_params["fq"] == null) {
+				$query_params["fq"] = "features:(*geo*)";
+			}
+			else {
+				$query_params["fq"] .= " AND features:(*geo*)";
+			}
 		}
 		
 		if($exclude_private_orgas){
@@ -678,43 +824,36 @@ class Api{
 			curl_setopt_array($curlOrg, $this->getSimpleOptions());
 			$orgs = curl_exec($curlOrg);
 			curl_close($curlOrg);
-
 			$orgs = json_decode($orgs, true);
-
 			$orgs_private=[];
-			$orgsPrivateIndex = [];
-			for ( $i= 0 ; $i <= count($orgs["result"]) ; $i++ ) {
-				$org = $orgs["result"][$i];
-				foreach($org["extras"] as $extra){
+			foreach($orgs["result"] as $org){
+				foreach($org["extra"] as $extra){
 					if($extra["key"] == "private"){
 						if($extra["value"] == "true"){
-							$orgs_private[] = $org["name"];
-							$orgsPrivateIndex[] = $i;
-							// unset($orgs["result"][$key]);
+							$orgs_private[] = $org["id"];
 						}
 						break;
 					}
 				}
 			}
-			foreach($orgsPrivateIndex as $index){
-				array_splice($orgs["result"], $index, 1);
-			}
 
 			if(count($orgs_private) > 0){
-				$queryOrgs = implode($orgs_private, " OR ");
-				$req = "-organization:(".$queryOrgs.")";
+				$orgs = implode($orgs_private, " OR ");
+				$req = "-organization:(".$orgs.")";
 				
 				if($query_params["fq"] == null){
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
+				
 			}
 		}
 
 		$url2 = http_build_query($query_params);
+
 		//echo $url2;
-		$result = $this->getPackageSearch($url2);
+		$result = $this->getPackageSearch($url2, $coordinateParam, $rows, $start);
 		$result["all_organizations"] = $orgs["result"];
 		error_log($result["result"]["count"]);
 		return $result;
@@ -5448,7 +5587,42 @@ if($exportUserField  != null ) {
         $return = $this->updateRequest($callUrl,$result['result'],"POST" );
         //var_dump($return);
     }
-    
+
+    function updateRequestOld($callUrl, $binaryData, $requestType) {
+        
+        var_dump($callUrl);
+        var_dump($binaryDatan);
+        die;
+        // error_log($callUrl);
+		//error_log(json_encode( $binaryData ));
+		// error_log($requestType);
+		
+		$jsonData = json_encode( $binaryData );
+        //drupal_set_message('<pre>'. print_r($jsonData, true) .'</pre>');
+        //$cle = 'dc6d41ef-7721-4617-9669-9de423fe383f'; 
+        $cle = $this->config->ckan->api_key; 
+		$options = array (
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => $requestType,
+				CURLOPT_POSTFIELDS => $jsonData,
+				CURLOPT_HTTPHEADER => array (
+						'Content-type:application/json',
+						'Content-Length: ' . strlen ( $jsonData ),
+						'Authorization:  ' .$cle 
+				)
+		);
+	
+		$curl = curl_init ( $callUrl );
+		curl_setopt_array ( $curl, $options );
+		$result = curl_exec ( $curl );
+		curl_close ( $curl );
+        //echo json_decode($result);
+        
+        //drupal_set_message('<pres>'.print_r($result, true).'</pre>');
+        
+		return $result;
+	}
+
     function updateRequest($callUrl, $binaryData, $requestType) {
         
         
@@ -6484,7 +6658,9 @@ if($exportUserField  != null ) {
 		if ($dataset != null && $dataset != ""){
 			$query->condition('reu_dataset_id',$dataset);
 		} else if($orga != null && $orga != ""){
+			
 			$req = "include_private=true&rows=10000&q=organization:".$orga;
+
 			$datasets = $this->getPackageSearch($req)["result"]["results"]; //error_log(json_encode($datasets));
 			$ids = array();
 			
@@ -6494,7 +6670,7 @@ if($exportUserField  != null ) {
 			//$ids = implode(",", $ids);
 			$query->condition('reu_dataset_id',$ids, "IN");
 		} 
-		
+
 		if($q != null && $q != ""){
 			$orGroup = $query->orConditionGroup()
 				->condition('reu_title','%' . \Drupal::database()->escapeLike($q) . '%', 'LIKE')
@@ -6820,4 +6996,17 @@ if($exportUserField  != null ) {
 
 		
 	}
+
+
+
+	public function callPackageReutilisation($params) {
+		$reuses = $this->getReuses(null, null, null, "online", 1000, 0);
+
+		$response = new Response();
+		$response->setContent(json_encode($reuses));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+    
 }

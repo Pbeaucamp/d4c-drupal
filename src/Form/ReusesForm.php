@@ -79,6 +79,8 @@ class ReusesForm extends HelpFormBase {
         
 		//$query = 'include_private=true&rows='.$num_per_page.'&sort=title_string%20asc&start='.$offset.$filterQuery;
 		//drupal_set_message($query);
+		var_dump($_GET["dataset"]);
+		var_dump($_GET["orga"]);die;
         $result = $api->getReuses($_GET["orga"], $_GET["dataset"], $_GET["q"], $_GET["status"], $num_per_page, $offset);
 		$result = json_decode(json_encode($result), true);
 		$reuses = $result["reuses"];
