@@ -259,19 +259,6 @@ PackagesForm.form:
     - core/jquery
 
 
-#User Story libraries
-userstory.form:
-  version: VERSION
-  js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    https://code.jquery.com/ui/1.9.2/jquery-ui.js: {}
-    https://code.jquery.com/jquery-1.9.1.js: {}
-    /sites/default/files/api/portail_d4c/js/jquery.slides.min.js: {}
-    js/userstory.js: {}
-  dependencies:
-    - core/jquery
-
 
 
 
