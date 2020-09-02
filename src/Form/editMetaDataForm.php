@@ -206,6 +206,11 @@ class editMetaDataForm extends HelpFormBase {
         $form['selected_data_id'] = array(
             '#type' => 'textfield',
             '#attributes' => array('style' => 'display:none'),
+		);
+		
+		$form['generated_task_id'] = array(
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'display:none'),
         );
 		
 		$form['m0_2'] = array(
@@ -224,7 +229,13 @@ class editMetaDataForm extends HelpFormBase {
              '#attributes' => array('style' => 'width: 50%;'),
 			 '#required' => TRUE,
 			 '#maxlength' => 300
-        );
+		);
+		
+        $form['progress-modal'] = array(
+			'#markup' => '<div id="progress" class="progress-modal" display="none">
+			</div>',
+		);
+   
         
         $form['img_backgr'] = array(
             '#type' => 'managed_file',
@@ -666,9 +677,8 @@ class editMetaDataForm extends HelpFormBase {
         
 		$form['m5_2'] = array(
 		'#markup' => '</div>',
-		); 
-        
-   
+		);
+
 		////////////////Jeux de donnees lies///////////////////////////////////////        
 		$form['valider'] = array(
 			'#type' => 'submit',
@@ -708,6 +718,7 @@ class editMetaDataForm extends HelpFormBase {
         
         $title = $form_state->getValue('title');
         $datasetId = $form_state->getValue('selected_data_id');
+        $generatedTaskId = $form_state->getValue('generated_task_id');
         $description = $form_state->getValue('description');
         $dateDataset = $form_state->getValue('date_dataset');
         $tags = $form_state->getValue('tags');
@@ -805,7 +816,7 @@ class editMetaDataForm extends HelpFormBase {
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 					
-					$datasetId = $resourceManager->createDataset($datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 
 					drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
 
@@ -835,7 +846,7 @@ class editMetaDataForm extends HelpFormBase {
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 
-					$datasetId = $resourceManager->updateDataset($datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+					$datasetId = $resourceManager->updateDataset($datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					drupal_set_message("Le jeu de données '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources

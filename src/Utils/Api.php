@@ -874,7 +874,6 @@ class Api{
     
 
 	public function callDatastoreApiBoundingBox($params) {
-
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
 		$patternBbox = '/geofilter.bbox/i';
@@ -2595,15 +2594,16 @@ if($exportUserField  != null ) {
 		curl_setopt_array($curl, $this->getSimpleGetOptions());
 		$dataset = curl_exec($curl);
 		curl_close($curl);
+
 		//echo $dataset . "\r\n";
 		$dataset = json_decode($dataset, true);
-  			 if(empty($dataset["features"])) {
-				 if($clusterPrec < 20) {
-					 $params = str_replace('clusterprecision=' . ($clusterPrec + 2), 'clusterprecision=' . ($clusterPrec + 4), $params);
-					 //error_log($params);
-					 return $this->callDatastoreApiGeoClusterOld($params);
-				 }
-			 }
+		if(empty($dataset["features"])) {
+			if($clusterPrec < 20) {
+				$params = str_replace('clusterprecision=' . ($clusterPrec + 2), 'clusterprecision=' . ($clusterPrec + 4), $params);
+				//error_log($params);
+				return $this->callDatastoreApiGeoClusterOld($params);
+			}
+		}
 
 		//recup resourceCSV
 		$resourceCSV; 
@@ -4652,6 +4652,8 @@ if($exportUserField  != null ) {
 		} else {
 			$data_array["layers"] = $tiles;
 		}
+
+		Logger::logMessage("Found bounding box " . $this->config->client->default_bounding_box);
 		
 		$default_bbox = $this->config->client->default_bounding_box;
 		if($default_bbox != null && $default_bbox != ""){
@@ -5097,7 +5099,11 @@ if($exportUserField  != null ) {
         curl_close($curlOrg);
         echo 'https://'.$params[0]."/api/datasets/2.0/search/q=".$params[1];*/
         $t = Query::callSolrServer('https://'.$params[0]."/api/datasets/2.0/search/q=".$params[1]);
-        //echo $t; $t = json_decode($t);
+		//echo $t; 
+		$t = json_decode($t);
+		
+		Logger::logMessage("callD4c - Search on " . $params[0] . " with params = " . $params[1]);
+		Logger::logMessage("Found " . count($t->result->results) . " results.");
            
 		foreach($t->result->results as &$dataset){
 			$dataset->siteOfDataset = $params[0];
@@ -5271,21 +5277,20 @@ if($exportUserField  != null ) {
     }	
     
     function ckanSearchCall($params){
-        
-       
-        
         $params = explode(";", $params);
+		
+		$callUrl = 'https://' . $params[0] . "/api/3/action/package_search?rows=1000&q=" . $params[1];
         
-        error_log($params[0]."/api/3/action/package_search?q=".$params[1]);
+		Logger::logMessage("ckanSearchCall - Search on " . $callUrl);
         
         //$result = Query::callSolrServer('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
-        $curl = curl_init('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
+        $curl = curl_init($callUrl);
 		$opt = $this->getSimpleGetOptions();                               
 		curl_setopt_array($curl, $opt);    
 		$result = curl_exec($curl);
 		curl_close($curl);
 		
-		//error_log(json_encode($result));
+		Logger::logMessage("ckanSearchCall - Found " . count(json_decode($result)->result->results) . " datasets");
         
         $response = new Response();
 		$response->setContent($result);
@@ -6754,5 +6759,138 @@ if($exportUserField  != null ) {
 		
 		
 		return $return;
+	}
+
+	/**
+	 * This method update the current task for the dataset integration
+	 * 
+	 * (For now we use entity_id as ID, to see if we change this later)
+	 * 
+	 * EntityType can be
+	 * > DATASET
+	 * 
+	 * TaskType can be
+	 * > MANAGE_DATASET
+	 * 
+	 * Action can be one of the following 
+	 * > UNKNOWN
+	 * > CREATE_DATASET
+	 * > UPDATE_DATASET
+	 * > MANAGE_FILE
+	 * > UPLOAD_CKAN
+	 * 
+	 * Status can be one of the following
+	 * > SUCCESS
+	 * > ERROR
+	 * > PENDING
+	 * 
+	 * SQL Query to create the table
+	 * 
+	 * CREATE TABLE dpl_d4c_task_status (
+	 * 	id text NOT NULL,
+	 * 	entity_id text NOT NULL,
+	 * 	entity_type text NOT NULL,
+	 * 	task_type text NOT NULL,
+	 * 	action text NOT NULL,
+	 * 	status text,
+	 * 	message text,
+	 * 	last_updated timestamp without time zone NOT NULL DEFAULT (current_timestamp AT TIME ZONE 'UTC')
+	 * );
+	 * ALTER TABLE public.dpl_d4c_task_status OWNER TO user_d4c;
+	 * 
+	 * To update the table after running the update with the URL https://XXX.data4citizen.com/update.php
+	 * 
+	 * ALTER TABLE ONLY dpl_dpl_d4c_task_status_test ALTER COLUMN last_updated SET DEFAULT (current_timestamp AT TIME ZONE 'UTC');
+	 * 
+	 */
+	function updateDatabaseStatus($isNew, $uniqId, $entityId, $entityType, $taskType, $action, $status, $message) {
+		if ($entityId) {
+			Logger::logMessage("Updating task status for resource '" . $entityId . "' \r\n");
+		}
+		else {
+			Logger::logMessage("Updating task status with uniqId '" . $uniqId . "' \r\n");
+		}
+		$table = "dpl_d4c_task_status";
+
+		if ($isNew) {
+			$query = \Drupal::database()->insert($table);
+			$query->fields([
+				'id',
+				'entity_id',
+				'entity_type',
+				'task_type',
+				'action',
+				'status',
+				'message',
+				'last_updated'
+			]);
+			$query->values([
+				$uniqId,
+				$entityId,
+				$entityType,
+				$taskType,
+				$action,
+				$status,
+				$message,
+				'now'
+			]);
+		}
+		else {
+			$query = \Drupal::database()->update($table);
+			$query->fields([
+				'entity_id' => $entityId,
+				'action' => $action,
+				'status' => $status,
+				'message' => $message,
+				'last_updated' => 'now'
+			]);
+			$query->condition(db_or()
+					->condition('id', $uniqId)
+					->condition('entity_id', $uniqId));
+		}
+
+		$query->execute();
+	}
+
+	/**
+	 * This method retrieve the status for the last dataset integration define by the dataset ID
+	 * 
+	 */
+	function getTaskStatus($id) {
+		$table = "dpl_d4c_task_status";
+
+		// $database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
+		$sqlQuery = "SELECT action, status, message FROM " . $table . " WHERE (id = '" . $id ."' OR entity_id = '" . $id . "') and task_type = 'MANAGE_DATASET'";
+		
+		$query = \Drupal::database()->query($sqlQuery);
+		$task = $query->fetchAssoc();
+		
+		if ($task) {
+			$action = $task["action"];
+			$status = $task["status"];
+			$message = $task["message"];
+
+			$status = ["id" => $id,
+				"action" => $action,
+				"status" => $status,
+				"message" => $message
+			];
+		}
+		else {
+			$status = ["id" => $id,
+				"action" => 'UNKNOWN',
+				"status" => 'ERROR',
+				"message" => ''
+			];
+		}
+
+		$result = json_encode($status);
+		Logger::logMessage("Task status for entity '" . $id . "' " . $result);
+
+		$response = new Response();
+		$response->setContent($result);
+		$response->headers->set('Content-Type', 'application/json');
+        
+		return $response;  
 	}
 }

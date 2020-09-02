@@ -26,8 +26,14 @@ class ResourceManager {
 		$this->urlCkan = $this->config->ckan->url;
 	}
 
-	function createDataset($datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
+	function updateDatabaseStatus($isNew, $uniqId, $datasetId, $action, $status, $message) {
+		$api = new Api;
+		$api->updateDatabaseStatus($isNew, $uniqId, $datasetId, 'DATASET', 'MANAGE_DATASET', $action, $status, $message);
+	}
+
+	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
+		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', '');
 	
 		$urlRes = $this->urlCkan . "/dataset/" . $datasetName;
 		$newData = ["name" => $datasetName,
@@ -58,11 +64,13 @@ class ResourceManager {
 		$datasetId = $datasetId[1];
 
 		Logger::logMessage("New dataset has been saved with id '" . $datasetId . "'");
+		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', '');
 		return $datasetId;
 	}
 
-	function updateDataset($datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
+	function updateDataset($datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
 		Logger::logMessage("Updating dataset '" . $datasetName . "'");
+		$this->updateDatabaseStatus(true, $datasetId, $datasetId, 'UPDATE_DATASET', 'PENDING', '');
 		
 		$datasetToUpdate[title] = $title;
 		$datasetToUpdate[notes] = $description;
@@ -86,11 +94,15 @@ class ResourceManager {
 				$result = $api->updateRequest($callUrl, ["id" => $datasetToUpdate[id], "organization_id" => $organization], "POST");
 				
 				if ($result->success != true) {
+					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPDATE_DATASET', 'ERROR', "L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 				}
 			}
+
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', "");
 		}
 		else {
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPDATE_DATASET', 'ERROR', "Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 		}
 	}
@@ -171,6 +183,7 @@ class ResourceManager {
 		Logger::logMessage("TRM filePath " . $filePath);
 
 		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
+		$resourceUrl = 'https://' . $host . '' . $filePath;
 		Logger::logMessage("TRM resourceUrl " . $resourceUrl);
 		
 		Logger::logMessage("Managing file '" . $filePath . "'");
@@ -190,6 +203,8 @@ class ResourceManager {
 		}
 		
 		Logger::logMessage("Found format " . $type);
+
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
 
 			//if files > 50MB we don't do the treatments.
@@ -242,6 +257,7 @@ class ResourceManager {
 			}
 
 
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 			return $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description);
 		}
 		else if ($type == 'xls' || $type == 'xlsx') {
@@ -278,9 +294,11 @@ class ResourceManager {
 					break;
 				}
 
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 				return $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
 			}
 			else {
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 				return $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description);
 			}
 		}
@@ -299,12 +317,15 @@ class ResourceManager {
 	
 				file_put_contents($rootCsv, $csv);
 
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 				return $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
 			}
 
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', "Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 			throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 		}
 		else {
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', 'Une erreur est survenue avec le fichier ' . $fileName . '.');
 			Logger::logMessage("We do not process the file '" . $filePath . "'");
 		}
 	}
@@ -340,7 +361,7 @@ class ResourceManager {
 	function manageGeoFiles($type, $resourceUrl, $filePath) {
 		Logger::logMessage("Manage " . $type . " file");
 
-		Logger::logMessage("Retrieving file '" . $resourceUrl + "'");
+		Logger::logMessage("Retrieving file '" . $resourceUrl . "'");
 		$fileContent = Query::callSolrServer($resourceUrl);
 
 		if ($type == 'geojson' || $type == 'json'){
@@ -393,6 +414,7 @@ class ResourceManager {
 	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description) {
 		
 		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource on CKAN and monitoring the datapusher");
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout des données dans le magasin de données.');
 	
 		if ($isUpdate) {
 			$resource = [
@@ -436,6 +458,16 @@ class ResourceManager {
 			$data["uuid"] = uniqid();
 			$api->updateRequest($callUrl, $data, "POST");
 
+			if ($datapusherResult[$resourceId]['status'] == 'error') {
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'ERROR', "Impossible d'ajouter les données dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
+			}
+			else if ($datapusherResult[$resourceId]['status'] == 'pending') {
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Les données sont encore en train d\'être ajoutées au magasin de données. Cette opération peut durer plusieurs minutes.');
+			}
+			else {
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', '');
+			}
+
 			return $datapusherResult;
 		}
 		else {
@@ -452,9 +484,22 @@ class ResourceManager {
 			$return = json_decode($return);
 			if ($return->success == true) {
 				$resourceId = $return->result->id;
-				return $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true);
+				$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true);
+
+				if ($datapusherResult[$resourceId]['status'] == 'error') {
+					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'ERROR', "Impossible d'ajouter les données dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
+				}
+				else if ($datapusherResult[$resourceId]['status'] == 'pending') {
+					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Les données sont encore en train d\'être ajoutées au magasin de données. Cette opération peut durer plusieurs minutes.');
+				}
+				else {
+					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', '');
+				}
+
+				return $datapusherResult;
 			} 
 			else {
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'ERROR', "Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . json_encode($return->error->message) . ")");
 				throw new \Exception("Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . json_encode($return->error->message) . ")");
 			}
 		}
@@ -559,279 +604,6 @@ class ResourceManager {
 		$valid = curl_exec($curlValid);
 		curl_close($curlValid);
 		return json_decode($valid, true);
-	}
-
-	function updateDataset2() {
-		
-        // TODO : Update dataset      
-		$check=false;
-
-		// foreach ($dataSet as &$value) {
-		// 	if ($value[id] == $data_id) {
-
-		// 		$check=true;
-		// 		$datasetName = $value[name];
-		// 		$editDataset = $value;
-		// 		$extras = array();
-		// 		$cout_extras = count($value[extras]);
-		// 		$pict = false;
-		// 		$pict2 = false;
-		// 		$dataset_lies = false;
-		// 		$them_t = false;
-		// 		$theme_label_ex = false;
-		// 		$analyse = false;
-		// 		$typeMap_ex = false;
-		// 		$overlaysMap_ex = false;
-		// 		$dnt_viz_api = false;
-		// 		$widget_ex = false;
-		// 		$visu_ex = false;
-		// 		$date_dataset_ex = false;
-		// 		$disableFieldsEmptyEx = false;
-				
-		// 		if ($cout_extras != 0) {
-
-		// 			$url_pict = '';
-
-		// 			$form_file = $form_state->getValue('img_picto');
-
-		// 			if (isset($form_file[0]) && !empty($form_file[0])) {
-
-		// 				$file = File::load($form_file[0]);
-		// 				$file->setPermanent();
-		// 				$file->save();
-		// 				$url_t = parse_url($file->url());
-		// 				$url_pict = $url_t["path"];
-
-		// 				$url_pict = explode("/", $url_pict);
-		// 				$url_pict = explode(".", $url_pict[(count($url_pict) - 1)]);
-		// 				$url_pict = $url_pict[0];
-		// 				$url_pict = "/sites/default/files/theme_logo/".$url_pict.".svg";
-
-		// 			} 
-		// 			else {
-		// 				$url_pict = "d4c-".$form_state->getValue('imgBack');
-		// 			}
-					
-		// 			$form_file = $form_state->getValue('img_backgr');
-		// 			if (isset($form_file[0]) && !empty($form_file[0])) {
-
-		// 				$file = File::load($form_file[0]);
-		// 				$file->setPermanent();
-		// 				$file->save();
-		// 				$url_t = parse_url($file->url());
-		// 				$url_pict2 = $url_t["path"];
-
-		// 			} 
-
-		// 			for ($j = 0; $j < count($value[extras]); $j++) {
-					  
-		// 				//$theme_label_ex = false;
-		// 				if ($value[extras][$j]['key'] == 'Picto') {
-		// 					$pict = true;
-		// 					if ($url_pict != '') {
-		// 						$value[extras][$j]['value'] = $url_pict;
-		// 					}
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'img_backgr') {
-		// 					$del_img = $form_state->getValue('del_img');
-		// 					if(isset($del_img)) {
-		// 						unset($value[extras]);
-		// 						// $j--;
-		// 					}
-		// 					else {
-		// 						$pict2 = true;
-		// 						if ($url_pict2 != '') {
-		// 							$value[extras][$j]['value'] = $url_pict2;
-		// 						}
-		// 					}
-		// 				}
-						
-
-		// 				if ($value[extras][$j]['key'] == 'LinkedDataSet') {
-		// 					$dataset_lies = true;
-		// 					$value[extras][$j]['value'] = $string_dataset_lies;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'dont_visualize_tab') {
-							 
-		// 					$dnt_viz_api = true;
-		// 					$value[extras][$j]['value'] = $dont_visualize_tab;
-
-		// 				}
-														
-		// 				if ($value[extras][$j]['key'] == 'theme') {
-		// 					$them_t = true;
-		// 					$value[extras][$j]['value'] = $them;
-		// 				}
-						
-		// 				 if ($value[extras][$j]['key'] == 'default_visu') {
-		// 					$visu_ex = true;
-		// 					$value[extras][$j]['value'] = $visu;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'label_theme') {
-		// 					$theme_label_ex = true;
-		// 					$value[extras][$j]['value'] = $them_label;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'analyse_default') {
-		// 					$analyse = true;
-		// 					$value[extras][$j]['value'] = $analyse_default;
-		// 				}
-							
-		// 				if ($value[extras][$j]['key'] == 'type_map') {
-		// 					$typeMap_ex = true;
-		// 					$value[extras][$j]['value'] = $selectedTypeMap;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'overlays') {
-		// 					$overlaysMap_ex = true;
-		// 					$value[extras][$j]['value'] = $selectedOverlays;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'widgets') {
-		// 					$widget_ex = true;
-		// 					$value[extras][$j]['value'] = $widget;
-		// 				}
-						
-		// 				if ($value[extras][$j]['key'] == 'date_dataset') {
-		// 					$date_dataset_ex = true;
-		// 					$value[extras][$j]['value'] = $dateDataset;
-		// 				}
-
-		// 				if ($value[extras][$j]['key'] == 'disable_fields_empty') {
-		// 					$disableFieldsEmptyEx  = true;
-		// 					$value[extras][$j]['value'] = $disableFieldsEmpty;
-		// 				}
-
-
-		// 			}
-
-		// 		}
-			   
-		// 		if ($pict == false) {
-
-		// 			$value[extras][count($value[extras])]['key'] = 'Picto';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $url_pict;
-		// 		}
-				
-		// 		if ($pict2 == false) {
-		// 			if($url_pict2 || $url_pict2!='' || $url_pict2!=null){
-		// 				$value[extras][count($value[extras])]['key'] = 'img_backgr';
-		// 				$value[extras][count($value[extras]) - 1]['value'] = $url_pict2;
-		// 			}
-		// 		}
-
-		// 		if ($dataset_lies == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'LinkedDataSet';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $string_dataset_lies;
-		// 		}
-				
-		// 		if ($dnt_viz_api == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'dont_visualize_tab';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $dont_visualize_tab;
-		// 		}
-
-
-			   
-				
-
-				
-		// 		if($theme_label_ex==false){
-		// 			$value[extras][count($value[extras])]['key'] = 'label_theme';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $them_label;
-		// 		}
-
-		// 		if ($them_t == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'theme';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $them; 
-		// 		}
-				
-		// 		if ($visu_ex == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'default_visu';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $visu; 
-		// 		}
-				
-		// 		if ($analyse == false && $analyse_default!='') {
-		// 			$value[extras][count($value[extras])]['key'] = 'analyse_default';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $analyse_default; 
-		// 		}
-				
-		// 		if ($typeMap_ex == false && $selectedTypeMap!='') {
-		// 			$value[extras][count($value[extras])]['key'] = 'type_map';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $selectedTypeMap; 
-		// 		} 
-				
-		// 		if ($overlaysMap_ex == false && $selectedOverlays!='') {
-		// 			$value[extras][count($value[extras])]['key'] = 'overlays';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $selectedOverlays; 
-		// 		} 
-				
-		// 		if ($widget_ex == false && $widget!='') {
-		// 			$value[extras][count($value[extras])]['key'] = 'widgets';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $widget; 
-		// 		}
-
-		// 		if ($date_dataset_ex == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'date_dataset';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $dateDataset; 
-		// 		}
-		// 		if ($disableFieldsEmptyEx  == false) {
-		// 			$value[extras][count($value[extras])]['key'] = 'disable_fields_empty';
-		// 			$value[extras][count($value[extras]) - 1]['value'] = $disableFieldsEmpty; 
-		// 		}
-
-				
-				
-		// 		$value[title] = $title;
-		// 		$value[notes] = $description;
-		// 		$value[license_id] = $licence;
-		// 		$value['private'] = $private;
-
-		// 		//tags//
-				
-		// 		$tagsFin = array();
-		// 		if($tags!=null || $tags!='') {
-		// 			$tagsFin = explode(",", $tags);
-		// 		}
-		// 		for ($j = 0; $j < count($tagsFin); $j++) {
-		// 			$tagsData[$j] = ["vocabulary_id" => null, "state" => "active", "display_name" => $tagsFin[$j], "name" => $tagsFin[$j], "resources" => $resources];
-		// 		} 
-		// 		if($tagsData==null){
-		// 			$tagsData=array();
-		// 		}
-		// 		$value["tags"] = $tagsData;
-				
-				
-		// 		//tags end//
-				
-
-		// 		$return = $api->updateRequest($callUrl, $value, "POST");
-		// 		$return = json_decode($return);
-		// 		if ($return->success == true) {
-		// 			drupal_set_message('Les données ont été sauvegardées');
-					 
-		// 		} else {
-					 
-					
-		// 			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
-		// 			drupal_set_message("Raison: " . $return->error->message);
-		// 		}
-				
-		// 		$callUrluptOwner = $this->urlCkan . "/api/action/package_owner_org_update";
-		// 		$return = $api->updateRequest($callUrluptOwner, ["id" => $data_id, "organization_id" => $organization], "POST");
-
-				
-		// 		break;
-		// 	}
-
-		// }
-	
-		// if($check==false){
-		// 	// drupal_set_message(t('id not find'), 'error');
-		
-		// }
 	}
 
 	/**

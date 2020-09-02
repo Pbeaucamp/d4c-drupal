@@ -834,3 +834,11 @@ ckan_admin.dataset_datapusher:
     _title: 'Tableau de contrôle du datapusher'
   requirements:
     _permission: 'access dataset_board'
+
+ckan_admin.callTaskStatus:
+  path: '/api/taskStatus/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getTaskStatus'
+    _title: ''
+  requirements:
+    _permission: 'access content'
