@@ -200,7 +200,7 @@ class portailController extends ControllerBase {
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
 <script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/filtre-map-emprise.js"></script>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         
 	<script type="text/javascript">
 		$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
