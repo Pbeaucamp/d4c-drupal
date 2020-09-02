@@ -1664,21 +1664,16 @@ class Api{
 		$first = true;
 
 		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
+		$stack = array();
 
+		if($exportUserField  != null ) {
 
-$stack = array();
-
-
-if($exportUserField  != null ) {
-
-	foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-		if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
-			array_push($stack, $valuefields["id"]);
+			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
+					array_push($stack, $valuefields["id"]);
+				}
+			}
 		}
-		
-		
-	}
-}
 
 
 		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
@@ -1692,39 +1687,35 @@ if($exportUserField  != null ) {
 
 			if($exportUserField  != null ) {
 
-			/* get all fields from exportuserfield */
-			if (in_array( $value['name'], $stack) ) {
+				/* get all fields from exportuserfield */
+				if (in_array( $value['name'], $stack) ) {
 					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 
 						if( $valuefields["id"] == $value['name'] ){
-							 	/* Get name of ever field user and assign it to fields Header*/ 
-							 	$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
-								$first = false;
-								break;
+							/* Get name of ever field user and assign it to fields Header*/ 
+							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+							$first = false;
+							break;
 						}
 					}
-			}
-			else{
-						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						$first = false;
-						}
 				}
-
+				else {
+					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+					$first = false;
+				}
+			}
 			else {
-					if (isset($reqFieldsArray)) {
-								if (in_array($value['name'], $reqFieldsArray)) {
-									$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-								}
-						}
-					else {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						}
+				if (isset($reqFieldsArray)) {
+					if (in_array($value['name'], $reqFieldsArray)) {
+						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+					}
+				}
+				else {
+					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+				}
 				$first = false;
 			}
-			}
-				
-
-
+		}
 
 		$fieldsHeader .= "\n";
 
