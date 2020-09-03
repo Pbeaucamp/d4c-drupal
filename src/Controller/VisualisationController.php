@@ -288,7 +288,7 @@ class VisualisationController extends ControllerBase {
 	    	if (!file_exists($_SERVER['DOCUMENT_ROOT']."/". $id)) {
 		    	mkdir($_SERVER['DOCUMENT_ROOT']."/". $id, 0777, true);
 			}
-			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/testxml.xml", $xml);
+			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml", $xml);
 			
 			break;
 	    }
@@ -297,17 +297,17 @@ class VisualisationController extends ControllerBase {
 
 
 
-	    if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $id."/testxml.xml")) {
+	    if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml")) {
 
-			    $str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/". $id."/testxml.xml"));
+			    $str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml"));
 
 
-				$fp=fopen($_SERVER['DOCUMENT_ROOT']."/".$id."/testxml.xml",'w');
+				$fp=fopen($_SERVER['DOCUMENT_ROOT']."/".$id."/metadata_xml_view.xml",'w');
 				$str=str_replace('&','??',$str);
 				$str=str_replace(':','',$str);
 				fwrite($fp,$str,strlen($str));
 
-				$xml = simplexml_load_file($id."/testxml.xml");
+				$xml = simplexml_load_file($id."/metadata_xml_view.xml");
 
 				 /*foreach ($xml as $key => $value) {
 				 	echo "<pre>";
@@ -519,6 +519,7 @@ class VisualisationController extends ControllerBase {
 	
 
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
+		
 		$element = array(
 			'example one' => [
 				'#type' => 'inline_template',
@@ -650,17 +651,6 @@ class VisualisationController extends ControllerBase {
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\']"></d4c-dataset-metadata-block>
 
 										'.$LinkedDataSet.'
-										<!--    <div class="d4c-dataset-metadata-block">
-												<div class="d4c-dataset-metadata-block__metadata">
-													<div class="d4c-dataset-metadata-block__metadata-name" translate>Follow</div>
-													<div class="d4c-dataset-metadata-block__metadata-value">
-														<d4c-dataset-subscription preset="false"
-																				  dataset-id="ctx.dataset.metas.name"
-																				  logged-in="true"></d4c-dataset-subscription>
-													</div>
-												</div>
-											</div>
-										-->
 									
 									
 									 <div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">

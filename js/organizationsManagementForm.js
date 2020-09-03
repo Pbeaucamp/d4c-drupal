@@ -1,7 +1,7 @@
 $ = jQuery;
 
 $("#edit-img-org-upload").after('<div id="org_img"></div>');
-$('#edit-valider').attr('onclick', ' validUpload(event, "img_org");');
+/*$('#edit-valider').attr('onclick', ' validUpload(event, "img_org");');*/
 
 function addData(data) {
 

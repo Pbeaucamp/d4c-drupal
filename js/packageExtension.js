@@ -48,6 +48,7 @@ function openExportPopup(event,xml=false){
             if(xml) {
                 const xmlfile = fileName.split('/');
                 var xmltext = readXml(fileName);
+                console.log(xmltext);
                 var contentxml = new XMLSerializer().serializeToString(xmltext);
                 var pom = document.createElement('a');
 
@@ -63,6 +64,8 @@ function openExportPopup(event,xml=false){
                 pom.classList.add('dragout');
 
                 pom.click();
+                
+
             }
             else {
                 window.location.href = fileName; 

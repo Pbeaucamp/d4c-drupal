@@ -6934,4 +6934,83 @@ if($exportUserField  != null ) {
 
 		
 	}
+public function addStory($params) {
+		if(is_array($params)){
+			$story = $params;
+		} else {
+			$story = $this->proper_parse_str($params);
+		}
+
+		$query = \Drupal::database()->insert('d4c_user_story');
+		$scrolltime = (int)$story["scrolling_time"];
+
+		$query->fields([
+			'widget_label',
+			'widget',
+			'scroll_time',
+			'image'
+		]);
+		$query->values([
+			$story["label_widget"],
+			$story["widget"],
+			$scrolltime,
+			$story["img_widget"]
+			
+		]);
+
+		$query->execute();
+
+		
+	}
+
+
+public function getStories() {
+		$res=array();
+		$table = "d4c_user_story";
+		$query2 = \Drupal::database()->select($table, 'story');
+
+
+		$query2->fields('story', [
+			'story_id',
+			'widget_label',
+			'widget',
+			'scroll_time',
+			'image'
+		]);
+
+
+		$prep=$query2->execute();
+		$res= array();
+		while ($enregistrement = $prep->fetch()) {
+			array_push($res, $enregistrement);
+		}
+
+		return $res;
+}
+
+function updateStory($story){
+
+		$story_id = $story["story_id"];
+		$query = \Drupal::database()->update('d4c_user_story');
+		$query->fields([
+			'widget_label' => $story["label_widget"],
+			'widget' => $story["widget"],
+			'scroll_time' => (int)$story["scrolling_time"],
+			'image' => $story["img_widget"]			
+		]);
+
+		$query->condition('story_id', $story_id);
+		$query->execute();
+		
+	}
+
+function deleteStory($story_id){
+
+		$query = \Drupal::database()->delete('d4c_user_story');
+
+
+		$query->condition('story_id', $story_id);
+		$query->execute();
+		
+	}
 }

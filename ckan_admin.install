@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\Core\Database\Database;
+
 function ckan_admin_schema() {
   $schema['d4c_maps'] = array(
     'description' => 'Gestion des cartes Data4citizen par Utilisateur',
@@ -133,4 +135,40 @@ function ckan_admin_schema() {
 
   return $schema;
 
+}
+
+/**
+ * Update for User Story
+ */
+function ckan_admin_update_8701(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion des user story',
+    'fields' => [
+      'story_id' => [
+        'description' => 'Myfield1 description.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'widget_label' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'widget' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
+      'scroll_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'image' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['story_id'],
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_user_story', $spec);
 }

@@ -157,6 +157,7 @@ class organizationsManagementForm extends HelpFormBase
         $description = $form_state->getValue('description');
         $selected_private = $form_state->getValue('selected_private');
         $form_file = $form_state->getValue('img_org');
+        var_dump($form_file);die;
         $private=$form_state->getValue('selected_private');
         
         if ($private == '0') {

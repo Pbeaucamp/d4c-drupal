@@ -271,6 +271,21 @@ PackageXMLFileForm.form:
   dependencies:
     - core/jquery
 
+#User Story libraries
+userstoryForm.form:
+  version: VERSION
+  js:
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/libraries.js: {}
+    /sites/default/files/api/portail_d4c/js/jquery.slides.min.js: {}
+    js/userstory.js: {}
+  dependencies:
+    - core/jquery
+  css:
+    base:
+      css/userstory.css: {}
+      https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css: {}
+
 
 
 
