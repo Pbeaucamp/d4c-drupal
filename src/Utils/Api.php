@@ -1434,6 +1434,7 @@ class Api{
 		$patternSerie = '/y.serie/i';
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
+		$params = $this->retrieveParameters($params);
        
 
         if($query_params['user_defined_fields']) {
