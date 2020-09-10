@@ -78,6 +78,7 @@ editMetaDataForm.form:
     /sites/default/files/api/portail_d4c/js/i18n.js: {}
     /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/editMetaDataForm.js: {}
+    js/progress.js: {}
   css:
     theme:
       /sites/default/files/api/portail_d4c/css/visualisation.css: {}

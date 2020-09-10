@@ -117,7 +117,7 @@ for(var i=1; i<=20; i++){
 if ($('#selected_data').val() == 'new') {
     $('#edit-table tbody tr').remove();
 }
-$('#edit-valider').attr('onclick', 'validUpload(event, "resours"); validUpload(event, "img_backgr");');
+$('#edit-valider').attr('onclick', 'validUpload(event, "resours"); validUpload(event, "img_backgr"); generateTaskUniqueId(); checkProgress()');
 $('#edit-del-button-dataset').attr('onclick', 'delDataset(event);');
 $('#edit-del-button-dataset').attr("style", "display: none;");
 $('#edit-filtr-org').change(function () {
@@ -230,7 +230,7 @@ function clear() {
     //var options = $('#selected_data option');
 
     $("#edit-table-widgets tbody tr").remove();
-    $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(1)">');
+    $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(1)"">');
 
     var values = $.map(tableChecks, function (tableChecks) {
         return tableChecks.id;
@@ -775,6 +775,116 @@ function findGetParameter(parameterName) {
         });
     return result;
 }
+
+function generateTaskUniqueId() {
+    var uuid = uuidv4();
+    $("#edit-generated-task-id").val(uuid);
+}
+
+/**
+ * Generate a random UUID to retrieve the task
+ */
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+}
+
+function checkProgress() {
+
+    showProgress();
+
+    var generatedId = $("#edit-generated-task-id").val();
+    worker(generatedId);
+}
+
+function worker(datasetId) {
+    $.ajax('/api/taskStatus/' + datasetId, {
+        type: 'POST',
+        dataType: 'json',
+
+//      Result can be
+//      * > UNKNOWN
+//      * > CREATE_DATASET
+//      * > UPDATE_DATASET
+//      * > MANAGE_FILE
+//      * > UPLOAD_CKAN
+// 
+//      Status can be
+//      * > SUCCESS
+// 	    * > ERROR
+// 	    * > PENDING
+        success: function(data) {
+            var slice = 25;
+
+            var percentile = 1;
+            var message = '';
+            var serverMessage = data.message;
+            if (data.action == 'CREATE_DATASET') {
+                if (data.status == 'PENDING') {
+                    message = 'Le jeu de données est en cours de création.';
+                    percentile = 1;
+                }
+                else if (data.status == 'ERROR') {
+                    message = 'Le jeu de données n\'a pas pu être créé car une erreur est survenue.';
+                    percentile = 1;
+                }
+                else if (data.status == 'SUCCESS') {
+                    message = 'Le jeu de données a été créé.';
+                    percentile = 1 * slice;
+                }
+            }
+            else if (data.action == 'UPDATE_DATASET') {
+                if (data.status == 'PENDING') {
+                    message = 'Le jeu de données est en cours de mise à jour.';
+                    percentile = 1;
+                }
+                else if (data.status == 'ERROR') {
+                    message = 'Le jeu de données n\'a pas pu être mis à jour car une erreur est survenue.';
+                    percentile = 1;
+                }
+                else if (data.status == 'SUCCESS') {
+                    message = 'Le jeu de données a été mis à jour.';
+                    percentile = 1 * slice;
+                }
+            }
+            else if (data.action == 'MANAGE_FILE') {
+                if (data.status == 'PENDING') {
+                    message = 'Le fichier est en cours de traitement.';
+                    percentile = 1 * slice;
+                }
+                else if (data.status == 'ERROR') {
+                    message = 'Le fichier n\'a pas pu être traité car une erreur est survenue.';
+                    percentile = 1 * slice;
+                }
+                else if (data.status == 'SUCCESS') {
+                    message = 'Le fichier a été traité.';
+                    percentile = 2 * slice;
+                }
+            }
+            else if (data.action == 'UPLOAD_CKAN') {
+                if (data.status == 'PENDING') {
+                    message = 'Les données sont en cours d\'ajout dans le magasin de données. Cette opération peut prendre plusieurs minutes suivant la taille du fichier.';
+                    percentile = 2 * slice;
+                }
+                else if (data.status == 'ERROR') {
+                    message = 'Les données n\'ont pas pu être ajouté dans le magasin de données. car une erreur est survenue.';
+                    percentile = 2 * slice;
+                }
+                else if (data.status == 'SUCCESS') {
+                    message = 'Les données ont été ajoutées dans le magasin de données.';
+                    percentile = 4 * slice;
+                }
+            }
+            updateProgress(percentile, serverMessage, message);
+        },
+        complete: function() {
+            // Schedule the next request when the current one's complete
+            setTimeout(worker.bind(null, datasetId), 1000);
+        }
+    });
+  }
 
 if(findGetParameter("id") != null){
 	$('#selected_data').val(findGetParameter("id"));

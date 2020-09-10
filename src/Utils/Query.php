@@ -15,10 +15,25 @@ Class Query{
 				CURLOPT_CONNECTTIMEOUT => 120,
 				CURLOPT_TIMEOUT        => 120,
 		);
-		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $options);
-		$result = curl_exec($curl);
-		curl_close($curl);
+		
+		Logger::logMessage("callSolrServer - " . $callUrl);
+		try {
+			$curl = curl_init($callUrl);
+			curl_setopt_array($curl, $options);
+			$result = curl_exec($curl);
+			// Check the return value of curl_exec(), too
+			if ($result === false) {
+				throw new \Exception(curl_error($curl), curl_errno($curl));
+			}
+
+			// Close curl handle
+			curl_close($curl);
+		} catch(\Exception $e) {
+		
+			Logger::logMessage(sprintf('callSolrServer - Curl failed with error #%d: %s', $e->getCode(), $e->getMessage()));
+		
+		}
+
 		return $result;
 	}
 	

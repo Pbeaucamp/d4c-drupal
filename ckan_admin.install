@@ -132,6 +132,44 @@ function ckan_admin_schema() {
     ),
     'primary key' => array('reu_id'),
   );
+ 
+  $schema['d4c_task_status'] = array(
+    'description' => 'Gestion des taches',
+    'fields' => array(
+      'id'=>array(
+        'type'=>'text',
+        'not null' => TRUE,
+      ),
+      'entity_id'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+	    'entity_type'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'task_type'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'action'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'status'=>array(
+        'type' => 'text'
+      ),
+      'message'=>array(
+        'type' => 'text'
+      ),
+      'last_updated'=>array(
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+        'default' => '',
+      )
+    )
+  );
 
   return $schema;
 
@@ -171,4 +209,45 @@ function ckan_admin_update_8701(&$sandbox) {
   ]; 
   $schema = Database::getConnection()->schema();
   $schema->createTable('d4c_user_story', $spec);
+}
+
+function ckan_admin_update_8702(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion des taches',
+    'fields' => [
+      'id' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'entity_id' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'entity_type' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'task_type' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'action' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'status' => [
+        'type' => 'text'
+      ],
+      'message' => [
+        'type' => 'text'
+      ],
+      'last_updated' => [
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE
+      ],
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_task_status', $spec);
 }

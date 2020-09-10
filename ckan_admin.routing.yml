@@ -921,3 +921,11 @@ ckan_admin.userstory:
     _title: 'Histoire de données'
   requirements:
     _permission: 'access content'
+
+ckan_admin.callTaskStatus:
+  path: '/api/taskStatus/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getTaskStatus'
+    _title: ''
+  requirements:
+    _permission: 'access content'

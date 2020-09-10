@@ -1889,6 +1889,8 @@ class MoissonnageDataGouv extends HelpFormBase {
             
 				/////////////////////resources////////////
 				foreach($results->resources as &$res){
+
+					Logger::logMessage("Add resource " . $res->url);
              
 					$host = $_SERVER['HTTP_HOST']; 
 			   
@@ -1908,8 +1910,14 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$filepathN = explode('/',$filepathN);
 						$filepathN = $filepathN[count($filepathN)-1];
 						$filepathN = explode('.',$filepathN)[0]; 
-						$filepathN =urldecode($filepathN);  
+						$filepathN = urldecode($filepathN);  
 						$filepathN = strtolower($filepathN);
+						$filepathN = $this->nettoyage($filepathN);
+
+						//If it does not contain the format, we put it automatically
+						if (!(strpos($filepathN, '.') !== false)) {
+							$filepathN = $filepathN . ".csv";
+						}
 					  
 						if( $res->format == 'XLS' || $res->format == 'XLSX'  || $res->format == 'xls' || $res->format == 'xlsx'){
 				   
@@ -1994,13 +2002,15 @@ class MoissonnageDataGouv extends HelpFormBase {
 						}
 				
 						if($res->format == 'csv' || $res->format == 'CSV') {
+
+							Logger::logMessage("Add CSV file");
 					  
 							$filepathN = explode(".",$filepathN)[0].'.csv';
 							$url_res = $url_res.''.$filepathN;
-							error_log($res->url);
-							// read into array
-							//$arr = file('/home/user-client/drupal-d4c'.$filepath);
-							$arr = file($res->url); //error_log($arr);
+
+							Logger::logMessage("Resource URL " . $res->url);
+
+							$arr = file($res->url);
 							if($arr == false || $arr == ""){error_log("retentative..");
 								$arrContextOptions=array(
 									"ssl"=>array(
@@ -2020,6 +2030,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 							// write back to file
 							file_put_contents($root.''. $filepathN, implode($arr));
+
+							Logger::logMessage("Write file to " . $root . '' . $filepathN);
 					
 							//$query = DataSet::createResource($idNewData,$url_res,$res->description,$res->name, $res->format,'false');
 					
@@ -2548,6 +2560,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$str = str_replace("/", "_", $str);
 		$str = str_replace("|", "_", $str);
 		$str = str_replace(".", "_", $str);
+		$str = str_replace("=", "_", $str);
 		$str = strtolower($str);     
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );

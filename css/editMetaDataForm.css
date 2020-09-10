@@ -5,3 +5,37 @@
 .resource-row.noedit .label, .resource-row.edit .edit{
 	display: inline-block;
 }
+
+/* The Modal (background) */
+.progress-modal {
+	display: none; /* Hidden by default */
+	position: fixed; /* Stay in place */
+	z-index: 1; /* Sit on top */
+	left: 0;
+	top: 0;
+	right: 0px;
+	height: 100%; /* Full height */
+	overflow: auto; /* Enable scroll if needed */
+	background-color: rgb(0,0,0); /* Fallback color */
+	background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+
+  .toolbar-tray-open .progress-modal {
+	margin-left: 240px;
+	margin-left: 15rem;
+  }
+  
+  /* Modal Content/Box */
+  .progress-modal-content {
+	background-color: #fefefe;
+	margin: 15% auto; /* 15% from the top and centered */
+	padding: 20px;
+	border: 1px solid #888;
+	width: 80%; /* Could be more or less, depending on screen size */
+  }
+
+  #progress-bar {
+	width: 1%;
+	height: 30px;
+	background-color: green;
+  }
