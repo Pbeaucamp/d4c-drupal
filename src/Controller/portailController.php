@@ -21,11 +21,42 @@ class portailController extends ControllerBase {
 		$element = array(
 				'example one' => [
 					'#type' => 'inline_template',
-					'#template' => '<div id ="main" class="widget-opendata">
+					'#template' => '<style type="text/css">
+						.d4cwidget-map__map {
+						    height: 100%;
+						    min-height: 1000px!important;
+						}
+						.main-container.container.js-quickedit-main-content {
+						    width: 100%!important;
+							padding: 0px!important;
+						    margin: 0px!important;
+						}
+						.d4cwidget{
+							height: 100px !important;
+						}
+						.d4cwidget-map {
+							height: 100px !important;
+						}
+					
+						</style><div id ="main" class="widget-opendata">
 						
 		 
 
         <div id="filter" class="col-md-2 content-body" >
+        <div class="ng-scope" ng-app="d4c-widgets">
+						<d4c-dataset-context context="staobs,limitecommune" limitecommune-dataset="geoflar-communes-2016" staobs-dataset="d4d0431b-9839-481a-8b1e-f94fe08a8c8a" staobs-parameters="">
+									<div class="row" ng-if="staobs.dataset">
+										
+										<div >
+											<div class="d4c-box d4c-map-wp">
+												<d4c-map location="11,-21.130738,55.5364801" scroll-wheel-zoom="true"> 
+													<d4c-map-layer border-color="#FFFFFF" border-opacity="1" border-pattern="solid" border-size="1" caption="false" color="#0e7ce3" context="staobs" display="clusters" exclude-from-refit="false" expression="meli_montttc_va" function="SUM" picto="d4c-" point-opacity="1" shape-opacity="0.5" show-marker="false" size-function="linear" size-max="5" size-min="3"> 
+													</d4c-map-layer> 
+												</d4c-map> 
+											</div>
+										</div>
+									</div>
+						</d4c-dataset-context></div>
             <h1> <span id="nb_jeux">0</span> Jeux de données</h1>
 			<input id="input-tag" type="text" class="hidden-filter">
                                 						
@@ -132,6 +163,46 @@ class portailController extends ControllerBase {
         
 
     </div>
+
+    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"/>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"/>
+    <script src="/sites/default/files/api/portail_d4c/js/script_portail.js"></script>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"/>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"/>
+
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"/>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"/>
+<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"/>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-carto.js"/>
+<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/widget-card-dataset.js"/>
+<link href="/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet" />
+<link href="/sites/default/files/api/portail_d4c/css/font-awesome.min.css" rel="stylesheet" />
+<link href="/sites/default/files/api/portail_d4c/css/client.css" rel="stylesheet" />
+
+
+<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+        
+	<script type="text/javascript">
+		$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
+		$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
+		var mod = angular.module(\'d4c.core.config\', []);
+
+		mod.factory("config", [function() {
+			return {
+				ID_DATASET: "'.$id.'",
+				HOST: "'.$config->client->domain.'"
+			}
+		}]);
+	</script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
     <script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
 	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
     <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
@@ -152,6 +223,7 @@ class portailController extends ControllerBase {
 					
 				],
 		);
+	$element['#attached']['library'][] = 'ckan_admin/visu.angular';
 		return $element;
 		
 	}
