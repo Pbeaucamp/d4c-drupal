@@ -903,3 +903,21 @@ ckan_admin.extension_package_fileXML:
     _title: 'Fichiers XML'
   requirements:
     _permission: 'access content'
+    
+    
+# ckan_admin.userstory:
+#   path: '/admin/config/data4citizen/userstory'
+#   defaults:
+#     _controller: '\Drupal\ckan_admin\Controller\userStoryController::myPage'
+#     _title: ''
+#   requirements:
+#     _permission: 'access content'
+
+
+ckan_admin.userstory:
+  path: '/admin/config/data4citizen/userstory'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\userStoryForm'
+    _title: 'Histoire de données'
+  requirements:
+    _permission: 'access content'
