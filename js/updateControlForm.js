@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 $('#formModal').after('<div class="modal" data-modal="1"><svg class="modal__cross js-modal-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M23.954 21.03l-9.184-9.095 9.092-9.174-2.832-2.807-9.09 9.179-9.176-9.088-2.81 2.81 9.186 9.105-9.095 9.184 2.81 2.81 9.112-9.192 9.18 9.1z"/></svg><div id="tablePlace" style="overflow:scroll; height:35em; "></div></div><div class="overlay js-overlay-modal"></div>');
 
+hide_param();
 var validation_resurce = [];
 
 /////////////modal/////////////
@@ -75,6 +76,82 @@ window.addEventListener("keypress", function (e) {
     }
 
 });
+
+
+
+
+
+function hide_param() {
+    $('#param_dataGouv').attr('style', 'display:none;');
+    $('#div_ckan').attr('style', 'display:none;');
+    $('#div_d4c').attr('style', 'display:none;');
+    $('#div_odsall').attr('style', 'display:none;');
+    $('#div_arcgis').attr('style', 'display:none;');
+    $('#div_socrata').attr('style', 'display:none;');
+$('#edit-ids').empty();
+
+
+
+
+    let siteSearch = $('input[name=search_on_site]:checked').val();
+   
+
+    if (siteSearch == 'Data_Gouv_fr') {
+
+        $('#param_dataGouv').removeAttr('style');
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('Data_Gouv_fr');
+        $('#edit-chercher').show('');
+
+    } else if (siteSearch == 'InfoCom94') {
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('InfoCom94');
+        $('#edit-chercher').show('');
+
+    } else if (siteSearch == 'Public_OpenDataSoft_com') {
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('Public_OpenDataSoft_com');
+        $('#edit-chercher').show('');
+
+    }
+    else if (siteSearch == 'socrata') {
+        //alert();
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('socrata');
+        $('#div_socrata').removeAttr('style');
+        $('#edit-chercher').show('');
+    } 
+    else if (siteSearch == 'dckan') {
+        //alert();
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('ckan'); 
+        $('#div_ckan').removeAttr('style');
+        $('#edit-chercher').show('');
+    }
+    else if (siteSearch == 'd4c') {
+        //alert();
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('d4c'); 
+        $('#div_d4c').removeAttr('style');
+        $('#edit-chercher').show('');
+    }
+    else if (siteSearch == 'odsall') {
+        //alert();
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('odsall'); 
+        $('#div_odsall').removeAttr('style');
+        $('#edit-chercher').show('');
+    }
+    else if (siteSearch == 'arcgis') {
+        //alert();
+        $('#edit-site-search').val('');
+        $('#edit-site-search').val('arcgis'); 
+        $('#div_arcgis').removeAttr('style');
+        $('#edit-chercher').val('');
+        $('#edit-chercher').hide('');
+    }
+
+}
 
 
 function fillTable(data, data2) {
