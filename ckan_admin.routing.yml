@@ -93,7 +93,7 @@ ckan_admin.portail:
     _title: ''
   requirements:
     _permission: 'access content'
-    
+
 ckan_admin.visualisation:
   path: '/visualisation/{tab}'
   defaults:
@@ -107,6 +107,15 @@ ckan_admin.carte:
   path: '/carte'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\MapController::manage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.cartemap:
+  path: '/carte/show'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\PortailController::myPage'
+    tab: 'table'
     _title: ''
   requirements:
     _permission: 'access content'
