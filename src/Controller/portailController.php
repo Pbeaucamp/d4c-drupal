@@ -15,7 +15,6 @@ class portailController extends ControllerBase {
 	 *   A simple renderable array.
 	 */
 	public function myPage() {
-		
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$element = array(

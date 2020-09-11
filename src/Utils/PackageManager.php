@@ -104,21 +104,25 @@ class PackageManager {
 
     	$api = new API();
     	$dataset = $api->getPackageShow2($contentdataset["result"]["id"],"");
-    	/*foreach ($dataset["metas"] as $key => $value) {
+    	$host = \Drupal::request()->getHost();
+		$protocol = \Drupal::request()->getScheme()."://";
+		$loggedIn = \Drupal::currentUser()->isAuthenticated();
+
+	/*	var_dump($dataset["metas"]["description"]);die;
+		foreach ($dataset["metas"] as $key => $value) {
     		echo "<pre>";
     		var_dump($key);
     		var_dump($value);
     		echo "</pre>";
     	}die;*/
-    	$host = \Drupal::request()->getHost();
-		$protocol = \Drupal::request()->getScheme()."://";
-		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
     	$description = $dataset["metas"]["description"];
     	$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$license = $dataset["metas"]["license"];
 		$thesaurusValue="";
+		$thesaruskeyword ="";
+		$thesarustype ="";
 		$otherkeyword =[];
 		$first = true;
 		$codepostal ="";
@@ -127,21 +131,49 @@ class PackageManager {
 		$urllogo = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
 		$resources = array();
 		$resourcesid = "";
+		$useLimitationsContent =array();
+		$otherrestriction="";
+		$accessconstraint="";
+		$useconstraintvalue="";
+		$topiccategory = "";
+		$reporttitle = "";
+		$reportdate = "";
+		$explanationtitle="";
+		$extentdescription ="";
+		$westBoundLongitudeValue="";
+		$eastBoundLongitudeValue="";
+		$southBoundLatitudeValue="";
+		$northBoundLatitudeValue="";
+		$lineagetitle ="";
+
+		/*var_dump($keywords);die;*/
+
 		foreach($dataset["metas"]["resources"] as $value){
+
             if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
 		 		$resourcesid = $value['id'];
                 
 		 	}
 			if($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'){
 				$res = array();
-				$res["@type"] = "DataDownload";
-				$res["encodingFormat"] = $value['format'];
+				$url = $value["url"];
+				$array = get_headers($url);
+				$string = $array[0];
+				if(strpos($string,"200")){
+					    $res["type"] = "WWW:LINK-1.0-http--link";
+					  }
+				else{
+					    $res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+				}
+				
+				$res["encodingFormat"] = $value['name'];
 				$res["contentUrl"] = $protocol . $host . "/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
 				$resources[] = $res;
+		
+
 			}
 		}
-
-
+	
 			if($resourcesid != ""){
 				$res = array();
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
@@ -183,13 +215,19 @@ class PackageManager {
 
 
 		if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $contentdataset["result"]["id"]."/metadata_xml_view.xml")) {
-			
 		 		$xml = simplexml_load_file($contentdataset["result"]["id"]."/metadata_xml_view.xml");
 
 		 		foreach ($xml as $key => $value) {
 		 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
+		 				/*echo "<pre>";
+		 				var_dump($key2);*/
+		 				
 		 				if($value2->gmdMD_Keywords->gmdthesaurusName) {
+		 					//var_dump($value2->gmdMD_Keywords->gmdtype->gmdMD_KeywordTypeCode["codeListValue"]->__toString());
 		 					$thesaurusValue = $value2->gmdMD_Keywords->gmdthesaurusName->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+		 					$thesaruskeyword = $value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString();
+		 					$thesarustype = $value2->gmdMD_Keywords->gmdtype->gmdMD_KeywordTypeCode["codeListValue"]->__toString();
+		 					break;
 		 				}
 		 				else {
 
@@ -198,17 +236,53 @@ class PackageManager {
 		 				}
 					}
 
-
+					//echo "</pre>";
 					$codepostal = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString();
 					$cityValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString();
 					$mailadress = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString();
 					$adresseValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString();
+
+
+					foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+				
+						foreach ($value2->gmdMD_LegalConstraints->gmduseLimitation as $limitation) {
+							array_push($useLimitationsContent, $limitation->gcoCharacterString->__toString());
+						}	
+
+						if($value2->gmdMD_LegalConstraints->gmdotherConstraints != null ){
+							$otherrestriction = $value2->gmdMD_LegalConstraints->gmdotherConstraints->gcoCharacterString->__toString();
+						}
+
+						if($value2->gmdMD_LegalConstraints->gmdaccessConstraints != null )
+						 	$accessconstraint = $value2->gmdMD_LegalConstraints->gmdaccessConstraints->gmdMD_RestrictionCode->__toString();
+
+
+						if($value2->gmdMD_LegalConstraints->gmduseConstraints != null )
+						 	$useconstraintvalue = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+					}
+
+					$topiccategory = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->gmdMD_TopicCategoryCode->__toString();
+					$extentdescription = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString();
+					$westBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
+					$eastBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
+					$southBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
+					$northBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
+
+					/*echo "<pre>";
+					var_dump($value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString());
+					echo "</pre>";*/
+					$lineagetitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString();
+
+					$reporttitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdspecification->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+				$reportdate = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdspecification->gmdCI_Citation->gmddate->gmdCI_Date->gmddate->gcoDate->__toString();
+				$explanationtitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdexplanation->gcoCharacterString->__toString();
+					
 		 		}
+		 		
+				
 		 }
 
-
-		
-	
+	//die;
     		// create Ms_Metadata element with attributes
 			$metadata = $doc->createElement("gmd:MD_Metadata");
 			$metadata->setAttribute("xmlns:gmd","http://www.isotc211.org/2005/gmd");
@@ -229,7 +303,22 @@ class PackageManager {
 
 				// create language element 
 				$gmdlanguage = $doc->createElement("gmd:language");
-				$gmdlanguagecode = $doc->createElement("gmd:LanguageCode", "fre");
+				if($dataset["metas"]["language"] == "fr") {
+					$langue = "fre";
+				}
+				if($dataset["metas"]["language"] == "en") {
+					$langue = "eng";
+				}
+				if($dataset["metas"]["language"] == "ge") {
+					$langue = "ger";
+				}
+				else {
+					$langue = "fre";
+				}
+						
+				$gmdlanguagecode = $doc->createElement("gmd:LanguageCode", $langue);
+				$gmdlanguagecode->setAttribute("codeListValue",$langue);
+				$gmdlanguagecode->setAttribute("codeList","http://www.loc.gov/standards/iso639-2/");
 				$gmdlanguage->appendChild($gmdlanguagecode);
 				$metadata->appendChild($gmdlanguage);
 
@@ -272,7 +361,7 @@ class PackageManager {
 
 						// create positionName element
 						$positionName = $doc->createElement("gmd:positionName");
-						$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "");
+						$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "consultant");
 						$positionName->appendChild($gcoCharacterStringorganisation);
 
 						// create contactInfo element
@@ -402,7 +491,7 @@ class PackageManager {
 								$date = $doc->createElement("gmd:date");
 									$CI_Date = $doc->createElement("gmd:CI_Date");
 										$date2 = $doc->createElement("gmd:date");
-											$datestamps = explode("T", $contentdataset["result"]["metadata_created"]);
+											$datestamps = explode("T", $dataset["metas"]["metadata_created"]);
 											$date3 = $doc->createElement("gco:Date",$datestamps[0]);
 										$date2->appendChild($date3);
 
@@ -419,11 +508,11 @@ class PackageManager {
 							// add date
 							$CI_Citation->appendChild($date);
 
-			
+
 								$date = $doc->createElement("gmd:date");
 									$CI_Date = $doc->createElement("gmd:CI_Date");
 										$date2 = $doc->createElement("gmd:date");
-											$datestamps = explode("T", $dataset["metas"]["metadata_processed"]);
+											$datestamps = explode("T", $dataset["metas"]["metadata_modified"]);
 											$date3 = $doc->createElement("gco:Date",$datestamps[0]);
 										$date2->appendChild($date3);
 
@@ -479,9 +568,15 @@ class PackageManager {
 
 
 						$abstract = $doc->createElement("gmd:abstract");
-							$CharacterString = $doc->createElement("gco:CharacterString","Aire ( ou Zone ou Arrêtés) de protection des habitats naturels (APHN) en Grand Est ");
+						
+						$description = str_replace('<br>', '', $description);
+						$pieces = explode(".", htmlentities($description));
+
+							$CharacterString = $doc->createElement("gco:CharacterString",htmlentities($pieces[0])."".htmlentities($pieces[1])."".htmlentities($pieces[3])."".htmlentities($pieces[4])."".htmlentities($pieces[5])."".htmlentities($pieces[6])."".htmlentities($pieces[7])."".htmlentities($pieces[8]));
 						$abstract->appendChild($CharacterString);
 					$MD_DataIdentification->appendChild($abstract);
+
+					//var_dump(html_entity_decode(htmlentities($pieces[0])));die;
 
 						$pointOfContact = $doc->createElement("gmd:pointOfContact");
 							$CI_ResponsibleParty = $doc->createElement("gmd:CI_ResponsibleParty");
@@ -497,7 +592,7 @@ class PackageManager {
 							$CI_ResponsibleParty->appendChild($organisationName);
 
 								$positionName = $doc->createElement("gmd:positionName");
-									$CharacterString = $doc->createElement("gco:CharacterString"," ");
+									$CharacterString = $doc->createElement("gco:CharacterString","consultant");
 								$positionName->appendChild($CharacterString);
 							$CI_ResponsibleParty->appendChild($positionName);
 
@@ -580,11 +675,14 @@ class PackageManager {
 								$fileName->appendChild($CharacterString);
 							$MD_BrowseGraphic->appendChild($fileName);
 
+
+								$description = str_replace('<br>', '', $description);
+								$pieces = explode(".", htmlentities($description));
 								$fileDescription = $doc->createElement("gmd:fileDescription");
-									$CharacterString = $doc->createElement("gco:CharacterString",$description);
+									$CharacterString = $doc->createElement("gco:CharacterString",htmlentities($pieces[0]));
 								$fileDescription->appendChild($CharacterString);	
 							$MD_BrowseGraphic->appendChild($fileDescription);
-
+							
 								/*$fileType = $doc->createElement("gmd:fileDescription");
 									$CharacterString = $doc->createElement("gco:CharacterString","ND");
 								$fileDescription->appendChild($CharacterString);	
@@ -597,7 +695,7 @@ class PackageManager {
 						$resourceConstraints = $doc->createElement("gmd:resourceConstraints");
 							$MD_SecurityConstraints = $doc->createElement("gmd:MD_SecurityConstraints");
 								$classification = $doc->createElement("gmd:classification");
-									$MD_ClassificationCode = $doc->createElement("gmd:MD_ClassificationCode","ND");
+									$MD_ClassificationCode = $doc->createElement("gmd:MD_ClassificationCode","unclassified");
 									$MD_ClassificationCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmxCodelists.xml#MD_ClassificationCode");
 									$MD_ClassificationCode->setAttribute("codeListValue","ND");
 
@@ -610,18 +708,37 @@ class PackageManager {
 
 						$resourceConstraints = $doc->createElement("gmd:resourceConstraints");
 							$MD_LegalConstraints = $doc->createElement("gmd:MD_LegalConstraints");
-
-								$useLimitation = $doc->createElement("gmd:classification");
-									$CharacterString = $doc->createElement("gco:CharacterString","ND ");
+								//$useLimitationsContent
+							foreach ($useLimitationsContent as $key => $value) {
+								
+								$useLimitation = $doc->createElement("gmd:useLimitation");
+									$CharacterString = $doc->createElement("gco:CharacterString",$value);
 								$useLimitation->appendChild($CharacterString);
 							$MD_LegalConstraints->appendChild($useLimitation);
 
+							}
+
+
 								$useConstraints = $doc->createElement("gmd:useConstraints");
-									$MD_RestrictionCode = $doc->createElement("gmd:MD_RestrictionCode",$contentdataset["result"]["license_title"]);
+									$MD_RestrictionCode = $doc->createElement("gmd:MD_RestrictionCode",$useconstraintvalue);
 									$MD_RestrictionCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmxCodelists.xml#MD_RestrictionCode");
-									$MD_RestrictionCode->setAttribute("codeListValue","license");
+									$MD_RestrictionCode->setAttribute("codeListValue",$useconstraintvalue);
 								$useConstraints->appendChild($MD_RestrictionCode);
 							$MD_LegalConstraints->appendChild($useConstraints);
+
+								$accessConstraints = $doc->createElement("gmd:accessConstraints");
+									$MD_RestrictionCode = $doc->createElement("gmd:MD_RestrictionCode",$accessconstraint);
+									$MD_RestrictionCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmxCodelists.xml#MD_RestrictionCode");
+									$MD_RestrictionCode->setAttribute("codeListValue",$accessconstraint);
+								$accessConstraints->appendChild($MD_RestrictionCode);
+							$MD_LegalConstraints->appendChild($accessConstraints);
+
+								$otherConstraints = $doc->createElement("gmd:otherConstraints");
+
+									$MD_RestrictionCode = $doc->createElement("gco:CharacterString",$otherrestriction);
+									
+								$otherConstraints->appendChild($MD_RestrictionCode);
+							$MD_LegalConstraints->appendChild($otherConstraints);
 
 						$resourceConstraints->appendChild($MD_LegalConstraints);
 					$MD_DataIdentification->appendChild($resourceConstraints);
@@ -633,12 +750,42 @@ class PackageManager {
 						$spatialRepresentationType->appendChild($MD_SpatialRepresentationTypeCode);
 					$MD_DataIdentification->appendChild($spatialRepresentationType);
 
+					
+						$language = $doc->createElement("gmd:language");
+						if($dataset["metas"]["language"] == "fr") {
+							$langue = "fre";
+						}
+						if($dataset["metas"]["language"] == "en") {
+							$langue = "eng";
+						}
+						if($dataset["metas"]["language"] == "ge") {
+							$langue = "ger";
+						}
+						else {
+							$langue = "fre";
+						}
+						
+							$LanguageCode = $doc->createElement("gmd:LanguageCode",$langue);
+	
+							$LanguageCode->setAttribute("codeList","http://www.loc.gov/standards/iso639-2/");
+							$LanguageCode->setAttribute("codeListValue",$langue);
+
+						$language->appendChild($LanguageCode);
+					$MD_DataIdentification->appendChild($language);
+
+					$MdtopicCategory = $doc->createElement("gmd:topicCategory");
+							$MD_TopicCategoryCode = $doc->createElement("gmd:MD_TopicCategoryCode",$topiccategory);
+
+						$MdtopicCategory->appendChild($MD_TopicCategoryCode);
+					$MD_DataIdentification->appendChild($MdtopicCategory);
+
+					//var_dump($MdtopicCategory);
 
 						$extent = $doc->createElement("gmd:extent");
 							$EX_Extent = $doc->createElement("gmd:EX_Extent");
 
 								$description = $doc->createElement("gmd:description");
-									$CharacterString = $doc->createElement("gco:CharacterString","ND ");
+									$CharacterString = $doc->createElement("gco:CharacterString",$extentdescription);
 								$description->appendChild($CharacterString);
 							$EX_Extent->appendChild($description);
 						$extent->appendChild($EX_Extent);
@@ -647,22 +794,22 @@ class PackageManager {
 								$EX_GeographicBoundingBox = $doc->createElement("gmd:EX_GeographicBoundingBox");
 
 									$westBoundLongitude = $doc->createElement("gmd:westBoundLongitude");
-										$Decimal = $doc->createElement("gco:Decimal","ND ");
+										$Decimal = $doc->createElement("gco:Decimal",$westBoundLongitudeValue);
 									$westBoundLongitude->appendChild($Decimal);
 								$EX_GeographicBoundingBox->appendChild($westBoundLongitude);
 
 									$eastBoundLongitude = $doc->createElement("gmd:eastBoundLongitude");
-										$Decimal = $doc->createElement("gco:Decimal","ND ");
+										$Decimal = $doc->createElement("gco:Decimal",$eastBoundLongitudeValue);
 									$eastBoundLongitude->appendChild($Decimal);
 								$EX_GeographicBoundingBox->appendChild($eastBoundLongitude);
 
 									$southBoundLatitude = $doc->createElement("gmd:southBoundLatitude");
-										$Decimal = $doc->createElement("gco:Decimal","ND ");
+										$Decimal = $doc->createElement("gco:Decimal",$southBoundLatitudeValue);
 									$southBoundLatitude->appendChild($Decimal);
 								$EX_GeographicBoundingBox->appendChild($southBoundLatitude);
 
 									$northBoundLatitude = $doc->createElement("gmd:northBoundLatitude");
-										$Decimal = $doc->createElement("gco:Decimal","ND ");
+										$Decimal = $doc->createElement("gco:Decimal",$northBoundLatitudeValue);
 									$northBoundLatitude->appendChild($Decimal);
 								$EX_GeographicBoundingBox->appendChild($northBoundLatitude);
 
@@ -672,17 +819,35 @@ class PackageManager {
 
 					$MD_DataIdentification->appendChild($extent);
 
+					foreach ($keywords as $key => $value) {
 						$descriptiveKeywords = $doc->createElement("gmd:descriptiveKeywords");
 							$MD_Keywords = $doc->createElement("gmd:MD_Keywords");
-								foreach ($otherkeyword as $key => $value) {
-										$keyword = $doc->createElement("gmd:keyword");
-											$CharacterString = $doc->createElement("gco:CharacterString",$value);
-										$keyword->appendChild($CharacterString);
-										$MD_Keywords->appendChild($keyword);
-										}
 
+								$keyword = $doc->createElement("gmd:keyword");
+										$CharacterString = $doc->createElement("gco:CharacterString",$value);
+								$keyword->appendChild($CharacterString);
+							$MD_Keywords->appendChild($keyword);
+
+							$type = $doc->createElement("gmd:type");
+									$MD_KeywordTypeCode = $doc->createElement("gmd:MD_KeywordTypeCode");
+									$MD_KeywordTypeCode->setAttribute("codeListValue","theme");
+									$MD_KeywordTypeCode->setAttribute("codeList","standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/gmxCodelists.xml#MD_KeywordTypeCode");
+								$type->appendChild($MD_KeywordTypeCode);
+							$MD_Keywords->appendChild($type);
+						$descriptiveKeywords->appendChild($MD_Keywords);
+					$MD_DataIdentification->appendChild($descriptiveKeywords);
+
+					}
+
+						$descriptiveKeywords = $doc->createElement("gmd:descriptiveKeywords");
+							$MD_Keywords = $doc->createElement("gmd:MD_Keywords");
 							
-
+		
+								$keyword = $doc->createElement("gmd:keyword");
+									$CharacterString = $doc->createElement("gco:CharacterString",$thesaruskeyword);
+								$keyword->appendChild($CharacterString);
+							$MD_Keywords->appendChild($keyword);
+							
 								$type = $doc->createElement("gmd:type");
 									$MD_KeywordTypeCode = $doc->createElement("gmd:MD_KeywordTypeCode");
 									$MD_KeywordTypeCode->setAttribute("codeListValue","theme");
@@ -693,20 +858,13 @@ class PackageManager {
 								$thesaurusName = $doc->createElement("gmd:thesaurusName");
 									$CI_Citation = $doc->createElement("gmd:CI_Citation");
 										$title = $doc->createElement("gmd:title");
-										/*foreach ($contentdataset["result"]['extras'] as $key => $value) {
-											if($value["key"] == "features") {*/
 
-												$CharacterString = $doc->createElement("gco:CharacterString"," themes");
-											
-											/*	break;
-											}*/
+												$CharacterString = $doc->createElement("gco:CharacterString",$thesaurusValue);
 
-											
-									//	}
-											
 										$title->appendChild($CharacterString);
 
 									$CI_Citation->appendChild($title);
+								
 
 										$date = $doc->createElement("gmd:date");
 											$CI_Date = $doc->createElement("gmd:CI_Date");
@@ -723,7 +881,11 @@ class PackageManager {
 							$MD_Keywords->appendChild($thesaurusName);
 
 						$descriptiveKeywords->appendChild($MD_Keywords);
+						
 					$MD_DataIdentification->appendChild($descriptiveKeywords);
+
+
+					
 
 				$identificationInfo->appendChild($MD_DataIdentification);
 			$metadata->appendChild($identificationInfo);
@@ -816,19 +978,50 @@ class PackageManager {
 			$DQ_DomainConsistency = $doc->createElement("gmd:DQ_DomainConsistency");
 			$result = $doc->createElement("gmd:result");
 			$DQ_ConformanceResult = $doc->createElement("gmd:DQ_ConformanceResult");
+
 			$specification = $doc->createElement("gmd:specification");
 			$CI_Citation = $doc->createElement("gmd:CI_Citation");
+
+			$gmdtitle = $doc->createElement("gmd:title");
+				$CharacterString = $doc->createElement("gco:CharacterString",$reporttitle);
+			
+			$gmdtitle->appendChild($CharacterString);
+			$CI_Citation->appendChild($gmdtitle);
+
+
 			$date = $doc->createElement("gmd:date");
 			$CI_Date = $doc->createElement("gmd:CI_Date");
+
+			$gmddate = $doc->createElement("gmd:dateType");
+			$gcoDate = $doc->createElement("gco:Date",$reportdate);
+			
+			$gmddate->appendChild($gcoDate);
+			$CI_Date->appendChild($gmddate);
+
+
 			$dateType = $doc->createElement("gmd:dateType");
 			$CI_DateTypeCode = $doc->createElement("gmd:CI_DateTypeCode");
 			$CI_DateTypeCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/ML_gmxCodelists.xml#CI_DateTypeCode");
 			$dateType->appendChild($CI_DateTypeCode);
 			$CI_Date->appendChild($dateType);
+
 			$date->appendChild($CI_Date);
 			$CI_Citation->appendChild($date);
+
+
 			$specification->appendChild($CI_Citation);
 			$DQ_ConformanceResult->appendChild($specification);
+
+			$gmdexplanation = $doc->createElement("gmd:explanation");
+
+				$CharacterString = $doc->createElement("gco:CharacterString",$explanationtitle);
+			
+			$gmdexplanation->appendChild($CharacterString);
+
+			$DQ_ConformanceResult->appendChild($gmdexplanation);
+
+
+
 			$result->appendChild($DQ_ConformanceResult);
 			$DQ_DomainConsistency->appendChild($result);
 			$report->appendChild($DQ_DomainConsistency);
@@ -838,7 +1031,7 @@ class PackageManager {
 			$lineage = $doc->createElement("gmd:lineage");
 			$LI_Lineage = $doc->createElement("gmd:LI_Lineage");
 			$statement = $doc->createElement("gmd:statement");
-			$CharacterString = $doc->createElement("gco:CharacterString","ND");
+			$CharacterString = $doc->createElement("gco:CharacterString",$lineagetitle);
 			$statement->appendChild($CharacterString);
 			$LI_Lineage->appendChild($statement);
 			$lineage->appendChild($LI_Lineage);
@@ -847,7 +1040,7 @@ class PackageManager {
 			$dataQualityInfo->appendChild($DQ_DataQuality);
 			$metadata->appendChild($dataQualityInfo);
 
-
+			//var_dump($lineage);die;
 
 			$gmdfileIdentifier->setAttribute("id",1);
 			$doc->save($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml") or die("Error, ot created");
@@ -871,7 +1064,7 @@ class PackageManager {
 		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources", 0777, true);
 		}
 
-		$_GET['xml'] = "true";
+		//$_GET['xml'] = "true";
 		if(isset($_GET['xml']) && $_GET['xml'] == "true") {
 			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
 
