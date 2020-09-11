@@ -192,7 +192,7 @@ class portailController extends ControllerBase {
 			}
 		}]);
 	</script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu-map.js"></script>
+    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
   
 	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
     <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
