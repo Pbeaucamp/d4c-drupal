@@ -9,7 +9,7 @@ ckan_admin_config_data4citizen:
   route_name: ckan_admin.admin_config_data4citizen
   parent: system.admin_config
   title: Data4Citizen
-  description: 'Configure et utilisation des outils Data4Citizen.'
+  description: 'Configuration et utilisation des outils Data4Citizen.'
   weight: -10
 
 ckan_admin.editMetaDataForm:
@@ -104,13 +104,6 @@ ckan_admin.datasets_dashboard:
   
 ckan_admin.reuses_dashboard:
   title: O. Réutilisation
-  description: "Gestion, validation, suppression des réutilisations"
-  route_name: ckan_admin.form.reuses
-  parent: ckan_admin_config_data4citizen
-
-
-ckan_admin.reuses_dashboard:
-  title: Gestion des réutilisations
   description: "Gestion, validation, suppression des réutilisations"
   route_name: ckan_admin.form.reuses
   parent: ckan_admin_config_data4citizen
