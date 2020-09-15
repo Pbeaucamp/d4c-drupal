@@ -14,14 +14,17 @@ class ReusesController extends ControllerBase {
 
 	public function myPage(Request $request) {
 
+
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$api = new Api();
 		
 		$reuses = $api->getReuses(null, null, null, "online", 1000, 0);
 		$html = "";
 		foreach($reuses["reuses"] as $reu){
+			$urldataset = $config->client->domain . $reu["dataset_id"];
 			$html .= '<div class="reuse col-md-3 col-sm-6 col-xs-12">
 						<div class="thumbnail">
+						<a href='.$urldataset.' target="_blank">
 							<img src="' . $reu["image"] . '"/>
 							<div class="caption">
 								<h2 data-id="' . $reu["id"] .'"> ' . $reu["title"] . ' </h2>
@@ -31,6 +34,7 @@ class ReusesController extends ControllerBase {
 								<p><span class="titre">Type</span><span class="info">' . $reu["type"] . '</span></p>
 								<p><span class="titre">Source</span><span class="info"><a href="' . $reu["url"] . '">' . $reu["url"] . '</a></span></p>
 							</div>
+							</a>
 						</div>
 					</div>';
 		}

@@ -15,7 +15,6 @@ class portailController extends ControllerBase {
 	 *   A simple renderable array.
 	 */
 	public function myPage() {
-		
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$element = array(
@@ -192,7 +191,7 @@ class portailController extends ControllerBase {
 			}
 		}]);
 	</script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu-map.js"></script>
+    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
   
 	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
     <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>

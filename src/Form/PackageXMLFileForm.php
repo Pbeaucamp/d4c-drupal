@@ -272,7 +272,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$filters["orga"] = $form_state->getValue("selected_org");
 		$filters["q"] = $form_state->getValue("selected_text");
 		$filters["type"] = $form_state->getValue("selected_vis");
-		$url = Url::fromRoute('ckan_admin.extension_package_data4citizen', [], ['query' => ["page" => 0, 'orga' => $filters["orga"], 'q' => $filters["q"], 'type' => $filters["type"]]]);
+		$url = Url::fromRoute('ckan_admin.extension_package_fileXML', [], ['query' => ["page" => 0, 'orga' => $filters["orga"], 'q' => $filters["q"], 'type' => $filters["type"]]]);
 		$form_state->setRedirectUrl($url);
 	}
 
@@ -283,7 +283,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$filters["orga"] = "";
 		$filters["q"] = "";
 		$filters["type"] = "";
-		$url = Url::fromRoute('ckan_admin.extension_package_data4citizen', [], ['query' => ["page" => 0, 'orga' => $filters["orga"], 'q' => $filters["q"], 'type' => $filters["type"]]]);
+		$url = Url::fromRoute('ckan_admin.extension_package_fileXML', [], ['query' => ["page" => 0, 'orga' => $filters["orga"], 'q' => $filters["q"], 'type' => $filters["type"]]]);
 		$form_state->setRedirectUrl($url);
 	}
 

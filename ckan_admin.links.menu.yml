@@ -9,7 +9,7 @@ ckan_admin_config_data4citizen:
   route_name: ckan_admin.admin_config_data4citizen
   parent: system.admin_config
   title: Data4Citizen
-  description: 'Configure et utilisation des outils Data4Citizen.'
+  description: 'Configuration et utilisation des outils Data4Citizen.'
   weight: -10
 
 ckan_admin.editMetaDataForm:
@@ -24,7 +24,7 @@ ckan_admin.organizationsManagementForm:
   description: 'Création et modification organisations'
   route_name: ckan_admin.organizationsManagementForm
   parent: ckan_admin_config_data4citizen
-  weight: 10
+  weight: 11
   
 ckan_admin.custom_views:
   title: D. Vues Personnalisées
@@ -38,7 +38,7 @@ ckan_admin.addThemeInDatasetForm:
   description: 'Création et association des thèmes'
   route_name: ckan_admin.addThemeInDatasetForm
   parent: ckan_admin_config_data4citizen
-  weight: 11
+  weight: 12
 
 ckan_admin.typeColumnsForm:
   title: D. Paramétrage Jeux de Données
@@ -72,14 +72,14 @@ ckan_admin.manage_map_tiles:
   description: 'Gestion des fonds de carte et sous-couches'
   route_name: ckan_admin.manage_map_tiles
   parent: ckan_admin_config_data4citizen
-  weight: 12
+  weight: 13
   
 ckan_admin.vanila_form:
   title: R. Modules Complémentaires
   description: 'Parametrage de BackOffice'
   route_name: ckan_admin.VanilaForm
   parent: ckan_admin_config_data4citizen
-  weight: 13
+  weight: 14
   
 ckan_admin.joinDatasets_form:
   title: D. Jointures Jeux de Données
@@ -93,7 +93,7 @@ ckan_admin.VanillaForm:
   description: 'Création et mise à jour Métadatas et Cubes'
   route_name: ckan_admin.VanillaForm
   parent: ckan_admin_config_data4citizen
-  weight: 9
+  weight: 10
 
 ckan_admin.datasets_dashboard:
   title: D. Contrôle Jeux de Données
@@ -104,13 +104,6 @@ ckan_admin.datasets_dashboard:
   
 ckan_admin.reuses_dashboard:
   title: O. Réutilisation
-  description: "Gestion, validation, suppression des réutilisations"
-  route_name: ckan_admin.form.reuses
-  parent: ckan_admin_config_data4citizen
-
-
-ckan_admin.reuses_dashboard:
-  title: Gestion des réutilisations
   description: "Gestion, validation, suppression des réutilisations"
   route_name: ckan_admin.form.reuses
   parent: ckan_admin_config_data4citizen

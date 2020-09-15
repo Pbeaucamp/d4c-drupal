@@ -926,6 +926,15 @@ ckan_admin.callTaskStatus:
   path: '/api/taskStatus/{id}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getTaskStatus'
+  requirements:
+    _permission: 'access content'
+
+
+ckan_admin.call.reuses:
+  path: '/api/datasets/reusesManagement'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageReutilisation'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
