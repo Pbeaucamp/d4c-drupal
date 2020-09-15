@@ -2507,8 +2507,8 @@ class Api{
 
 	public function callPackageShow2($datasetid,$params) {
         
-        
-        
+
+
 		$res = $this->getPackageShow2($datasetid,$params);
         
         //$rendered_message = \Drupal\Core\Render\Markup::create('<pre>' . $res . '</pre>');
@@ -3313,7 +3313,6 @@ class Api{
         $datasets = array();   
 		$facet_groups = array();
 		$result = json_decode($result,true);
-
 		foreach($result["result"]["results"] as $value){
 			if($rows != null && count($datasets) >= $rows){
 				break;
