@@ -114,7 +114,7 @@ class ResourceManager {
 	 	$filepathContent = file_get_contents($filepath);
 	 	// check if file contains the comma and replace it by semicolon  
 	 	if (strpos(file_get_contents($filepath), ',') !== false) {
-	 		$commaReplace = str_replace(",",";",$filepathContent);
+	 		/*$commaReplace = str_replace(",",";",$filepathContent);*/
 	 		$pathinfo = pathinfo($filepath);
 	 		$pathinfo["extension"] = $new_extension;
 	 		
@@ -134,7 +134,7 @@ class ResourceManager {
 	 			
 	 		}
 	 		//create a new csv files contains the same content of text file
-	 		file_put_contents($newfile, $commaReplace);
+	 		file_put_contents($newfile, $filepathContent);
 	 		return $newfile;
 
 	 	}
@@ -398,7 +398,6 @@ class ResourceManager {
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();
-
 		$zip = new ZipArchive;
 		$res = $zip->open($filePath);
 		if ($res === TRUE) {
