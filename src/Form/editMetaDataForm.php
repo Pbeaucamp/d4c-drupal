@@ -904,7 +904,6 @@ class editMetaDataForm extends HelpFormBase {
 
 
 		$result = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
-    var_dump($result);die;
 
         foreach ($result as $key => $value) {
 			if ($value['status'] == 'complete') {
