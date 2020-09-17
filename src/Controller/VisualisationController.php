@@ -842,12 +842,16 @@ class VisualisationController extends ControllerBase {
 		}]);
 	</script>
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+	<script type="text/javascript" src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/leaflet-routing-machine-3.2.12/dist/leaflet-routing-machine.min.js"></script>
 	<script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
     <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
 	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
 
 	<script>
 		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"https://unpkg.com/leaflet@1.2.0/dist/leaflet.css\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/lib/leaflet-routing-machine-3.2.12/dist/leaflet-routing-machine.min.css\" rel=\"stylesheet\">");
 		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
 		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
 		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");

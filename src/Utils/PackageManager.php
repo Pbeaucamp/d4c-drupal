@@ -1093,6 +1093,29 @@ class PackageManager {
 		if ($zip->open($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename, ZipArchive::CREATE)!==TRUE) {
 		    exit("Impossible d'ouvrir le fichier <$filename>\n");
 		}
+		/*****       create dataset resources json file   *****/
+		// get dataset resources 
+        $datasetresources = $this->getResources($id);
+
+
+        foreach ($datasetresources as $key => $value) {
+	        $format =$value["format"];
+	        if($value["format"] == "SHP" || $value["format"] == "shp") {
+	        	$value["format"] = "zip";
+	        }
+
+        	$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $value["url"]);
+			$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"w");
+			curl_setopt($ch, CURLOPT_FILE, $fp);
+			curl_exec ($ch);
+			curl_close ($ch);
+			fclose($fp);
+
+			// add dataset resources json to zip
+			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
+        }
+
 
 	
         //save json file in root directory
@@ -1108,31 +1131,7 @@ class PackageManager {
 
 		
 
-		/*****       create dataset resources json file   *****/
-		// get dataset resources 
-        $datasetresources = $this->getResources($id);
-
-        foreach ($datasetresources as $key => $value) {
-	        $format =$value["format"];
-	        if($value["format"] == "SHP" || $value["format"] == "shp") {
-	        	$value["format"] = "zip";
-	        }
-
-
-        	$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $value["url"]);
-			$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"w");
-			curl_setopt($ch, CURLOPT_FILE, $fp);
-			curl_exec ($ch);
-			curl_close ($ch);
-			fclose($fp);
-
-			// add dataset resources json to zip
-			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"],"/Ressources/".$value["name"].".".$value["format"]);
-        }
-
-
-
+		
 		// close and save archive
 		$zip->close(); 
 
