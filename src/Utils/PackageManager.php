@@ -1128,7 +1128,7 @@ class PackageManager {
 			fclose($fp);
 
 			// add dataset resources json to zip
-			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"],"/Ressources/".$value["name"].".".$value["format"]);
+			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
         }
 
 
