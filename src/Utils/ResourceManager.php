@@ -112,13 +112,14 @@ class ResourceManager {
 
 		// get content of text file
 	 	$filepathContent = file_get_contents($filepath);
+
 	 	// check if file contains the comma and replace it by semicolon  
 	 	if (strpos(file_get_contents($filepath), ',') !== false) {
 	 		/*$commaReplace = str_replace(",",";",$filepathContent);*/
 	 		$pathinfo = pathinfo($filepath);
 	 		$pathinfo["extension"] = $new_extension;
-	 		
-	 		$filepath = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $filepath);
+	 	
+	 		//$filepath = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $filepath);
 
 	 		$pathfiles = explode("/", $filepath);
 	 		$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"]. "." .$new_extension; 
@@ -135,6 +136,108 @@ class ResourceManager {
 	 		}
 	 		//create a new csv files contains the same content of text file
 	 		file_put_contents($newfile, $filepathContent);
+
+	 		$delimiter = "\t"; //your column separator
+			$csv_data = array();
+			$row = 1;
+			if (($handle = fopen($newfile, 'r')) !== FALSE) {
+			    while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+			        $csv_data[] = $data;
+			        $row++;
+			    }
+			    fclose($handle);
+			}
+
+			$extra_columns = array('coordinate' => null, 'geoshape' => null);
+			$latIndex = "";
+			$lngIndex = "";
+			$shapeIdIndex = "";
+			$coordinatesGeojson=[];
+			$coordinatearray = [];
+			$Routes=[];
+
+			foreach ($csv_data as $i => $data) {
+				foreach ($data as $key => $value) {
+			    	if($value == "shape_pt_lat") {
+			    		$latIndex = $key;
+			    	}
+			    	if($value == "shape_pt_lon") {
+			    		$lngIndex = $key;
+			    	}
+			    	if($value == "shape_id") {
+			    		$shapeIdIndex = $key;
+			    	}
+			    	}
+			    	if($i!=0) {
+			    		if($i+1 < sizeof($csv_data)) {
+			    		$data2 = $csv_data[$i+1];
+			    		if($data[$shapeIdIndex] != $data2[$shapeIdIndex] ) {
+			    			array_push($Routes, $i);
+			    		}
+			    		
+			    	}
+
+			    	}
+			    	
+
+			}
+			$routesvalue=[];
+
+			foreach ($Routes as $key => $value) {
+				
+				if($key == 0) {
+					$firstindex = 1;
+				}else {
+					$firstindex = $Routes[$key -1 ] + 1;
+				}
+
+				$array1=[];
+				$array2 =array();
+				$array3=[];
+			
+
+					for ($i=$firstindex; $i <=$value ; $i++) { 
+
+						$array2 =array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+						$array3[] = $array2;
+				}
+
+				
+					$routesvalue[$key+1] = json_encode(array('type' => "LineString",'coordinates' => $array3));
+
+			}
+
+			foreach ($csv_data as $i => $data) {
+				
+				/*$geo_shape = str_replace(",",";",$routesvalue[$i]);*/
+				
+			    if ($i == 0) {
+			    	$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+			        $csv_data[$i] = array_merge($data, array_keys($extra_columns));
+			    } else {
+
+			    		if (array_key_exists($i,$routesvalue)) {
+			    			$geo_shape = $routesvalue[$i];
+			    			$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape);
+			    					
+			    		} 
+			    		else {
+			    			$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+			    		}
+			    		
+			    		$csv_data[$i] = $data = array_merge($data, $extra_columns);
+			    }
+
+
+			}
+
+			if (($handle = fopen($newfile, 'w')) !== FALSE) {
+			    foreach ($csv_data as $data) {
+			        fputcsv($handle, $data, ",");
+			    }
+			    fclose($handle);
+			}
+			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $newfile);
 	 		return $newfile;
 
 	 	}
@@ -148,6 +251,8 @@ class ResourceManager {
 		$files = $this->getDirContents($filesDirectory);
 		$csv="";
 	
+
+
 		//check if shapes.txt exist inside zip
 		$shapesExistIndex = null;
 		foreach($files as $key=>$file) {
@@ -157,6 +262,7 @@ class ResourceManager {
 			}
 			
 		}
+
 		//convert shapes file from txt to csv if exist
 		if($shapesExistIndex != null ) {
 			$titlesFile = explode("/", $files[$shapesExistIndex]);
@@ -397,7 +503,10 @@ class ResourceManager {
 		Logger::logMessage("Manage zip file");
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
-		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();
+		/*$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();*/
+		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_5f60e225c615c';
+		return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceUrl, $outputDirectory, $encoding);
+		die;
 		$zip = new ZipArchive;
 		$res = $zip->open($filePath);
 		if ($res === TRUE) {
