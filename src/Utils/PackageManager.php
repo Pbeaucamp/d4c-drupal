@@ -83,8 +83,99 @@ class PackageManager {
     // Get dataset resources by id 
     public function getResources($id) {
     	$api = new Api();
+    	$host = \Drupal::request()->getHost();
+		$protocol = \Drupal::request()->getScheme()."://";
     	$dataset = $api->getDataSetById($id);
+
         $contentdataset = json_decode($dataset->getContent(),true);
+        $theme = "";
+        $vignette = "";
+    /*    echo "<pre>";*/
+    /*	var_dump($contentdataset["result"]["extras"]);*/
+    	foreach ($contentdataset["result"]["extras"] as $key => $value) {
+    		if($value["key"] == "theme") {
+    			$theme = $value["value"];
+    			break;
+    		}
+
+    	}
+    	
+    	$themes = $api->getPackageTheme();
+    	$themes = json_decode($themes->getContent(),true);
+    
+    	foreach ($themes as $key => $value) {
+    		if($value["title"] == $theme ) {
+    			$vignette = $protocol . $host .$value["url"];
+    		}
+    	}
+
+		$dataset = $api->getPackageShow2($id,"");
+		$resources = array();
+		$resourcesid = "";
+		$resourcesname = "";
+
+/*		foreach($dataset["metas"]["resources"] as $value){
+			if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
+		 		$resourcesid = $value['id'];
+		 		$resourcesname = $value['name'];
+                
+		 	}
+			if($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'){
+				$res = array();
+				$res["@type"] = "DataDownload";
+				$res["name"] = $value['name'];
+				$res["format"] = $value['format'];
+				$res["url"] = $protocol . $host . "/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
+				$resources[] = $res;
+			}
+
+		}
+		
+		if($resourcesid != ""){
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["name"] = $resourcesname;
+			$res["format"] = "CSV";
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["format"] = "json";
+			$res["name"] = $resourcesname;
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["format"] = "xls";
+			$res["name"] = $resourcesname;
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["format"] = "geojson";
+			$res["name"] = $resourcesname;
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["format"] = "kml";
+			$res["name"] = $resourcesname;
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["@type"] = "DataDownload";
+			$res["format"] = "shp";
+			$res["name"] = $resourcesname;
+			$res["url"] = $protocol . $host . "/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
+			$resources[] = $res;
+		}*/
+       
 
         //Create json file 
          $datasetJson= [
@@ -93,12 +184,250 @@ class PackageManager {
 		  ]
 		];
 
+		if($vignette != "" ) {
+			$res = array();
+				$res["@type"] = "DataDownload";
+				$res["name"] = $theme;
+				$res["format"] =  pathinfo($vignette, PATHINFO_EXTENSION);
+				$res["url"] = $vignette;
+				$resources[] = $res;
+		}
 
-        return $contentdataset["result"]["resources"];
+		
+		$contentdataset["result"]["resources"][] = $res;
+/*		foreach ($contentdataset["result"]["resources"] as $key => $value) {
+			echo "<pre>";
+			var_dump($value);
+			echo "</pre>";
+		}
+die;*/
+       return $contentdataset["result"]["resources"];
+      /*   return $resources;*/
 
     }
 
+	public function createPackageZip($id){
 
+		$api = new Api();
+
+		// search dataset data by id in array of all datasets 
+        $datasetinfo = $this->getDatasetInformations($id);
+        if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id)) {
+        	
+		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id, 0777, true);
+		}
+		if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources")) {
+        	
+		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources", 0777, true);
+		}
+
+		//$_GET['xml'] = "true";
+		if(isset($_GET['xml']) && $_GET['xml'] == "true") {
+			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
+
+        	$contentdataset = json_decode($datasetinfo->getContent(),true);
+
+
+    	 	$xmlfile = $this->createXMLFile($contentdataset);
+    	 	
+
+			$response = new Response(json_encode(array('filename' => $xmlfile)));
+		} else {
+			/*****       create datasetinfo json file   *****/
+       
+
+		 // create archive
+		$zip = new ZipArchive();
+
+		$filename = $id.".zip";
+
+		if(file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename)) {
+
+	        unlink ($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename); 
+
+		}
+		
+		if ($zip->open($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename, ZipArchive::CREATE)!==TRUE) {
+		    exit("Impossible d'ouvrir le fichier <$filename>\n");
+		}
+
+	
+        //save json file in root directory
+		$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/metadata.json","w");
+		if( $fp == false ){
+
+		}else{
+		    fwrite($fp,$datasetinfo);
+		    fclose($fp);
+		    // add datasetinfo json to zip
+			$zip->addFile("packageDataset/".$id."/metadata.json","/metadata.json");
+		}
+
+		
+
+		/*****       create dataset resources json file   *****/
+		// get dataset resources 
+        $datasetresources = $this->getResources($id);
+        foreach ($datasetresources as $key => $value) {
+  		
+	        $format =$value["format"];
+
+ 
+	        if($value["format"] == "SHP" || $value["format"] == "shp" || $value["format"] == "Shapefile") {
+	        	$value["format"] = "zip";
+	        }
+
+        	$ch = curl_init();
+			curl_setopt($ch, CURLOPT_URL, $value["url"]);
+			$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"w");
+			curl_setopt($ch, CURLOPT_FILE, $fp);
+			curl_exec ($ch);
+			curl_close ($ch);
+			fclose($fp);
+
+			// add dataset resources json to zip
+			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
+        }
+		// close and save archive
+		$zip->close(); 
+
+
+		$response = new Response(json_encode(array('filename' => "/packageDataset/".$id.".zip")));
+		}
+
+		return $response;
+		
+
+	}
+
+	public function callDatastoreApiDownloadFile($params,$name) {
+		
+		$query_params = $api->proper_parse_str($params);
+		$format = $query_params['format'];
+
+		/*var_dump($params);die;*/
+
+		if ($format == "csv") {
+			header('Content-Type:text/csv');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
+		} else if ($format == "xls") {
+			header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+			//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
+		} else if ($format == "json") {
+			header('Content-Type:application/json');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+		} else if ($format == "geojson") {
+			header('Content-Type:application/vnd.geo+json');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
+		} else if ($format == "shp") {
+			header('Content-Type:application/zip');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
+		} else if ($format == "kml") {
+			header('Content-Type:application/vnd.google-earth.kml+xml');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
+		} else {
+			header('Content-Type:application/json');
+			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+		}
+
+		$fields = $api->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+
+		$result = $api->getRecordsDownload($params);
+		var_dump($result);
+		if ($format == "csv" || $format == "json" || $format == "geojson") {
+			echo $result;
+		} else if ($format == "xls") {
+			//We create a tmp file in which we write the result and an output file to convert
+			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+			$fileInput = fopen($pathInput, 'w');
+			fwrite($fileInput, $result);
+			fclose($fileInput);
+
+			//We rename the file because PhpSpreadsheet does not support conversion without
+			rename($pathInput, $pathInput .= '.csv');
+
+			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+
+			$reader = ReaderFactory::create(Type::CSV);
+			$reader->setFieldDelimiter(';');
+			$reader->setFieldEnclosure('"');
+			$reader->setEndOfLineCharacter("\r");
+			
+			$writer = WriterFactory::create(Type::XLSX);
+			
+			$reader->open($pathInput);
+			$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
+
+			foreach ($reader->getSheetIterator() as $sheet) {
+				foreach ($sheet->getRowIterator() as $row) {
+					$writer->addRow($row);
+				}
+			}//$writer->addRows($multipleRows); // add multiple rows at a time
+
+			$reader->close();
+			$writer->close();
+
+			header('Content-Length: ' . filesize($pathOutput));
+			readfile($pathOutput);
+		} else if ($format == "shp" || $format == "kml") {
+			//We create a tmp file in which we write the result and an output file to convert
+			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+			$fileInput = fopen($pathInput, 'w');
+			fwrite($fileInput, $result);
+			fclose($fileInput);
+
+			//Get current Php directory to call the script
+			$dir = dirname(__FILE__);
+			$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
+
+			if ($format == "shp") {
+				$typeConvert = 'ESRI Shapefile';
+
+				//We create a temp directory
+				$pathOutput = $api->tempdir(null, 'output_convert_geo_file_');
+			} else if ($format == "kml") {
+				$typeConvert = 'KML';
+			
+				//We create a temp file
+				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+			}
+
+			$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
+			$message = shell_exec($command);
+
+			if ($format == "kml") {
+				header('Content-Length: ' . filesize($pathOutput));
+				readfile($pathOutput);
+			}
+			else if ($format == "shp") {
+				$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
+
+				$zip = new ZipArchive();
+				if ($zip->open($pathOutputZip, ZipArchive::CREATE) !== TRUE) {
+					echo "Problem creating the zip file";
+				}
+				if ($handle = opendir($pathOutput)) {
+					while (false !== ($entry = readdir($handle))) {
+						if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
+							$zip->addFile($pathOutput."/".$entry, $entry);
+						}
+					}
+					closedir($handle);
+				}
+
+				$zip->close();
+
+				header('Content-Length: ' . filesize($pathOutputZip));
+				readfile($pathOutputZip);
+			}
+		} else {
+			echo $result;
+		}
+
+		$response = new Response();
+		return $response;
+	}
     public function createXMLFile($contentdataset){
     	$doc = new \DOMDocument('1.0',"UTF-8");
 
@@ -108,13 +437,6 @@ class PackageManager {
 		$protocol = \Drupal::request()->getScheme()."://";
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
-	/*	var_dump($dataset["metas"]["description"]);die;
-		foreach ($dataset["metas"] as $key => $value) {
-    		echo "<pre>";
-    		var_dump($key);
-    		var_dump($value);
-    		echo "</pre>";
-    	}die;*/
 
     	$description = $dataset["metas"]["description"];
     	$dateModified = $dataset["metas"]["modified"];
@@ -1049,101 +1371,7 @@ class PackageManager {
 			return "/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml";
     }
     
-	public function createPackageZip($id){
 
-		$api = new Api();
-
-		// search dataset data by id in array of all datasets 
-        $datasetinfo = $this->getDatasetInformations($id);
-        if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id)) {
-        	
-		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id, 0777, true);
-		}
-		if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources")) {
-        	
-		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources", 0777, true);
-		}
-
-		//$_GET['xml'] = "true";
-		if(isset($_GET['xml']) && $_GET['xml'] == "true") {
-			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
-
-        	$contentdataset = json_decode($datasetinfo->getContent(),true);
-
-
-    	 	$xmlfile = $this->createXMLFile($contentdataset);
-    	 	
-
-			$response = new Response(json_encode(array('filename' => $xmlfile)));
-		} else {
-			/*****       create datasetinfo json file   *****/
-       
-
-		 // create archive
-		$zip = new ZipArchive();
-
-		$filename = $id.".zip";
-
-		if(file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename)) {
-
-	        unlink ($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename); 
-
-		}
-		
-		if ($zip->open($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$filename, ZipArchive::CREATE)!==TRUE) {
-		    exit("Impossible d'ouvrir le fichier <$filename>\n");
-		}
-
-	
-        //save json file in root directory
-		$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/metadata.json","w");
-		if( $fp == false ){
-
-		}else{
-		    fwrite($fp,$datasetinfo);
-		    fclose($fp);
-		    // add datasetinfo json to zip
-			$zip->addFile("packageDataset/".$id."/metadata.json","/metadata.json");
-		}
-
-		
-
-		/*****       create dataset resources json file   *****/
-		// get dataset resources 
-        $datasetresources = $this->getResources($id);
-
-        foreach ($datasetresources as $key => $value) {
-	        $format =$value["format"];
-	        if($value["format"] == "SHP" || $value["format"] == "shp") {
-	        	$value["format"] = "zip";
-	        }
-
-
-        	$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $value["url"]);
-			$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"w");
-			curl_setopt($ch, CURLOPT_FILE, $fp);
-			curl_exec ($ch);
-			curl_close ($ch);
-			fclose($fp);
-
-			// add dataset resources json to zip
-			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
-        }
-
-
-
-		// close and save archive
-		$zip->close(); 
-
-
-		$response = new Response(json_encode(array('filename' => "/packageDataset/".$id.".zip")));
-		}
-
-		return $response;
-		
-
-	}
 
 	
 

@@ -1959,7 +1959,7 @@ class Api{
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
-		
+		/*var_dump($params);die;*/
 
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
