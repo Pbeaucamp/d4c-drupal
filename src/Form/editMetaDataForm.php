@@ -928,7 +928,9 @@ class editMetaDataForm extends HelpFormBase {
                 }
 
             $fp = fopen($_SERVER['DOCUMENT_ROOT']."/sites/default/files/dataset/urlsheet/".$datasetId.".csv","wb");
+            fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
             foreach ( $data as $line ) {
+
                 fputcsv($fp, $line);
             }
             fclose($fp);
