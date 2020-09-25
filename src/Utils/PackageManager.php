@@ -109,6 +109,7 @@ class PackageManager {
     		}
     	}
 
+
 		$dataset = $api->getPackageShow2($id,"");
 		$resources = array();
 		$resourcesid = "";
@@ -186,7 +187,7 @@ class PackageManager {
 
 		if($vignette != "" ) {
 			$res = array();
-				$res["@type"] = "DataDownload";
+				$res["url_type"] = "vignette";
 				$res["name"] = $theme;
 				$res["format"] =  pathinfo($vignette, PATHINFO_EXTENSION);
 				$res["url"] = $vignette;
@@ -269,8 +270,15 @@ die;*/
 		// get dataset resources 
         $datasetresources = $this->getResources($id);
         foreach ($datasetresources as $key => $value) {
-  		
-	        $format =$value["format"];
+  			
+  			
+  			if($value["url_type"] == "vignette") {
+  			
+
+			file_put_contents($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"], file_get_contents($value["url"]));
+
+  			} else {
+  				$format =$value["format"];
 
  
 	        if($value["format"] == "SHP" || $value["format"] == "shp" || $value["format"] == "Shapefile") {
@@ -284,10 +292,13 @@ die;*/
 			curl_exec ($ch);
 			curl_close ($ch);
 			fclose($fp);
+  			}
+	        
 
 			// add dataset resources json to zip
 			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
         }
+     
 		// close and save archive
 		$zip->close(); 
 

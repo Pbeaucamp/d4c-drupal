@@ -222,6 +222,8 @@ class editMetaDataForm extends HelpFormBase {
 			'#markup' => '<div id="infoTab">',
 		); 
 		
+
+
         $form['title'] = array(
             '#markup' => '',
             '#type' => 'textfield',
@@ -343,7 +345,13 @@ class editMetaDataForm extends HelpFormBase {
 		);
 
      
-
+        $form['url_g_sheet'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Importer une ressource à partir d\'un google spreadsheet:'),
+             '#attributes' => array('style' => 'width: 50%;'),
+             '#required' => FALSE
+        );
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
 			'#type' => 'managed_file',
@@ -709,6 +717,8 @@ class editMetaDataForm extends HelpFormBase {
         return $form;
 	}
 
+
+
     public function submitForm(array &$form, FormStateInterface $form_state) {
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
 		$users = \Drupal\user\Entity\User::loadMultiple();
@@ -716,6 +726,7 @@ class editMetaDataForm extends HelpFormBase {
 		$api = new Api;
 		$resourceManager = new ResourceManager;
         
+
         $title = $form_state->getValue('title');
         $datasetId = $form_state->getValue('selected_data_id');
         $generatedTaskId = $form_state->getValue('generated_task_id');
@@ -735,6 +746,8 @@ class editMetaDataForm extends HelpFormBase {
 		$table_data = $form_state->getValue('table');
 		$validata = $form_state->getValue('validata');
 		$resources = $form_state->getValue('resours', 0);
+       /* var_dump($resources);die;*/
+
 
 		// Define Dataset name
 		$datasetName = $resourceManager->defineDatasetName($title);
