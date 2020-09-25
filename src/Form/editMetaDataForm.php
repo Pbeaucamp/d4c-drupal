@@ -346,6 +346,7 @@ class editMetaDataForm extends HelpFormBase {
 
         $form['url_Gsheet'] = array(
                 '#type' => 'textarea',
+                '#title' => $this->t('Saisir un url Google SpreadSheet :'),
                 '#attributes' => array('style' => 'height: 5em;width: 25em;'),
                 '#maxlength' => null,
 
