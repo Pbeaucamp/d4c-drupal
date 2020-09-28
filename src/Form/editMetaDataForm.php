@@ -344,14 +344,6 @@ class editMetaDataForm extends HelpFormBase {
 			'#title' => $this->t('Ne pas afficher les API'),
 		);
 
-     
-        $form['url_g_sheet'] = array(
-            '#markup' => '',
-            '#type' => 'textfield',
-            '#title' => $this->t('Importer une ressource à partir d\'un google spreadsheet:'),
-             '#attributes' => array('style' => 'width: 50%;'),
-             '#required' => FALSE
-        );
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
 			'#type' => 'managed_file',
