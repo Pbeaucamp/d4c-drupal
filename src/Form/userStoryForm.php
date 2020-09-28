@@ -12,6 +12,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Implements an example form.
@@ -27,9 +28,16 @@ class userStoryForm extends HelpFormBase
         return 'userStoryForm';
     }
 
-    /**
+        /**
      * {@inheritdoc}
      */
+
+    function dummy_preprocess_page(&$variables) {
+        if (\Drupal::service('path.matcher')->isFrontPage()) {
+            $variables['#attached']['library'][] = 'ckan_admin/userstoryForm.form';
+        }
+    }
+    
 
     public function buildForm(array $form, FormStateInterface $form_state){
         $form = parent::buildForm($form, $form_state);
@@ -54,7 +62,9 @@ class userStoryForm extends HelpFormBase
                 'Authorization:  ' . $cle,
             ),
         );
+
         
+ 
         $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true&include_extras=true";
         $curlOrg = curl_init($callUrlOrg);
 
@@ -69,31 +79,34 @@ class userStoryForm extends HelpFormBase
         $stories = $api->getStories();
 
         
-        $form['m1'] = array(
+        
+
+        if(\Drupal::currentUser()->id() != 0) {
+            $form['m1'] = array(
             '#markup' => '<div id="visibilityStories"></div>',
         ); 
+            
+             $ids = array();
+            $ids["new"]="Sélectionner une histoire(Modifier/Supprimer) ";
+            foreach($stories as &$ds) {
+                $ids[$ds->story_id] = $ds->widget_label;
+            }
 
-        $ids = array();
-        $ids["new"]="Sélectionner une histoire(Modifier/Supprimer) ";
-        foreach($stories as &$ds) {
-            $ids[$ds->story_id] = $ds->widget_label;
-        }
+            $storiesjson = json_encode($stories,true);
 
-
-        $storiesjson = json_encode($stories,true);
-       $form['selected_data'] = array(
+            $form['selected_data'] = array(
             '#type' => 'select',
             '#title' => t(''),
             '#options' => $ids,
             '#attributes' => array( 
                 'onchange' => 'loadStory('.$storiesjson.')','style' => 'width: 50%;float: right;
-    position: absolute;
-    margin-top: -35px;
-    margin-left: 30%;', 
+                position: absolute;
+                margin-top: -35px;
+                margin-left: 30%;', 
                 'id' => ['selected_data'])
         );
+        }
 
-   
         $contentstories = json_encode($stories);
 
 

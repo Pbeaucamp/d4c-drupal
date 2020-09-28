@@ -107,73 +107,17 @@ class ResourceManager {
 		}
 	}
 
-		//convert text file to csv
-	function convertTextFileToCsv($filepath, $new_extension) {
-
-		// get content of text file
-	 	$filepathContent = file_get_contents($filepath);
-	 	// check if file contains the comma and replace it by semicolon  
-	 	if (strpos(file_get_contents($filepath), ',') !== false) {
-	 		/*$commaReplace = str_replace(",",";",$filepathContent);*/
-	 		$pathinfo = pathinfo($filepath);
-	 		$pathinfo["extension"] = $new_extension;
-	 		
-	 		$filepath = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $filepath);
-
-	 		$pathfiles = explode("/", $filepath);
-	 		$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"]. "." .$new_extension; 
-	 		$newfile="";
-	 		foreach ($pathfiles as $key => $value) {
-	
-	 			if($key == 0) {
-	 				$newfile= $value;
-	 			}
-	 			else {
-	 				$newfile .="/".$value;
-	 			}
-	 			
-	 		}
-	 		//create a new csv files contains the same content of text file
-	 		file_put_contents($newfile, $filepathContent);
-	 		return $newfile;
-
-	 	}
-	
-	}
-
 	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $filesDirectory, $encoding) {
 		Logger::logMessage("Managing files in '" . $filesDirectory . "'");
 
 		// $files = scandir($filesDirectory);
 		$files = $this->getDirContents($filesDirectory);
-		$csv="";
-	
-		//check if shapes.txt exist inside zip
-		$shapesExistIndex = null;
-		foreach($files as $key=>$file) {
-			if (strpos($file, 'shapes.txt') !== false) {
-				//get the index of file
-			    $shapesExistIndex = $key;
-			}
-			
-		}
-		//convert shapes file from txt to csv if exist
-		if($shapesExistIndex != null ) {
-			$titlesFile = explode("/", $files[$shapesExistIndex]);
-			//convert file txt to csv
-			$csv = $this->convertTextFileToCsv($files[$shapesExistIndex], "csv");
-
-		}
-		else {
-			foreach($files as $file) {
-
-				//TODO: Remake
-				$csv = $this->manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding);
-			
-		}
-		}
-		if ($csv != null) {
+		foreach($files as $file) {
+			//TODO: Remake
+			$csv = $this->manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding);
+			if ($csv != null) {
 				return $csv;
+			}
 		}
 	}
 
@@ -211,7 +155,6 @@ class ResourceManager {
 		//Managing file (filepath and filename)
 		$fileName = parse_url($resourceUrl);
 		Logger::logMessage("TRM fileName " . $fileName);
-
 
 		$host = $fileName[host];
 		Logger::logMessage("TRM host " . $host);
@@ -360,13 +303,7 @@ class ResourceManager {
 			}
 		}
 		else if ($type == 'zip') {
-			$resourceUrl = $this->manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding);
-			$fileName = pathinfo($resourceUrl)["filename"];
-			
-			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-			return $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $description);
-
-			
+			return $this->manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding);
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
 			$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
@@ -398,6 +335,7 @@ class ResourceManager {
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();
+
 		$zip = new ZipArchive;
 		$res = $zip->open($filePath);
 		if ($res === TRUE) {
@@ -544,7 +482,6 @@ class ResourceManager {
 			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 			$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			$return = json_decode($return);
-			
 			if ($return->success == true) {
 				$resourceId = $return->result->id;
 				$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true);
@@ -1387,7 +1324,4 @@ class ResourceManager {
         }
         return $alpha;
 	}
-
-
-
 }
