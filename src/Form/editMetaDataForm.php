@@ -74,21 +74,29 @@ class editMetaDataForm extends HelpFormBase {
 
         $api = new Api;
 
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
+        // $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
+        // $dataSet = $dataSet->getContent();
+		// $dataSet2 = json_encode($dataSet, true);
+
+        // $dataSet = json_decode($dataSet, true);
+        // $dataSet = $dataSet[result][results];
+		$selectedDatasetId = \Drupal::request()->query->get('id');
+		if ($selectedDatasetId) {
+			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
+			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null);
+			$selectedDataset = $selectedDataset['metas'];
+
+			//We simulate the previous process - We have to encode it twice
+			$selectedData = array();
+			$selectedData[result][results][] = $selectedDataset;
+			$selectedData = json_encode($selectedData);
+			$selectedData = json_encode($selectedData, true);
+		}
 		
-     
-        $dataSet = $dataSet->getContent();
-
-
-        $dataSet2 = json_encode($dataSet, true);
-        $dataSet = json_decode($dataSet, true);
-        $dataSet = $dataSet[result][results];
-
-		
-		uasort($dataSet, function($a, $b) {
-			$res =  strcasecmp($a['title'], $b['title']);
-			return $res;
-		});
+		// uasort($dataSet, function($a, $b) {
+		// 	$res =  strcasecmp($a['title'], $b['title']);
+		// 	return $res;
+		// });
 		
 		///////////////////////////////organization_list////
 
@@ -131,10 +139,13 @@ class editMetaDataForm extends HelpFormBase {
 
 
 		$ids["new"] = "Сréer un jeu de données";
-   
-        foreach($dataSet as &$ds) {
-            $ids[$ds[id]] = $ds[title];
-        }
+		if ($selectedDataset) {
+			Logger::logMessage("Set dataset with id " . $selectedDataset[id] . " and name " . $selectedDataset[name]);
+			$ids[$selectedDataset[id]] = $selectedDataset[title];
+		}
+        // foreach($dataSet as &$ds) {
+        //     $ids[$ds[id]] = $ds[title];
+        // }
 
          
 
@@ -199,7 +210,7 @@ class editMetaDataForm extends HelpFormBase {
             '#title' => t('*Sélectionner un jeu de données :'),
             '#options' => $ids,
             '#attributes' => array(
-                'onchange' => 'addData('.$dataSet2.')','style' => 'width: 50%;', 
+                'onchange' => 'addData('.$selectedData.')','style' => 'width: 50%;', 
                 'id' => ['selected_data'])
         );
         
@@ -846,7 +857,7 @@ class editMetaDataForm extends HelpFormBase {
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 
-					$datasetId = $resourceManager->updateDataset($datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					drupal_set_message("Le jeu de données '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
@@ -865,6 +876,8 @@ class editMetaDataForm extends HelpFormBase {
 						$encoding = $table_data[$i][encoding];
 						$oldname = $table_data[$i][donnees_old];
 						$generateColumns = strpos($oldname, '_gencol.csv') !== false;
+
+						Logger::logMessage("TRM - Found " . json_encode($table_data[$i]));
 
 						if ($needToBeDelete == 1) {
 							$resourceManager->deleteResource($resourceId);
@@ -902,20 +915,34 @@ class editMetaDataForm extends HelpFormBase {
 	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata) {
 		$validataResources = array();
 
-		$result = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
-		foreach ($result as $key => $value) {
-			if ($value['status'] == 'complete') {
-				$validataResources[] = $value['resourceUrl'];
+		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
 
-				drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
-			}
-			else if ($value['status'] == 'pending') {
-				$validataResources[] = $value['resourceUrl'];
+		foreach ($results as &$result) {
 
-				drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
-			}
-			else if ($value['status'] == 'error') {
-				drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+			foreach ($result as $key => $value) {
+				if ($value['status'] == 'complete') {
+					if ($value['type'] == 'DATAPUSHER') {
+						$validataResources[] = $value['resourceUrl'];
+
+						drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Les clusters ont été générés.");
+					}
+				}
+				else if ($value['status'] == 'pending') {
+					$validataResources[] = $value['resourceUrl'];
+
+					drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+				}
+				else if ($value['status'] == 'error') {
+					if ($value['type'] == 'DATAPUSHER') {
+						drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+					}
+				}
 			}
 		}
 
@@ -1045,6 +1072,7 @@ class editMetaDataForm extends HelpFormBase {
 	}
 	
 	public function applyErrorsInline(array &$form, FormStateInterface $form_state) {
+		Logger::logMessage("EditMetadataForm errors " . json_encode($form_state->getErrors()));
 		// If validation errors, add inline errors.
 		if ($errors = $form_state->getErrors()) {
 		  // Add error to fields using Symfony Accessor.

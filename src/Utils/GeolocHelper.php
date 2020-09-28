@@ -12,7 +12,8 @@ class GeolocHelper {
 		$this->urlCkan = $this->config->ckan->url;
     }
 
-    function buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon){
+    function buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, 
+        $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon, $uploadGeojson){
         # $command = '/usr/bin/java -jar ' . $pathUserClientData . '/bpm.geoloc.creator_1.0.0.jar 
         # g = 0 if we don't need it, 1 if we need to get geolocalisation from the API BAN, 2 if we need to merge two coordinate column
         # n = Node URL
@@ -36,6 +37,7 @@ class GeolocHelper {
         # lon = Longitude column name
         # s = Minimum score to accept geolocalisation (Between 0 and 100) (Default is '60')
         # f = Temp file path
+        # ug = Upload geojson
 
         
         $pathUserClient = '/home/user-client';
@@ -59,6 +61,7 @@ class GeolocHelper {
         $re = $selectedEncoding;
         $s = $minimumScore;
         $f = $pathTempFile;
+        $ug = $uploadGeojson;
 
 		if ($buildGeolocType == '0') {
             $geolocParams = ' -coor "' . $colCoordinate . '" -cs "' . $coordinateSeparator . '"';
@@ -92,16 +95,18 @@ class GeolocHelper {
         Logger::logMessage("Geoloc params =  " . $geolocParams ."\r\n");
         Logger::logMessage("D4C URL " . $d4c ."\r\n");
 
-		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d4c "' . $d4c . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '"';
+		$command = '/usr/bin/java -jar ' . $pathUserClientData . '/' . $geolocJar . ' -g "' . $g . '" -n "' . $n . '" -np "' . $np . '" -d4c "' . $d4c . '" -d "' . $d . '" -k "' . $k . '" -pid "' . $pid . '" -rid "' . $rid . '" -rs "' . $rs . '" -re "' . $re . '" ' . $geolocParams . ' -s "' . $s . '" -f "' . $f . '" -ug "' . $ug . '"';
         Logger::logMessage($command);
 
-		$output = shell_exec($command);
+        $output = shell_exec($command);
+        
+        Logger::logMessage("Geoloc finish with result " . $output);
 
         if (strpos($output, 'GEOLOC END WITH SUCCESS') !== false) {
             Logger::logMessage("Geoloc success \r\n");
-			sleep(20);
-			$api = new Api();
-            $api->calculateVisualisations($selectedDataset);
+			// sleep(20);
+			// $api = new Api();
+            // $api->calculateVisualisations($selectedDataset);
             return "SUCCESS";
         }
         else {

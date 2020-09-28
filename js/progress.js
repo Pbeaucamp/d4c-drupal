@@ -2,7 +2,7 @@ $ = jQuery;
 
 function showProgress() {
     $('#progress').show();
-    $('#progress').append('<div id="progress-content" class="progress-modal-content"><div id="progress-bar"/><div id="progress-message"/></div>');  
+    $('#progress').append('<div id="progress-content" class="progress-modal-content"><div id="progress-bar"/><div id="progress-message"/></div>'); 
 }
 
 function updateProgress(percentage, mainMessage, message) {
@@ -18,5 +18,5 @@ function updateProgress(percentage, mainMessage, message) {
 function updateProgessBar(percentage) {
     $('#progress-bar').animate({
         width: percentage + "%"
-    }, 2000 );
+    }, 500 );
 }

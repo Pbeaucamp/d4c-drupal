@@ -5355,11 +5355,11 @@ class Api{
     
     function getDataSetById($id){
     
-    $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-    $this->urlCkan = $this->config->ckan->url;
-    $api = new Api;
-    $cle = $this->config->ckan->api_key;
-    $optionst = array(
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->urlCkan = $this->config->ckan->url;
+		$api = new Api;
+		$cle = $this->config->ckan->api_key;
+		$optionst = array(
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "POST",
             CURLOPT_HTTPHEADER => array(
@@ -5627,6 +5627,8 @@ class Api{
 				)
 		);
 	
+		Logger::logMessage("TRM - LOG MESSAGE : " .$jsonData);
+
 		$curl = curl_init ( $callUrl );
 		curl_setopt_array ( $curl, $options );
 		$result = curl_exec ( $curl );
@@ -7067,6 +7069,8 @@ class Api{
 	 * > UPDATE_DATASET
 	 * > MANAGE_FILE
 	 * > UPLOAD_CKAN
+	 * > UPLOAD_DATASTORE
+	 * > CREATE_CLUSTER
 	 * 
 	 * Status can be one of the following
 	 * > SUCCESS

@@ -313,7 +313,7 @@ class GeolocForm extends HelpFormBase
 
 		
 		$geolocHelper = new GeolocHelper();
-		$result = $geolocHelper->buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon);
+		$result = $geolocHelper->buildGeoloc($selectedDataset, $selectedResource, $selectedSeparator, $selectedEncoding, $buildGeolocType, $colCoordinate, $coordinateSeparator, $onlyOneAddress, $colNum, $colStreet, $colAdress, $colPostalCode, $colCity, $colLat, $colLon, true);
 		
 
 		if ($result == 'SUCCESS'){
