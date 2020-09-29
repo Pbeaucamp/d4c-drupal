@@ -353,7 +353,15 @@ class editMetaDataForm extends HelpFormBase {
 			'#title' => $this->t('Ne pas afficher les API'),
 		);
 
-     
+
+
+        $form['url_Gsheet'] = array(
+                '#type' => 'textarea',
+                '#title' => $this->t('Saisir un url Google SpreadSheet :'),
+                '#attributes' => array('style' => 'height: 5em;width: 25em;'),
+                '#maxlength' => null,
+
+            );
 
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
@@ -746,6 +754,18 @@ class editMetaDataForm extends HelpFormBase {
 		$table_data = $form_state->getValue('table');
 		$validata = $form_state->getValue('validata');
 		$resources = $form_state->getValue('resours', 0);
+        $url_Gsheet = $form_state->getValue('url_Gsheet');
+
+        // récuperer l'url google sheet
+        $jsonData = file_get_contents($url_Gsheet);
+        $rows = explode("\n",$jsonData);
+        $contenturlsheet = array();
+       
+        foreach($rows as $row) {
+            $contenturlsheet[] = str_getcsv($row);
+        }
+
+        
 
 		// Define Dataset name
 		$datasetName = $resourceManager->defineDatasetName($title);
@@ -832,7 +852,7 @@ class editMetaDataForm extends HelpFormBase {
 					drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
 
 					//Managing resources
-					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata);
+					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata,$contenturlsheet);
 				}
 				else {
 					//Fow now we use the old system but after we should look the dataset by ID
@@ -862,7 +882,7 @@ class editMetaDataForm extends HelpFormBase {
 
 					//Managing resources
 					Logger::logMessage("TRM - Managing resource");
-					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata);
+					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata,$contenturlsheet);
 
 					// Manage other resources
 					Logger::logMessage("TRM - " . count($table_data));
@@ -904,11 +924,34 @@ class editMetaDataForm extends HelpFormBase {
 		}
 	}
 
-	function manageFileResource($api, $resourceManager, $datasetId, $resourceId, $resources, $generateColumns, $isUpdate, $encoding, $validata) {
+	function manageFileResource($api, $resourceManager, $datasetId, $resourceId, $resources, $generateColumns, $isUpdate, $encoding, $validata,$contenturlsheet =null) {
 		if (isset($resources[0]) && !empty($resources[0])) {
 			$resourceUrl = $resourceManager->manageFile($resources[0]);
-			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata);
+
+
 		}
+
+        // save the content of GSheeturl in csv file and get url of resource
+        if($contenturlsheet != null){
+            $data = $contenturlsheet;
+                    if (!file_exists($_SERVER['DOCUMENT_ROOT']."/sites/default/files/dataset/urlsheet/")) {
+            
+                    mkdir($_SERVER['DOCUMENT_ROOT']."/sites/default/files/dataset/urlsheet/", 0777, true);
+                }
+
+            $fp = fopen($_SERVER['DOCUMENT_ROOT']."/sites/default/files/dataset/urlsheet/".$datasetId.".csv","wb");
+            fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+            foreach ( $data as $line ) {
+
+                fputcsv($fp, $line);
+            }
+            fclose($fp);
+
+            $resourceUrl = 'https://' . $_SERVER['SERVER_NAME']."/sites/default/files/dataset/urlsheet/".$datasetId.".csv";
+            
+        }
+       
+        $this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata);
 	}
 	
 	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata) {
