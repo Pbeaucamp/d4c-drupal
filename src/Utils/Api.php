@@ -5625,8 +5625,6 @@ class Api{
 						'Authorization:  ' .$cle 
 				)
 		);
-	
-		Logger::logMessage("TRM - LOG MESSAGE : " .$jsonData);
 
 		$curl = curl_init ( $callUrl );
 		curl_setopt_array ( $curl, $options );

@@ -906,7 +906,6 @@ class editMetaDataForm extends HelpFormBase {
 
 	function manageFileResource($api, $resourceManager, $datasetId, $resourceId, $resources, $generateColumns, $isUpdate, $encoding, $validata) {
 		if (isset($resources[0]) && !empty($resources[0])) {
-			Logger::logMessage("TRM - Found resource");
 			$resourceUrl = $resourceManager->manageFile($resources[0]);
 			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata);
 		}

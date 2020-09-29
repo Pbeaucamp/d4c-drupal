@@ -108,37 +108,6 @@ class ResourceManager {
 		}
 	}
 
-	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $filesDirectory, $encoding) {
-		Logger::logMessage("Managing files in '" . $filesDirectory . "'");
-
-		// $files = scandir($filesDirectory);
-		$files = $this->getDirContents($filesDirectory);
-		foreach($files as $file) {
-			//TODO: Remake
-			$csv = $this->manageFile($datasetId, $generateColumns, $isUpdate, $resourceId, $file, $encoding);
-			if ($csv != null) {
-				return $csv;
-			}
-		}
-	}
-
-	function getDirContents($dir, &$results = array()) {
-		$files = scandir($dir);
-	
-		foreach ($files as $key => $value) {
-			$path = realpath($dir . DIRECTORY_SEPARATOR . $value);
-			if (!is_dir($path)) {
-				$results[] = $path;
-			}
-			else if ($value != "." && $value != "..") {
-				$this->getDirContents($path, $results);
-				$results[] = $path;
-			}
-		}
-	
-		return $results;
-	}
-
 	function manageFile($file) {
 		Logger::logMessage("Managing file from FORM POST");
 
@@ -158,6 +127,7 @@ class ResourceManager {
 		//Managing file (filepath and filename)
 		$fileName = parse_url($resourceUrl);
 		Logger::logMessage("TRM fileName " . $fileName);
+
 
 		$host = $fileName[host];
 		Logger::logMessage("TRM host " . $host);
@@ -309,7 +279,52 @@ class ResourceManager {
 			}
 		}
 		else if ($type == 'zip') {
-			$result = $this->manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding);
+			//If we update the ZIP, we need to get the previous ZIP resource to update it and keep the same URL
+			if ($isUpdate) {
+				Logger::logMessage("Looking for the previous ZIP resource to update");
+				$dataset = $api->getPackageShow("id=" . $datasetId);
+				foreach($dataset['result']['resources'] as $resource){
+					if (strpos($resource['name'], 'zip') !== false) {
+
+						Logger::logMessage("TRM - FOUND RESOURCE " . json_encode($resource));
+
+						$resourceId = $resource['id'];
+						$name = $resource['name'];
+
+						//We need to change the PATH of the zip file to match the previous version and backup the old one
+						Logger::logMessage("Found the previous ZIP resource '" . $resourceId . "' with name '" . $name . "'");
+
+
+						$rootDirectory = 'sites/default/files/dataset/';
+						
+						$rootOldFile = self::ROOT . $rootDirectory . $name;
+						$oldFile = '/' . $rootDirectory . $name;
+						$oldFileBackup = $rootDirectory . "backup_" . $name;
+						Logger::logMessage("TRM - Rename '" . $rootOldFile . "' in '" . $oldFileBackup . "'");
+						//We backup the old one
+						rename($rootOldFile, $oldFileBackup);
+
+						$newFile = $rootDirectory . $fileName;
+						Logger::logMessage("TRM - Rename '" . $newFile . "' in '" . $oldFile . "'");
+						//We rename the new file into the old file
+						rename($newFile, $rootOldFile);
+
+						Logger::logMessage("TRM - FILE PATH BEFORE '" . $filePath . "'");
+						//We define the old value for the rest of the process
+						$fileName = $name;
+						$resourceUrl = $resource['url'];
+						$filePath = $oldFile;
+						Logger::logMessage("TRM - FILE PATH AFTER '" . $filePath . "'");
+
+						break;
+					}
+				}  
+			}
+
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
+			$results[] = $result;
+
+			$result = $this->manageZip($datasetId, $generateColumns, false, $resourceId, $filePath, $encoding);
 			$results = array_merge($results, $result);
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
@@ -366,8 +381,11 @@ class ResourceManager {
 			throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 		}
 		else {
-			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', 'Une erreur est survenue avec le fichier ' . $fileName . '.');
-			Logger::logMessage("We do not process the file '" . $filePath . "'");
+			// We upload the file as resource
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
+			$results[] = $result;
+			// $this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', 'Une erreur est survenue avec le fichier ' . $fileName . '.');
+			// Logger::logMessage("We do not process the file '" . $filePath . "'");
 		}
 
 		return $results;
@@ -417,26 +435,6 @@ class ResourceManager {
 		$result[$resourceId]['message'] = $message;
 		return $result;
 	}
-	
-	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceUrl, $filePath, $encoding) {
-		Logger::logMessage("Manage zip file");
-		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
-
-		$outputDirectory = '/home/user-client/drupal-d4c/sites/default/files/dataset/zip_extraction_' . uniqid();
-
-		$zip = new ZipArchive;
-		$res = $zip->open($filePath);
-		if ($res === TRUE) {
-			// extract it to the path we determined above
-			$zip->extractTo($outputDirectory);
-			$zip->close();
-
-			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceUrl, $outputDirectory, $encoding);
-		}
-		else {
-			throw new \Exception('Le fichier ne peut pas être extrait.');
-		}
-	}
 
 	/**
 	 * Generate a geojson file (if it does not exist) and a CSV file from various type of Geo format
@@ -480,11 +478,11 @@ class ResourceManager {
 			// fwrite($fileInput, $fileContent);
 			// fclose($fileInput);
 
-			$scriptPath = '/home/user-client/drupal-d4c/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
+			$scriptPath = self::ROOT . 'modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
 
 			$typeConvert = 'GEOJSON';
 			
-			$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/gen_'.uniqid().'.geojson';
+			$rootJson= self::ROOT . 'sites/default/files/dataset/gen_'.uniqid().'.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
 			$message = shell_exec($command);
 			$json = file_get_contents ($rootJson);
@@ -498,10 +496,214 @@ class ResourceManager {
 
 		return $csv;
 	}
+	
+	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
+		Logger::logMessage("Manage zip file with path '" . self::ROOT . $filePath . "'");
+		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
+
+		$directoryName = 'zip_extraction_' . uniqid();
+		$directoryPath = self::ROOT . 'sites/default/files/dataset/' . $directoryName;
+
+		$zip = new ZipArchive;
+		$res = $zip->open(self::ROOT . $filePath);
+		if ($res === TRUE) {
+			// extract it to the path we determined above
+			$zip->extractTo($directoryPath);
+			$zip->close();
+
+			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryName, $directoryPath, $encoding);
+		}
+		else {
+			throw new \Exception('Le fichier ne peut pas être extrait.');
+		}
+	}
+
+	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryName, $directoryPath, $encoding) {
+		Logger::logMessage("Managing files in '" . $directoryPath . "'");
+		$results = array();
+		
+		$files = $this->getDirContents($directoryPath);
+
+		// We check if the zip is a GTFS. 
+		// We check if shapes.txt exist inside zip
+		foreach($files as $key=>$file) {
+			Logger::logMessage("Managing file '" . $file . "'");
+
+			$fileName = pathinfo($file, PATHINFO_FILENAME);
+			$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+			
+			$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
+
+			Logger::logMessage("TRM - Found resource URL = " . $resourceUrl);
+
+			if (strpos($file, 'shapes.txt') !== false) {
+				//TODO: Add log for progress
+				$csv = $this->convertTextFileToCsv($file, "csv");
+			}
+			else {
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
+				$results = array_merge($results, $result);
+			}
+		}
+
+		return $results;
+	}
+
+	//convert text file to csv
+	function convertTextFileToCsv($filepath, $new_extension) {
+
+		// get content of text file
+		$filepathContent = file_get_contents($filepath);
+
+		// check if file contains the comma and replace it by semicolon  
+		if (strpos(file_get_contents($filepath), ',') !== false) {
+			/*$commaReplace = str_replace(",",";",$filepathContent);*/
+			$pathinfo = pathinfo($filepath);
+			$pathinfo["extension"] = $new_extension;
+		
+			//$filepath = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $filepath);
+
+			$pathfiles = explode("/", $filepath);
+			$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"]. "." .$new_extension; 
+			$newfile="";
+			foreach ($pathfiles as $key => $value) {
+
+				if($key == 0) {
+					$newfile= $value;
+				}
+				else {
+					$newfile .="/".$value;
+				}
+				
+			}
+			//create a new csv files contains the same content of text file
+			file_put_contents($newfile, $filepathContent);
+
+			$delimiter = "\t"; //your column separator
+			$csv_data = array();
+			$row = 1;
+			if (($handle = fopen($newfile, 'r')) !== FALSE) {
+				while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+					$csv_data[] = $data;
+					$row++;
+				}
+				fclose($handle);
+			}
+
+			$extra_columns = array('coordinate' => null, 'geoshape' => null);
+			$latIndex = "";
+			$lngIndex = "";
+			$shapeIdIndex = "";
+			$coordinatesGeojson=[];
+			$coordinatearray = [];
+			$Routes=[];
+
+			foreach ($csv_data as $i => $data) {
+				foreach ($data as $key => $value) {
+					if($value == "shape_pt_lat") {
+						$latIndex = $key;
+					}
+					if($value == "shape_pt_lon") {
+						$lngIndex = $key;
+					}
+					if($value == "shape_id") {
+						$shapeIdIndex = $key;
+					}
+					}
+					if($i!=0) {
+						if($i+1 < sizeof($csv_data)) {
+						$data2 = $csv_data[$i+1];
+						if($data[$shapeIdIndex] != $data2[$shapeIdIndex] ) {
+							array_push($Routes, $i);
+						}
+						
+					}
+
+					}
+					
+
+			}
+			$routesvalue=[];
+
+			foreach ($Routes as $key => $value) {
+				
+				if($key == 0) {
+					$firstindex = 1;
+				}else {
+					$firstindex = $Routes[$key -1 ] + 1;
+				}
+
+				$array1=[];
+				$array2 =array();
+				$array3=[];
+			
+
+					for ($i=$firstindex; $i <=$value ; $i++) { 
+
+						$array2 =array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+						$array3[] = $array2;
+				}
+
+				
+					$routesvalue[$key+1] = json_encode(array('type' => "LineString",'coordinates' => $array3));
+
+			}
+
+			foreach ($csv_data as $i => $data) {
+				
+				/*$geo_shape = str_replace(",",";",$routesvalue[$i]);*/
+				
+				if ($i == 0) {
+					$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
+				} else {
+
+						if (array_key_exists($i,$routesvalue)) {
+							$geo_shape = $routesvalue[$i];
+							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape);
+									
+						} 
+						else {
+							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+						}
+						
+						$csv_data[$i] = $data = array_merge($data, $extra_columns);
+				}
+
+
+			}
+
+			if (($handle = fopen($newfile, 'w')) !== FALSE) {
+				foreach ($csv_data as $data) {
+					fputcsv($handle, $data, ",");
+				}
+				fclose($handle);
+			}
+			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $newfile);
+			return $newfile;
+		}
+	}
+
+	function getDirContents($dir, &$results = array()) {
+		$files = scandir($dir);
+	
+		foreach ($files as $key => $value) {
+			$path = realpath($dir . DIRECTORY_SEPARATOR . $value);
+			if (!is_dir($path)) {
+				$results[] = $path;
+			}
+			else if ($value != "." && $value != "..") {
+				$this->getDirContents($path, $results);
+				$results[] = $path;
+			}
+		}
+	
+		return $results;
+	}
 
 	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher) {
 		
-		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource on CKAN and monitoring the datapusher");
+		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher");
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
 	
 		if ($isUpdate) {
@@ -578,6 +780,7 @@ class ResourceManager {
 			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 			$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			$return = json_decode($return);
+			
 			if ($return->success == true) {
 			
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
@@ -1437,4 +1640,7 @@ class ResourceManager {
         }
         return $alpha;
 	}
+
+
+
 }
