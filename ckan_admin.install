@@ -14,9 +14,9 @@ function ckan_admin_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-	  'map_name'=>array(
+    'map_name'=>array(
         'type' => 'varchar',
-		'length' => 50,
+    'length' => 50,
         'not null' => TRUE,
       ),
       'map_json'=>array(
@@ -38,9 +38,9 @@ function ckan_admin_schema() {
         'type' => 'varchar(50)',
         'not null' => TRUE,
       ),
-	  'cv_title'=>array(
+    'cv_title'=>array(
         'type' => 'varchar(50)',
-		'length' => 50,
+    'length' => 50,
         'not null' => TRUE,
       ),
       'cv_icon'=>array(
@@ -80,11 +80,11 @@ function ckan_admin_schema() {
         'type'=>'serial',
         'not null' => TRUE,
       ),
-	  'reu_dataset_id'=>array(
+    'reu_dataset_id'=>array(
         'type'=>'varchar(50)',
         'not null' => TRUE,
       ),
-	  'reu_dataset_title'=>array(
+    'reu_dataset_title'=>array(
         'type'=>'varchar(100)',
         'not null' => TRUE,
       ),
@@ -92,45 +92,100 @@ function ckan_admin_schema() {
         'type' => 'varchar(100)',
         'not null' => TRUE,
       ),
-	  'reu_title'=>array(
+    'reu_title'=>array(
         'type' => 'varchar(100)',
-		'length' => 100,
+    'length' => 100,
         'not null' => TRUE,
       ),
-	  'reu_description'=>array(
+    'reu_description'=>array(
         'type' => 'text',
       ),
       'reu_author_name'=>array(
         'type' => 'varchar(30)',
-		'not null' => TRUE,
+    'not null' => TRUE,
       ),
-	  'reu_author_url'=>array(
+    'reu_author_url'=>array(
         'type' => 'text'
       ),
-	  'reu_author_email'=>array(
+    'reu_author_email'=>array(
         'type' => 'varchar(50)'
       ),
       'reu_url'=>array(
         'type' => 'text',
         'not null' => TRUE,
       ),
-	  'reu_image'=>array(
+    'reu_image'=>array(
         'type' => 'text',
         'not null' => TRUE,
       ),
-	  'reu_date'=>array(
+    'reu_date'=>array(
         'type' => 'datetime',
         'not null' => TRUE,
       ),
-	  'reu_status'=>array(
+    'reu_status'=>array(
         'type' => 'integer',
         'not null' => TRUE,
       ),
-	  'reu_type'=>array(
+    'reu_type'=>array(
         'type' => 'varchar(30)'
       )
     ),
     'primary key' => array('reu_id'),
+  );
+ 
+  $schema['d4c_task_status'] = array(
+    'description' => 'Gestion des taches',
+    'fields' => array(
+      'id'=>array(
+        'type'=>'text',
+        'not null' => TRUE,
+      ),
+      'entity_id'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'entity_type'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'task_type'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'action'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'status'=>array(
+        'type' => 'text'
+      ),
+      'message'=>array(
+        'type' => 'text'
+      ),
+      'last_updated'=>array(
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+        'default' => '',
+      )
+    )
+  );
+  
+
+    $schema['d4c_user_story'] = array(
+    'description' => 'Gestion des user story',
+    'fields' => array(
+      'story_id'=>array(
+        'type'=>'text',
+        'not null' => TRUE,
+      ),
+      'scroll_time'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      )
+      
+      
+    )
   );
 
   return $schema;
@@ -149,13 +204,31 @@ function ckan_admin_update_8701(&$sandbox) {
         'type' => 'serial',
         'not null' => TRUE,
       ],
+      'widget_label' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'widget' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
       'scroll_time' => [
         'type' => 'int',
         'not null' => TRUE,
-      ]
+      ],
+      'image' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
     ],
     'primary key' => ['story_id'],
   ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_user_story', $spec);
+}
+
+function ckan_admin_update_8703(&$sandbox) {
 
   $widget = [
     'description' => 'Gestion des widgets',
@@ -186,6 +259,14 @@ function ckan_admin_update_8701(&$sandbox) {
     'primary key' => ['widget_id'],
   ]; 
   $schema = Database::getConnection()->schema();
-  $schema->createTable('d4c_user_story', $spec);
   $schema->createTable('d4c_user_story_widget', $widget);
 }
+
+function ckan_admin_update_8704(&$sandbox) {
+ 
+  $schema = Database::getConnection()->schema();
+  $schema->dropField('d4c_user_story', 'widget_label');
+  $schema->dropField('d4c_user_story', 'widget');
+  $schema->dropField('d4c_user_story', 'image');
+}
+

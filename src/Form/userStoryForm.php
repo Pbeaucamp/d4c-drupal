@@ -66,7 +66,7 @@ class userStoryForm extends HelpFormBase
         $orgs = json_decode($orgs, true);
         $this->orgas = $orgs;
 
-        /*$stories = $api->getStories();*/
+        $stories = $api->getStories();
 
         $idUser = \Drupal::currentUser()->id();
             
@@ -103,27 +103,45 @@ class userStoryForm extends HelpFormBase
    
         $contentstories = json_encode($stories);
 
+/*        
+        echo "<pre>";
 
-        $contentwidget ='<div class="slideshow-container" id="slides">';
-        $indocators ='<div style="text-align:center; margin-top: -20px !important;">';
-        foreach ($stories as $key => $value) {
-            $contentwidget.='
-            <div class="mySlides " data-index = "1">
-                <a href ="#" target="_blank">
-                <iframe id="iframejeu" src="'.$value->widget.'" frameBorder="0" width = 100% height =645></iframe> 
-
-                  <div class="text">'.$value->widget_label.'</div></a>
-                </div>';
-
-            $indocators.='
-          <img class="dot" onclick="currentSlide('.$key.')" src ="'.$value->image.'" /> ';
+        foreach ($stories as $key => $story) {
+            $widgets = $api->getWidgetByStory($story->story_id);
+            if(sizeof($widgets) > 0) {
+                var_dump($widgets);
+            }
+            
         }
+        
+        echo "</pre>";die;*/
 
-        $contentwidget.="</div>";
-        $indocators.="</div>";
+        $slide = "";
 
+        foreach ($stories as $key => $story) {
+            
+            $widgets = $api->getWidgetByStory($story->story_id);
+            if(sizeof($widgets) > 0) {
+                $contentwidget.='<div class="slideshow-container" id="slides">';
+                foreach ($widgets as $key => $value) {
+                    $contentwidget.='
+                    <div class="mySlides " data-index = "1">
+                        <a href ="#" target="_blank">
+                        <iframe id="iframejeu" src="'.$value->widget.'" frameBorder="0" width = 100% height =645></iframe> 
 
-        $form['content-stories2'] = array(
+                          <div class="text">'.$value->widget_label.'</div></a>
+                        </div>';
+
+                    $indocators.='
+                  <img class="dot" onclick="currentSlide('.$key.')" src ="'.$value->image.'" /> ';
+                }
+
+                $contentwidget.="</div>";
+                $indocators.="</div>";
+
+            }
+/*
+        $form['content-stories2'][] = array(
         'example one' => [
           '#type' => 'inline_template',
           '#template' => '
@@ -147,10 +165,49 @@ class userStoryForm extends HelpFormBase
         $form['m2_2'] = array(
           '#markup' => '</div>',
         ); 
+    */
+        }
+
+        /*$contentwidget ='<div class="slideshow-container" id="slides">';
+        $indocators ='<div style="text-align:center; margin-top: -20px !important;">';
+        foreach ($stories as $key => $value) {
+            $contentwidget.='
+            <div class="mySlides " data-index = "1">
+                <a href ="#" target="_blank">
+                <iframe id="iframejeu" src="'.$value->widget.'" frameBorder="0" width = 100% height =645></iframe> 
+
+                  <div class="text">'.$value->widget_label.'</div></a>
+                </div>';
+
+            $indocators.='
+          <img class="dot" onclick="currentSlide('.$key.')" src ="'.$value->image.'" /> ';
+        }
+
+        $contentwidget.="</div>";
+        $indocators.="</div>";*/
+
+
+
+
 
         $form['m2'] = array(
             '#markup' => '<div id="visibilityModalStory">',
         ); 
+
+        $form['table_widgets'] = array(
+            
+            //'#prefix' =>'<div id="ConfigurationTab">',
+            '#type' => 'table',
+            '#header' => array(
+                $this->t('img_widget'),
+                $this->t('label_widget'),
+                $this->t('Widget/URL'),
+                $this->t('Désactiver'),
+                $this->t('Supprimer')  
+            ),
+            //'#suffix' => '</div>',
+
+        );
         
         $form['id_story'] = array(
                 '#type' => 'textfield',
@@ -158,7 +215,7 @@ class userStoryForm extends HelpFormBase
                 '#attributes' => array('style' => 'display: none;'),
 
             );
-        $form['scroll_tps'] = array(
+/*        $form['scroll_tps'] = array(
             '#markup' => '',
             '#type' => 'textfield',
             '#title' => $this->t('*Temps de défilement :'),
@@ -188,7 +245,7 @@ class userStoryForm extends HelpFormBase
             '#resizable' => true,
             '#attributes' => array('style' => 'width: 50%;'),
         ); 
-
+*/
 
         $form['valider'] = array(
             '#type' => 'submit',

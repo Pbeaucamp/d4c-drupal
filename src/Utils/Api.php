@@ -6934,12 +6934,26 @@ if($exportUserField  != null ) {
 
 		
 	}
+
+function _get_id($tableName, $fieldName) {
+
+    $select = db_select($tableName, 'o');
+    $fields = array(
+        $fieldName,
+    );
+    $select->fields('o', $fields);
+    $result = $select->orderBy($fieldName)->execute()->fetchAll();
+    return (int)$result[sizeof($result)-1]->story_id;
+}
+
+
 public function addStory($params) {
 		if(is_array($params)){
 			$story = $params;
 		} else {
 			$story = $this->proper_parse_str($params);
 		}
+
 
 		$query = \Drupal::database()->insert('d4c_user_story');
 
@@ -6954,7 +6968,9 @@ public function addStory($params) {
 			
 		]);
 
-		/*$query_widget->fields([
+		$lastId = $this->_get_id('d4c_user_story' , 'story_id');
+
+		$query_widget->fields([
 			'widget_label',
 			'widget',
 			'story_id',
@@ -6963,12 +6979,14 @@ public function addStory($params) {
 		$query_widget->values([
 			$story["label_widget"],
 			$story["widget"],
-			$scrolltime,
+			$lastId,
 			$story["img_widget"]
 			
-		]);*/
+		]);
 
 		$query->execute();
+		$query_widget->execute();
+		
 
 
 		
@@ -6983,9 +7001,30 @@ public function getStories() {
 
 		$query2->fields('story', [
 			'story_id',
+			'scroll_time'
+		]);
+
+
+		$prep=$query2->execute();
+		$res= array();
+		while ($enregistrement = $prep->fetch()) {
+			array_push($res, $enregistrement);
+		}
+
+		return $res;
+}
+
+public function getWidgets() {
+		$res=array();
+		$table = "d4c_user_story_widget";
+		$query2 = \Drupal::database()->select($table, 'widget');
+
+
+		$query2->fields('widget', [
+			'widget_id',
 			'widget_label',
 			'widget',
-			'scroll_time',
+			'story_id',
 			'image'
 		]);
 
@@ -6998,6 +7037,30 @@ public function getStories() {
 
 		return $res;
 }
+
+	function getWidgetByStory($story_id){
+		$table = "d4c_user_story_widget";
+		$query = \Drupal::database()->select($table, 'widget');
+
+		$query->fields('widget', [
+			'widget_id',
+			'widget_label',
+			'widget',
+			'story_id',
+			'image'
+		]);
+		
+		$query->condition('story_id',$story_id);		
+		$prep=$query->execute();
+		//$prep->setFetchMode(PDO::FETCH_OBJ);
+		$res= array();
+		while ($enregistrement = $prep->fetch()) {
+			array_push($res, $enregistrement);
+		}
+		return $res;
+	}
+
+
 
 function updateStory($story){
 

@@ -8,6 +8,7 @@ $('#edit-button-del-story').attr('onclick', 'delStory(event);');
 $("#edit-img-widget-upload").after('<div id="img_widget"></div>');
 /*$('#edit-valider').attr('onclick', ' validUpload(event, "img_widget");');*/
 $('#visibilityStories').before(`<p><input id="exportdataset" type="button" onclick="openModalStory()" class="button"  value="Ajouter une histoire" /></p>`);
+$("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(1)">');
 
 
 
