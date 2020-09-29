@@ -149,6 +149,22 @@ function ckan_admin_update_8701(&$sandbox) {
         'type' => 'serial',
         'not null' => TRUE,
       ],
+      'scroll_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ]
+    ],
+    'primary key' => ['story_id'],
+  ]; 
+
+  $widget = [
+    'description' => 'Gestion des widgets',
+    'fields' => [
+      'widget_id' => [
+        'description' => 'Myfield1 description.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
       'widget_label' => [
         'type' => 'varchar',
         'length' => 255,
@@ -158,7 +174,7 @@ function ckan_admin_update_8701(&$sandbox) {
         'type' => 'text',
         'not null' => TRUE,
       ],
-      'scroll_time' => [
+      'story_id' => [
         'type' => 'int',
         'not null' => TRUE,
       ],
@@ -167,8 +183,9 @@ function ckan_admin_update_8701(&$sandbox) {
         'not null' => TRUE,
       ],
     ],
-    'primary key' => ['story_id'],
+    'primary key' => ['widget_id'],
   ]; 
   $schema = Database::getConnection()->schema();
   $schema->createTable('d4c_user_story', $spec);
+  $schema->createTable('d4c_user_story_widget', $widget);
 }

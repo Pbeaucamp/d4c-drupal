@@ -66,10 +66,10 @@ class userStoryForm extends HelpFormBase
         $orgs = json_decode($orgs, true);
         $this->orgas = $orgs;
 
-        $stories = $api->getStories();
+        /*$stories = $api->getStories();*/
 
         $idUser = \Drupal::currentUser()->id();
-    
+            
         
         if($idUser != 0) {
             $form['m1'] = array(
@@ -83,7 +83,8 @@ class userStoryForm extends HelpFormBase
         }
 
 
-        $storiesjson = json_encode($stories,true);
+        /*$storiesjson = json_encode($stories,true);*/
+        $storiesjson=null;
        $form['selected_data'] = array(
             '#type' => 'select',
             '#title' => t(''),
@@ -263,6 +264,7 @@ class userStoryForm extends HelpFormBase
 
         }else {
             $api->addStory($data);
+            var_dump("expression");die;
         }
 
         header("Refresh:0");

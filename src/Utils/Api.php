@@ -6942,23 +6942,34 @@ public function addStory($params) {
 		}
 
 		$query = \Drupal::database()->insert('d4c_user_story');
+
+		$query_widget = \Drupal::database()->insert('d4c_user_story_widget');
 		$scrolltime = (int)$story["scrolling_time"];
 
 		$query->fields([
-			'widget_label',
-			'widget',
-			'scroll_time',
-			'image'
+			'scroll_time'
 		]);
 		$query->values([
+			$scrolltime
+			
+		]);
+
+		/*$query_widget->fields([
+			'widget_label',
+			'widget',
+			'story_id',
+			'image'
+		]);
+		$query_widget->values([
 			$story["label_widget"],
 			$story["widget"],
 			$scrolltime,
 			$story["img_widget"]
 			
-		]);
+		]);*/
 
 		$query->execute();
+
 
 		
 	}
