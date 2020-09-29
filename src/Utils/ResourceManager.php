@@ -121,7 +121,7 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false) {
 		$results = array();
 
 		//Managing file (filepath and filename)
@@ -283,7 +283,14 @@ class ResourceManager {
 			if ($isUpdate) {
 				Logger::logMessage("Looking for the previous ZIP resource to update");
 				$dataset = $api->getPackageShow("id=" . $datasetId);
-				foreach($dataset['result']['resources'] as $resource){
+
+				$resources = $dataset['result']['resources'];
+
+				//We check if the zip was previously unzip by counting the resources
+				$unzipZip = count($resources) > 1;
+
+				Logger::logMessage("TRM - FOUND '" . count($resources) . "' RESOURCES " . json_encode($resources));
+				foreach($resources as $resource){
 					if (strpos($resource['name'], 'zip') !== false) {
 
 						Logger::logMessage("TRM - FOUND RESOURCE " . json_encode($resource));
@@ -324,8 +331,10 @@ class ResourceManager {
 			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
 			$results[] = $result;
 
-			$result = $this->manageZip($datasetId, $generateColumns, false, $resourceId, $filePath, $encoding);
-			$results = array_merge($results, $result);
+			if ($unzipZip) {
+				$result = $this->manageZip($datasetId, $generateColumns, false, $resourceId, $filePath, $encoding);
+				$results = array_merge($results, $result);
+			}
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
 			// We upload the geojson file as resource
@@ -496,6 +505,38 @@ class ResourceManager {
 
 		return $csv;
 	}
+
+	function manageGsheet($datasetId, $urlGsheet) {
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'PENDING', 'Création du fichier depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
+
+        // récuperer l'url google sheet
+        $jsonData = file_get_contents($urlGsheet);
+        $rows = explode("\n", $jsonData);
+        $contenturlsheet = array();
+       
+        foreach($rows as $row) {
+            $contenturlsheet[] = str_getcsv($row);
+		}
+
+        // save the content of GSheeturl in csv file and get url of resource
+		$data = $contenturlsheet;
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/", 0777, true);
+		}
+
+		$fileName = $datasetId . ".csv";
+
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/" . $fileName, "wb");
+		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+		foreach ( $data as $line ) {
+			fputcsv($fp, $line);
+		}
+		fclose($fp);
+
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
+
+		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/urlsheet/' . $fileName;
+	}
 	
 	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
 		Logger::logMessage("Manage zip file with path '" . self::ROOT . $filePath . "'");
@@ -530,20 +571,18 @@ class ResourceManager {
 			Logger::logMessage("Managing file '" . $file . "'");
 
 			$fileName = pathinfo($file, PATHINFO_FILENAME);
-			$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
 			
-			$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
-
-			Logger::logMessage("TRM - Found resource URL = " . $resourceUrl);
-
 			if (strpos($file, 'shapes.txt') !== false) {
-				//TODO: Add log for progress
-				$csv = $this->convertTextFileToCsv($file, "csv");
+				Logger::logMessage("Found shapes.txt -> Managing GTFS");
+				$resourceUrl = $this->convertTextFileToCsv($file, "csv");
 			}
 			else {
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
-				$results = array_merge($results, $result);
+				$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
 			}
+
+			$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
+			$results = array_merge($results, $result);
 		}
 
 		return $results;
@@ -560,8 +599,6 @@ class ResourceManager {
 			/*$commaReplace = str_replace(",",";",$filepathContent);*/
 			$pathinfo = pathinfo($filepath);
 			$pathinfo["extension"] = $new_extension;
-		
-			//$filepath = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $filepath);
 
 			$pathfiles = explode("/", $filepath);
 			$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"]. "." .$new_extension; 
@@ -679,7 +716,7 @@ class ResourceManager {
 				}
 				fclose($handle);
 			}
-			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['SERVER_NAME'], $newfile);
+			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
 			return $newfile;
 		}
 	}
