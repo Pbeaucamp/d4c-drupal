@@ -68,8 +68,11 @@ class userStoryForm extends HelpFormBase
 
         $stories = $api->getStories();
 
+        $idUser = \Drupal::currentUser()->id();
+    
         
-        $form['m1'] = array(
+        if($idUser != 0) {
+            $form['m1'] = array(
             '#markup' => '<div id="visibilityStories"></div>',
         ); 
 
@@ -92,6 +95,9 @@ class userStoryForm extends HelpFormBase
     margin-left: 30%;', 
                 'id' => ['selected_data'])
         );
+
+        }
+        
 
    
         $contentstories = json_encode($stories);
