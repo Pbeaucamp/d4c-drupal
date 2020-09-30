@@ -270,3 +270,15 @@ function ckan_admin_update_8704(&$sandbox) {
   $schema->dropField('d4c_user_story', 'image');
 }
 
+function ckan_admin_update_8705(&$sandbox) {
+     $spec = array(
+        'type' => 'varchar',
+        'description' => "Title",
+        'length' => 255
+      ); 
+     $schema = Database::getConnection()->schema();
+     $schema->addField('d4c_user_story', 'title_story', $spec);
+     return $schema;
+}
+
+

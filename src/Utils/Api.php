@@ -6947,29 +6947,12 @@ function _get_id($tableName, $fieldName) {
 }
 
 
-public function addStory($params) {
-		if(is_array($params)){
-			$story = $params;
-		} else {
-			$story = $this->proper_parse_str($params);
-		}
+public function addWidget($params,$lastid_story) {
 
 
-		$query = \Drupal::database()->insert('d4c_user_story');
 
+	/*var_dump($imgUrl);*/
 		$query_widget = \Drupal::database()->insert('d4c_user_story_widget');
-		$scrolltime = (int)$story["scrolling_time"];
-
-		$query->fields([
-			'scroll_time'
-		]);
-		$query->values([
-			$scrolltime
-			
-		]);
-
-		$lastId = $this->_get_id('d4c_user_story' , 'story_id');
-
 		$query_widget->fields([
 			'widget_label',
 			'widget',
@@ -6977,19 +6960,57 @@ public function addStory($params) {
 			'image'
 		]);
 		$query_widget->values([
-			$story["label_widget"],
-			$story["widget"],
-			$lastId,
-			$story["img_widget"]
+			$params["label_widget"],
+			$params["widget"],
+			$lastid_story,
+			$params["urlimg"]
+			
+		]);
+
+
+
+		$query_widget->execute();
+		
+}
+public function addStory($params) {
+		if(is_array($params)){
+			$story = $params;
+		} else {
+			$story = $this->proper_parse_str($params);
+		}
+		/*echo "<pre>";
+
+		foreach ($story["widget"] as $key => $value) {
+			var_dump($value["label_widget"]);
+		}
+	echo "</pre>";die;
+*/
+
+		$query = \Drupal::database()->insert('d4c_user_story');
+
+		
+		$scrolltime = (int)$story["scrolling_time"];
+
+		$query->fields([
+			'scroll_time',
+			'title_story'
+		]);
+		$query->values([
+			$scrolltime,
+			$story["title_story"]
 			
 		]);
 
 		$query->execute();
-		$query_widget->execute();
-		
+		$lastId = $this->_get_id('d4c_user_story' , 'story_id');
+		/*var_dump($lastId);die;*/
+
+		foreach ($story["widget"] as $key => $value) {
+			
+			$this->addWidget($value, $lastId);
+		}
 
 
-		
 	}
 
 
@@ -7001,7 +7022,8 @@ public function getStories() {
 
 		$query2->fields('story', [
 			'story_id',
-			'scroll_time'
+			'scroll_time',
+			'title_story'
 		]);
 
 
@@ -7078,10 +7100,24 @@ function updateStory($story){
 		
 	}
 
+function deleteWidget($widget_id){
+
+			$query_widget = \Drupal::database()->delete('d4c_user_story_widget');
+			$query_widget->condition('widget_id', $widget_id);
+			$query_widget->execute();
+		
+		
+}
+
+
 function deleteStory($story_id){
 
 		$query = \Drupal::database()->delete('d4c_user_story');
 
+		$widgets = $this->getWidgetByStory($story_id);
+		foreach ($widgets as $key => $value) {
+			$this->deleteWidget($value->widget_id);
+		}
 
 		$query->condition('story_id', $story_id);
 		$query->execute();

@@ -15,12 +15,43 @@ $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-for
 
 $(document).ready(function() {
 var timer = null;
-timer = setInterval(function() {
+/*timer = setInterval(function() {
   $("#next").trigger("click");
 }, 2500);
-  
+  */
 
   });
+
+function deleteRowWidget(btn) {
+    var row = btn.parentNode.parentNode;
+    row.parentNode.removeChild(row);
+}
+
+
+function addWidgetRow(num) {
+
+  console.log("ddd");
+    num = num + 1;
+
+
+    let label_widget = '<td><div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-widgets-' + num + '-label_widget form-item-table-widgets-' + num + '-label_widget form-no-label"><input data-drupal-selector="edit-table-widgets-' + num + '-name" type="text" id="edit-table-widgets-' + num + '-label_widget" name="table_widgets[' + num + '][label_widget]" value="" size="30" class="form-text"></div></td>';
+
+/*    let img_widget = '<td><div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-widgets-' + num + '-img_widget-upload form-item-table-widgets-' + num + '-img_widget form-no-label"><input data-drupal-selector="edit-table-widgets-' + num +'-img-widget" type="file" id="edit-table-widgets-' + num +'-img-widget-upload" name="files[table_widgets_'+num+'_img_widget]" size="22" class="js-form-file form-file"></div></td>';
+*/
+    let img_widget = '<td><div id="ajax-wrapper"><div class="js-form-item form-item js-form-type-managed-file form-type-managed-file js-form-item-table-widgets-'+num+'-img-widget form-item-table-widgets-'+num+'-img-widget"><label for="edit-table-widgets-'+num+'-img-widget-upload" id="edit-table-widgets-'+num+'-img-widget--label">Image de l\'histoire  :</label><div id="edit-table-widgets-'+num+'-img-widget" class="js-form-managed-file form-managed-file"><input data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload" type="file" id="edit-table-widgets-'+num+'-img-widget-upload" name="files[table_widgets_'+num+'_img_widget]" size="22" class="js-form-file form-file"><input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload-button" formnovalidate="formnovalidate" type="submit" id="edit-table-widgets-'+num+'-img-widget-upload-button" name="table_widgets_'+num+'_img_widget_upload_button" value="Transférer"><input data-drupal-selector="edit-table-widgets-'+num+'-img-widget-fids" type="hidden" name="table_widgets['+num+'][img_widget][0]"></div></div></div></td>';
+
+    let widget_widget = '<td><div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-widgets-' + num + '-widget form-item-table-widgets-' + num + '-widget form-no-label"><div class="form-textarea-wrapper"><textarea style="height: 5em;width: 25em;" data-drupal-selector="edit-table-widgets-' + num + '-widget" id="edit-table-widgets-' + num + '-widget" name="table_widgets[' + num + '][widget]" rows="5" cols="60" class="form-textarea resize-vertical"></textarea> </div></div></td>';
+
+    let del_widget = ' <td><input type="button" class="button js-form-submit form-submit" value="Supprimer" onclick="deleteRowWidget(this)"/></td>';
+
+    $('#edit-table-widgets > tbody:last-child').append('<tr data-drupal-selector="edit-table-widgets-' + num + '" class="odd">' + label_widget + img_widget + widget_widget + del_widget + '</tr>');
+
+
+    $('#addRowBtnWidget').remove();
+    $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(' + num + ')">');
+
+
+}
 
 function delStory(event) {
 
@@ -61,12 +92,23 @@ function getStoryByID(stories, id) {
 
     return data;
 }
-var slideIndex = 1;
-showSlides(slideIndex);
+
 
 function showSlides(n) {
+  console.log("show slides");
   var i;
   var slides = document.getElementsByClassName("mySlides");
+  console.log(" attributes ");
+  
+  
+  if(n==1) {
+      for(var j=0; j<slides.length; j++ ){
+        console.log(slides[j].getAttribute("data-key"));
+        if(slides[j].getAttribute("data-key") == 0) {
+            slides[j].style.display = "block"; 
+        }
+      }
+  } else {
   var dots = document.getElementsByClassName("dot");
 
 
@@ -80,15 +122,80 @@ function showSlides(n) {
   }
   slides[slideIndex-1].style.display = "block"; 
   dots[slideIndex-1].className += " active";
+  }
+  
 }
 
-function plusSlides(n) {
-  showSlides(slideIndex += n);
+var slideIndex = 1;
+ 
+var slideIndexArray = [];
+$(document).ready(function() {
+
+
+  $(".slidescontent").each(function(){
+    
+    slideIndexArray[$(this).attr("data-id")] = 1;
+    showSlides2(null,slideIndexArray[$(this).attr("data-id")]);
+    var timer = null;
+    var next = $(this).find("#next");
+/*    console.log(next.attr("data-scrolltime"));*/
+    timer = setInterval(function() {
+      next.trigger("click");
+      /*console.log(" click");*/
+    }, 2500);
+
+});
+  
+console.log(" slide array ");
+console.log(slideIndexArray);
+
+  });
+
+function showSlides2(storyindex,n) {
+/*  console.log(storyindex);
+  console.log("n = " +n);
+  console.log("show slides2");*/
+  if(storyindex == null) {
+      if(n==1) {
+        var slides = document.getElementsByClassName("mySlides");
+        for(var j=0; j<slides.length; j++ ){
+        console.log(slides[j].getAttribute("data-key"));
+        if(slides[j].getAttribute("data-key") == 0) {
+            slides[j].style.display = "block"; 
+        }
+      }
+      }
+  } else {
+    var i;
+    var slides = document.getElementById("slides-"+storyindex).querySelectorAll(".mySlides");
+
+
+    var dots = document.getElementById("slidesContent-"+storyindex).querySelectorAll(".dot");
+
+  if (n > slides.length) {slideIndexArray[storyindex] = 1 }    
+  if (n <= 1) {slideIndexArray[storyindex] = slides.length}
+  for (i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+  }
+  for (i = 0; i < dots.length; i++) {
+      dots[i].className = dots[i].className.replace(" active", "");
+  }
+  slides[slideIndexArray[storyindex]-1].style.display = "block"; 
+  dots[slideIndexArray[storyindex]-1].className += " active";
+  }
+  
+  
+  
+}
+function plusSlides(storyindex,n) {
+  
+ /* console.log("plus slide");*/
+  showSlides2(storyindex,slideIndexArray[storyindex] += n);
 }
 
-function currentSlide(n) {
-  console.log(" hh ");
-  showSlides(slideIndex = n);
+function currentSlide(storyindex,n) {
+/*  console.log(" hh ");*/
+  showSlides2(storyindex,slideIndexArray[storyindex] = n);
 }
 
 var urlimag = "";
@@ -120,7 +227,7 @@ function imageIsLoaded() {
 })*/
 
 function openModalStory(story=null) {
-    $('#visibilityStories').after(`<div style="width: 70em; padding: 72px; box-shadow: 5px 10px 8px 10px #888888;" class="modal" data-modal="3">
+    $('#visibilityStories').after(`<div style="width: 100em; padding: 72px; box-shadow: 5px 10px 8px 10px #888888;" class="modal" data-modal="3">
          
               <div class="row">
                     <a href="#" id="cancel2" class="js-modal-close-export button" style="float: right;margin-top: -71px;
@@ -142,9 +249,10 @@ function openModalStory(story=null) {
           $('#edit-label-widget').before('<img id="img-widget-modal" style="width:80px !important; height:80px !important" src="https://kmo.data4citizen.com/sites/default/files/gris.jpg" width:80 height: 80 />');
 
           if(story != null ) {
-             $('#title-modal-story').text("Modifier la story "+story["widget_label"]);
+             $('#title-modal-story').text("Modifier la story "+story["title_story"]);
              $('input[name=button_del_story_name]').css("display","block");
              $('input[name=id_story]').val(story["story_id"]);
+             $('input[name=story_title]').val(story["title_story"]);
              $('input[name=scroll_tps]').val(story["scroll_time"]);
              $('input[name=label_widget]').val(story["widget_label"]);
              $('textarea[name=widget]').val(story["widget"]);
