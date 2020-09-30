@@ -1253,10 +1253,4 @@ die;*/
 
 			return "/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml";
     }
-    
-
-
-	
-
-
 }
