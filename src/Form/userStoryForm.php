@@ -93,13 +93,14 @@ class userStoryForm extends HelpFormBase
 
 
         $storiesjson = json_encode($stories,true);
+        $widgetsjson = json_encode($widgets,true);
         /*$storiesjson=null;*/
        $form['selected_data'] = array(
             '#type' => 'select',
             '#title' => t(''),
             '#options' => $ids,
             '#attributes' => array( 
-                'onchange' => 'loadStory('.$storiesjson.')','style' => 'width: 50%;float: right;
+                'onchange' => 'loadStory('.$storiesjson.','.$widgetsjson.')','style' => 'width: 50%;float: right;
             position: absolute;
             margin-top: -35px;
             margin-left: 30%;', 
@@ -260,8 +261,14 @@ class userStoryForm extends HelpFormBase
             //'#suffix' => '</div>',
 
         );
-                for ($i = 1; $i <= 1; $i++) {
+           for ($i = 1; $i <= 1; $i++) {
 //titre
+/*            $form['table_widgets'][$i]['id_widget'] = array(
+                '#type' => 'textfield',
+                '#maxlength' => null,
+                '#attributes' => array('style' => 'display: none;'),
+
+            );*/
             $form['table_widgets'][$i]['label_widget'] = array(
                 '#type' => 'textfield',
                 '#size' => 30,

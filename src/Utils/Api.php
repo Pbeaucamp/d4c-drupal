@@ -6978,13 +6978,6 @@ public function addStory($params) {
 		} else {
 			$story = $this->proper_parse_str($params);
 		}
-		/*echo "<pre>";
-
-		foreach ($story["widget"] as $key => $value) {
-			var_dump($value["label_widget"]);
-		}
-	echo "</pre>";die;
-*/
 
 		$query = \Drupal::database()->insert('d4c_user_story');
 
@@ -7003,7 +6996,6 @@ public function addStory($params) {
 
 		$query->execute();
 		$lastId = $this->_get_id('d4c_user_story' , 'story_id');
-		/*var_dump($lastId);die;*/
 
 		foreach ($story["widget"] as $key => $value) {
 			
@@ -7013,6 +7005,45 @@ public function addStory($params) {
 
 	}
 
+function updatewidget($widget){
+			$story_id = $story["story_id"];
+		$query = \Drupal::database()->update('d4c_user_story');
+		$query->fields([
+			'widget_label' => $story["label_widget"],
+			'widget' => $story["widget"],
+			'scroll_time' => (int)$story["scrolling_time"],
+			'image' => $story["img_widget"]			
+		]);
+
+		$query->condition('story_id', $story_id);
+		$query->execute();
+
+
+}
+function updateStory($story){
+
+
+		$story_id = $story["story_id"];
+		$query = \Drupal::database()->update('d4c_user_story');
+		$query->fields([
+			'scroll_time' => (int)$story["scrolling_time"],
+			'title_story' => $story["title_story"]			
+		]);
+
+		$query->condition('story_id', $story_id);
+		$query->execute();
+
+		$widgets = $this->getWidgetByStory($story_id);
+		foreach ($widgets as $key => $value) {
+			$this->deleteWidget($value->widget_id);
+		}
+
+		foreach ($story["widget"] as $key => $value) {
+			
+			$this->addWidget($value, $story_id);
+		}
+		
+	}
 
 public function getStories() {
 		$res=array();
@@ -7084,21 +7115,7 @@ public function getWidgets() {
 
 
 
-function updateStory($story){
 
-		$story_id = $story["story_id"];
-		$query = \Drupal::database()->update('d4c_user_story');
-		$query->fields([
-			'widget_label' => $story["label_widget"],
-			'widget' => $story["widget"],
-			'scroll_time' => (int)$story["scrolling_time"],
-			'image' => $story["img_widget"]			
-		]);
-
-		$query->condition('story_id', $story_id);
-		$query->execute();
-		
-	}
 
 function deleteWidget($widget_id){
 
