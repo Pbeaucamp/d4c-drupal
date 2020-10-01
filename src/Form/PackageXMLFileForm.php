@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\ckan_admin\Utils\HelpFormBase;
@@ -174,6 +175,18 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
 //-------------------------End filter form -------------------------------------------------------
 
+    $form['jdd'] = array(
+	'#title' => t('Importer un JDD : '),
+	'#type' => 'managed_file',
+	'#upload_location' => 'public://dataset/',
+	'#upload_validators' => array(
+		'file_validate_extensions' => array('xls xlsx xml'),
+	),
+	'#size' => 10,
+    '#suffix' => '</div>',
+);
+
+
 	$form['importer'] = array(
             '#type' => 'submit',
             '#value' => $this->t('Importer'),
@@ -252,6 +265,27 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		return $form;
 	}
     
+    function gen_uuid() {
+    return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        // 32 bits for "time_low"
+        mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+
+        // 16 bits for "time_mid"
+        mt_rand( 0, 0xffff ),
+
+        // 16 bits for "time_hi_and_version",
+        // four most significant bits holds version number 4
+        mt_rand( 0, 0x0fff ) | 0x4000,
+
+        // 16 bits, 8 bits for "clk_seq_hi_res",
+        // 8 bits for "clk_seq_low",
+        // two most significant bits holds zero and one for variant DCE1.1
+        mt_rand( 0, 0x3fff ) | 0x8000,
+
+        // 48 bits for "node"
+        mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+    );
+}
     //submit form
 	public function submitForm(array &$form, FormStateInterface $form_state)
 	{
@@ -259,10 +293,34 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api();
+        $resourceManager = new ResourceManager;
+
+        $dataset_file = $form_state->getValue('jdd', 0);
+        $resourceUrl = $resourceManager->manageFile($dataset_file[0]);
+
+       
+		$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
+
+		if (file_exists(urldecode($resourceUrl))) {
+			$str=implode("\n",file(urldecode($resourceUrl)));
+			$fp=fopen(urldecode($resourceUrl),'w');
+				$str=str_replace('&','??',$str);
+				$str=str_replace(':','',$str);
+				fwrite($fp,$str,strlen($str));
+				$xml = simplexml_load_file(urldecode($resourceUrl));
+			
+		}
+
+		//generated tasked id
+		$generatedTaskId = $this->gen_uuid();
+		/*var_dump($generatedTaskId);die;*/
+		/*$datasetName = $resourceManager->defineDatasetName($title);*/
+
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
        
 	}
+
 
 
 	// filter function
