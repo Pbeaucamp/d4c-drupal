@@ -278,6 +278,7 @@ class userStoryForm extends HelpFormBase
             $form['table_widgets'][$i]['img_widget'] = array(
                 '#type' => 'managed_file',
                 '#title' => t('Image de l\'histoire  :'),
+                "#id" =>'ajax-wrapper-'.$i,
                 '#upload_location' => 'public://organization/',
                 '#upload_validators' => array(
                     'file_validate_extensions' => array('png jpeg jpg svg gif WebP PNG JPEG JPG SVG GIF'),

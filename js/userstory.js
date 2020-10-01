@@ -28,6 +28,11 @@ function deleteRowWidget(btn) {
 }
 
 
+function uploadImg(num) {
+  const selectedFile = document.getElementById('edit-table-widgets-'+num+'-img-widget-upload').files[0];
+  console.log(" key up");
+  console.log(selectedFile);
+}
 function addWidgetRow(num) {
 
     num = num + 1;
@@ -37,7 +42,7 @@ function addWidgetRow(num) {
 
 /*    let img_widget = '<td><div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-widgets-' + num + '-img_widget-upload form-item-table-widgets-' + num + '-img_widget form-no-label"><input data-drupal-selector="edit-table-widgets-' + num +'-img-widget" type="file" id="edit-table-widgets-' + num +'-img-widget-upload" name="files[table_widgets_'+num+'_img_widget]" size="22" class="js-form-file form-file"></div></td>';
 */
-    let img_widget = '<td><div id="ajax-wrapper"><div class="js-form-item form-item js-form-type-managed-file form-type-managed-file js-form-item-table-widgets-'+num+'-img-widget form-item-table-widgets-'+num+'-img-widget"><label for="edit-table-widgets-'+num+'-img-widget-upload" id="edit-table-widgets-'+num+'-img-widget--label">Image de l\'histoire  :</label><div id="edit-table-widgets-'+num+'-img-widget" class="js-form-managed-file form-managed-file"><input data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload" type="file" id="edit-table-widgets-'+num+'-img-widget-upload" name="files[table_widgets_'+num+'_img_widget]" size="22" class="js-form-file form-file"><input class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload-button" formnovalidate="formnovalidate" type="submit" id="edit-table-widgets-'+num+'-img-widget-upload-button" name="table_widgets_'+num+'_img_widget_upload_button" value="Transférer"><input data-drupal-selector="edit-table-widgets-'+num+'-img-widget-fids" type="hidden" name="table_widgets['+num+'][img_widget][0]"></div></div></div></td>';
+    let img_widget = '<td><div id="ajax-wrapper-'+num+'"><div class="js-form-item form-item js-form-type-managed-file form-type-managed-file js-form-item-table-widgets-'+num+'-img-widget form-item-table-widgets-'+num+'-img-widget"><label for="edit-table-widgets-'+num+'-img-widget-upload" id="edit-table-widgets-'+num+'-img-widget--label">Image de l\'histoire  :</label><div id="edit-table-widgets-'+num+'-img-widget" class="js-form-managed-file form-managed-file"><input onclick="uploadImg('+ num +')"  data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload" type="file" id="edit-table-widgets-'+num+'-img-widget-upload" name="files[table_widgets_'+num+'_img_widget]" size="22" class="js-form-file form-file"><input onsubmit="uploadImg('+ num +')" onkeyup="uploadImg('+ num +')" class="js-hide button js-form-submit form-submit" data-drupal-selector="edit-table-widgets-'+num+'-img-widget-upload-button" formnovalidate="formnovalidate" type="submit" id="edit-table-widgets-'+num+'-img-widget-upload-button" name="table_widgets_'+num+'_img_widget_upload_button" value="Transférer"><input data-drupal-selector="edit-table-widgets-'+num+'-img-widget-fids" type="hidden" name="table_widgets['+num+'][img_widget][0]"></div></div></div></td>';
 
     let widget_widget = '<td><div class="js-form-item form-item js-form-type-textarea form-type-textarea js-form-item-table-widgets-' + num + '-widget form-item-table-widgets-' + num + '-widget form-no-label"><div class="form-textarea-wrapper"><textarea style="height: 5em;width: 25em;" data-drupal-selector="edit-table-widgets-' + num + '-widget" id="edit-table-widgets-' + num + '-widget" name="table_widgets[' + num + '][widget]" rows="5" cols="60" class="form-textarea resize-vertical"></textarea> </div></div></td>';
 
