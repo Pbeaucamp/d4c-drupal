@@ -308,11 +308,123 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$str=str_replace(':','',$str);
 				fwrite($fp,$str,strlen($str));
 				$xml = simplexml_load_file(urldecode($resourceUrl));
-			
+
+				$visu=0;
+				$imgPicto = array();
+				$imgPicto = $resourceManager->definePicto($imgPicto, $imgBack);
+				$imgBackground = array();
+
+				$imgBackground = $resourceManager->defineBackground($imgBackground);
+				$removeBackground = 0;
+				$removeBackground = isset($removeBackground);
+
+				$widgets =  array();
+				$widgets = $resourceManager->defineWidget($widgets);
+				$analize_false = 0;
+        		$api_false = 0;
+
+        		$dont_visualize_tab = '';
+		        if ($api_false == 1) {
+					$dont_visualize_tab = $dont_visualize_tab . 'api;';
+				}
+		        if ($analize_false == 1) {
+		            $dont_visualize_tab = $dont_visualize_tab . 'analize;';
+				}
+
+				$analyseDefault = "";
+
+				$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
+
+				$theme = "default%Default";
+		        $theme = explode("%", $theme);
+		        $themeLabel = $theme[1];
+				$theme = $theme[0];
+				$selectedTypeMap = "";
+
+				$selectedOverlays = "";
+				if ($selectedTypeMap != NULL) {
+					$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+				}
+				$linkDatasets = "";
+
+				$linkDatasets = $resourceManager->defineLinkDatasets($linkDatasets);
+				$private = 0;
+				if ($private == '1') {
+				$isPrivate = true;
+				} 
+				else {
+					$isPrivate = false;
+				}
+				$tags = array();
+				$userId = "*" . \Drupal::currentUser()->id() . "*";
+				$users = \Drupal\user\Entity\User::loadMultiple();
+				$title="";
+				$datasetName="";
+				$description = "";
+				$licence ="";
+				$organization="";
+				$disableFieldsEmpty = 1;
+				$generatedTaskId = $this->gen_uuid();
+				$resourceUrlval="";
+
+				foreach ($xml as $key => $value) {
+					echo "<pre>";
+					
+					if($key == "gmdidentificationInfo") {
+						
+						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+						$datasetName = $resourceManager->defineDatasetName($title);
+						$description = $value->gmdMD_DataIdentification->gmdabstract->gcoCharacterString->__toString();
+
+						
+
+						foreach ($value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as $key3 => $value3) {
+							
+						if($value3->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "creation") {
+							
+							$dateDataset = $value3->gmdCI_Date->gmddate->gcoDate->__toString();
+						}
+						}
+
+						foreach ($value->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+	
+							if($value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode != null ){
+								$licence = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+								
+							}
+
+						}
+
+					}
+
+					if($key == "gmdcontact") {
+						$organization = $value->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString();
+
+					}
+
+					if($key == "gmddistributionInfo") {
+						
+						$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+
+					}
+					
+						
+					echo "</pre>";
+				}die;
+				$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+							$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
+							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
+				
+				drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+
+				//Managing resources
+					/*$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
+				$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);*/
 		}
 
 		//generated tasked id
-		$generatedTaskId = $this->gen_uuid();
+		
 		/*var_dump($generatedTaskId);die;*/
 		/*$datasetName = $resourceManager->defineDatasetName($title);*/
 
