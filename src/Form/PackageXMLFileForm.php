@@ -366,9 +366,13 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$disableFieldsEmpty = 1;
 				$generatedTaskId = $this->gen_uuid();
 				$resourceUrlval="";
+				$generateColumns =0;
+				$unzipZip =0;
+				$encoding ="UTF-8";
+				$validata ="non_valider";
 
 				foreach ($xml as $key => $value) {
-					echo "<pre>";
+					
 					
 					if($key == "gmdidentificationInfo") {
 						
@@ -406,21 +410,21 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 						
 						$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
 
+						$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
+
+
 					}
 					
-						
-					echo "</pre>";
-				}die;
+				
+				}
 				$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 							$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 				
 				drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+				/*$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);*/
 
-				//Managing resources
-					/*$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
-				$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);*/
 		}
 
 		//generated tasked id
@@ -433,7 +437,70 @@ public function buildForm(array $form, FormStateInterface $form_state) {
        
 	}
 
+	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata, $unzipZip) {
+		$validataResources = array();
 
+		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
+
+		
+
+		foreach ($results as &$result) {
+
+			foreach ($result as $key => $value) {
+				if ($value['status'] == 'complete') {
+					if ($value['type'] == 'DATAPUSHER') {
+						$validataResources[] = $value['resourceUrl'];
+
+						drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Les clusters ont été générés.");
+					}
+				}
+				else if ($value['status'] == 'pending') {
+					$validataResources[] = $value['resourceUrl'];
+
+					drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+				}
+				else if ($value['status'] == 'error') {
+					if ($value['type'] == 'DATAPUSHER') {
+						drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+					}
+				}
+			}
+		}
+
+		// We validate the data, if the user ask for it (put it in ResourceManager someday)
+		if ($validata != "non_valider") {
+	
+			for ($v=0; $v < count($validataResources); $v++) {
+
+				$validataUrl = "https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=" . $validataResources[$v];
+				$validataResult = $resourceManager->validateData($validataUrl);
+
+				if ($validataResult[report][valid] == false) {
+					$errorsValid = $validataResult[report][tables][0][errors];
+					for ($i = 0; $i < count($errorsValid); $i++) {
+						
+						drupal_set_message(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						
+						if($i>5){
+							break;
+						}
+					}
+				} 
+				else if ($validataResult[report][valid] == true) {
+					drupal_set_message('Les données ont été validées');
+				}
+			}
+		}
+
+		//We update the visualisation's icons
+		$api->calculateVisualisations($datasetId);
+	}
 
 	// filter function
 	public function submitfiltering(array &$form, FormStateInterface $form_state){ 
