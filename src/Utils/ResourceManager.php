@@ -233,7 +233,6 @@ class ResourceManager {
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true);
 			$results[] = $result;
-			
 		}
 		else if ($type == 'xls' || $type == 'xlsx') {
 
