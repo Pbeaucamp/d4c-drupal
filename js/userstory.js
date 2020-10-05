@@ -337,6 +337,8 @@ function openModalStory(story=null,widgets=null) {
 
                 parentModal.classList.remove('active');
                 overlay3.classList.remove('active');
+                document.getElementById('selected_data').value='new';
+                clear();
                 
                 
             });
@@ -351,6 +353,16 @@ function clear() {
              $('input[name=label_widget]').val('');
              $('textarea[name=widget]').val('');
              $('#img-widget-modal').attr('src', "https://kmo.data4citizen.com/sites/default/files/gris.jpg");
+
+
+             $('input[name=id_story]').val('');
+             $('input[name=story_title]').val('');
+             $("#edit-table-widgets tbody tr:not(:first)").remove();
+             $('input[id=edit-table-widgets-1-label_widget]').val('');
+              $('input[id=edit-table-widgets-1-img-widget-upload]').val('');
+             $('textarea[id=edit-table-widgets-1-widget]').val('');
+             
+             
 
 }
 
