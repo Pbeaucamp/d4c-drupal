@@ -301,6 +301,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
        
 		$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
 
+
 		if (file_exists(urldecode($resourceUrl))) {
 			$str=implode("\n",file(urldecode($resourceUrl)));
 			$fp=fopen(urldecode($resourceUrl),'w');
@@ -371,14 +372,27 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$encoding ="UTF-8";
 				$validata ="non_valider";
 
+			/*	foreach ($xml as $key => $value) {
+					echo "<pre>";
+					if($key == "gmdidentificationInfo") {
+						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+						$datasetName = $resourceManager->defineDatasetName($title);
+						var_dump($datasetName);
+					}
+					echo "</pre>";
+
+				}die;*/
+
 				foreach ($xml as $key => $value) {
-					
-					
+		
+
 					if($key == "gmdidentificationInfo") {
 						
 						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
 						$datasetName = $resourceManager->defineDatasetName($title);
+						$datasetName = str_replace(".", "-", $datasetName);
 						$description = $value->gmdMD_DataIdentification->gmdabstract->gcoCharacterString->__toString();
+						
 
 						
 
@@ -411,6 +425,35 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 						$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
 
 						$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
+						$newfile="";
+						$filepathContent = file_get_contents($resourceUrlval);
+						if (strpos(file_get_contents($resourceUrlval), ';') !== false) {
+							$resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
+
+							$commaReplace = str_replace(";",",",$filepathContent);
+							$commaReplace = str_replace('"','',$filepathContent);
+							
+							$pathinfo = pathinfo($resourceUrlval);
+
+							$pathfiles = explode("/", $resourceUrlval);
+							
+							foreach ($pathfiles as $key => $value) {
+
+								if($key == 0) {
+									$newfile= $value;
+								}
+								else {
+									$newfile .="/".$value;
+								}
+								
+							}
+							//create a new csv files contains the same content of text file
+							file_put_contents($newfile, $commaReplace);
+							$resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
+						
+						}
+
+
 
 
 					}
@@ -421,17 +464,21 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 							$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 				
-				drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+							drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+
+				        $orga = $api->getAllOrganisations();
+				        foreach ($orga as $key => $value) {
+				        	if($value["display_name"] == $organization || $value["title"] == $organization) {
+				        		$organization = $value["id"];
+				        	}	
+				        }
+				       
+
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
-				/*$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);*/
+			
+				$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);
 
 		}
-
-		//generated tasked id
-		
-		/*var_dump($generatedTaskId);die;*/
-		/*$datasetName = $resourceManager->defineDatasetName($title);*/
-
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
        
@@ -441,8 +488,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$validataResources = array();
 
 		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
-
-		
 
 		foreach ($results as &$result) {
 

@@ -931,7 +931,9 @@ class editMetaDataForm extends HelpFormBase {
 			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
 		}
 		else if (isset($resources[0]) && !empty($resources[0])) {
+
 			$resourceUrl = $resourceManager->manageFile($resources[0]);
+            
 
 			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
 		}
@@ -941,7 +943,7 @@ class editMetaDataForm extends HelpFormBase {
 		$validataResources = array();
 
 		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
-
+        var_dump($results);die;
 		foreach ($results as &$result) {
 
 			foreach ($result as $key => $value) {
