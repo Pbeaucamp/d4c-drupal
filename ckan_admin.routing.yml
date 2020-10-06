@@ -800,7 +800,7 @@ ckan_admin.form.reuses:
     _form: 'Drupal\ckan_admin\Form\ReusesForm'
     _title: 'Gestion des réutilisations'
   requirements:
-    _permission: 'access dataset'
+    _permission: 'administer site configuration'
     
 ckan_admin.datasets.reuses:
   path: '/api/datasets/1.0/{datasetid}/reuses'
@@ -893,7 +893,7 @@ ckan_admin.extension_package_data4citizen:
     _form: 'Drupal\ckan_admin\Form\PackagesForm'
     _title: 'Packages Data4Citizen'
   requirements:
-    _permission: 'access content'
+    _permission: 'administer site configuration'
 
 # add package file XML route
 ckan_admin.extension_package_fileXML:
@@ -902,7 +902,7 @@ ckan_admin.extension_package_fileXML:
     _form: 'Drupal\ckan_admin\Form\PackageXMLFileForm'
     _title: 'Fichiers XML'
   requirements:
-    _permission: 'access content'
+    _permission: 'administer site configuration'
     
     
 # ckan_admin.userstory:
@@ -920,7 +920,7 @@ ckan_admin.userstory:
     _form: 'Drupal\ckan_admin\Form\userStoryForm'
     _title: 'Histoire de données'
   requirements:
-    _permission: 'access content'
+    _permission: 'administer site configuration'
 
 ckan_admin.callTaskStatus:
   path: '/api/taskStatus/{id}'
@@ -934,6 +934,24 @@ ckan_admin.call.reuses:
   path: '/api/datasets/reusesManagement'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageReutilisation'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.createDataset:
+  path: '/api/v1/dataset/create'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callCreateDataset'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.addResource:
+  path: '/api/v1/dataset/addResource'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callUploadResource'
     params: ''
     _title: ''
   requirements:
