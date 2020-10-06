@@ -182,6 +182,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 	'#upload_validators' => array(
 		'file_validate_extensions' => array('xls xlsx xml'),
 	),
+	'#required' => TRUE,
 	'#size' => 10,
     '#suffix' => '</div>',
 );
