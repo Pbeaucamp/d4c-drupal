@@ -984,12 +984,11 @@ class Api{
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
-		// drupal_set_message($callUrl);
-        error_log('url check : ' . $callUrl);
+        // Logger::logMessage('TRM - url check : ' . $callUrl);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		//echo $callUrl;
+        // Logger::logMessage('TRM - Result : ' . $result);
 		curl_close($curl);
 		
 		$result = json_decode($result,true);
@@ -7196,6 +7195,7 @@ class Api{
 
 	public function callCreateDataset() {
 		Logger::logMessage("Create dataset by API");
+		$users = \Drupal\user\Entity\User::loadMultiple();
 			
 		$resourceManager = new ResourceManager;
 
@@ -7230,7 +7230,6 @@ class Api{
 
 	public function callUploadResource() {
 		Logger::logMessage("Upload resource by API");
-		$users = \Drupal\user\Entity\User::loadMultiple();
 
 		$result = array();
 			
