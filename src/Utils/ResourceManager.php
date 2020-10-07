@@ -790,7 +790,7 @@ class ResourceManager {
 		return $results;
 	}
 
-	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher) {
+	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null) {
 		
 		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher");
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
@@ -858,14 +858,23 @@ class ResourceManager {
 			return $datapusherResult;
 		}
 		else {
-			$resources = [    
-				"package_id" => $datasetId,
-				"url" => $resourceUrl,
-				"description" => '',
-				"name" => $fileName
-				// Put this ?
-				// "format" => 'csv'
-			];
+			if ($format) {
+				$resources = [    
+					"package_id" => $datasetId,
+					"url" => $resourceUrl,
+					"description" => '',
+					"name" => $fileName,
+					"format" => $format
+				];
+			}
+			else {
+				$resources = [    
+					"package_id" => $datasetId,
+					"url" => $resourceUrl,
+					"description" => '',
+					"name" => $fileName
+				];
+			}
 			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 			$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			$return = json_decode($return);

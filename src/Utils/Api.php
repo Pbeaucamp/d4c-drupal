@@ -7242,13 +7242,14 @@ class Api{
 		$resourceName = $_POST['resource_name'];
 		$resourceUrl = $_POST['resource_url'];
 
+		$format = $_POST['format'];
 		$encoding = $_POST['encoding'];
 		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
 
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
 			$results = array();
-			$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false);
+			$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
 			$results[] = $resultUpload;
 			Logger::logMessage("TRM - Result " . json_encode($results));
 	
