@@ -11,6 +11,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\ckan_admin\Utils\HelpFormBase;
@@ -174,6 +175,19 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
 //-------------------------End filter form -------------------------------------------------------
 
+    $form['jdd'] = array(
+	'#title' => t('Importer un JDD : '),
+	'#type' => 'managed_file',
+	'#upload_location' => 'public://dataset/',
+	'#upload_validators' => array(
+		'file_validate_extensions' => array('xls xlsx xml'),
+	),
+	'#required' => TRUE,
+	'#size' => 10,
+    '#suffix' => '</div>',
+);
+
+
 	$form['importer'] = array(
             '#type' => 'submit',
             '#value' => $this->t('Importer'),
@@ -252,6 +266,27 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		return $form;
 	}
     
+    function gen_uuid() {
+    return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        // 32 bits for "time_low"
+        mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ),
+
+        // 16 bits for "time_mid"
+        mt_rand( 0, 0xffff ),
+
+        // 16 bits for "time_hi_and_version",
+        // four most significant bits holds version number 4
+        mt_rand( 0, 0x0fff ) | 0x4000,
+
+        // 16 bits, 8 bits for "clk_seq_hi_res",
+        // 8 bits for "clk_seq_low",
+        // two most significant bits holds zero and one for variant DCE1.1
+        mt_rand( 0, 0x3fff ) | 0x8000,
+
+        // 48 bits for "node"
+        mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
+    );
+}
     //submit form
 	public function submitForm(array &$form, FormStateInterface $form_state)
 	{
@@ -259,11 +294,259 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api();
+        $resourceManager = new ResourceManager;
+
+        $dataset_file = $form_state->getValue('jdd', 0);
+        $resourceUrl = $resourceManager->manageFile($dataset_file[0]);
+
+       
+		$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
+
+
+		if (file_exists(urldecode($resourceUrl))) {
+			$str=implode("\n",file(urldecode($resourceUrl)));
+			$fp=fopen(urldecode($resourceUrl),'w');
+				$str=str_replace('&','??',$str);
+				$str=str_replace(':','',$str);
+				fwrite($fp,$str,strlen($str));
+				$xml = simplexml_load_file(urldecode($resourceUrl));
+
+				$visu=0;
+				$imgPicto = array();
+				$imgPicto = $resourceManager->definePicto($imgPicto, $imgBack);
+				$imgBackground = array();
+
+				$imgBackground = $resourceManager->defineBackground($imgBackground);
+				$removeBackground = 0;
+				$removeBackground = isset($removeBackground);
+
+				$widgets =  array();
+				$widgets = $resourceManager->defineWidget($widgets);
+				$analize_false = 0;
+        		$api_false = 0;
+
+        		$dont_visualize_tab = '';
+		        if ($api_false == 1) {
+					$dont_visualize_tab = $dont_visualize_tab . 'api;';
+				}
+		        if ($analize_false == 1) {
+		            $dont_visualize_tab = $dont_visualize_tab . 'analize;';
+				}
+
+				$analyseDefault = "";
+
+				$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
+
+				$theme = "default%Default";
+		        $theme = explode("%", $theme);
+		        $themeLabel = $theme[1];
+				$theme = $theme[0];
+				$selectedTypeMap = "";
+
+				$selectedOverlays = "";
+				if ($selectedTypeMap != NULL) {
+					$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+				}
+				$linkDatasets = "";
+
+				$linkDatasets = $resourceManager->defineLinkDatasets($linkDatasets);
+				$private = 0;
+				if ($private == '1') {
+				$isPrivate = true;
+				} 
+				else {
+					$isPrivate = false;
+				}
+				$tags = array();
+				$userId = "*" . \Drupal::currentUser()->id() . "*";
+				$users = \Drupal\user\Entity\User::loadMultiple();
+				$title="";
+				$datasetName="";
+				$description = "";
+				$licence ="";
+				$organization="";
+				$disableFieldsEmpty = 1;
+				$generatedTaskId = $this->gen_uuid();
+				$resourceUrlval="";
+				$generateColumns =0;
+				$unzipZip =0;
+				$encoding ="UTF-8";
+				$validata ="non_valider";
+
+			/*	foreach ($xml as $key => $value) {
+					echo "<pre>";
+					if($key == "gmdidentificationInfo") {
+						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+						$datasetName = $resourceManager->defineDatasetName($title);
+						var_dump($datasetName);
+					}
+					echo "</pre>";
+
+				}die;*/
+
+				foreach ($xml as $key => $value) {
+		
+
+					if($key == "gmdidentificationInfo") {
+						
+						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+						$datasetName = $resourceManager->defineDatasetName($title);
+						$datasetName = str_replace(".", "-", $datasetName);
+						$description = $value->gmdMD_DataIdentification->gmdabstract->gcoCharacterString->__toString();
+						
+
+						
+
+						foreach ($value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as $key3 => $value3) {
+							
+						if($value3->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "creation") {
+							
+							$dateDataset = $value3->gmdCI_Date->gmddate->gcoDate->__toString();
+						}
+						}
+
+						foreach ($value->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+	
+							if($value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode != null ){
+								$licence = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+								
+							}
+
+						}
+
+					}
+
+					if($key == "gmdcontact") {
+						$organization = $value->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString();
+
+					}
+
+					if($key == "gmddistributionInfo") {
+						
+						$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+
+						$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
+						$newfile="";
+						$filepathContent = file_get_contents($resourceUrlval);
+						if (strpos(file_get_contents($resourceUrlval), ';') !== false) {
+							$resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
+
+							$commaReplace = str_replace(";",",",$filepathContent);
+							$commaReplace = str_replace('"','',$filepathContent);
+							
+							$pathinfo = pathinfo($resourceUrlval);
+
+							$pathfiles = explode("/", $resourceUrlval);
+							
+							foreach ($pathfiles as $key => $value) {
+
+								if($key == 0) {
+									$newfile= $value;
+								}
+								else {
+									$newfile .="/".$value;
+								}
+								
+							}
+							//create a new csv files contains the same content of text file
+							file_put_contents($newfile, $commaReplace);
+							$resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
+						
+						}
+
+
+
+
+					}
+					
+				
+				}
+				$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+							$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
+							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
+				
+							drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+
+				        $orga = $api->getAllOrganisations();
+				        foreach ($orga as $key => $value) {
+				        	if($value["display_name"] == $organization || $value["title"] == $organization) {
+				        		$organization = $value["id"];
+				        	}	
+				        }
+				       
+
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+			
+				$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);
+
+		}
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
        
 	}
 
+	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata, $unzipZip) {
+		$validataResources = array();
+
+		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
+
+		foreach ($results as &$result) {
+
+			foreach ($result as $key => $value) {
+				if ($value['status'] == 'complete') {
+					if ($value['type'] == 'DATAPUSHER') {
+						$validataResources[] = $value['resourceUrl'];
+
+						drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Les clusters ont été générés.");
+					}
+				}
+				else if ($value['status'] == 'pending') {
+					$validataResources[] = $value['resourceUrl'];
+
+					drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+				}
+				else if ($value['status'] == 'error') {
+					if ($value['type'] == 'DATAPUSHER') {
+						drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						drupal_set_message("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+					}
+				}
+			}
+		}
+
+		// We validate the data, if the user ask for it (put it in ResourceManager someday)
+		if ($validata != "non_valider") {
+	
+			for ($v=0; $v < count($validataResources); $v++) {
+
+				$validataUrl = "https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=" . $validataResources[$v];
+				$validataResult = $resourceManager->validateData($validataUrl);
+
+				if ($validataResult[report][valid] == false) {
+					$errorsValid = $validataResult[report][tables][0][errors];
+					for ($i = 0; $i < count($errorsValid); $i++) {
+						
+						drupal_set_message(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						
+						if($i>5){
+							break;
+						}
+					}
+				} 
+				else if ($validataResult[report][valid] == true) {
+					drupal_set_message('Les données ont été validées');
+				}
+			}
+		}
+
+		//We update the visualisation's icons
+		$api->calculateVisualisations($datasetId);
+	}
 
 	// filter function
 	public function submitfiltering(array &$form, FormStateInterface $form_state){ 

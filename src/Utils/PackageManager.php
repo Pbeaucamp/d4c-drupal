@@ -416,7 +416,23 @@ die;*/
 				$resources[] = $res;
 		}
 
+		$xmlfile =false;
+	    foreach($dataset["metas"]["resources"] as $key=>$value){
+	    	
+	    	if($value["format"] == "csw" || strpos($value["name"], "Vue XML des métadonnées")== true) {
 
+	    		$xmlfile = true;
+	    	$xml = file_get_contents($value['url']); 
+
+	    	if (!file_exists($_SERVER['DOCUMENT_ROOT']."/". $id)) {
+		    	mkdir($_SERVER['DOCUMENT_ROOT']."/". $id, 0777, true);
+			}
+			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml", $xml);
+			
+			break;
+	    }
+
+	    }
 
 		if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $contentdataset["result"]["id"]."/metadata_xml_view.xml")) {
 		 		$xml = simplexml_load_file($contentdataset["result"]["id"]."/metadata_xml_view.xml");
