@@ -86,12 +86,8 @@ class PackageManager {
     	$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
     	$dataset = $api->getDataSetById($id);
-<<<<<<< HEAD
-
-=======
     	$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
->>>>>>> show-data-inspire-csw
         $contentdataset = json_decode($dataset->getContent(),true);
         $theme = "";
         $vignette = "";
@@ -190,7 +186,6 @@ class PackageManager {
 		  ]
 		];
 
-<<<<<<< HEAD
 		if($vignette != "" ) {
 			$res = array();
 				$res["url_type"] = "vignette";
@@ -217,17 +212,6 @@ die;*/
 
 		$api = new Api();
 
-=======
-		$dataset = $api->getPackageShow2($id,"");
-        return $contentdataset["result"]["resources"];
-
-    }
-
-  
-	public function createPackageZip($id){
-
-		$api = new Api();
->>>>>>> show-data-inspire-csw
 		// search dataset data by id in array of all datasets 
         $datasetinfo = $this->getDatasetInformations($id);
         if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id)) {
@@ -286,7 +270,6 @@ die;*/
 		/*****       create dataset resources json file   *****/
 		// get dataset resources 
         $datasetresources = $this->getResources($id);
-<<<<<<< HEAD
         foreach ($datasetresources as $key => $value) {
   			
   			
@@ -303,16 +286,6 @@ die;*/
 	        	$value["format"] = "zip";
 	        }
 
-=======
-
-        foreach ($datasetresources as $key => $value) {
-	        $format =$value["format"];
-	        if($value["format"] == "SHP" || $value["format"] == "shp") {
-	        	$value["format"] = "zip";
-	        }
-
-
->>>>>>> show-data-inspire-csw
         	$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $value["url"]);
 			$fp = fopen($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"w");
@@ -320,7 +293,6 @@ die;*/
 			curl_exec ($ch);
 			curl_close ($ch);
 			fclose($fp);
-<<<<<<< HEAD
   			}
 	        
 
@@ -328,15 +300,6 @@ die;*/
 			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"].".".$value["format"],"/Ressources/".$value["name"].".".$value["format"]);
         }
      
-=======
-
-			// add dataset resources json to zip
-			$zip->addFile("packageDataset/".$id."/Ressources/".$value["name"],"/Ressources/".$value["name"].".".$value["format"]);
-        }
-
-
-
->>>>>>> show-data-inspire-csw
 		// close and save archive
 		$zip->close(); 
 
