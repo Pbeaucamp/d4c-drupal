@@ -152,22 +152,122 @@ $('#edit-ids').empty();
     }
 
 }
+////////////////ArcGIS/////////////////////////
 
 
-function fillTable(data, data2) {
+function createTablePrew(resUrl,type_file,type_site){
+// console.log(resUrl);
+ resUrl = resUrl.replace(/\//g,'!');
 
+$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+
+        type: 'POST',
+        dataType: 'json',
+        cache: true,
+        beforeSend: function () {
+            $('html,body').attr('style', 'cursor:wait !important;');
+            $('input[type="submit"]').attr('disabled', true);
+            $('#tablePlace').contents().remove();
+        },
+        complete: function () {
+            $('html,body').removeAttr("style");
+            $('input[type="submit"]').attr('disabled', false);
+            $('#org_div').attr('style', 'width: 50%;');
+           
+            
+        },
+        success: function (result) {
+
+            console.log(result);
+            
+            let delimeter=result.delimiter;
+            if(delimeter =='\\t') delimeter='\t';
+            
+            result = result.data;
+            
+            
+            let thead ='';
+            let tbody ='';
+            let count_prew;
+            
+            
+            //console.log(result);
+            
+            if(result.length>=15){
+                
+               count_prew =15;
+                
+            }
+            else{
+               count_prew = result.length; 
+            }
+            
+            for(let i = 0; i < count_prew; i++){
+                
+                if(i == 0){
+                    let title = result[i].toString().split(delimeter);
+                    
+                    for(let j=0; j<title.length; j++){
+                        
+                      thead = thead+'<th>'+title[j]+'<th>'; 
+                        
+                    }
+                    
+                    thead = '<thead><tr>'+thead+'</tr></thead>';
+                    
+                }
+                else{
+                    let text = result[i].toString().split(delimeter);
+                    let tbody_str='';
+                    for(let j=0; j<text.length; j++){
+                        
+                      tbody_str = tbody_str+'<td>'+text[j]+'<td>'; 
+                        
+                    }
+                    
+                    tbody  = tbody+'<tr>'+tbody_str+'</tr>';  
+                }
+                   
+            }
+            
+            tbody = '<tbody>'+tbody+'</tbody>';
+            
+            $('#tablePlace').append('<table data-drupal-selector="edit-table" id="edit-table" class="responsive-enabled" data-striping="1">'+thead+tbody+'</table>');
+
+           
+
+
+        },
+        error: function (e) {
+            console.log("ERROR: ", e);
+            alert('Error');
+            
+        },
+
+    });
+ let overlay  = document.querySelector('.js-overlay-modal');
+            let modalElem = document.querySelector('.modal[data-modal="1"]');
+            modalElem.classList.add('active');
+            overlay.classList.add('active');   
+        
+}
+
+
+
+
+
+
+function fillTable(data) {
     clear();
     /*console.log($('#edit-selected-org').val());*/
 
-    if ($('#edit-selected-org').val() == '') {} else {
+    if ($('#edit-selected-org').val() == '') {}
+    else {
 
         for (let j = 0; j < data.length; j++) {
 
-
-            
-
             if ($('#edit-selected-org').val() == data[j].id_org) {
-                let keydataset = data2[data[j].id_org];
+                // let keydataset = data2[data[j].id_org];
                 
                /*console.log(data[j]);*/
                 let datasets = data[j].datasets;
@@ -176,10 +276,7 @@ function fillTable(data, data2) {
                     
                     if(datasets[i].title_data==null){
                         delete datasets[i];
-                       }
-                    
-                    
-                    
+                    }
                 }
                 
                 Object.values(datasets);
@@ -195,261 +292,159 @@ function fillTable(data, data2) {
                     return 0 
                 });
                 
-                if(datasets!=null || datasets!=''){
-                   
-                    
-                  for (let i = 0; i < datasets.length; i++) {
+                if(datasets!=null || datasets!='') {
+                    for (let i = 0; i < datasets.length; i++) {
 
+                        var datasetvalueparams = datasets[i].parameters;
+                        if(JSON.stringify(datasets[i].parameters) == undefined){
+                            datasetvalueparams = null;
+                        }
+   
+                        let name_id = '<td><a target="_blank"  href ="/visualisation/table/?id=' + datasets[i].id_data + '">' + datasets[i].title_data + '</a><div style="display:none" class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-name-2 form-item-table-' + i + '-name-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-name-2" type="text" id="edit-table-0-name-2" name="table[' + i + '][name][2]" value="' + datasets[i].id_data + '" size="60" maxlength="128" class="form-text"></div></td>';
+                        let org = '<td>' + data[j].name_org + '</td>';
+                        let orgine = '<td>Moissonnage</td>';
+                        /*let site = '<td>' + datasets[i].site + '</td>';*/
+                        // let site = '<td><a target="_blank"  href ="' + keydataset[datasets[i].id_data] + '">'  + keydataset[datasets[i].id_data] + '</a></td>';
+                        let site = '<td><a target="_blank"  href ="' + datasets[i].siteUrl + '">'  + datasets[i].siteUrl + '</a></td>';
 
-                
+                        if (datasets[i].site == 'joinDataset') {
+                            orgine = '<td>Jointure</td>';
+                            site = '<td></td>';
+                        }
 
-                   var datasetvalueparams = datasets[i].parameters;
-                   if(JSON.stringify(datasets[i].parameters) == undefined){
-                        datasetvalueparams = null;
-                   }
+                        var options = {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            second: 'numeric'
+                        };
+
+                        let dateLastUpdate = new Date(Date.parse(datasets[i].last_update));
+                        dateLastUpdate = dateLastUpdate.toLocaleDateString("fr-FR", options);
+                        let dateLastUp = '<td>' + dateLastUpdate + '</td>';
+                        
+                        let dateNextUpdate = new Date(Date.parse(datasets[i].next_update));
+                        dateNextUpdate = dateNextUpdate.toLocaleDateString("fr-FR", options);
+                        let dateNextUp = '<td>' + dateNextUpdate + '</td>';
+
+                        let t=[];
+                        if (datasets[i].periodic_update == null || datasets[i].periodic_update == '' 
+                                || datasets[i].periodic_update == 0 || datasets[i].periodic_update == '0' 
+                                || typeof(datasets[i].periodic_update) == 'number'){
+                            t[0]='';
+                            t[1]='';
+                            t[2]='A';
+                        }
+                        else {
+                            t = datasets[i].periodic_update.split(';');
+
+                            if (t[1] == '') {
+                                t[1] = 1;
+                            }
+                        }
+
+                        let status = '<td><div class="js-form-item form-item js-form-type-select form-type-select js-form-item-table-' + i + '-status form-item-table-' + i + '-status form-no-label"><select data-drupal-selector="edit-table-' + i + '-status" id="edit-table-' + i + '-status" name="table[' + i + '][status]" class="form-select"><option value="A">Actif</option><option value="P">Passif</option></select></div></td>';
+
+                        let period = '<td><div class="js-form-item form-item js-form-type-select form-type-select js-form-item-table-' + i + '-period-1 form-item-table-' + i + '-period-1 form-no-label"><select data-drupal-selector="edit-table-' + i + '-period-1" id="edit-table-' + i + '-period-1" name="table[' + i + '][period][1]" class="form-select"><option value="Mi">Minute</option><option value="H">Heure</option><option value="D">Jour</option><option value="W">Semaine</option><option value="M">Mois</option><option value="Y">Année</option></select></div><div class="js-form-item form-item js-form-type-number form-type-number js-form-item-table-' + i + '-period-2 form-item-table-' + i + '-period-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-period-2" type="number" id="edit-table-' + i + '-period-2" name="table[' + i + '][period][2]" value="" step="1" class="form-number"></div></td>';
+
+                        let details = "";
+                        let url_res="";
+                        if(datasets[i].site == "Data_Gouv_fr") {
+                            $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q='+ datasets[i].title_data, function (result) {
+                                console.log(result);
+
+                                if (result) {
+                                    result.data.sort(function (a, b) {
+                                        var textA = a.slug.toLowerCase(),
+                                        textB = b.slug.toLowerCase()
+                                        if (textA < textB)
+                                            return -1
+                                        if (textA > textB)
+                                            return 1
+                                        return 0
+                                    })
+    
+                                    let firstResource = getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data));
+                                    url_res = firstResource ? firstResource.url : '', type_res='csv', type_site='DataGouvfr';
+    
+                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
+                                        ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
+                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
+                                
+                                    $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
+                                    $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
             
+                                    $('#edit-table-' + i + '-period-2').val(t[1]);
+            
+            
+            
+                                    if(JSON.stringify(datasets[i].parameters)  && JSON.stringify(datasets[i].parameters) != null && JSON.stringify(datasets[i].parameters) != "null" && JSON.stringify(datasets[i].parameters) != undefined) {
+                                        $(".span_"+i).addClass("buttonDetailsActif");
+                                    }
+                                }
+                            });
+                        }
+                        else if(datasets[i].site == "locale") {
 
+                            $.getJSON('/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
 
-                    let name_id = '<td><a target="_blank"  href ="/visualisation/table/?id=' + datasets[i].id_data + '">' + datasets[i].title_data + '</a><div style="display:none" class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-name-2 form-item-table-' + i + '-name-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-name-2" type="text" id="edit-table-0-name-2" name="table[' + i + '][name][2]" value="' + datasets[i].id_data + '" size="60" maxlength="128" class="form-text"></div></td>';
+                                console.log(result);
 
-                    let org = '<td>' + data[j].name_org + '</td>';
+                                if (result) {
+                                    result.data.sort(function (a, b) {
+                                        var textA = a.slug.toLowerCase(),
+                                            textB = b.slug.toLowerCase()
+                                        if (textA < textB)
+                                            return -1
+                                        if (textA > textB)
+                                            return 1
+                                        return 0
+                                    })
 
+                                    let firstResource = getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data));
+                                    url_res = firstResource ? firstResource.url : '', type_res='csv', type_site='InfoCom94';
 
-                    let orgine = '<td>Moissonnage</td>';
-                    /*let site = '<td>' + datasets[i].site + '</td>';*/
+                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
+                                        ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
 
-                    
-
-
-                    let site = '<td><a target="_blank"  href ="' + keydataset[datasets[i].id_data] + '">'  + keydataset[datasets[i].id_data] + '</a></td>';
-
-
-                    if (datasets[i].site == 'joinDataset') {
-                        orgine = '<td>Jointure</td>';
-                        site = '<td></td>';
-                    }
-                      let dateLastUp='';
-                      let date='';
-                      //console.log(typeof(datasets[i].periodic_update));
-                      let t=[];
-                      
-                    if(datasets[i].periodic_update==null || datasets[i].periodic_update=='' || datasets[i].periodic_update== 0 || datasets[i].periodic_update=='0' || typeof(datasets[i].periodic_update)=='number'){
+                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
+                                
+                                    $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
+                                    $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
+            
+                                    $('#edit-table-' + i + '-period-2').val(t[1]);
+            
+            
+            
+                                    if(JSON.stringify(datasets[i].parameters)  && JSON.stringify(datasets[i].parameters) != null && JSON.stringify(datasets[i].parameters) != "null" && JSON.stringify(datasets[i].parameters) != undefined) {
+                                        $(".span_"+i).addClass("buttonDetailsActif");
+                                    }
+                                }
+                            });
+                        }
+                        else {
+                            details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}" onclick="openModalFilter($(this) );" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
+                            $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
                         
-                       t[0]='';
-                       t[1]='';
-                       t[2]='A';
-                       
-                        date = '<td>tous les jours à 5h</td>'
-                       dateLastUp = parseInt(Date.parse(datasets[i].last_update) / 1000);
-                         var options = {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        second: 'numeric'
-                    };
-                    dateLastUp = new Date(dateLastUp * 1000);
-                    dateLastUp = dateLastUp.toLocaleDateString("fr-FR", options);
-                    dateLastUp = '<td>'+dateLastUp+'</td>';
-                        
-                    }
-                      else{
-                        
-                        
-                   
-                     t = datasets[i].periodic_update.split(';');
-
-                    if (t[1] == '') {
-                        t[1] = 1;
-                    }
-
-                    
-
-
-                    switch (t[0]) {
-                        case 'Mi':
-                            date = t[1] * 60;
-                            break;
-                        case 'H':
-                            date = t[1] * 3600;
-                            break;
-                        case 'D':
-                            date = t[1] * 86400;
-                            break;
-                        case 'W':
-                            date = t[1] * 604800;
-                            break;
-                        case 'M':
-                            date = t[1] * 2592000;
-                            break;
-                        case 'Y':
-                            date = t[1] * 31536000;
-                            break;
-
-                        default:
-
-                            date = 0;
-                            break;
-
-                    }
-
-                    dateLastUp = parseInt(Date.parse(datasets[i].last_update) / 1000);
-                    if(parseInt(Date.parse(Date()))/ 1000>date){
-                        
-                       date = (parseInt(Date.parse(Date()) / 1000) + date )*1000; 
-                        
-                    }
-                    else{
-                         date = (date + dateLastUp)*1000;
-                    }
-
-                    date = new Date(date);
-
-                    var options = {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        second: 'numeric'
-                    };
-                    dateLastUp = new Date(dateLastUp * 1000);
-
-                    //date = date.toString(options); 
-                    date = date.toLocaleDateString("fr-FR", options);
-                    dateLastUp = dateLastUp.toLocaleDateString("fr-FR", options);
-
-                   
-                         
-                   
-
-                    dateLastUp = '<td>' + dateLastUp + '</td>';
-                    date = '<td>' + date + '</td>';
-                    }
-
-                    let status = '<td><div class="js-form-item form-item js-form-type-select form-type-select js-form-item-table-' + i + '-status form-item-table-' + i + '-status form-no-label"><select data-drupal-selector="edit-table-' + i + '-status" id="edit-table-' + i + '-status" name="table[' + i + '][status]" class="form-select"><option value="A">Actif</option><option value="P">Passif</option></select></div></td>';
-
-                    let period = '<td><div class="js-form-item form-item js-form-type-select form-type-select js-form-item-table-' + i + '-period-1 form-item-table-' + i + '-period-1 form-no-label"><select data-drupal-selector="edit-table-' + i + '-period-1" id="edit-table-' + i + '-period-1" name="table[' + i + '][period][1]" class="form-select"><option value="Mi">Minute</option><option value="H">Heure</option><option value="D">Jour</option><option value="W">Semaine</option><option value="M">Mois</option><option value="Y">Année</option></select></div><div class="js-form-item form-item js-form-type-number form-type-number js-form-item-table-' + i + '-period-2 form-item-table-' + i + '-period-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-period-2" type="number" id="edit-table-' + i + '-period-2" name="table[' + i + '][period][2]" value="" step="1" class="form-number"></div></td>';
-
-                    let details = "";
-                    let url_res="";
-                
-                if(datasets[i].site == "Data_Gouv_fr") {
-                    $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q='+ datasets[i].title_data, function (result) {
-
-                        console.log(result);
-
-                        result.data.sort(function (a, b) {
-                            var textA = a.slug.toLowerCase(),
-                                textB = b.slug.toLowerCase()
-                            if (textA < textB)
-                                return -1
-                            if (textA > textB)
-                                return 1
-                            return 0
-                        })
-
-                        url_res=getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data)).url,type_res='csv',type_site='DataGouvfr';
-
-                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
-                ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-
-                  $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + date + '' + status + '' + period + '' + details + '</tr>');
-
-                });
-
+                            $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
+                            $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
+    
+                            $('#edit-table-' + i + '-period-2').val(t[1]);
+    
+    
+    
+                            if(JSON.stringify(datasets[i].parameters)  && JSON.stringify(datasets[i].parameters) != null && JSON.stringify(datasets[i].parameters) != "null" && JSON.stringify(datasets[i].parameters) != undefined) {
+                                $(".span_"+i).addClass("buttonDetailsActif");
+                            }
+                        }
+                    }  
                 }
-                else if(datasets[i].site == "locale") {
-
-                    $.getJSON('/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
-
-                        console.log(result);
-
-                        result.data.sort(function (a, b) {
-                            var textA = a.slug.toLowerCase(),
-                                textB = b.slug.toLowerCase()
-                            if (textA < textB)
-                                return -1
-                            if (textA > textB)
-                                return 1
-                            return 0
-                        })
-
-                        url_res=getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data)).url,type_res='csv',type_site='InfoCom94';
-
-                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
-                ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-
-                  $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + date + '' + status + '' + period + '' + details + '</tr>');
-
-                });
-                }
-
-                /*else if(datasets[i].site == "socrata") {
-
-                    $.getJSON('/datasets/update/socrataCall/'+ datasets[i].title_data, function (result) {
-
-                        console.log(result);
-
-                        result.data.sort(function (a, b) {
-                            var textA = a.slug.toLowerCase(),
-                                textB = b.slug.toLowerCase()
-                            if (textA < textB)
-                                return -1
-                            if (textA > textB)
-                                return 1
-                            return 0
-                        })
-
-                        url_res=getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data)).url,type_res='csv',type_site='InfoCom94';
-
-                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
-                ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-
-                  $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + date + '' + status + '' + period + '' + details + '</tr>');
-
-                });
-                }*/
-                
-                else {
-                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}" onclick="openModalFilter($(this) );" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-                                        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + date + '' + status + '' + period + '' + details + '</tr>');
-
-                }
-        
-
-
-                
-
-                    $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
-                    $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
-
-                    $('#edit-table-' + i + '-period-2').val(t[1]);
-
-                    
-           
-                    if(JSON.stringify(datasets[i].parameters)  && JSON.stringify(datasets[i].parameters) != null && JSON.stringify(datasets[i].parameters) != "null" && JSON.stringify(datasets[i].parameters) != undefined) {
-
-                        $(".span_"+i).addClass("buttonDetailsActif");
-                        
-                    }
-                    
-
-                }  
-                }
-
-
             }
-
-
         }
-
     }
-
-
 }
 
 
@@ -470,28 +465,20 @@ function fillTable(data, data2) {
 }
 
 
- function getFirstRessource(result) {
- 
-    let ressourcevalue = "";
+function getFirstRessource(result) {
+    if (result) {
+        for (let g = 0; g < result.resources.length; g++) {
+            if(result.resources[g].format == 'CSV' || result.resources[g].format == 'csv'){
 
-                                for (let g = 0; g < result.resources.length; g++) {
-                                    
-                                    if(result.resources[g].format == 'CSV' || result.resources[g].format == 'csv'){
-                                            
-                                                url_res=result.resources[g].url,
-                                                type_res='csv',
-                                                type_site='DataGouvfr'; 
-                                         
-                                            ressourcevalue = result.resources[g];
-                                            break;
+                url_res=result.resources[g].url,
+                type_res='csv',
+                type_site='DataGouvfr'; 
 
-                                    }
-
-                            }
-                            return ressourcevalue;
-                        
-                      
-
+                return result.resources[g];
+            }
+        }
+    }
+    return null;
 }
 
 ////////////////ArcGIS/////////////////////////
@@ -500,16 +487,6 @@ function fillTable(data, data2) {
 function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
-   if(resUrl.includes("?")) {
-      var res = resUrl.split("?");
-      resUrl = res[0];
- }
-
-
-if(resUrl.includes("?")) {
-      var res = resUrl.split("?");
-      resUrl = res[0];
- }
 
 $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
