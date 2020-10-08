@@ -112,10 +112,13 @@ class ResourceManager {
 		Logger::logMessage("Managing file from FORM POST");
 
 		$file = File::load($file);
+
 		$file->setPermanent();
 		$file->save();
 
+
 		$resourceUrl = $file->url();
+
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
 		return $resourceUrl;
@@ -538,16 +541,23 @@ class ResourceManager {
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/urlsheet/' . $fileName;
 	}
 
-		function manageXmlfile($url) {
 
+	
+
+function manageXmlfile($url) {
+		$api = new Api;
         // récuperer l'url google sheet
         $jsonData = file_get_contents($url);
+       
         $rows = explode("\n", $jsonData);
+
         $contenturlsheet = array();
        
         foreach($rows as $row) {
+        	$row = str_replace(";", ",", $row);
             $contenturlsheet[] = str_getcsv($row);
 		}
+
 
         // save the content of GSheeturl in csv file and get url of resource
 		$data = $contenturlsheet;
@@ -555,15 +565,17 @@ class ResourceManager {
 			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/", 0777, true);
 		}
 		
-		$api = new Api;
+		
 		$query_params = $api->proper_parse_str($url);
 		$fileName = $query_params["resource_id"] . "-xml" . ".csv";
 
 		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
+			
 			fputcsv($fp, $line);
 		}
+
 		fclose($fp);
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
