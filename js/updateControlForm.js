@@ -2,6 +2,7 @@ $ = jQuery;
 var variableglobale = [];
 var variableglobalekey = [];
 var nhitsvalue = [];
+var datasetvalues=[];
 !function(e){"function"!=typeof e.matches&&(e.matches=e.msMatchesSelector||e.mozMatchesSelector||e.webkitMatchesSelector||function(e){for(var t=this,o=(t.document||t.ownerDocument).querySelectorAll(e),n=0;o[n]&&o[n]!==t;)++n;return Boolean(o[n])}),"function"!=typeof e.closest&&(e.closest=function(e){for(var t=this;t&&1===t.nodeType;){if(t.matches(e))return t;t=t.parentNode}return null})}(window.Element.prototype);
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -50,7 +51,7 @@ var validation_resurce = [];
 $('#edit-selected-org option[value=""]').attr('selected', 'selected');
 
 $('#edit-table thead tr').remove();
-$('#edit-table thead').append('<th data-type="string">nom</th><th data-type="string">Organisation hgh</th><th data-type="string">origine</th><th data-type="string">site</th><th>La date de dernière réplication</th><th>La date prévue de la prochaine réplication</th><th>État</th><th>Fréquence de moissonnage</th><th>Détails</th>');
+$('#edit-table thead').append('<th data-type="string">nom</th><th data-type="string">Organisation hgh</th><th data-type="string">origine</th><th data-type="string">site</th><th>La date de dernière réplication</th><th>La date prévue de la prochaine réplication</th><th>État</th><th>Fréquence de moissonnage</th><th>Détails</th> <th>Supprimer</th>');
 
 $('#edit-table').before('</br><div><input class="form-search" type="text"  id="search" placeholder="Recherche"></div></br>');
 
@@ -258,6 +259,10 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
 
 function fillTable(data) {
+    console.log(data);
+    var dataString = JSON.stringify(data);
+    console.log(dataString);
+    datasetvalues = data;
     clear();
     /*console.log($('#edit-selected-org').val());*/
 
@@ -351,6 +356,7 @@ function fillTable(data) {
                         let period = '<td><div class="js-form-item form-item js-form-type-select form-type-select js-form-item-table-' + i + '-period-1 form-item-table-' + i + '-period-1 form-no-label"><select data-drupal-selector="edit-table-' + i + '-period-1" id="edit-table-' + i + '-period-1" name="table[' + i + '][period][1]" class="form-select"><option value="Mi">Minute</option><option value="H">Heure</option><option value="D">Jour</option><option value="W">Semaine</option><option value="M">Mois</option><option value="Y">Année</option></select></div><div class="js-form-item form-item js-form-type-number form-type-number js-form-item-table-' + i + '-period-2 form-item-table-' + i + '-period-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-period-2" type="number" id="edit-table-' + i + '-period-2" name="table[' + i + '][period][2]" value="" step="1" class="form-number"></div></td>';
 
                         let details = "";
+                        let del_moissonage ="";
                         let url_res="";
                         if(datasets[i].site == "Data_Gouv_fr") {
                             $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q='+ datasets[i].title_data, function (result) {
@@ -371,8 +377,14 @@ function fillTable(data) {
                                     url_res = firstResource ? firstResource.url : '', type_res='csv', type_site='DataGouvfr';
     
                                     details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
-                                        ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
+                                        ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>';
+
+                                    del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
+                        <span  title="Supprimer" class="fa fa-trash-o " style="cursor:pointer;vertical-align:middle;margin-left:1em;color:black;font-size:20px;"></span>
+
+                        </a></td>`;
+                                   
+                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '' + del_moissonage+ '</tr>');
                                 
                                     $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
                                     $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
@@ -409,8 +421,11 @@ function fillTable(data) {
 
                                     details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
                                         ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
+                                    del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
+                        <span  title="Supprimer" class="fa fa-trash-o " style="cursor:pointer;vertical-align:middle;margin-left:1em;color:black;font-size:20px;"></span>
 
-                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
+                        </a></td>`;
+                                    $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '' +del_moissonage+ '</tr>');
                                 
                                     $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
                                     $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
@@ -427,7 +442,12 @@ function fillTable(data) {
                         }
                         else {
                             details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data_site+'" name="valuedetails_span" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}" onclick="openModalFilter($(this) );" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
-                            $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '</tr>');
+                            del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
+                        <span  title="Supprimer" class="fa fa-trash-o " style="cursor:pointer;vertical-align:middle;margin-left:1em;color:black;font-size:20px;"></span>
+
+                        </a></td>`;
+
+                            $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + name_id + '' + org + '' + orgine + '' + site + '' + dateLastUp + '' + dateNextUp + '' + status + '' + period + '' + details + '' +del_moissonage+ '</tr>');
                         
                             $('#edit-table-' + i + '-status option[value="' + t[2] + '"]').attr('selected', 'selected');
                             $('#edit-table-' + i + '-period-1 option[value="' + t[0] + '"]').attr('selected', 'selected');
@@ -448,6 +468,84 @@ function fillTable(data) {
 }
 
 
+function removeDatasetFromarray(data, id) {
+
+    const array = [2, 5, 9];
+
+    console.log(array);
+
+    const index = array.indexOf(5);
+    if (index > -1) {
+      array.splice(index, 1);
+    }
+
+    // array = [2, 9]
+    for (let j = 0; j < data.length; j++) {
+                if ($('#edit-selected-org').val() == data[j].id_org) {
+                    let datasets = data[j].datasets;
+                    console.log(datasets.length);
+                    var ind = datasets.findIndex(x => x.id_data === id);
+                     if (ind > -1) {
+                      datasets.splice(ind, 1);
+                    }
+                    console.log(datasets.length);
+                }
+                
+    }
+    return data;
+/*    currentdatasetid = data.result.results.findIndex(x => x.id === id);
+    console.log(currentdatasetid);*/
+    /*const index = array.indexOf(5);
+    if (index > -1) {
+      array.splice(index, 1);
+    }
+
+    return data;*/
+}
+
+function deleteMoissonnage(event) {
+
+    var conf = confirm("Etes-vous sûr de vouloir supprimer ce moissonnage?");
+
+
+    if (conf) {
+         var datasetId=event.attr("data-id-moisonnage");
+         
+        
+
+    
+        $.ajax('/api/dataset/remove/'+datasetId, {
+        type: 'POST',
+        dataType: 'json',
+        cache: true,
+        success: function (data) {
+            clear();
+            var dataresult = removeDatasetFromarray(datasetvalues,datasetId);
+            fillTable(dataresult);
+           /* var selectorge = document.getElementById("edit-selected-org");
+            var valoption = selectorge.options[selectorge.selectedIndex].value;
+            console.log(valoption);
+            clear();
+            selectorge.onchange();*/
+
+
+        },
+        error: function (e) {
+            console.log("ERROR: ", e);
+        },
+
+    });
+      
+
+    } else {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.isDefaultPrevented()) {
+            event.returnValue = false;
+        }
+
+    }
+}
 
  function getdatasetbyTitle(result,title) {
 

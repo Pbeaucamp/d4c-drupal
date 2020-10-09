@@ -9,6 +9,9 @@ use ZipArchive;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
+use Drupal\ckan_admin\Utils\Export;
 
 
 class ResourceManager {
@@ -1554,6 +1557,8 @@ class ResourceManager {
         return array('0'=>$coll, '1'=>$idNewData);
     }
 
+
+
 	function deleteDataset($datasetId) {
 		$callUrl = $this->urlCkan . "/api/action/package_delete";
             
@@ -1568,7 +1573,7 @@ class ResourceManager {
 		if ($response[success] == true) {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
-			return true;
+			return new Response("true"); ;
 		}
 		else {
 			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
