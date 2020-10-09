@@ -2,7 +2,7 @@ $ = jQuery;
 
 function showProgress() {
     $('#progress').show();
-    $('#progress').append('<div id="progress-content" class="progress-modal-content"><div id="progress-bar"/><div id="progress-message"/></div>'); 
+    $('#progress').append('<div id="progress-content" class="progress-modal-content"><div id="progress-bar"></div><div id="progress-message"></div></div>'); 
 }
 
 function updateProgress(percentage, mainMessage, message) {
