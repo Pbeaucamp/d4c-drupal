@@ -68,8 +68,17 @@ class userStoryForm extends HelpFormBase
 
         $stories = $api->getStories();
 
+        $widgets = $api->getWidgets();
+/*        foreach ($stories as $key => $value) {
+            $api->deleteStory($value->story_id);
+        }
+        var_dump(sizeof($stories));
+
+        var_dump(sizeof($widgets));
+        die;*/
+
         $idUser = \Drupal::currentUser()->id();
-    
+            
         
         if($idUser != 0) {
             $form['m1'] = array(
@@ -79,22 +88,24 @@ class userStoryForm extends HelpFormBase
         $ids = array();
         $ids["new"]="Sélectionner une histoire(Modifier/Supprimer) ";
         foreach($stories as &$ds) {
-            $ids[$ds->story_id] = $ds->widget_label;
+            $ids[$ds->story_id] = $ds->title_story;
         }
 
 
         $storiesjson = json_encode($stories,true);
+        $widgetsjson = json_encode($widgets,true);
+        /*$storiesjson=null;*/
        $form['selected_data'] = array(
             '#type' => 'select',
             '#title' => t(''),
             '#options' => $ids,
             '#attributes' => array( 
-                'onchange' => 'loadStory('.$storiesjson.')','style' => 'width: 50%;float: right;
-    position: absolute;
-    margin-top: -35px;
-    margin-left: 30%;', 
-                'id' => ['selected_data'])
-        );
+                'onchange' => 'loadStory('.$storiesjson.','.$widgetsjson.')','style' => 'width: 50%;float: right;
+            position: absolute;
+            margin-top: -35px;
+            margin-left: 30%;', 
+                        'id' => ['selected_data'])
+                );
 
         }
         
@@ -102,7 +113,72 @@ class userStoryForm extends HelpFormBase
    
         $contentstories = json_encode($stories);
 
+        
 
+        $slide = "";
+
+
+        $generalTitle ='<div class="text-center">
+                            <h2 style="margin-top:20px !important;" class="section-heading text-uppercase" >Histoire de données</h2>
+          </div>';
+
+        $contentDiv="";
+        foreach ($stories as $key => $story) {
+
+            $titleStories='<div class="text-center">
+                            <h2 style="margin-top:20px !important;" class="section-heading text-uppercase" >'.$story->title_story.'</h2>
+            </div>';
+
+            $contentwidget ='<div class="slideshow-container " id="slides-'.$key.'">';
+            $widgets = $api->getWidgetByStory($story->story_id);
+            $indocators ='<div style="text-align:center; margin-top: -20px !important;">';
+    
+            foreach ($widgets as $keywidget => $widget) {
+                
+                $contentwidget.='
+                <div class="mySlides " data-index = "1" data-key = '.$keywidget.'>
+                    <a href ="#" target="_blank">
+                        <iframe id="iframejeu-'.$keywidget.'" src="'.$widget->widget.'" frameBorder="0" width = 100% height =645></iframe> 
+
+                        <div class="text">'.$widget->widget_label.'</div>
+                    </a>
+                </div>';
+
+                $indocators.='
+                <img class="dot" onclick="currentSlide('.$key.','.$keywidget.')" src ="'.$widget->image.'" /> ';
+            }
+
+            
+            $contentwidget.='</div>';
+            $indocators .='</div>';
+
+            $form['content-stories2'][] = array(
+          'example one' => [
+          '#type' => 'inline_template',
+          '#template' =>'<div class="slidescontent" data-id = '.$key.' id="slidesContent-'.$key.'">'. $titleStories.'<br>
+          '.$contentwidget.'
+
+            <br>
+            <div>
+            <a class="prev" style="float:left; margin-top:-500px !important;margin-left: 100px;" onclick="plusSlides('.$key.',-1)">&#10094;</a>
+            <a class="next" id="next" data-scrolltime ='.$story->scroll_time.' style="float:right; margin-top:-500px !important;margin-right: 100px;" onclick="plusSlides('.$key.',1)">&#10095;</a>
+            </div>
+            <br>
+            '. $indocators.'
+
+            <br>
+            </div></div>'
+          
+        ],
+    );
+        $form['m2_2'] = array(
+          '#markup' => '</div>',
+        );
+
+        }
+
+      
+/*        for ($i=0; $i <3 ; $i++) { 
         $contentwidget ='<div class="slideshow-container" id="slides">';
         $indocators ='<div style="text-align:center; margin-top: -20px !important;">';
         foreach ($stories as $key => $value) {
@@ -122,7 +198,7 @@ class userStoryForm extends HelpFormBase
         $indocators.="</div>";
 
 
-        $form['content-stories2'] = array(
+        $form['content-stories2'][] = array(
         'example one' => [
           '#type' => 'inline_template',
           '#template' => '
@@ -147,9 +223,83 @@ class userStoryForm extends HelpFormBase
           '#markup' => '</div>',
         ); 
 
+        }*/
+
+
+
+
+
+
         $form['m2'] = array(
             '#markup' => '<div id="visibilityModalStory">',
         ); 
+
+        $form['story_title'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('*Titre:'),
+                '#attributes' => array('style' => 'width: 50%;'),
+        );
+
+         $form['scroll_tps'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('*Temps de défilement :'),
+                '#attributes' => array('style' => 'width: 50%;'),
+        );
+
+        $form['table_widgets'] = array(
+            
+            //'#prefix' =>'<div id="ConfigurationTab">',
+            '#type' => 'table',
+            '#header' => array(
+                $this->t('label_widget'),
+                $this->t('img_widget'),
+                $this->t('Widget/URL'),
+                $this->t('Supprimer')  
+            ),
+            //'#suffix' => '</div>',
+
+        );
+           for ($i = 1; $i <= 1; $i++) {
+//titre
+/*            $form['table_widgets'][$i]['id_widget'] = array(
+                '#type' => 'textfield',
+                '#maxlength' => null,
+                '#attributes' => array('style' => 'display: none;'),
+
+            );*/
+            $form['table_widgets'][$i]['label_widget'] = array(
+                '#type' => 'textfield',
+                '#size' => 30,
+                '#maxlength' => null,
+            );
+//description
+            $form['table_widgets'][$i]['img_widget'] = array(
+                '#type' => 'managed_file',
+                '#title' => t('Image de l\'histoire  :'),
+                "#id" =>'ajax-wrapper-'.$i,
+                '#upload_location' => 'public://organization/',
+                '#upload_validators' => array(
+                    'file_validate_extensions' => array('png jpeg jpg svg gif WebP PNG JPEG JPG SVG GIF'),
+                ),
+                '#size' => 22,
+            );
+
+
+            
+            $form['table_widgets'][$i]['widget'] = array(
+            '#type' => 'textarea',
+                '#attributes' => array('style' => 'height: 5em;width: 25em;'),
+                '#maxlength' => null,
+
+        );
+            
+            $form['table_widgets'][$i]['del'] = array(
+            //'#type' => 'textarea',
+        );
+            
+        }
         
         $form['id_story'] = array(
                 '#type' => 'textfield',
@@ -157,7 +307,7 @@ class userStoryForm extends HelpFormBase
                 '#attributes' => array('style' => 'display: none;'),
 
             );
-        $form['scroll_tps'] = array(
+/*        $form['scroll_tps'] = array(
             '#markup' => '',
             '#type' => 'textfield',
             '#title' => $this->t('*Temps de défilement :'),
@@ -187,7 +337,7 @@ class userStoryForm extends HelpFormBase
             '#resizable' => true,
             '#attributes' => array('style' => 'width: 50%;'),
         ); 
-
+*/
 
         $form['valider'] = array(
             '#type' => 'submit',
@@ -224,31 +374,47 @@ class userStoryForm extends HelpFormBase
 
         $this->urlCkan = $this->config->ckan->url;
         $scrolling_time = $form_state->getValue('scroll_tps');
+        $title_story = $form_state->getValue('story_title');
         $widget = $form_state->getValue('widget');
         $label_widget = $form_state->getValue('label_widget');
         $form_file = $form_state->getValue('img_widget');
         $idStroy = $form_state->getValue('id_story');
+        $widget = $form_state->getValue('table_widgets');
 
 
 
         $data =array();
+        $data["title_story"]=$title_story;
         $data["scrolling_time"]=$scrolling_time;
-        $data["widget"]=$widget;
-        $data["label_widget"]=$label_widget;
-        if (isset($form_file[0]) && !empty($form_file[0])) {
-                $file = File::load($form_file[0]);
+       
+       /*echo "<pre>";*/
+       
+         /*$data["widget"]=$widget;
+        $data["label_widget"]=$label_widget;*/
+              
+        foreach ($widget as $key => $value) {
+          
+            if (isset($value["img_widget"][0]) && !empty($value["img_widget"][0])) {
+
+                $file = File::load($value["img_widget"][0]);
                 $file->setPermanent();
                 $file->save();
                 $file->url();
-                $data[img_widget]= $file->url();
+                $value["img_widget"][0]= $file->url();
+                $widget[$key]["urlimg"] = $file->url();
+
             }
         else {
-            $data[img_widget] = "http://kmo.data4citizen.com/sites/default/files/organization/img_v3.jpg";
+            $value["img_widget"] = "http://kmo.data4citizen.com/sites/default/files/organization/img_v3.jpg";
+            $widget[$key]["urlimg"] = "http://kmo.data4citizen.com/sites/default/files/organization/img_v3.jpg";
         }
+       
+  
+        }
+        $data["widget"] = $widget;
 
-         $del_story = $form_state->getValue('del_story');
-        
-        
+        $del_story = $form_state->getValue('del_story');
+
 
         if($idStroy != null ) {
             $data["story_id"]=$idStroy;
@@ -262,7 +428,9 @@ class userStoryForm extends HelpFormBase
 
 
         }else {
-            $api->addStory($data);
+/*            var_dump($data);die;
+*/            $api->addStory($data);
+            
         }
 
         header("Refresh:0");
