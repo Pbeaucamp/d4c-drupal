@@ -1,0 +1,949 @@
+ckan_admin.organisationForm:
+ path: '/admin/config/data4citizen/organisationForm'
+ defaults:
+   _title: 'Moissonnage'
+   _form: 'Drupal\ckan_admin\Form\organisationForm'
+ requirements:
+   _permission: 'access crawl'
+
+ckan_admin.datagouvForm:
+ path: '/admin/config/data4citizen/datagouvForm'
+ defaults:
+   _title: 'Moissonnage'
+   _form: 'Drupal\ckan_admin\Form\MoissonnageDataGouv'
+ requirements:
+   _permission: 'access crawl'
+   
+ckan_admin.selectionForm:
+  path: '/admin/config/data4citizen/selection'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\selectionForm'
+    _title: 'Sélection'
+  requirements:
+    _permission: 'access crawl'
+ 
+ckan_admin.ckanForm:
+  path: '/admin/config/data4citizen/ckan'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\ckanForm'
+    _title: 'Automatisation'
+  requirements:
+    _permission: 'administer site configuration'
+    
+ckan_admin.themeForm:
+  path: '/admin/config/data4citizen/theme'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\themeForm'
+    _title: 'Thèmes'
+  requirements:
+    _permission: 'access theme'
+    
+ckan_admin.controDataslForm:
+  path: '/admin/config/data4citizen/controDataslForm'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\controDataslForm'
+    _title: 'Données par site'
+  requirements:
+    _permission: 'access data site'
+    
+ckan_admin.addThemeInDatasetForm:
+  path: '/admin/config/data4citizen/theme_dataset'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\addThemeInDatasetForm'
+    _title: 'Thèmes'
+  requirements:
+    _permission: 'access theme'
+    
+ckan_admin.typeColumnsForm:
+  path: '/admin/config/data4citizen/dictionnaire'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\typeColumnsForm'
+    _title: 'Dictionnaire de données et Infobulle'
+  requirements:
+    _permission: 'access dictionnary'
+
+ckan_admin.editMetaDataForm:
+  path: '/admin/config/data4citizen/editMetaDataForm'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\editMetaDataForm'
+    _title: 'Création et modification jeu de données'
+  requirements:
+    _permission: 'access dataset'
+    
+ckan_admin.organizationsManagementForm:
+  path: '/admin/config/data4citizen/organizationsManagementForm'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\organizationsManagementForm'
+    _title: 'Création et modification organisations'
+  requirements:
+    _permission: 'access organization' 
+
+ckan_admin.GeolocForm:
+  path: '/admin/config/data4citizen/geolocForm'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\GeolocForm'
+    _title: 'Options cartographique sur les jeux de données'
+  requirements:
+    _permission: 'access map'
+
+ckan_admin.portail:
+  path: '/portail'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\portailController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.visualisation:
+  path: '/visualisation/{tab}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\VisualisationController::myPage'
+    tab: 'table'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+ 
+ckan_admin.carte:
+  path: '/carte'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\MapController::manage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.cartemap:
+  path: '/carte/show'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\PortailController::myPage'
+    tab: 'table'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api3:
+  path: '/api/records/2.0/search/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.calculatevisu:
+  path: '/api/datasets/calculatevisu/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callCalculateVisualisations'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.callCustomView:
+  path: '/api/datasets/2.0/callCustomView/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callCustomView'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'    
+    
+ckan_admin.callVanillaUrlReports:
+  path: '/api/records/2.0/callVanillaUrlReports'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callVanillaUrlReports'
+    _title: ''
+  requirements:
+    _permission: 'access content'    
+    
+ckan_admin.getCsvXls:
+  path: '/datasets/update/getCsvXls/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getCsvXls'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'    
+    
+
+ckan_admin.updatemoissonnage:
+  path: '/datasets/update/moissonnage'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\DataSet::callUpdateDatasetDataGouv'
+    _title: ''
+  requirements:
+    _permission: 'access content'    
+
+ckan_admin.api2:
+  path: '/api/datasets/2.0/DATASETID/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.dataGouOrg:
+  path: '/api/datasets/2.0/dataGouOrg/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvOrg'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.callSearchOpendatasoft:
+  path: '/api/datasets/2.0/callSearchOpendatasoft/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchOpendatasoft'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.dataGouDataSetByOrg:
+  path: '/api/datasets/2.0/dataGouDataSetByOrg/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvDatasetByOrg'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.callSearchOpendatasoftAllSite:
+  path: '/api/datasets/2.0/callSearchOpendatasoftAllSite/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchOpendatasoftAllSite'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.ckanSearchCall:
+  path: '/datasets/update/ckanSearchCall/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::ckanSearchCall'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.dataGouDataSet:
+  path: '/api/datasets/2.0/dataGouDataSet/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvDataset'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.SearchRes:
+  path: '/api/datasets/2.0/searchdatasetres/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShowForSearch'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api1:
+  path: '/api/datasets/2.0/search/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.Inf94:
+  path: '/datasets/update/callInfocom94/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callInfocom94'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.getResourceById:
+  path: '/datasets/update/getresourcebyid/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getResourceById'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.d4cSearch:
+  path: '/datasets/update/calld4c/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callD4c'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.socrata:
+  path: '/datasets/update/socrataCall/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchSocrata'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'    
+        
+ckan_admin.callPackageSearchPublicPrivate:
+  path: '/api/datasets/2.0/searchPublicPrivate/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch_public_private'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.record.facets:
+  path: '/api/records/1.0/download/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiFacet'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.record.boundingbox:
+  path: '/api/records/1.0/boundingbox/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiBoundingBox'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.record.download:
+  path: '/api/records/2.0/download/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiDownload'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.record.download2:
+  path: '/api/records/2.0/downloadfile/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiDownloadFile'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.dataset.id:
+  path: '/api/datasets/1.0/{datasetid}/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow2'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.api.dataset.themes:
+  path: '/api/themes'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getPackageTheme'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.dataset.table:
+  path: '/api/table/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callAllFieldsForTableParam'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.api.record.geocluster:
+  path: '/api/records/1.0/geocluster/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoClusterOld'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.record.geoPreview:
+  path: '/api/records/1.0/geopreview/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoPreview'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api3.ods:
+  path: '/api/records/1.0/search/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi_v2'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api2.ods:
+  path: '/api/datasets/1.0/DATASETID/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow2_v2'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api1.ods:
+  path: '/api/datasets/1.0/search/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch_v2'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.basic:
+  path: '/api/metadata/1.0/basic'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::metaBasic'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.interop:
+  path: '/api/metadata/1.0/interop'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::metaInterop'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.explore:
+  path: '/explore/dataset/{id}/{tab}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\VisualisationController::myPage2'
+    tab: 'table'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.cluster:
+  path: '/cluster/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::cluster'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.visualisation.frame:
+  path: '/visualisation/frame/{tab}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::renderFrame'
+    tab: 'table'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.orga.show:
+  path: '/api/orga/2.0/show/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::orgaShow'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.license.list:
+  path: '/api/license/2.0/list'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::licenseList'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.package.list:
+  path: '/api/datasets/2.0/list'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::packageList'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+    
+ckan_admin.updateNbDownload:
+  path: '/api/datasets/{params}/update/downloads'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::updateNbDownload'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.updateViews:
+  path: '/api/datasets/{params}/update/views'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::updateNbViews'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+    
+ckan_admin.sortdataset:
+  path: '/api/datasets/sort/bykey/{key}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::sortDatasetbyKey'
+    key: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.plu:
+  path: '/page/exportplu'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\ExportPLUController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.gettheme:
+  path: '/api/gettheme'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getThemeArray'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.getthemebydownload:
+  path: '/api/getthemebydownload'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::themebydownload'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.getdatasetbytheme:
+  path: '/api/getdatasetbytheme/{theme}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::datasetByTheme'
+    theme: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.records.analyze:
+  path: '/api/records/1.0/analyze/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getAnalyze'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.alternative.export:
+  path: '/api/datasets/1.0/{datasetid}/alternative_exports/{resourceid}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callAlternativeExport'
+    resourceid: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.mapbuilder:
+  path: '/api/mapbuilder/{idmap}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::mapBuilder'
+    _title: ''
+    idmap: ''
+  requirements:
+    _permission: 'access content'
+  methods: [GET, HEAD, POST, PUT, DELETE]
+
+ckan_admin.carte.edit:
+  path: '/carte/{idmap}/edit'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\MapController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.is.connected:
+  path: '/api/signup/is_logged_in'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::isLoggedIn'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.admin_config_data4citizen:
+  path: '/admin/config/data4citizen'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'Data4Citizen'
+  requirements:
+    _permission: 'access administration pages'
+
+ckan_admin.custom_views:
+  path: '/admin/config/data4citizen/custom_views'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\customViewsForm'
+    _title: 'Vues Personnalisées'
+  requirements:
+    _permission: 'access view custom'
+
+ckan_admin.manage_map_tiles:
+  path: '/admin/config/data4citizen/manage_map_tiles'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\MapTilesForm'
+    _title: 'Fonds de Carte'
+  requirements:
+    _permission: 'access map layer'
+
+ckan_admin.harvest_map_tiles:
+  path: '/admin/config/data4citizen/harvest_map_tiles'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\MapTilesHarvestForm'
+    _title: 'Fonds de Carte Moissonnage'
+  requirements:
+    _permission: 'access map layer'
+
+ckan_admin.map.layers:
+  path: '/api/maps/layers/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callMapLayers'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+   
+ckan_admin.joinDatasetsForm:
+ path: '/admin/config/data4citizen/joinDatasetsForm'
+ defaults:
+   _title: 'Jointure entre datasets'
+   _form: 'Drupal\ckan_admin\Form\joinDatasetsForm'
+ requirements:
+   _permission: 'administer site configuration'
+   
+ckan_admin.updateControlForm:
+ path: '/admin/config/data4citizen/updateControlForm'
+ defaults:
+   _title: 'chronologie'
+   _form: 'Drupal\ckan_admin\Form\updateControlForm'
+ requirements:
+   _permission: 'administer site configuration'
+   
+ckan_admin.VanilaForm:
+ path: '/admin/config/data4citizen/VanilaForm'
+ defaults:
+   _title: 'Paramétrage Back Office'
+   _form: 'Drupal\ckan_admin\Form\VanilaForm'
+ requirements:
+   _permission: 'Vanilla'   
+   
+ckan_admin.precluster:
+  path: '/precluster'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::precluster'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.map.layers.add:
+  path: '/api/maps/addlayers'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::updateMapLayer'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.records.count:
+  path: '/api/datasets/2.0/records/count/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearchWithRecordsCount'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.VanillaForm:
+ path: '/admin/config/data4citizen/VanillaForm'
+ defaults:
+   _title: 'Vanilla'
+   _form: 'Drupal\ckan_admin\Form\VanillaForm'
+ requirements:
+   _permission: 'Vanilla'
+
+ckan_admin.CubeForm:
+ path: '/admin/config/data4citizen/CubeForm'
+ defaults:
+   _title: 'Cube'
+   _form: 'Drupal\ckan_admin\Form\CubeForm'
+ requirements:
+   _permission: 'Vanilla'
+
+ckan_admin.callSearchArcgis:
+  path: '/api/datasets/2.0/callSearchArcGIS/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchArcGIS'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.datasets_dashboard:
+  path: '/admin/config/data4citizen/datasetsManagement'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\DatasetsBoardForm'
+    _title: 'Tableau de contrôle des jeux de données'
+  requirements:
+    _permission: 'access dataset_board'
+    
+ckan_admin.callAllOrganizations:
+  path: '/api/organizations/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callAllOrganisations'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.datasets.download:
+  path: '/api/datasets/2.0/download/{format}/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearchDownload'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.datasets.rebuild:
+  path: '/api/datasets/rebuild'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::reBuildAllDataset'
+    _title: ''
+  requirements:
+    _custom_access: '\Drupal\ckan_admin\Controller\LocalAccessController::access'
+
+ckan_admin.external.facets:
+  path: '/api/external/facets/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callFacetsFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.external.get:
+  path: '/api/external/get/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callDatasetFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.external.records:
+  path: '/api/external/records/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callRecordsFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.external.boundingbox:
+  path: '/api/external/boundingbox/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callBoundingBoxFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.external.geopreview:
+  path: '/api/external/geopreview/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callGeoPreviewFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.external.geocluster:
+  path: '/api/external/geocluster/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callGeoClusterFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.external.download:
+  path: '/api/external/download/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\External::callDownloadFromSource'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.form.reuses:
+  path: '/admin/config/data4citizen/reusesManagement'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\ReusesForm'
+    _title: 'Gestion des réutilisations'
+  requirements:
+    _permission: 'access dataset'
+    
+ckan_admin.datasets.reuses:
+  path: '/api/datasets/1.0/{datasetid}/reuses'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callGetReuses'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  methods: [GET, POST]
+  
+ckan_admin.menu.reuses:
+  path: '/reuses'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\ReusesController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.menu.chart:
+  path: '/chart'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\ChartController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.menu.chart.frame:
+  path: '/chart/frame'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\ChartController::myFrame'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.records.api.orange:
+  path: '/webservice/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callOrangeApiGetData'
+    _title: ''
+    params: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.calldatapuhser:
+  path: '/api/datapusher/{resourceId}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::externalCallDatapusher'
+    _title: ''
+    resourceId: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.calldatapuhserjobstatus:
+  path: '/api/datapusher/job/{jobId}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatapusherJobStatus'
+    _title: ''
+    jobId: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.dataset_datapusher:
+  path: '/admin/config/data4citizen/datasetsManagement/datasetDatapusher'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\DatasetDatapusherForm'
+    _title: 'Tableau de contrôle du datapusher'
+  requirements:
+    _permission: 'access dataset_board'
+
+ckan_admin.calculValueFiltre:
+  path: '/api/calculvaluefiltre'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::calculValueFromFiltre'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  
+ckan_admin.exportdataset:
+  path: '/package/exportdataset/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\PackageManager::createPackageZip'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+# add package data4citizen route
+ckan_admin.extension_package_data4citizen:
+  path: '/admin/config/data4citizen/packages'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\PackagesForm'
+    _title: 'Packages Data4Citizen'
+  requirements:
+    _permission: 'access content'
+
+# add package file XML route
+ckan_admin.extension_package_fileXML:
+  path: '/admin/config/data4citizen/package/fichiersXML'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\PackageXMLFileForm'
+    _title: 'Fichiers XML'
+  requirements:
+    _permission: 'access content'
+    
+    
+# ckan_admin.userstory:
+#   path: '/admin/config/data4citizen/userstory'
+#   defaults:
+#     _controller: '\Drupal\ckan_admin\Controller\userStoryController::myPage'
+#     _title: ''
+#   requirements:
+#     _permission: 'access content'
+
+
+ckan_admin.userstory:
+  path: '/admin/config/data4citizen/userstory'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\userStoryForm'
+    _title: 'Histoire de données'
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.callTaskStatus:
+  path: '/api/taskStatus/{id}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getTaskStatus'
+  requirements:
+    _permission: 'access content'
+
+
+ckan_admin.call.reuses:
+  path: '/api/datasets/reusesManagement'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callPackageReutilisation'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+
+
+ckan_admin.deleteDataset:
+  path: '/api/dataset/remove/{datasetId}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\ResourceManager::deleteDataset'
+  requirements:
+    _permission: 'access crawl'

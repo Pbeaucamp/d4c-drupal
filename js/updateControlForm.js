@@ -679,17 +679,12 @@ function openModalFilter(elem){
 
     var data_str = elem.attr("data-param-values-set");
     var my_object = JSON.parse(decodeURIComponent(data_str));
-    console.log(" my object ");
-    console.log(my_object);
-
-    console.log(elem);
     /*data-id-dataset="'+datasets[i].id_data+'"*/
     var site_url = elem.data("url");
     var type_site = elem.data("type");
     var id = elem.data("id");
     var idDataset = elem.data("id-dataset");
     var parameters = elem.attr("data-parameters");
-    console.log(JSON.parse(parameters));
 
     if(parameters != undefined /*&& parameters != ""*/){
         if(parameters != "" && parameters != "{}"){
@@ -712,8 +707,6 @@ function openModalFilter(elem){
 
     var elem2 = elem;
     var nhits = elem.data("nhits");
-
-    
     
     var scope = angular.element("#filterPlace .d4c-dataset-selection-list__records").scope();
     scope.externalcontext.type = type_site;
@@ -721,8 +714,6 @@ function openModalFilter(elem){
     scope.externalcontext.datasetID = id;
     scope.externalcontext.parameters = parameters;
     scope.externalcontext.nhits = nhits;
-
-
 
     scope.cancel = function () {
         overlay = document.querySelector('.js-overlay-modal-filter');
@@ -734,10 +725,6 @@ function openModalFilter(elem){
 
 
     scope.selectDataset = function (dataset, parameters, nhits) {
-        console.log(" select dataset ");
-        console.log(elem);
-        console.log(parameters);
-        console.log(nhits);
         elem.attr("data-parameters", JSON.stringify(parameters));
         elem.data("nhits", nhits);
        
@@ -747,11 +734,8 @@ function openModalFilter(elem){
 
         value.params = parameters;
         value.url = site_url;
-        console.log(JSON.stringify(parameters));
       
         document.getElementById("valuedetails_span_"+idDataset).value=JSON.stringify(parameters);
-        
-        console.log(document.getElementById("valuedetails_span_"+idDataset).value);
 
         scope.cancel();
 
