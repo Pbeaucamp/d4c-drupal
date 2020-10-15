@@ -546,11 +546,9 @@ class ResourceManager {
 
 function manageXmlfile($url) {
 		$api = new Api;
-        // récuperer l'url google sheet
+        // récuperer l'url xml file
         $jsonData = file_get_contents($url);
-       
         $rows = explode("\n", $jsonData);
-
         $contenturlsheet = array();
        
         foreach($rows as $row) {
@@ -558,13 +556,11 @@ function manageXmlfile($url) {
             $contenturlsheet[] = str_getcsv($row);
 		}
 
-
-        // save the content of GSheeturl in csv file and get url of resource
+        // save the content of xml url in csv file and get url of resource
 		$data = $contenturlsheet;
 		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/")) {
 			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/", 0777, true);
 		}
-		
 		
 		$query_params = $api->proper_parse_str($url);
 		$fileName = $query_params["resource_id"] . "-xml" . ".csv";
@@ -577,7 +573,6 @@ function manageXmlfile($url) {
 		}
 
 		fclose($fp);
-
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
 
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/xmlfile/' . $fileName;
