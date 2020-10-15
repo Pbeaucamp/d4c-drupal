@@ -699,7 +699,6 @@ class Api{
 			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
 			$dataSetscontent = [];
 
-			//var_dump($result["result"]["results"]);die;
 			
 
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
@@ -1860,6 +1859,8 @@ class Api{
 
 		//We build the first row with the header's name
 		$fieldsHeader = "";
+		//set fields header to filter with
+		$fieldsHeader2 = "";
 		if ($reqFields != "") {
 			$reqFieldsArray = explode(",", $reqFields);
 		}
@@ -1870,9 +1871,9 @@ class Api{
 		$stack = array();
 
 		if($exportUserField  != null ) {
-
+			//set header fields with exportapi as true
 			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $valuefields["info"]["exportapi"]==1) {
+				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $valuefields["info"]["exportapi"]==1 && $valuefields["info"]["exportapi"]=="1") {
 					array_push($stack, $valuefields["id"]);
 				}
 			}
@@ -1886,7 +1887,7 @@ class Api{
 				continue;
 			}
 
-
+			//set header fields with exportapi as true
 			if($exportUserField  != null ) {
 
 				/* get all fields from exportuserfield */
@@ -1896,6 +1897,7 @@ class Api{
 						if( $valuefields["id"] == $value['name'] && ($valuefields["info"]["exportapi"]==1 || $valuefields["info"]["exportapi"]=="1")){
 							/* Get name of ever field user and assign it to fields Header*/ 
 							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+							$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
 							$first = false;
 							break;
 						}
@@ -1904,6 +1906,7 @@ class Api{
 				else { 
 					if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
 						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
 					$first = false;
 					}
 					
@@ -1914,19 +1917,25 @@ class Api{
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
 							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
 						}
 					}
 					else {
 						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
 					}
 					$first = false;
 				}
 
 			}
+
+
+
 		}
 
 
 		$fieldsHeader .= "\n";
+		$fieldsHeader2 .= "\n";
 
 
 		$ids = array();
@@ -1950,9 +1959,18 @@ class Api{
 			if($query_params['user_defined_fields']) {
 				$query_params = array_pop($query_params);
 			}
+
+			//search value in database by fields
+			$fieldsheaderparams =  str_replace(";", ',', trim($fieldsHeader2)) ;
+			//change fields params by fields header
+			$query_params["fields"] = $fieldsheaderparams;
+
 			$url2 = http_build_query($query_params);
+			$url22 = $this->proper_parse_str($url2);
+
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
+
 			//echo mb_strlen($callUrl , '8bit');				  
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -1960,36 +1978,18 @@ class Api{
 			//echo $result2 . "\r\n";
 			curl_close($curl);
 
-			$recordsValue = [];
-			$fieldsHeaderArray = explode(";", trim($fieldsHeader));
-			foreach ($fieldsHeaderArray as $keyFH => $valueFH) {
-				
-				$indexfield = $this->getIndexFieldHeaders(json_decode($result2,true)["result"]["fields"], $valueFH);
-				
-				$recordscontent = explode(',', json_decode($result2,true)["result"]["records"]);
-				if($indexfield > 0 ) {
-					array_push($recordsValue, json_encode($recordscontent[$indexfield]));
-				}
-				
-				
-				
-			}
-/*
-			var_dump(implode(",",$recordsValue));*/
-
 	//		header('Content-Type:text/csv');
 	//		header('Content-Disposition:attachment; filename=file.csv');
 	//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
 			if($format == "objects"){
-				$records = array_merge($records, implode(",",$recordsValue));
+				$records = array_merge($records, json_decode($result2,true)["result"]["records"]);
 			} else {
 				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
 				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.$callUrl );
-				$records .=implode(",",$recordsValue);
+				$records .=json_decode($result2,true)["result"]["records"];
 			}
 		
 		}
-
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -2031,8 +2031,6 @@ class Api{
 		
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
-
-		/*var_dump($params);die;*/
 
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
@@ -5684,7 +5682,6 @@ class Api{
         $callUrl = $this->urlCkan."api/action/package_update";
 		
         $return = $this->updateRequest($callUrl,$result['result'],"POST" );
-        //var_dump($return);
     }
 
     function updateRequest($callUrl, $binaryData, $requestType) {
@@ -5947,7 +5944,6 @@ class Api{
         $data = json_decode($datasetList->getContent() );
         $dataJson = $datasetList->getContent() ;
        // echo "<!Doctype html><html>";
-        //var_dump($data->result->results[4]);
         $key_found=false;
         $listbyKey = $this->getdatasetListByKey($key);
         if( $key=="nb_download"){
@@ -6038,7 +6034,6 @@ class Api{
     function getThemeArray(){
  
         $listbyKey = $this->getdatasetListByKey("theme") ;
-        //var_dump($listbyKey);
         
         for($l=0; $l<count($listbyKey);$l++ ){
             
@@ -6055,7 +6050,6 @@ class Api{
         }
         
         //echo " list apres" ;
-        //var_dump($themeList);
         
        // echo json_encode($listbyKey);
         
@@ -6150,7 +6144,6 @@ class Api{
             
         }
         
-        //var_dump( $selectedDataset ) ;
         //echo json_encode($selectedDataset );
         
         

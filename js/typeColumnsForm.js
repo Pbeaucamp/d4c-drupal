@@ -134,6 +134,7 @@ function addDataInTable(data){
 
         let facet='<input data-drupal-selector="edit-table-'+i+'-facet" type="checkbox" id="edit-table-'+i+'-facet" name="table['+i+'][facet]" value="1" class="form-checkbox">';
         
+        //export api td
         let exportapi='<input data-drupal-selector="edit-table-'+i+'-exportApi" type="checkbox" id="edit-table-'+i+'-exportApi" name="table['+i+'][exportApi]" value="1" class="form-checkbox">';
 
         let table='<input data-drupal-selector="edit-table-'+i+'-table" type="checkbox" id="edit-table-'+i+'-table" name="table['+i+'][table]" value="1" class="form-checkbox">';
@@ -171,7 +172,8 @@ function addDataInTable(data){
 
         let facet_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-facet form-item-table-'+i+'-facet form-no-label">'+facet+'</div>';
         
-         let exportapi_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-exportApi form-item-table-'+i+'-facet form-no-label">'+exportapi+'</div>';
+        // export api div
+        let exportapi_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-exportApi form-item-table-'+i+'-facet form-no-label">'+exportapi+'</div>';
 
         let table_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-table form-item-table-'+i+'-table form-no-label">'+table+'</div>';
         
@@ -587,7 +589,6 @@ function uncheckAllHeader() {
 function checkAll(columnName, checkbox) {
 	var check = document.getElementById(checkbox).checked;
 
-  console.log(dataSize);
 	if (!(typeof dataSize === 'undefined')) {
 		for(let j = 0; j < dataSize; j++) {
 			$('#edit-table-' + j + columnName).prop('checked', check);
