@@ -578,7 +578,7 @@ function manageXmlfile($url) {
 
 		fclose($fp);
 
-		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
 
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/xmlfile/' . $fileName;
 	}
