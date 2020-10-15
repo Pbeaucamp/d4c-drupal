@@ -158,3 +158,10 @@ function openExportPopup(event,xml=false){
 
     });
 }
+
+
+$('#edit-orga-selected-input').css("display", "none");
+$('#edit-selected-org').on('change', function() {
+  $("input[name = orga_selected_input]").value = this.value;
+   $("input[name = orga_selected_input]").val(this.value);
+});

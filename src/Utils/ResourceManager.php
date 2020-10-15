@@ -112,10 +112,13 @@ class ResourceManager {
 		Logger::logMessage("Managing file from FORM POST");
 
 		$file = File::load($file);
+
 		$file->setPermanent();
 		$file->save();
 
+
 		$resourceUrl = $file->url();
+
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
 		return $resourceUrl;
@@ -536,6 +539,43 @@ class ResourceManager {
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
 
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/urlsheet/' . $fileName;
+	}
+
+
+	
+
+function manageXmlfile($url) {
+		$api = new Api;
+        // récuperer l'url xml file
+        $jsonData = file_get_contents($url);
+        $rows = explode("\n", $jsonData);
+        $contenturlsheet = array();
+       
+        foreach($rows as $row) {
+        	$row = str_replace(";", ",", $row);
+            $contenturlsheet[] = str_getcsv($row);
+		}
+
+        // save the content of xml url in csv file and get url of resource
+		$data = $contenturlsheet;
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/", 0777, true);
+		}
+		
+		$query_params = $api->proper_parse_str($url);
+		$fileName = $query_params["resource_id"] . "-xml" . ".csv";
+
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/" . $fileName, "wb");
+		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+		foreach ( $data as $line ) {
+			
+			fputcsv($fp, $line);
+		}
+
+		fclose($fp);
+		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
+
+		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/xmlfile/' . $fileName;
 	}
 	
 	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
