@@ -154,6 +154,12 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('FACETTE'),
 					':action' => 'checkAll("-facet","checkboxFacet")'])
 				),
+				//add export/api checkbox 
+				"ExportDownload" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxExportDownload" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Export/api'),
+					':action' => 'checkAll("-exportApi","checkboxExportDownload")'])
+				),
+
 				"facetM" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxFacetM" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('FACETTE Multiple'),
 					':action' => 'checkAll("-disjunctive","checkboxFacetM")'])
@@ -228,8 +234,13 @@ class typeColumnsForm extends HelpFormBase {
 				'#size' => 15,
 			);      
 		
-			// facet   
+			// facet
 			$form['table'][$i]['facet'] = array(
+				'#type' => 'checkbox',
+			);
+
+			// exportApi
+			$form['table'][$i]['exportApi'] = array(
 				'#type' => 'checkbox',
 			);
 		
@@ -454,11 +465,12 @@ class typeColumnsForm extends HelpFormBase {
         $json["fields"]=array();
         
         //array_push($json["fields"], $filds[result][fields][0]);
-        
+
         for( $i=1; $i<count($filds[result][fields]); $i++){
             
             $notes='';
             $title='';
+            $exportapi =0;
 			 
             if ($table_data[$i][Intitulé]){
 				$title = $table_data[$i][Intitulé];
@@ -468,6 +480,16 @@ class typeColumnsForm extends HelpFormBase {
                $facet = $table_data[$i][facet];
                 if($facet==1){
                     $notes=$notes.'<!--facet-->,';
+                }
+//              else{
+//                  $notes=$notes.'<!---->';
+//              }
+            }
+
+            if ($table_data[$i][exportApi]){
+               $exportapi = $table_data[$i][exportApi];
+                if($exportapi==1){
+                    $notes=$notes.'<!--exportApi-->,';
                 }
 //              else{
 //                  $notes=$notes.'<!---->';
@@ -627,6 +649,7 @@ class typeColumnsForm extends HelpFormBase {
 			$notes =substr($notes, 0, -1);
 			$filds[result][fields][$i][info][notes]=$notes;  
 			$filds[result][fields][$i][info][label]=$title;
+			$filds[result][fields][$i][info][exportapi]=$exportapi;
         
 			array_push($json["fields"], $filds[result][fields][$i]);
 		}
@@ -643,8 +666,7 @@ class typeColumnsForm extends HelpFormBase {
 				$oldDataset = $d;
 			}
 		}
-		
-		
+
 		$tooltip = array();
 		$tooltip["type"] = $form_state->getValue('type');
 		if($tooltip["type"] == "html"){

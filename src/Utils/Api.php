@@ -1351,6 +1351,7 @@ class Api{
 			//echo $sql;
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+			$callUrl2 =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
 		}
 		
 		//echo $callUrl;
@@ -1359,6 +1360,13 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		$result = json_decode($result,true);
+
+		$curl2 = curl_init($callUrl2);
+		curl_setopt_array($curl2, $this->getStoreOptions());
+		$result2 = curl_exec($curl2);
+		curl_close($curl2);
+		$result2 = json_decode($result2,true);
+
 		
 		$geoPointnb = 0;
 
@@ -1371,6 +1379,7 @@ class Api{
 			$field = array();
 			//if($value['id'] == "_id") continue;
 			$field['name'] = $value['id'];
+
 			$isFile = false;
 			if($full){
 				$annotations = array();
@@ -1446,6 +1455,8 @@ class Api{
 				} else {
 					$field['label'] = $field['name'];
 				}
+
+				$field['exportapi'] = $value['info']['exportapi'];
 				
 			}
 			else {
@@ -1478,7 +1489,15 @@ class Api{
 			}
 			$data_array[] = $field;
 		}
-		
+			
+		foreach ($data_array as $key => $value) {
+
+			$exportvalue = $this->getExportApiValue($result2['result']['fields'],$value["name"]);
+			$data_array[$key]["exportapi"] = $exportvalue;
+
+
+		}
+
 		if(!$hasFacet){
 			$hasTextCol = false;
 			foreach ($data_array as $id => $field) {
@@ -1496,6 +1515,16 @@ class Api{
 		return $data_array;
 	}
     
+
+    public function getExportApiValue($array, $elementValue){
+    	$exportapi = "";
+    	foreach ($array as $key => $value) {
+    		if($value["id"] == $elementValue) {
+    			$exportapi = $value["info"]["exportapi"];
+    		}
+    	}
+    	return $exportapi;
+    }
     public function getAllFieldsForTableParam($resourceId) {
         $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
@@ -1600,8 +1629,10 @@ class Api{
 			
 		}
 		
+		
 		 
 		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
+
 		//echo json_encode($fields);
 		$fieldId = "_id";
 		$reqFields="";
@@ -1841,12 +1872,11 @@ class Api{
 		if($exportUserField  != null ) {
 
 			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
+				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $valuefields["info"]["exportapi"]==1) {
 					array_push($stack, $valuefields["id"]);
 				}
 			}
 		}
-
 
 		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
 			
@@ -1863,7 +1893,7 @@ class Api{
 				if (in_array( $value['name'], $stack) ) {
 					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 
-						if( $valuefields["id"] == $value['name'] ){
+						if( $valuefields["id"] == $value['name'] && ($valuefields["info"]["exportapi"]==1 || $valuefields["info"]["exportapi"]=="1")){
 							/* Get name of ever field user and assign it to fields Header*/ 
 							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
 							$first = false;
@@ -1871,25 +1901,33 @@ class Api{
 						}
 					}
 				}
-				else {
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+				else { 
+					if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
+						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
 					$first = false;
+					}
+					
 				}
 			}
 			else {
-				if (isset($reqFieldsArray)) {
-					if (in_array($value['name'], $reqFieldsArray)) {
+				if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
+					if (isset($reqFieldsArray)) {
+						if (in_array($value['name'], $reqFieldsArray)) {
+							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						}
+					}
+					else {
 						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
 					}
+					$first = false;
 				}
-				else {
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-				}
-				$first = false;
+
 			}
 		}
 
+
 		$fieldsHeader .= "\n";
+
 
 		$ids = array();
 		foreach ($result["result"]["records"] as $value) {
@@ -1921,20 +1959,37 @@ class Api{
 			$result2 = curl_exec($curl);
 			//echo $result2 . "\r\n";
 			curl_close($curl);
+
+			$recordsValue = [];
+			$fieldsHeaderArray = explode(";", trim($fieldsHeader));
+			foreach ($fieldsHeaderArray as $keyFH => $valueFH) {
+				
+				$indexfield = $this->getIndexFieldHeaders(json_decode($result2,true)["result"]["fields"], $valueFH);
+				
+				$recordscontent = explode(',', json_decode($result2,true)["result"]["records"]);
+				if($indexfield > 0 ) {
+					array_push($recordsValue, json_encode($recordscontent[$indexfield]));
+				}
+				
+				
+				
+			}
+/*
+			var_dump(implode(",",$recordsValue));*/
+
 	//		header('Content-Type:text/csv');
 	//		header('Content-Disposition:attachment; filename=file.csv');
 	//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
 			if($format == "objects"){
-				$records = array_merge($records, json_decode($result2,true)["result"]["records"]);
+				$records = array_merge($records, implode(",",$recordsValue));
 			} else {
 				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
 				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.$callUrl );
-				$records .= json_decode($result2,true)["result"]["records"];
+				$records .=implode(",",$recordsValue);
 			}
 		
 		}
 
-		
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -1953,6 +2008,16 @@ class Api{
 //		$response->send();
 	}
 
+	public function getIndexFieldHeaders($array, $element) {
+		$index="";
+		foreach ($array as $key => $value) {
+			if($value["id"] == $element){
+				$index = $key;
+			}
+			
+		}
+		return $index ;
+	}
 	public function callDatastoreApiDownload($params) {
 		$result = $this->getRecordsDownload($params);
 
@@ -1995,7 +2060,9 @@ class Api{
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
+
 		$result = $this->getRecordsDownload($params);
+	
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
 		} else if ($format == "xls") {
