@@ -18,6 +18,7 @@ use Box\Spout\Writer\Style\CellAlignment;
 use SplFileObject;
 use finfo;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\ResourceManager;
 
 
 
@@ -7202,6 +7203,22 @@ class Api{
 		$response->headers->set('Content-Type', 'application/json');
 
 		return $response;
+	}
+
+
+	function deleteDataset($datasetId) {
+
+
+		$ressourceManager = new ResourceManager();
+		$result = $ressourceManager->deleteDataset($datasetId);
+		
+
+		if($result) {
+			return new Response("true");
+		}
+		else {
+			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
+		}
 	}
     
 }

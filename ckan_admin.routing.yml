@@ -944,6 +944,6 @@ ckan_admin.call.reuses:
 ckan_admin.deleteDataset:
   path: '/api/dataset/remove/{datasetId}'
   defaults:
-    _controller: '\Drupal\ckan_admin\Utils\ResourceManager::deleteDataset'
+    _controller: '\Drupal\ckan_admin\Utils\Api::deleteDataset'
   requirements:
     _permission: 'access crawl'

@@ -1573,7 +1573,7 @@ class ResourceManager {
 		if ($response[success] == true) {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
-			return new Response("true"); ;
+			return true;
 		}
 		else {
 			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
