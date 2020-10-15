@@ -185,7 +185,7 @@ class updateControlForm extends HelpFormBase {
      
       $table = $form_state->getValue('table');
       $org = $form_state->getValue('selected_org');
-        
+
       if($org!=''|| $org!=null) {
         foreach($table as &$res) {
             for ($i = 0; $i<count($dataForUpdate); $i++) {
@@ -194,6 +194,12 @@ class updateControlForm extends HelpFormBase {
                     for($j = 0; $j<count($datasets); $j++){
                         
                         if($datasets[$j]->id_data == $res[name][2]) {
+                            $params = $form_state->getValue('valuedetails_span-'.$datasets[$j]->id_data);
+                            
+                            if($res[valuedetails_span] != null || $res[valuedetails_span] != "" ) {
+                              $datasets[$j]->parameters = json_decode($res[valuedetails_span]); 
+                            }
+                            
                             $datasets[$j]->periodic_update = $res[period][1].';'.$res[period][2].';'.$res[status];
                             break;
                         }
@@ -203,6 +209,7 @@ class updateControlForm extends HelpFormBase {
                 }
             }
         }
+
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
         $config->set('dataForUpdateDatasets', json_encode($dataForUpdate))->save(); 
     }

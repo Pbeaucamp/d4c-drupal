@@ -1594,6 +1594,8 @@ function manageXmlfile($url) {
         return array('0'=>$coll, '1'=>$idNewData);
     }
 
+
+
 	function deleteDataset($datasetId) {
 		$callUrl = $this->urlCkan . "/api/action/package_delete";
             
