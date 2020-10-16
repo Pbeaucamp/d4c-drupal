@@ -1860,7 +1860,7 @@ class Api{
 		//We build the first row with the header's name
 		$fieldsHeader = "";
 		//set fields header to filter with
-		$fieldsHeader2 = "";
+		$fieldsToExport = "";
 		if ($reqFields != "") {
 			$reqFieldsArray = explode(",", $reqFields);
 		}
@@ -1869,17 +1869,36 @@ class Api{
 
 		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
 		$stack = array();
+		$exportval = false;
+
+		foreach ($fields as $value) {
+		// check if export field is checked
+			if($exportUserField  != null) {
+				foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+						if($valuefields["info"]["exportapi"]==1 || $valuefields["info"]["exportapi"]=="1") {
+							$exportval = true;
+						}
+
+				}
+
+			} else {
+						if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
+							$exportval = true;
+						}
+			}
+		}
 
 		if($exportUserField  != null ) {
 			//set header fields with exportapi as true
 			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $valuefields["info"]["exportapi"]==1 && $valuefields["info"]["exportapi"]=="1") {
+				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $exportval) {
 					array_push($stack, $valuefields["id"]);
 				}
 			}
 		}
 
 		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
+
 			
 		foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
@@ -1894,48 +1913,45 @@ class Api{
 				if (in_array( $value['name'], $stack) ) {
 					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 
-						if( $valuefields["id"] == $value['name'] && ($valuefields["info"]["exportapi"]==1 || $valuefields["info"]["exportapi"]=="1")){
+
+						if( $valuefields["id"] == $value['name'] && $exportval){
 							/* Get name of ever field user and assign it to fields Header*/ 
 							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
-							$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
+							$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 							$first = false;
 							break;
 						}
 					}
 				}
 				else { 
-					if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
+					if($exportval) {
 						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
+						$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 					$first = false;
 					}
 					
 				}
 			}
 			else {
-				if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
+				if($exportval) {
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
 							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-							$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
+							$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 						}
 					}
 					else {
 						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						$fieldsHeader2 .= (!$first ? ";" : "" ) . $value['name'];
+						$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 					}
 					$first = false;
 				}
 
 			}
-
-
-
 		}
 
-
 		$fieldsHeader .= "\n";
-		$fieldsHeader2 .= "\n";
+		$fieldsToExport .= "\n";
 
 
 		$ids = array();
@@ -1961,13 +1977,11 @@ class Api{
 			}
 
 			//search value in database by fields
-			$fieldsheaderparams =  str_replace(";", ',', trim($fieldsHeader2)) ;
+			$fieldsheaderparams =  str_replace(";", ',', trim($fieldsToExport)) ;
 			//change fields params by fields header
 			$query_params["fields"] = $fieldsheaderparams;
 
 			$url2 = http_build_query($query_params);
-			$url22 = $this->proper_parse_str($url2);
-
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
 
