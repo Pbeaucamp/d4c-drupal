@@ -353,10 +353,7 @@ class customViewsForm extends HelpFormBase {
 		$api = new Api();
 		$api->calculateVisualisations($data["cv_dataset_id"]);
         
-       drupal_set_message('Les données ont été sauvegardées');
-        
-      // drupal_set_message(t(' %title.', ['%title' => $form_state->getValue('template_'.$i.'')])); 
-   //}
+        \Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 	}
     
     public function validateForm(array &$form, FormStateInterface $form_state){

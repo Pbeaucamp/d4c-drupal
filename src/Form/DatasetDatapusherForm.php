@@ -166,7 +166,7 @@ class DatasetDatapusherForm extends HelpFormBase {
 		Logger::logMessage("Reupload dataset '" . $resourceId . "' to datastore \r\n");
 		$api->callDatapusher($resourceId);
 
-		drupal_set_message('La ressource est en cours de téléchargement dans le DataStore.');
+		\Drupal::messenger()->addMessage('La ressource est en cours de téléchargement dans le DataStore.');
 	}
 
 	public function calculateVisu(array &$form, FormStateInterface $form_state) {
@@ -175,6 +175,6 @@ class DatasetDatapusherForm extends HelpFormBase {
 		$api = new API();
 		$api->calculateVisualisations($datasetId);
 		
-		drupal_set_message('Les icones de visualisation ont été régénérées.');
+		\Drupal::messenger()->addMessage('Les icones de visualisation ont été régénérées.');
 	}
 }

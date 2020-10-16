@@ -431,7 +431,6 @@ class DataSet{
 		
 		
 		$binaryData->id = $package_name;
-		//drupal_set_message($package_name,'status');
 		$query = Query::putSolrRequest($ckan . '/api/action/package_show', $binaryData, 'POST');
 		$results = json_decode($query);
 		
@@ -581,18 +580,6 @@ class DataSet{
 		$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
         
         
-        /*
-        foreach ($reuses as &$value){
-            
-            //$query2 = DataSet::createResource($id_dataset,$value->url,$value->description,$value->title, $value->format,$value->id);
-            //drupal_set_message('<pre>'. print_r($query2, true) .'</pre>'); 
-            
-            
-            $query2 = Query::putSolrRequest($ckan .'/api/action/resource_create', $value, 'POST');
-           // drupal_set_message('<pre>'. print_r($query2, true) .'</pre>'); 
-            
-        }
-        */
         
         
 		//$r = json_decode($query);
@@ -622,8 +609,6 @@ class DataSet{
             
 			$query=DataSet::addResource($id_dataSet,$url,$description,$name,$format,$idResource);
             $r = json_decode($query);
-            //drupal_set_message(print_r($r,true));    
-				//drupal_set_message(strval($r),'status');
             
             
             
@@ -638,8 +623,6 @@ class DataSet{
 				$binaryData->id = $idResource;
 				$query = Query::putSolrRequest($ckan . '/api/action/resource_update', $binaryData, 'POST');
 				$r = json_decode($query);
-				//drupal_set_message(strval($r),'status');
-				//drupal_set_message(print_r($r, true));
 				//var_dump($r);
 			}
 			else
@@ -649,9 +632,6 @@ class DataSet{
 				$binaryData->package_id = $id_dataSet;
 				$query = Query::putSolrRequest($ckan . '/api/action/resource_create', $binaryData, 'POST');
 				$r = json_decode($query);
-                //drupal_set_message(print_r($r, true));
-				//var_dump($r);
-				//drupal_set_message(strval($r),'status');
 			}
 			
 		}
@@ -721,8 +701,6 @@ class DataSet{
 		
 		$response = curl_exec($ch);
         
-        //drupal_set_message("sdfsdfdsfsd:". print_r($response,true) );  
-		//var_dump($response);
 		curl_close($ch);
 		
 		unlink("$file_path/$file_name");
@@ -816,7 +794,7 @@ class DataSet{
 	static function initJsonFile()
 	{
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		drupal_set_message("init",'status');
+		\Drupal::messenger()->addMessage("init",'status');
 		$json = array();
 		$ids = $config->get('ids_cron');
 		foreach ($ids as $id)
@@ -847,7 +825,7 @@ class DataSet{
 		$file_path = drupal_realpath('public://').'/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", $json_string);
-		drupal_set_message($file,'status');
+		\Drupal::messenger()->addMessage($file,'status');
 		
 	}
 	
@@ -856,7 +834,6 @@ class DataSet{
        
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 		$dataForUpdateDatasets = $config->get('dataForUpdateDatasets');
-        //drupal_set_message('<arr>'.print_r($dataForUpdateDatasets,true).'<arr>');
         $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
         date_default_timezone_set('Europe/Paris');
         
@@ -1170,8 +1147,6 @@ class DataSet{
 			}
             $query = Query::callSolrServer($site_search."/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
             
-            //drupal_set_message($site_search."/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
-            
             $results = json_decode($query);
             $results = $results->result;
         
@@ -1361,7 +1336,6 @@ class DataSet{
 			return Dataset::harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org, $update, $resource);
         }
         else if($site=='Public_OpenDataSoft_com'){
-            //drupal_set_message('<pre>Public_OpenDataSoft_com</pre>');
 
             $query = Query::callSolrServer("https://public.opendatasoft.com/api/datasets/1.0/".$id_dataset_gouv.'/');
 
@@ -1502,7 +1476,6 @@ class DataSet{
 
 		}
         else if($site=='odsall'){
-            //drupal_set_message('<pre>odsall</pre>');
 			if(strpos($site_search, 'https://') === false){
 				$site_search = 'https://'.$site_search;
 			}
@@ -1643,7 +1616,6 @@ class DataSet{
         else if ($site=='socrata'){
             
 			$query = Query::callSolrServer("https://".$site_search."/api/views/metadata/v1/".$id_dataset_gouv.".json");
-			//drupal_set_message('<result>'. print_r($query, true) .'</result>');
             $results = json_decode($query);
             $tagsData = array();
             
@@ -2023,7 +1995,6 @@ class DataSet{
 							$return = $api->updateResourceAndPushDatastore($resources);
 						}
                 
-						//drupal_set_message("REZ:". print_r($return,true) );    
                 
 						//$return = json_decode($return, true);
 					}
@@ -2228,7 +2199,6 @@ class DataSet{
 			if($csv1!='' && $csv2!=''){
 				$resName = $jdd1->name.'_'.$jdd2->name;
 				$urlFileNew = DataSet::join2csv($csv1, $csv2, $resName, $columns_data, $columns_data2);
-				//drupal_set_message('<pre>'. print_r($idNewData, true) .'</pre>'); 
 				
 				$editId = null;
 				foreach($old_resources as $oldRes){
@@ -3179,7 +3149,6 @@ class DataSet{
     
 		unset($csv1[0][$index_column_join]);
 		$nome_column_new=array_unique(array_merge($csv2[0],$csv1[0]));
-		//drupal_set_message('<pre>'. print_r($nome_column_new, true) .'</pre>');    
 			
 		
 		for($x=0;$x< count($arr_csv2);$x++)
@@ -3203,9 +3172,6 @@ class DataSet{
     
 		$arr_csv1=array_values($arr_csv1);
     
-//    	drupal_set_message('<line>'. print_r(json_encode($line), true) .'</line>'); 
-//    	drupal_set_message('<csv1>'. print_r($arr_csv1, true) .'</csv1>'); 
-    
 		for($x=0;$x< count($arr_csv1);$x++){
 		   
 			$arr_csv1[$x][$columns_data2]=$arr_csv1[$x][$columns_data];
@@ -3215,7 +3181,6 @@ class DataSet{
 			$line[]=$arr_csv1[$x];    
 		}
     
-		//drupal_set_message('<line>'. print_r(json_encode($line), true) .'</line>');
     
     
 		$res_arr = array();
@@ -3228,7 +3193,6 @@ class DataSet{
 			   
 				$val='';
 			   
-				//drupal_set_message('<pre>'.$nome_column_new[$y].'</pre>');
 			   
 				if($line[$x][$nome_column_new[$y]]) $val=$line[$x][$nome_column_new[$y]];
 			   
@@ -3245,7 +3209,6 @@ class DataSet{
         }
         fclose($fp);
     
-	// drupal_set_message('<pre>'. print_r($url_res, true) .'</pre>');
     
     
 		return $url_res;

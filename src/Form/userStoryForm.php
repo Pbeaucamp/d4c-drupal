@@ -399,9 +399,9 @@ class userStoryForm extends HelpFormBase
                 $file = File::load($value["img_widget"][0]);
                 $file->setPermanent();
                 $file->save();
-                $file->url();
-                $value["img_widget"][0]= $file->url();
-                $widget[$key]["urlimg"] = $file->url();
+                $file->createFileUrl(FALSE);
+                $value["img_widget"][0]= $file->createFileUrl(FALSE);
+                $widget[$key]["urlimg"] = $file->createFileUrl(FALSE);
 
             }
         else {

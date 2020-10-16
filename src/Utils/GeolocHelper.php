@@ -113,27 +113,6 @@ class GeolocHelper {
             Logger::logMessage($output);
             return $output;
         }
-        
-        // if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
-        //     drupal_set_message($output, 'error');
-        // }
-        // else{
-        //     drupal_set_message($output, 'status', false);
-        // }
-        // Logger::logMessage($validOutput);
-        
-        // if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
-        //     drupal_set_message($output, 'error');
-        // }
-        // else{
-        //     drupal_set_message($output, 'status', false);
-		// 	sleep(20);
-		// 	$api = new Api();
-		// 	$api->calculateVisualisations($selectedDataset);
-        // }
-
-
-		// return $response;
     }
     
 }

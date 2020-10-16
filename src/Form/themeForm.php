@@ -145,7 +145,6 @@ class themeForm extends HelpFormBase {
 			} 
             
 			$themes = $themes_defolt;
-            //drupal_set_message('<pre>'. print_r($themes, true) .'</pre>');
             
             $config->set('themes',json_encode($themes))->save();
         }
@@ -271,10 +270,10 @@ class themeForm extends HelpFormBase {
 			}
 			array_splice($themes, $selectThemIndex, 1);
 			$config->set('themes',json_encode($themes))->save(); 
-			drupal_set_message('Thême supprimé avec succès','status');
+			\Drupal::messenger()->addMessage('Thême supprimé avec succès','status');
 		}
 		else {
-			drupal_set_message('Les thêmes par défaut ne peuvent pas être supprimés.','error');
+			\Drupal::messenger()->addMessage('Les thêmes par défaut ne peuvent pas être supprimés.','error');
 		}
 	}
     
@@ -311,7 +310,7 @@ class themeForm extends HelpFormBase {
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
 				$file->save();
-				$url_t=parse_url($file->url());
+				$url_t=parse_url($file->createFileUrl(FALSE));
 				$themes[count($themes)-1]->url =$url_t["path"];
 			
 			}
@@ -322,12 +321,11 @@ class themeForm extends HelpFormBase {
 				$themes[count($themes)-1]->url ="/sites/default/files/api/portail_d4c/img/theme-default.png";
             }
             
-            //drupal_set_message(print_r($themes, true));
             
             $config->set('themes',null)->save();
             $config->set('themes',json_encode($themes))->save();
             
-            drupal_set_message('Les données ont été sauvegardées','status',false);
+            \Drupal::messenger()->addMessage('Les données ont été sauvegardées','status',false);
         }
         else{
 			$selectThem = explode("%", $selectThem);
@@ -346,7 +344,7 @@ class themeForm extends HelpFormBase {
 					$file = File::load($form_file[0]);
 					$file->setPermanent();
 					$file->save();
-					$url_t=parse_url($file->url());
+					$url_t=parse_url($file->createFileUrl(FALSE));
 					$themes[$selectThem]->url =$url_t["path"];
 				}
             }
@@ -373,7 +371,7 @@ class themeForm extends HelpFormBase {
 					$file = File::load($form_file[0]);
 					$file->setPermanent();
 					$file->save();
-					$url_t=parse_url($file->url());
+					$url_t=parse_url($file->createFileUrl(FALSE));
 					$themes[$selectThem]->url =$url_t["path"];
                 }
                 else if($form_state->getValue('imgBack')!=''|| $form_state->getValue('imgBack')!=null){
@@ -383,7 +381,7 @@ class themeForm extends HelpFormBase {
             }
 
             $config->set('themes',json_encode($themes))->save(); 
-            drupal_set_message('Les données ont été sauvegardées','status',false);
+            \Drupal::messenger()->addMessage('Les données ont été sauvegardées','status',false);
             
 			///// replace theme in dataset 
             

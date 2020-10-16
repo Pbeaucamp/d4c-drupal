@@ -54,7 +54,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
         $option_org=array();
         $option_idDataset=array();
-       // drupal_set_message('<pre>'. print_r($dataForUpdateDatasets, true) .'</pre>');
         foreach($dataForUpdateDatasets as &$value){
                 
             $option_org[$value->id_org]=$value->name_org;
@@ -169,10 +168,9 @@ public function buildForm(array $form, FormStateInterface $form_state) {
             }     
         }
 
-        //drupal_set_message('<pre>'. print_r($dataForUpdate, true) .'</pre>');  
 		$config->set('dataForUpdateDatasets', json_encode($dataForUpdate))->save();  
         
-		drupal_set_message('Les données ont été sauvegardées');
+		\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 		
 	}
     
@@ -246,7 +244,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                 foreach($value->datasets as &$dataset_value){
                     if($dataset_value->id_data==$datasett){
                         
-                        //drupal_set_message('<pre>'. print_r($dataset_value,true) .'</pre>');
                         $id_dataset_gouv = $dataset_value->id_data_site;
                         $site = $dataset_value->site;
                         $site_infocom='';
@@ -257,7 +254,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                         }
                     
                         $dataset_value->last_update = date("m/d/Y H:i:s");
-                        //drupal_set_message('<pre>'. date("m/d/Y H:i:s") .'</pre>');
                         
 //                         if($time_up_value==''){
 //                            $time_up_value=='1';

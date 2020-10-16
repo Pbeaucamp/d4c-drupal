@@ -570,7 +570,6 @@ class joinDatasetsForm extends HelpFormBase {
     
 //        $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 //        $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
-//        drupal_set_message('<pre>'. print_r($dataForUpdateDatasets, true) .'</pre>'); 
     
         $csv1='';
         $csv2='';
@@ -665,18 +664,16 @@ class joinDatasetsForm extends HelpFormBase {
     
         $coll = $data[0];
         
-		// drupal_set_message('<pre>'.$data[0].'</pre>');
          
         $api = new Api;
 		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");
-		//drupal_set_message('<pre>'.$return.'</pre>');
 		$resnew = json_decode($return);
 		$idNewData = $resnew->result->id;
 		$NewTitle = $resnew->result->title;
                          
 		if ($resnew->success == true) {
-			drupal_set_message('Les données ont été sauvegardées');
+			\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			$idNewData = $resnew->result->id;
 			$NewTitle = $resnew->result->title;
 		} 
@@ -738,7 +735,7 @@ class joinDatasetsForm extends HelpFormBase {
 			}
 		}
          else {
-			drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
+			\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées!'), 'error');
 		}
         
         return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle);
@@ -901,7 +898,6 @@ class joinDatasetsForm extends HelpFormBase {
 				$res_arr[] = $line;
 			}
 		}
-		//drupal_set_message('<pre>'. print_r($res_arr, true) .'</pre>');
 	
 	
     /*    $fh = fopen($url1, 'r');
@@ -964,8 +960,7 @@ class joinDatasetsForm extends HelpFormBase {
 		error_log(json_encode($arr_csv1));
 		error_log(json_encode($arr_csv2));
 		unset($csv1[0][$index_column_join]);
-		$nome_column_new=array_unique(array_merge($csv2[0],$csv1[0]));
-		//drupal_set_message('<pre>'. print_r($nome_column_new, true) .'</pre>');    
+		$nome_column_new=array_unique(array_merge($csv2[0],$csv1[0]));  
         error_log(json_encode($nome_column_new));
 		
 		$full_arr = array();
@@ -992,8 +987,6 @@ class joinDatasetsForm extends HelpFormBase {
     
 		$arr_csv1=array_values($arr_csv1);
     
-//    	drupal_set_message('<line>'. print_r(json_encode($line), true) .'</line>'); 
-//    	drupal_set_message('<csv1>'. print_r($arr_csv1, true) .'</csv1>'); 
     
 		for($x=0;$x< count($arr_csv1);$x++){
 		   
@@ -1004,7 +997,6 @@ class joinDatasetsForm extends HelpFormBase {
 			$line[]=$arr_csv1[$x];    
 		}
     
-    //	drupal_set_message('<line>'. print_r(json_encode($line), true) .'</line>');
     
     
 		$res_arr = array();
@@ -1014,7 +1006,6 @@ class joinDatasetsForm extends HelpFormBase {
 		for($x=0; $x<count($line); $x++){
 			for($y=0; $y <count($nome_column_new); $y++){
 				$val='';
-				//drupal_set_message('<pre>'.$nome_column_new[$y].'</pre>');
 			   
 				if($line[$x][$nome_column_new[$y]]) $val=$line[$x][$nome_column_new[$y]];
 			   
@@ -1022,7 +1013,6 @@ class joinDatasetsForm extends HelpFormBase {
 			} 
 		}
     
-		//drupal_set_message('<pre>'. print_r($res_arr, true) .'</pre>');
     
  */   
 
@@ -1034,7 +1024,6 @@ class joinDatasetsForm extends HelpFormBase {
         }
         fclose($fp);
     
-   // drupal_set_message('<pre>'. print_r($url_res, true) .'</pre>');
     
 		return $url_res;
     

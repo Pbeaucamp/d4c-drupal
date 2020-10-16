@@ -55,7 +55,6 @@ class typeColumnsForm extends HelpFormBase {
 		
 		uasort($dataSet, function($a, $b) {
 			$res =  strcasecmp($a['title'], $b['title']);
-			// drupal_set_message(json_encode($a) . ' ------- ' . $b . '-----' .$res);
 			return $res;
 		});
 		
@@ -111,8 +110,6 @@ class typeColumnsForm extends HelpFormBase {
             $organizationList[$value[name]] = $value[display_name];
         }
 		
-		//$rendered_message = \Drupal\Core\Render\Markup::create('<pre>' . print_r( $dataSet, true) . '</pre>');s
-		// drupal_set_message($rendered_message);
 			
 		// select for table
 		
@@ -656,7 +653,6 @@ class typeColumnsForm extends HelpFormBase {
 		}
 		
 		$json = json_encode($tooltip);
-		//drupal_set_message($json);
 		
 		$extras = $oldDataset["extras"];
 		$found = false;
@@ -710,12 +706,10 @@ class typeColumnsForm extends HelpFormBase {
    
 		$api->calculateVisualisations($id_data);
 		
-		drupal_set_message('Les données ont été sauvegardées');
-        //drupal_set_message('<pre>'. print_r(json_encode($filds),true).'</pre>');
+		\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 	}
 
 	public function datasetCallback(array &$form, FormStateInterface $form_state){
-		//drupal_set_message('<pre>'. print_r($_SESSION, true) .'</pre>'); 
    
         $api = new Api;
 		

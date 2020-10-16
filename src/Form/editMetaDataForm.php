@@ -833,7 +833,7 @@ class editMetaDataForm extends HelpFormBase {
 			$deleteDataset = $form_state->getValue('del_dataset');
 			if ($deleteDataset) {
 				if ($resourceManager->deleteDataset($datasetId)) {
-					drupal_set_message(t('Le jeu de données a été supprimé!'), 'warning');
+					\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
 					$datasetId = null;
 				}
 			}
@@ -846,7 +846,7 @@ class editMetaDataForm extends HelpFormBase {
 					
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 
-					drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
 
 					//Managing resources
 					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
@@ -875,7 +875,7 @@ class editMetaDataForm extends HelpFormBase {
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
-					drupal_set_message("Le jeu de données '" . $datasetName ."' a été mis à jour.");
+					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
 					Logger::logMessage("TRM - Managing resource");
@@ -899,7 +899,7 @@ class editMetaDataForm extends HelpFormBase {
 
 						if ($needToBeDelete == 1) {
 							$resourceManager->deleteResource($resourceId);
-							drupal_set_message("La ressource '" . $datasetName ."' a été mis supprimé.");
+							\Drupal::messenger()->addMessage("La ressource '" . $datasetName ."' a été mis supprimé.");
 						}
 						else if ($needUpdate == 1 && $resourceUrl != "") {
 							Logger::logMessage("TRM - Need update " . $needUpdate);
@@ -918,7 +918,7 @@ class editMetaDataForm extends HelpFormBase {
 			Logger::logMessage("User redirected");
 		} catch (\Exception $e) {
 			Logger::logMessage($e->getMessage());
-			drupal_set_message(t($e->getMessage()), 'error');
+			\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');
 		}
 	}
 
@@ -949,23 +949,23 @@ class editMetaDataForm extends HelpFormBase {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
 					}
 					else if ($value['type'] == 'CLUSTER') {
-						drupal_set_message("Les clusters ont été générés.");
+						\Drupal::messenger()->addMessage("Les clusters ont été générés.");
 					}
 				}
 				else if ($value['status'] == 'pending') {
 					$validataResources[] = $value['resourceUrl'];
 
-					drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+					\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
 				}
 				else if ($value['status'] == 'error') {
 					if ($value['type'] == 'DATAPUSHER') {
-						drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+						\Drupal::messenger()->addMessage("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
 					}
 					else if ($value['type'] == 'CLUSTER') {
-						drupal_set_message("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+						\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
 					}
 				}
 			}
@@ -983,7 +983,7 @@ class editMetaDataForm extends HelpFormBase {
 					$errorsValid = $validataResult[report][tables][0][errors];
 					for ($i = 0; $i < count($errorsValid); $i++) {
 						
-						drupal_set_message(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
 						
 						if($i>5){
 							break;
@@ -991,7 +991,7 @@ class editMetaDataForm extends HelpFormBase {
 					}
 				} 
 				else if ($validataResult[report][valid] == true) {
-					drupal_set_message('Les données ont été validées');
+					\Drupal::messenger()->addMessage('Les données ont été validées');
 				}
 			}
 		}
@@ -1157,9 +1157,6 @@ class editMetaDataForm extends HelpFormBase {
 	}
 	
     public function datasetCallback(array &$form, FormStateInterface $form_state){
-		//drupal_set_message('<pre>'. print_r($_SESSION, true) .'</pre>'); 
-    
-
         $api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');

@@ -115,7 +115,7 @@ class ResourceManager {
 		$file->setPermanent();
 		$file->save();
 
-		$resourceUrl = $file->url();
+		$resourceUrl = $file->createFileUrl(FALSE);
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
 		return $resourceUrl;
@@ -972,7 +972,7 @@ class ResourceManager {
 			$file = File::load($imgPicto[0]);
 			$file->setPermanent();
 			$file->save();
-			$url_t = parse_url($file->url());
+			$url_t = parse_url($file->createFileUrl(FALSE));
 			$url_pict = $url_t["path"];
 
 			$url_pict = explode("/", $url_pict);
@@ -993,7 +993,7 @@ class ResourceManager {
 			$file = File::load($imgBackground[0]);
 			$file->setPermanent();
 			$file->save();
-			$url_t = parse_url($file->url());
+			$url_t = parse_url($file->createFileUrl(FALSE));
 			$url_pict = $url_t["path"];
 
 			return $url_pict;
@@ -1494,7 +1494,6 @@ class ResourceManager {
 
 		//TODO Rework this
 		if ($resnew->success == true) {
-			// drupal_set_message('Les données ont été sauvegardées');
 			$idNewData = $resnew->result->id;
 		} 
 		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){

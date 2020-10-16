@@ -223,7 +223,6 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-        // drupal_set_message($visu);
 		if($visu == 0) {
 			$tab = 'information';
 		}

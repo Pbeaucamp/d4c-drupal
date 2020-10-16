@@ -643,8 +643,6 @@ class Api{
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		//echo $result . "\r\n";
-        //drupal_set_message('<pre>'. print_r($json, true) .'</pre>');
 		$result = json_decode($result,true);
 		return $result;
 	}
@@ -992,7 +990,6 @@ class Api{
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
-		// drupal_set_message($callUrl);
         error_log('url check : ' . $callUrl);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -1510,8 +1507,6 @@ class Api{
 
 		$res = $this->getAllFieldsForTableParam($params);
         
-        //$rendered_message = \Drupal\Core\Render\Markup::create('<pre>' . $res . '</pre>');
-        //drupal_set_message($rendered_message);
         
 		echo json_encode($res);
 		$response = new Response();
@@ -2536,9 +2531,6 @@ class Api{
 
 		$res = $this->getPackageShow2($datasetid,$params);
         
-        //$rendered_message = \Drupal\Core\Render\Markup::create('<pre>' . $res . '</pre>');
-        //drupal_set_message($rendered_message);
-        //error_log('dsfsdfsdsd');
         
 		echo json_encode($res);
 		$response = new Response();
@@ -4877,8 +4869,6 @@ class Api{
 		$tile["key"] = $query_params["key"];*/
 		
 		$this->config->map_tiles[] = $tile;
-		//drupal_set_message(json_encode($this->config->map_tiles));
-		//drupal_set_message(__DIR__ ."/../../config.json");
 		//json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$res = file_put_contents(__DIR__ ."/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 		
@@ -4925,8 +4915,7 @@ class Api{
 		error_log(json_encode($this->config->map_tiles));
 		$arr = array();
 		foreach($this->config->map_tiles as $layer){
-			if($layer->name != $idLayer){//drupal_set_message(json_encode($this->config->map_tiles[$layer]));
-				//unset($this->config->map_tiles[$i]);
+			if($layer->name != $idLayer){
 				$arr[] = $layer;
 				//break;
 			}
@@ -5382,7 +5371,6 @@ class Api{
         curl_setopt_array($curl, $optionst);
         $res  = curl_exec($curl);
         curl_close($curl);
-    //drupal_set_message('<pre>'. print_r($res, true) .'</pre>');
       
     
         $response = new Response();

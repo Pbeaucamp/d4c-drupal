@@ -78,7 +78,6 @@ class ReusesForm extends HelpFormBase {
 		}*/
         
 		//$query = 'include_private=true&rows='.$num_per_page.'&sort=title_string%20asc&start='.$offset.$filterQuery;
-		//drupal_set_message($query);
 		var_dump($_GET["dataset"]);
 		var_dump($_GET["orga"]);
         $result = $api->getReuses($_GET["orga"], $_GET["dataset"], $_GET["q"], $_GET["status"], $num_per_page, $offset);
@@ -282,7 +281,6 @@ class ReusesForm extends HelpFormBase {
 		
 		$status = $form_state->getValue("selected_action");
 		$id = $form_state->getValue("selected_id");
-		//drupal_set_message($status ." " . $id);
 		
 		$res = $api->getReuse($id);
 		//error_log(json_encode($res));
@@ -301,7 +299,7 @@ class ReusesForm extends HelpFormBase {
 		
 		$api->updateReuse($res);
    
-		drupal_set_message('La réutilisation '. $res["title"] . $label);
+		\Drupal::messenger()->addMessage('La réutilisation '. $res["title"] . $label);
 	}
 	
 	

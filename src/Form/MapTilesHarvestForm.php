@@ -517,12 +517,7 @@ class MapTilesHarvestForm extends HelpFormBase {
 			}
 		}
 	
-		
-		//drupal_set_message($c);
-		//drupal_set_message(json_encode($form["panelLayers"][Element::children($form["panelLayers"])[0]]));
-		//drupal_set_message(json_encode(count($res)));
-		
-		drupal_set_message('Les '. count($res) .' couches sélectionnées ont été sauvegardées');
+		\Drupal::messenger()->addMessage('Les '. count($res) .' couches sélectionnées ont été sauvegardées');
 	}
 
 	public function searchLayers(array &$form, FormStateInterface $form_state)

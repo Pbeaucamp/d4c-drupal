@@ -70,8 +70,8 @@ class selectionForm extends HelpFormBase {
 		);
 		
 		if(count(array_filter($form_state->getValue('ids'))) == 1){
-			drupal_set_message('Affichez les jeux de données de ce producteur dans votre site Web en copiant le code ci-dessous.', 'status');
-			drupal_set_message('<script src="http://51.255.95.107:8090/sites/default/files/api/portail_bfc/js/widget-script2.js" type="text/javascript"></script><div class="container" data-producteur="'.reset(array_filter($form_state->getValue('ids'))).'" data-serveur="'. $config->get('ckan') .'" id="widget-container" style="height: 100%; width:100%"></div>', 'status');
+			\Drupal::messenger()->addMessage('Affichez les jeux de données de ce producteur dans votre site Web en copiant le code ci-dessous.', 'status');
+			\Drupal::messenger()->addMessage('<script src="http://51.255.95.107:8090/sites/default/files/api/portail_bfc/js/widget-script2.js" type="text/javascript"></script><div class="container" data-producteur="'.reset(array_filter($form_state->getValue('ids'))).'" data-serveur="'. $config->get('ckan') .'" id="widget-container" style="height: 100%; width:100%"></div>', 'status');
 		}
 		
 

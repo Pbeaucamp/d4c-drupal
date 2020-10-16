@@ -63,7 +63,6 @@ class DatasetsBoardForm extends HelpFormBase {
 		
 		$filterQuery = "";
 		if ($_GET["orga"] != "" || $_GET["q"] != "" || $_GET["type"] != "") {
-			//drupal_set_message(json_encode($form_state->getStorage()));
 			//$store = $form_state->getStorage();
 			
 			$filterQuery = "&q=";
@@ -87,11 +86,9 @@ class DatasetsBoardForm extends HelpFormBase {
 		}
         //rows=10&start=0&q=organization:ariam-idf%20AND%20text:*de*
 		$query = 'include_private=true&rows='.$num_per_page.'&start='.$offset.$filterQuery;
-		// drupal_set_message($query);
 		//error_log($query);
         $result = $api->callPackageSearch_public_private($query, $current_user->id());
 							   
-     //drupal_set_message($result); 
         $result = $result->getContent();
 		
         $result = json_decode($result, true)[result];
@@ -116,7 +113,6 @@ class DatasetsBoardForm extends HelpFormBase {
 		foreach ($datasets as $row) {
 			
 			//$default_chart
-			// drupal_set_message(json_encode($row[extras]));
 			 for ($j = 0; $j < count($row[extras]); $j++) {
 				 if ($row[extras][$j]['key'] == 'analyse_default') {
 					 $default_chart = $row[extras][$j]['value'];
@@ -131,7 +127,6 @@ class DatasetsBoardForm extends HelpFormBase {
 			$saveTimeZone = date_default_timezone_get();
 			date_default_timezone_set('Europe/Paris');
 
-			// drupal_set_message($viewLink);
 			$uirow = [
 				'name' => array('data' => array('#markup' => $row["title"])),
 				'orga' => array('data' => array('#markup' => $row["organization"]["title"])),
@@ -326,7 +321,6 @@ class DatasetsBoardForm extends HelpFormBase {
 		];
 		
 		$roles = user_role_names();
-		//drupal_set_message(json_encode($roles));
 		unset($roles["anonymous"]);
 		unset($roles["authenticated"]);
 		$form['security']['roles']['roles_list'] = array(
@@ -353,7 +347,6 @@ class DatasetsBoardForm extends HelpFormBase {
 				$userListComplete[$uid] = array("id" => $uid, "name" => $username, "roles" => $uroles);
 			}
 		}
-		//drupal_set_message(json_encode($userListComplete));
 		$form['security']['users']['users_list'] = array(
 			'#type'          => 'checkboxes',
 			// '#default_value' => $settings['tynt_roles'],
@@ -367,7 +360,6 @@ class DatasetsBoardForm extends HelpFormBase {
 		
 		
 		$form['#attached']['drupalSettings']['users'] = json_encode($userListComplete);
-		// drupal_set_message('eee' . $current_user->id());
 		$form['#attached']['drupalSettings']['currentuser'] = $current_user->id();
 		return $form;
 	}
@@ -381,7 +373,6 @@ class DatasetsBoardForm extends HelpFormBase {
 		$visibility = $form_state->getValue("selected_type");
 		$security = $form_state->getValue("selected_users");
 		$id = $form_state->getValue("selected_id");
-		//drupal_set_message($visibility ." " . $id);
 		
 		
 		$res = $api->getPackageShow("id=".$id);
@@ -390,7 +381,7 @@ class DatasetsBoardForm extends HelpFormBase {
 		if($visibility != ""){
 			$oldDataset["private"] = ($visibility == "private" ? true : false);
 			
-			drupal_set_message('Le jeu de données '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
+			\Drupal::messenger()->addMessage('Le jeu de données '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
 		} 
 		if($security != ""){
 			$exists = false;
@@ -408,7 +399,7 @@ class DatasetsBoardForm extends HelpFormBase {
 				$oldDataset["extras"][(count($oldDataset["extras"]) - 1)]['value'] = $security;
 			}
 			
-			drupal_set_message('La sécurité sur le jeu de données '. $oldDataset["title"] . ' a été modifiée');
+			\Drupal::messenger()->addMessage('La sécurité sur le jeu de données '. $oldDataset["title"] . ' a été modifiée');
 		}
 		
 		$callUrl = $this->urlCkan . "/api/action/package_update";

@@ -42,7 +42,6 @@ class controDataslForm extends HelpFormBase {
         $siteList = $config->get('siteList'); 
         $siteList2 = $siteList;
         $siteList = json_decode($siteList);
-         //drupal_set_message('<pre>'. print_r($siteList, true) .'</pre>'); 
         
         
         $listUrl = array();

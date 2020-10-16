@@ -185,7 +185,7 @@ public function submitForm(array &$form, FormStateInterface $form_state){
                         $file = File::load($form_file[0]);
                         $file->setPermanent();
                         $file->save();
-                        $url_t = parse_url($file->url());
+                        $url_t = parse_url($file->createFileUrl(FALSE));
                         $url_pict = $url_t["path"];
 
                     }
@@ -214,7 +214,7 @@ public function submitForm(array &$form, FormStateInterface $form_state){
                 if($value->name==$new_data->name){
                     $ex=true;
                     
-                    drupal_set_message(t('exist'), 'error');
+                    \Drupal::messenger()->addMessage(t('exist'), 'error');
                     
                 }
                   
@@ -252,7 +252,7 @@ public function submitForm(array &$form, FormStateInterface $form_state){
                          if($value2->name==$this->nettoyage($title) && $value2->name != $datas_name){
                              $ex=true;
                     
-                            drupal_set_message(t('exist'), 'error');
+                             \Drupal::messenger()->addMessage(t('exist'), 'error');
                              
                          }
                          

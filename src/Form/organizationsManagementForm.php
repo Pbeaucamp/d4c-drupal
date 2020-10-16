@@ -144,7 +144,7 @@ class organizationsManagementForm extends HelpFormBase
         }
 		
 		if($this->org[package_count] > 0) {
-			drupal_set_message('Cette organisation contient des jeux de données. Ils doivent être supprimés avant de pouvoir supprimer cette organisation.','error');
+			\Drupal::messenger()->addMessage('Cette organisation contient des jeux de données. Ils doivent être supprimés avant de pouvoir supprimer cette organisation.','error');
 		}
 		else {
 			$context[id]=$this->org[id];
@@ -200,8 +200,7 @@ class organizationsManagementForm extends HelpFormBase
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
 				$file->save();
-				$file->url();
-				$context[image_url]= $file->url();
+				$context[image_url]= $file->createFileUrl(FALSE);
 			}
             
             $callUrlCreate = $this->urlCkan . "/api/action/organization_create";
@@ -209,21 +208,19 @@ class organizationsManagementForm extends HelpFormBase
             $return = json_decode($return, true);
             
             if ($return[success] == true) {
-				drupal_set_message('Les données ont été sauvegardées');
+				\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			}
             else {
-				drupal_set_message(t('les données n`ont pas été ajoutées! '.$return[error][name][0]), 'error');
+				\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées! '.$return[error][name][0]), 'error');
                 $context =[
 					'id'=>$name,
 					'state'=>'active',//'active'/ 'deleted' /draft
 				];
             
 				$callUrlUpdate = $this->urlCkan . "/api/action/organization_update";
-				$return = $api->updateRequest($callUrlUpdate, $context, "POST");
-				//drupal_set_message(print_r($return));    
+				$return = $api->updateRequest($callUrlUpdate, $context, "POST");  
 			}
             
-            //drupal_set_message(print_r($return, true));
             
         }
         else{
@@ -233,20 +230,19 @@ class organizationsManagementForm extends HelpFormBase
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
 				$file->save();
-				$url_t = parse_url($file->url());
+				$url_t = parse_url($file->createFileUrl(FALSE));
 				$url_pict = $url_t["path"];
-				$context[image_url]=$file->url();
+				$context[image_url]=$file->createFileUrl(FALSE);
 			}
             
             $callUrlUpdate = $this->urlCkan . "/api/action/organization_update";
             $return = $api->updateRequest($callUrlUpdate, $context, "POST");
             $return = json_decode($return, true);
-            //drupal_set_message($return[success]); 
             if ($return[success] == true) {
-				drupal_set_message('Les données ont été sauvegardées');
+				\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			}
             else {
-				drupal_set_message(t('les données n`ont pas été ajoutées!'), 'error');
+				\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées!'), 'error');
 			}
           
         }

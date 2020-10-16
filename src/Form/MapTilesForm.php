@@ -311,7 +311,7 @@ class MapTilesForm extends HelpFormBase {
 			$stat = "mise à jour";
 		}
         
-		drupal_set_message('La couche ' . $tile["label"] . " a été " . $stat . " avec succès");
+		\Drupal::messenger()->addMessage('La couche ' . $tile["label"] . " a été " . $stat . " avec succès");
        
 	}
     
@@ -349,7 +349,7 @@ class MapTilesForm extends HelpFormBase {
 		$api = new API();
 		$api->deleteMapLayer($id);
 		
-		drupal_set_message('La couche a été supprimée');
+		\Drupal::messenger()->addMessage('La couche a été supprimée');
 	}
 	
 	public function refreshMap(array &$form, FormStateInterface $form_state)

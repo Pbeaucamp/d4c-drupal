@@ -317,60 +317,10 @@ class GeolocForm extends HelpFormBase
 		
 
 		if ($result == 'SUCCESS'){
-            drupal_set_message("La création de la carte a réussie.", 'status', false);
+            \Drupal::messenger()->addMessage("La création de la carte a réussie.", 'status', false);
         }
         else {
-            drupal_set_message("Une erreur est survenue durant la création de la carte (Code ou message d'erreur = " . $result . ")", 'error');
+            \Drupal::messenger()->addMessage("Une erreur est survenue durant la création de la carte (Code ou message d'erreur = " . $result . ")", 'error');
         }
-
-		// $nodeUrl = 'https://localhost:1337/';
-		// $pathUserClient = '/home/user-client';
-
-		// $command = '/usr/bin/java -jar ' . $pathUserClientData . '/bpm.geoloc.creator_1.0.0.jar 
-		// 	-g ' . $buildGeoloc . ' 
-		// 	-n "' . $nodeUrl . '" 
-		// 	-np "' . $pathUserClientData . '" 
-		// 	-d "' . $this->urlCkan . '" 
-		// 	-k "' . $this->config->ckan->api_key . '" 
-		// 	-pid "' . $selectedDataset . '" 
-		// 	-rid "' . $selectedResource . '" 
-		// 	-rs "' . $selectedSeparator . '" 
-		// 	-re "' . $selectedEncoding . '" 
-		// 	-oa ' . $onlyOneAddress . ' 
-		// 	-a "' . $selectedAddress . '" 
-		// 	-p "' . $selectedPostalCode . '" 
-		// 	-s ' . $minimumScore . ' 
-		// 	-f "' . $pathTempFile . '"';
-		// ' -g $g -n $n -np $np -d $d -k $k -pid $pid -rid $rid -rs "$rs" -re "$re" -oa $oa -a "$a" -p "$p" -s $s -f $f'
-		// $command = '/usr/bin/java -jar /home/user-client/data/bpm.geoloc.creator_1.0.0.jar -g "' . $buildGeoloc . '" -n "https://localhost:1337/" -np "/home/user-client/data/clusters" -d "' . $this->urlCkan . '" -k "' . $this->config->ckan->api_key . '" -pid "' . $selectedDataset . '" -rid "' . $selectedResource . '" -rs "' . $selectedSeparator . '" -re "' . $selectedEncoding . '" -f "/home/user-client/data/temp" -s "10"';
-		
-		// if($buildGeoloc == '1') {
-		// 	if($selectedPostalCode == '') {
-		// 		$command = $command . ' -p "' . $selectedPostalCode . '"';
-		// 	}
-		// 	$command = $command . ' -a "' . $numero . ' ' . $rue . ' ' . $ville . ' ' . $selectedAddress . '"';
-		// }
-		// else if($buildGeoloc == '2') {
-		// 	$command = $command . ' -lat "' . $lat . '" -lon "' . $long . '"';
-		// }
-		
-		// drupal_set_message($command);
-
-		// $output = shell_exec($command);
-        
-        
-        // $validOutput = explode(" ", $output);
-        
-        // if ($validOutput[count($validOutput)-1]=='defined.' && $validOutput[count($validOutput)-2]=='correctly' && $validOutput[count($validOutput)-3]=='not'){
-        //     drupal_set_message($output, 'error');
-        // }
-        // else{
-        //     drupal_set_message($output, 'status', false);
-		// 	sleep(20);
-		// 	$api = new Api();
-		// 	$api->calculateVisualisations($selectedDataset);
-        // }
-        
-		
 	}
 }

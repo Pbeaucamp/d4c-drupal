@@ -156,9 +156,7 @@ class MoissonnageDataGouv extends HelpFormBase {
         for ($i = 0; $i < count($orgs[result]); $i++) {
             $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
         }
-        //drupal_set_message(json_encode($this->config->site));
 		if(isset($this->config->sitesSearch) && count($this->config->sitesSearch) > 0){
-			//drupal_set_message("ok ");
 			$form['domaine'] = array(
 				'#markup' => '<div id="domaine">'. $this->config->client->domain .'</div>',
 				'#type' => 'container',
@@ -375,7 +373,6 @@ class MoissonnageDataGouv extends HelpFormBase {
 					if($value->id_org == $org_id){
 						array_push($dataForUpdateDatasets[$key]->datasets, $dataset_conf);
                    
-						//drupal_set_message('<pre>'. print_r($dataForUpdateDatasets[$key]->datasets, true) .'</pre>'); 
 						$controlEx = true;
 						break;
 					}
@@ -788,7 +785,6 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$label = $results->slug;
 				
-				// drupal_set_message(print_r($query, true));
 				
 				$label = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $label)));
 				$label = str_replace(" ", "_", $label);
@@ -888,7 +884,6 @@ class MoissonnageDataGouv extends HelpFormBase {
 					   
 						array_push($dataForUpdateDatasets[$key]->datasets, $dataset_conf);
 						$controlEx = true;
-						//drupal_set_message('<tagFinal>'.print_r($dataset_conf,true).'<tagFinal>');
 						break;
 					}
 				}
@@ -1044,7 +1039,6 @@ class MoissonnageDataGouv extends HelpFormBase {
 								"format"=>$res->format
 							];
 						
-							//drupal_set_message("RES:". print_r($resources,true) );
 
 							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");
@@ -1994,7 +1988,6 @@ class MoissonnageDataGouv extends HelpFormBase {
 								"format"=>$res->format
 							];
 					
-							//drupal_set_message("RES:". print_r($resources,true) );
 
 							$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 							$return = $api->updateRequest($callUrluptres, $resources, "POST");
@@ -2428,19 +2421,17 @@ class MoissonnageDataGouv extends HelpFormBase {
     public function saveData($newData, $data){
         $coll = $data[0];
         
-		// drupal_set_message('<pre>'.$data[0].'</pre>');
         //error_log(json_encode($newData));
         $api = new Api;
 		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");
-		//drupal_set_message('<pre>'.$return.'</pre>');
 		$resnew = json_decode($return);
 		$idNewData = $resnew->result->id;
 		$NewTitle = $resnew->result->title;
 		$NewName = $resnew->result->name;
                            
 		if ($resnew->success == true) {
-			drupal_set_message('Le jeu de données '.$resnew->result->title.' a bien été créé');
+			\Drupal::messenger()->addMessage('Le jeu de données '.$resnew->result->title.' a bien été créé');
 			$idNewData = $resnew->result->id;
 			$NewTitle = $resnew->result->title;
 			$NewName = $resnew->result->name;
@@ -2508,7 +2499,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 			}
 		} 
 		else {
-			drupal_set_message('Le jeu de données '.$newData[title].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
+			\Drupal::messenger()->addMessage('Le jeu de données '.$newData[title].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
 		}
         
         return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle, '3'=>$NewName);
@@ -2590,10 +2581,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$res = json_decode($return, true);
 		if($res["success"] == true){
 			$out = "Succès";
-			drupal_set_message("Ajout de la ressource ".$name . " : " . $out);
+			\Drupal::messenger()->addMessage("Ajout de la ressource ".$name . " : " . $out);
 		} else {
 			$out = json_encode($res["error"]);
-			drupal_set_message("Ajout de la ressource ".$name . " : " . $out, 'error');
+			\Drupal::messenger()->addMessage("Ajout de la ressource ".$name . " : " . $out, 'error');
 		}
 	}
 }

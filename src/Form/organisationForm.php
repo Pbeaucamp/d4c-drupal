@@ -89,10 +89,10 @@ class organisationForm extends HelpFormBase {
 		
 		if(!empty($config->get('ids')))
 		{
-			drupal_set_message('Organisations moissonnées :', 'status');
+			\Drupal::messenger()->addMessage('Organisations moissonnées :', 'status');
 			foreach ($config->get('names') as $nom)
 			{
-				drupal_set_message($nom,'status');
+				\Drupal::messenger()->addMessage($nom,'status');
 			}
 			
 		}
