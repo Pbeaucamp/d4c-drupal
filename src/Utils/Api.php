@@ -1360,6 +1360,7 @@ class Api{
 		curl_close($curl);
 		$result = json_decode($result,true);
 
+		// get searchDatastoreByResourceUrl result
 		$curl2 = curl_init($searchDatastoreByResourceUrl);
 		curl_setopt_array($curl2, $this->getStoreOptions());
 		$resultDatastore = curl_exec($curl2);
@@ -1488,7 +1489,9 @@ class Api{
 			}
 			$data_array[] = $field;
 		}
-			
+		
+
+		// add exportapi field value to data_array 
 		foreach ($data_array as $key => $value) {
 
 			$exportvalue = $this->getExportApiValue($resultDatastore['result']['fields'],$value["name"]);
