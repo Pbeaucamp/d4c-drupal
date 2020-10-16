@@ -1350,7 +1350,7 @@ class Api{
 			//echo $sql;
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-			$callUrl2 =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
+			$searchDatastoreByResourceUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
 		}
 		
 		//echo $callUrl;
@@ -1360,11 +1360,11 @@ class Api{
 		curl_close($curl);
 		$result = json_decode($result,true);
 
-		$curl2 = curl_init($callUrl2);
+		$curl2 = curl_init($searchDatastoreByResourceUrl);
 		curl_setopt_array($curl2, $this->getStoreOptions());
-		$result2 = curl_exec($curl2);
+		$resultDatastore = curl_exec($curl2);
 		curl_close($curl2);
-		$result2 = json_decode($result2,true);
+		$resultDatastore = json_decode($resultDatastore,true);
 
 		
 		$geoPointnb = 0;
@@ -1491,7 +1491,7 @@ class Api{
 			
 		foreach ($data_array as $key => $value) {
 
-			$exportvalue = $this->getExportApiValue($result2['result']['fields'],$value["name"]);
+			$exportvalue = $this->getExportApiValue($resultDatastore['result']['fields'],$value["name"]);
 			$data_array[$key]["exportapi"] = $exportvalue;
 
 
