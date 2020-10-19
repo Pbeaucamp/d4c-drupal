@@ -1730,20 +1730,32 @@ class Api{
 		}
 		
 		if($reqFields == "") {
+
 			$i = 0;
 			foreach ($fields as $value) {
-				if($i > 0) {
+
+					$exportval = true;
+
+				foreach ($value["annotations"] as $keyAnnota => $annotat) {
+					if($annotat["name"] == "exportApi") {
+						$exportval = false;
+						break;
+						
+					}
+
+				}
+				if($i > 0 && $exportval) {
 					$reqFields .= ',';
 					
 				}
-				if($value['name'] != '_id' && $value['name'] != '_full_text') {
+				if($value['name'] != '_id' && $value['name'] != '_full_text' && $exportval) {
 					$reqFields .= $value['name'];
 					$i++;
 				}
 				
 			}
 		}
-		
+
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
 		$where = "";$limit  = "";
@@ -1845,7 +1857,7 @@ class Api{
 		/* if exportField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
 
 		foreach ($fields as $value) {
-			$exportval = false;
+			$exportval = true;
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
@@ -1853,7 +1865,7 @@ class Api{
 
 			foreach ($value["annotations"] as $keyAnnota => $annotat) {
 				if($annotat["name"] == "exportApi") {
-					$exportval = true;
+					$exportval = false;
 					break;
 					
 				}
@@ -1917,7 +1929,7 @@ class Api{
 			$paramsUrl = $query_params;
 			$paramsUrl["fields"] = $fieldsheaderparams;
 
-			$url2 = http_build_query($paramsUrl);
+			$url2 = http_build_query($query_params);
 
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
@@ -2012,6 +2024,7 @@ class Api{
 
 
 		$result = $this->getRecordsDownload($params);
+
 	
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
