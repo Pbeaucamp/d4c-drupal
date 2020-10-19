@@ -1359,6 +1359,7 @@ class Api{
 		curl_close($curl);
 		$result = json_decode($result,true);
 
+		
 		$geoPointnb = 0;
 
 		$data_array = array();
@@ -1379,9 +1380,11 @@ class Api{
 					$annotations[] = array("name" => "facet");
 					$hasFacet = true; //echo "1";
 				} 
+
+
 				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
 					$annotations[] = array("name" => "exportApi");
-				} 
+				}
 				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
@@ -1480,8 +1483,8 @@ class Api{
 				$field['type'] = $value['type'];
 			}
 			$data_array[] = $field;
-		}		
-
+		}
+		
 		if(!$hasFacet){
 			$hasTextCol = false;
 			foreach ($data_array as $id => $field) {
@@ -1499,6 +1502,16 @@ class Api{
 		return $data_array;
 	}
     
+
+    public function getExportApiValue($array, $elementValue){
+    	$exportapi = "";
+    	foreach ($array as $key => $value) {
+    		if($value["id"] == $elementValue) {
+    			$exportapi = $value["info"]["exportapi"];
+    		}
+    	}
+    	return $exportapi;
+    }
     public function getAllFieldsForTableParam($resourceId) {
         $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
@@ -1595,16 +1608,17 @@ class Api{
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 		$params = $this->retrieveParameters($params);
-		$exportField = false;
+       	
        
 
+
         if($query_params['user_defined_fields']) {
-        	$exportField = true;
+			//array_pop($query_params);
+			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 			
 		}
-		
-		$fields = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
-
+		 
+		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 
 		//echo json_encode($fields);
 		$fieldId = "_id";
@@ -1729,26 +1743,15 @@ class Api{
 		    }
 		}
 		
-		if($reqFields == "") {
 
+		if($reqFields == "") {
 			$i = 0;
 			foreach ($fields as $value) {
-
-					$exportval = true;
-
-				foreach ($value["annotations"] as $keyAnnota => $annotat) {
-					if($annotat["name"] == "exportApi") {
-						$exportval = false;
-						break;
-						
-					}
-
-				}
-				if($i > 0 && $exportval) {
+				if($i > 0) {
 					$reqFields .= ',';
 					
 				}
-				if($value['name'] != '_id' && $value['name'] != '_full_text' && $exportval) {
+				if($value['name'] != '_id' && $value['name'] != '_full_text') {
 					$reqFields .= $value['name'];
 					$i++;
 				}
@@ -1849,51 +1852,86 @@ class Api{
 			$reqFieldsArray = explode(",", $reqFields);
 		}
 
+
+
 		$first = true;
 
-		
-		/* if exportField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
+		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
+		$stack = array();
+
+
+
+		if($exportUserField  != null ) {
+			//set header fields with exportapi as true
+			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
+					array_push($stack, $valuefields["id"]);
+				}
+			}
+		}
+
+
+		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
 
 		foreach ($fields as $value) {
-			$exportval = true;
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
 			}
 
-			foreach ($value["annotations"] as $keyAnnota => $annotat) {
-				if($annotat["name"] == "exportApi") {
-					$exportval = false;
-					break;
+			//set header fields with exportapi as true
+			if($exportUserField  != null ) {
+
+				/* get all fields from exportuserfield */
+				if (in_array( $value['name'], $stack) ) {
+					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
+
+						if( $valuefields["id"] == $value['name']){
+							/* Get name of ever field user and assign it to fields Header*/ 
+							if (isset($reqFieldsArray)) {
+									if (in_array($valuefields["id"], $reqFieldsArray)) {
+										$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+										$first = false;
+									}
+								}
+								else {
+									$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+									$first = false;
+								}
+
+							break;
+						}
+					}
+				}
+				else { 
+						if (isset($reqFieldsArray)) {
+							if (in_array($value['name'], $reqFieldsArray)) {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+								$first = false;
+							}
+						}
+						else {
+							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$first = false;
+						}
 					
 				}
-
 			}
-			if($exportval) {
+			else {
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
-							if($exportField) {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['label'];
-							}
-							else {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-							}
-							
+							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$first = false;
 						}
 					}
 					else {
-						if($exportField) {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['label'];
-							}
-							else {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-								
-							}
+						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						$first = false;
 					}
-					$first = false;
-				}
+					
+			
+			}
 		}
-
 
 		$fieldsHeader .= "\n";
 
@@ -1921,7 +1959,6 @@ class Api{
 			}
 
 			$url2 = http_build_query($query_params);
-
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
 
@@ -1944,7 +1981,6 @@ class Api{
 			}
 		
 		}
-
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -2013,9 +2049,34 @@ class Api{
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
+		$reqFields = "";
+		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+		if($reqFields == "") {
+			$i = 0;
+			foreach ($fieldsValue as $value) {
 
-		$result = $this->getRecordsDownload($params);
+					$exportval = true;
 
+				foreach ($value["annotations"] as $keyAnnota => $annotat) {
+					if($annotat["name"] == "exportApi") {
+						$exportval = false;
+						break;	
+					}
+				}
+				if($i > 0 && $exportval) {
+					$reqFields .= ',';
+					
+				}
+				if($exportval) {
+					$reqFields .= $value['name'];
+					$i++;
+				}
+				
+			}
+		}
+
+		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
+	
 	
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
