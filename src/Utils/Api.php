@@ -1499,16 +1499,6 @@ class Api{
 		return $data_array;
 	}
     
-
-    public function getExportApiValue($array, $elementValue){
-    	$exportapi = "";
-    	foreach ($array as $key => $value) {
-    		if($value["id"] == $elementValue) {
-    			$exportapi = $value["info"]["exportapi"];
-    		}
-    	}
-    	return $exportapi;
-    }
     public function getAllFieldsForTableParam($resourceId) {
         $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
