@@ -1924,11 +1924,6 @@ class Api{
 				unset($query_params['user_defined_fields']);
 			}
 
-			//search value in database by fields
-			$fieldsheaderparams =  str_replace(";", ',', trim($fieldsToExport)) ;
-			$paramsUrl = $query_params;
-			$paramsUrl["fields"] = $fieldsheaderparams;
-
 			$url2 = http_build_query($query_params);
 
 			//echo $url2;
