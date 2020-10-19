@@ -470,7 +470,6 @@ class typeColumnsForm extends HelpFormBase {
             
             $notes='';
             $title='';
-            $exportapi =0;
 			 
             if ($table_data[$i][Intitulé]){
 				$title = $table_data[$i][Intitulé];
@@ -650,8 +649,6 @@ class typeColumnsForm extends HelpFormBase {
 			$notes =substr($notes, 0, -1);
 			$filds[result][fields][$i][info][notes]=$notes;  
 			$filds[result][fields][$i][info][label]=$title;
-			//add exportapi field to fields array
-			$filds[result][fields][$i][info][exportapi]=$exportapi;
         
 			array_push($json["fields"], $filds[result][fields][$i]);
 		}

@@ -1350,7 +1350,6 @@ class Api{
 			//echo $sql;
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-			$searchDatastoreByResourceUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
 		}
 		
 		//echo $callUrl;
@@ -1360,14 +1359,6 @@ class Api{
 		curl_close($curl);
 		$result = json_decode($result,true);
 
-		// get searchDatastoreByResourceUrl result
-		$curl2 = curl_init($searchDatastoreByResourceUrl);
-		curl_setopt_array($curl2, $this->getStoreOptions());
-		$resultDatastore = curl_exec($curl2);
-		curl_close($curl2);
-		$resultDatastore = json_decode($resultDatastore,true);
-
-		
 		$geoPointnb = 0;
 
 		$data_array = array();
@@ -1387,6 +1378,9 @@ class Api{
 				if(preg_match("/<!--.*facet.*-->/i",$description)) {
 					$annotations[] = array("name" => "facet");
 					$hasFacet = true; //echo "1";
+				} 
+				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
+					$annotations[] = array("name" => "exportApi");
 				} 
 				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
 					$annotations[] = array("name" => "disjunctive");
@@ -1455,8 +1449,6 @@ class Api{
 				} else {
 					$field['label'] = $field['name'];
 				}
-
-				$field['exportapi'] = $value['info']['exportapi'];
 				
 			}
 			else {
@@ -1488,17 +1480,7 @@ class Api{
 				$field['type'] = $value['type'];
 			}
 			$data_array[] = $field;
-		}
-		
-
-		// add exportapi field value to data_array 
-		foreach ($data_array as $key => $value) {
-
-			$exportvalue = $this->getExportApiValue($resultDatastore['result']['fields'],$value["name"]);
-			$data_array[$key]["exportapi"] = $exportvalue;
-
-
-		}
+		}		
 
 		if(!$hasFacet){
 			$hasTextCol = false;
@@ -1623,17 +1605,16 @@ class Api{
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 		$params = $this->retrieveParameters($params);
+		$exportField = false;
        
 
         if($query_params['user_defined_fields']) {
-			array_pop($query_params);
-			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+        	$exportField = true;
 			
 		}
 		
-		
-		 
-		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
+		$fields = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+
 
 		//echo json_encode($fields);
 		$fieldId = "_id";
@@ -1870,92 +1851,53 @@ class Api{
 
 		$first = true;
 
-		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
-		$stack = array();
-		$exportval = false;
+		
+		/* if exportField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
 
 		foreach ($fields as $value) {
-		// check if export field is checked
-			if($exportUserField  != null) {
-				foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-						if($valuefields["info"]["exportapi"]==1 || $valuefields["info"]["exportapi"]=="1") {
-							$exportval = true;
-						}
-
-				}
-
-			} else {
-						if($value["exportapi"] == "1" || $value["exportapi"] == 1) {
-							$exportval = true;
-						}
-			}
-		}
-
-		if($exportUserField  != null ) {
-			//set header fields with exportapi as true
-			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "") && $exportval) {
-					array_push($stack, $valuefields["id"]);
-				}
-			}
-		}
-
-		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
-
-			
-		foreach ($fields as $value) {
+			$exportval = false;
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
 			}
 
-			//set header fields with exportapi as true
-			if($exportUserField  != null ) {
-
-				/* get all fields from exportuserfield */
-				if (in_array( $value['name'], $stack) ) {
-					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-
-
-						if( $valuefields["id"] == $value['name'] && $exportval){
-							/* Get name of ever field user and assign it to fields Header*/ 
-							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
-							$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
-							$first = false;
-							break;
-						}
-					}
-				}
-				else { 
-					if($exportval) {
-						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
-					$first = false;
-					}
+			foreach ($value["annotations"] as $keyAnnota => $annotat) {
+				if($annotat["name"] == "exportApi") {
+					$exportval = true;
+					break;
 					
 				}
+
 			}
-			else {
-				if($exportval) {
+			if($exportval) {
+				$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
-							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-							$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
+							if($exportField) {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['label'];
+							}
+							else {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							}
+							
 						}
 					}
 					else {
-						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-						$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
+						if($exportField) {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['label'];
+							}
+							else {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+								
+							}
 					}
 					$first = false;
 				}
-
-			}
 		}
+
 
 		$fieldsHeader .= "\n";
 		$fieldsToExport .= "\n";
-
 
 		$ids = array();
 		foreach ($result["result"]["records"] as $value) {
@@ -1976,15 +1918,17 @@ class Api{
 				$query_params['limit'] = 100000000;
 			}
 			if($query_params['user_defined_fields']) {
-				$query_params = array_pop($query_params);
+				//$query_params = array_pop($query_params);
+				unset($query_params['user_defined_fields']);
 			}
 
 			//search value in database by fields
 			$fieldsheaderparams =  str_replace(";", ',', trim($fieldsToExport)) ;
-			//change fields params by fields header
-			$query_params["fields"] = $fieldsheaderparams;
+			$paramsUrl = $query_params;
+			$paramsUrl["fields"] = $fieldsheaderparams;
 
-			$url2 = http_build_query($query_params);
+			$url2 = http_build_query($paramsUrl);
+
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
 
@@ -2007,6 +1951,7 @@ class Api{
 			}
 		
 		}
+
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
