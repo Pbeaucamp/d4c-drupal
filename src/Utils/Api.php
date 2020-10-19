@@ -1845,8 +1845,6 @@ class Api{
 
 		//We build the first row with the header's name
 		$fieldsHeader = "";
-		//set fields header to filter with
-		$fieldsToExport = "";
 		if ($reqFields != "") {
 			$reqFieldsArray = explode(",", $reqFields);
 		}
@@ -1872,7 +1870,6 @@ class Api{
 
 			}
 			if($exportval) {
-				$fieldsToExport .= (!$first ? ";" : "" ) . $value['name'];
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
 							if($exportField) {
@@ -1899,7 +1896,6 @@ class Api{
 
 
 		$fieldsHeader .= "\n";
-		$fieldsToExport .= "\n";
 
 		$ids = array();
 		foreach ($result["result"]["records"] as $value) {
