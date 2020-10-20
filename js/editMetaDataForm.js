@@ -133,6 +133,7 @@ $("#selected_data select").val($('#edit-selected-data-id').val());
 $("#edit-selected-data-id").val($('#selected_data').val());
 //addPicto();
 
+
 function anichange(objName) {
 
     //objName = '#datasetLies';
@@ -176,7 +177,6 @@ function addData(result) {
 
     } else {
 
-        console.log(result);
         let data = getDataByID(result, data_id);
         fillData(data);
 
@@ -212,6 +212,15 @@ function clear() {
     $("#edit-analize-false").removeAttr("checked");
     $("#edit-api-false").removeAttr("checked");
     $('#disable_fields_empty').prop("checked", true);
+    $('#edit-imgback').val('');
+    // clear producer value
+    $('#edit-producteur input').val('');
+    // clear source value
+    $('#edit-source input').val('');
+    // clear donnees source value
+    $('#edit-donnes-source input').val('');
+    // clear mentions legales value
+    $('#edit-mention-legales textarea').val('');
  
 
     //$("#edit-table-widgets ").remove();
@@ -306,7 +315,6 @@ function fillData(data) {
     $('#edit-table tbody tr').remove();
     let num = 0;
 
-    console.log(data.resources);
     for (let i = 0; i < data.resources.length; i++) {
         //console.log(data.resources[i]);
         num = i + 1;
@@ -373,6 +381,48 @@ function fillData(data) {
 
     let hasHideFieldsProp = false;
     for (let g = 0; g < data.extras.length; g++) {
+        // get donnees source and source value from extra data and assign it to new source and donnees_source
+        if (data.extras[g].key == 'FTP_API') {
+            var value = data.extras[g].value;
+            if(value != "FTP") {
+                $("#edit-donnes-source input").val(value);
+                const url = new URL(value);
+                $("#edit-source input").val(url.hostname);
+            }
+            
+        }
+        // get producer value
+        if (data.extras[g].key == 'producer') {
+            var producer = data.extras[g].value;
+                $("#edit-producteur input").val(producer);
+            
+        }
+
+        // get source value
+        if (data.extras[g].key == 'source') {
+            var source = data.extras[g].value;
+            if(source != null) {
+                $("#edit-source input").val(source);
+            }
+            
+        }
+
+        // get donnees source value
+        if (data.extras[g].key == 'donnees_source') {
+            var donnees_source = data.extras[g].value;
+            if(donnees_source != null){
+                $("#edit-donnes-source input").val(donnees_source);
+            }
+            
+        }
+
+        //get mention legales value
+        if (data.extras[g].key == 'mention_legales') {
+            var mention_legales = data.extras[g].value;
+                $("#edit-mention-legales textarea").val(mention_legales);
+            
+        }
+
         if (data.extras[g].key == 'Picto') {
 			var path = data.extras[g].value;
 			if(!path.startsWith('/')){

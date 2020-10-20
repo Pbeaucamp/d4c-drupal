@@ -59,9 +59,6 @@ class VisualisationController extends ControllerBase {
 		
 		$api = new API();
 		$dataset = $api->getPackageShow2($id,"");
-			/*	echo "<pre>";
-		var_dump($dataset);
-		echo "</pre>";die;*/
 
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
@@ -89,9 +86,6 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		/*Logger::logMessage("ressource " . json_encode($resources));*/
-	/*	echo "<pre>";
-		var_dump($resources);
-		echo "</pre>";die;*/
 		
 		if($resourcesid != ""){
 			$res = array();
@@ -135,6 +129,8 @@ class VisualisationController extends ControllerBase {
         
         $met=$dataset[metas][extras];
         $LinkedDataSet='';
+        //add mention legales bloc
+        $mention_legales='';
         $themes='';
         $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
 						<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div>   
@@ -156,8 +152,6 @@ class VisualisationController extends ControllerBase {
         $theme=false;
 		$visu = 1;
         for($i=0; $i < count($met); $i++){
-
-        	/*var_dump($met[$i]);die;*/
             if($met[$i]['key']=='LinkedDataSet'){
                 $links = $met[$i][value];
                 $links = explode(";", $links);
@@ -199,6 +193,20 @@ class VisualisationController extends ControllerBase {
                             </div>';
                 } 
             }
+
+            // get source value
+            if($met[$i]['key']=='source' && $met[$i][value]!= null){
+                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Site Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div>';
+            }
+
+            //get donnees source value
+           	if($met[$i]['key']=='donnees_source' && $met[$i][value]!= null){
+                  
+                    $source = '<div class="d4c-dataset-metadata-block">
+                                <div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div></div> </div>
+                            </div>';
+            }
+
 			if($met[$i]['key']=='custom_view'){
 				$view = json_encode($met[$i][value]);
 			}
@@ -228,6 +236,13 @@ class VisualisationController extends ControllerBase {
                 
 				$visWidget = $result_w;
 			}
+
+			// define mention legales bloc
+			if($met[$i]['key']=='mention_legales'){
+
+                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions légales</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div></div><br>';
+
+         }
 		}
 
 		if($visu == 0) {
@@ -654,10 +669,11 @@ class VisualisationController extends ControllerBase {
 									</div>
 									
 										   '.$source.'
-									   
+									
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\']"></d4c-dataset-metadata-block>
 
 										'.$LinkedDataSet.'
+										'.$mention_legales.'
 									
 									
 									 <div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
