@@ -131,6 +131,8 @@ class VisualisationController extends ControllerBase {
         $LinkedDataSet='';
         //add mention legales bloc
         $mention_legales='';
+        //add frequence bloc
+        $frequence='';
         $themes='';
         $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
 						<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div>   
@@ -240,9 +242,20 @@ class VisualisationController extends ControllerBase {
 			// define mention legales bloc
 			if($met[$i]['key']=='mention_legales'){
 
-                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions légales</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div></div><br>';
+                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions légales</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
 
          }
+
+         // define frequence bloc
+			if($met[$i]['key']=='frequence'){
+
+                    $frequence ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+                    				<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de maj</div>
+                    				<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
+
+         }
+
+
 		}
 
 		if($visu == 0) {
@@ -669,6 +682,7 @@ class VisualisationController extends ControllerBase {
 									</div>
 									
 										   '.$source.'
+										   '.$frequence.'
 									
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\']"></d4c-dataset-metadata-block>
 

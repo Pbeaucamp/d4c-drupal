@@ -215,6 +215,8 @@ function clear() {
     $('#edit-imgback').val('');
     // clear producer value
     $('#edit-producteur input').val('');
+    // clear frequence value
+    $('#edit-frequence input').val('');
     // clear source value
     $('#edit-source input').val('');
     // clear donnees source value
@@ -395,6 +397,13 @@ function fillData(data) {
         if (data.extras[g].key == 'producer') {
             var producer = data.extras[g].value;
                 $("#edit-producteur input").val(producer);
+            
+        }
+
+        // get frequence value
+        if (data.extras[g].key == 'frequence') {
+            var frequence = data.extras[g].value;
+                $("#edit-frequence input").val(frequence);
             
         }
 

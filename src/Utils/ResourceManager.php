@@ -1124,7 +1124,7 @@ function manageXmlfile($url) {
 	
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null) {
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null,$frequence=null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1144,6 +1144,7 @@ function manageXmlfile($url) {
 		$hasDisableFieldsEmpty = false;
 		$hasSecurity = false;
 		$hasProducer = false;
+		$hasFrequence = false;
 		$hasSource = false;
 		$hasDonneesSource = false;
 		$hasMentionLegales = false;
@@ -1226,6 +1227,12 @@ function manageXmlfile($url) {
 				if ($extras[$index]['key'] == 'producer') {
 					$hasProducer = true;
 					$extras[$index]['value'] = $producer;
+				}
+
+				//frequence
+				if ($extras[$index]['key'] == 'frequence') {
+					$hasFrequence = true;
+					$extras[$index]['value'] = $frequence;
 				}
 
 				// source
@@ -1325,6 +1332,11 @@ function manageXmlfile($url) {
 		if ($hasProducer == false) {
 			$extras[count($extras)]['key'] = 'producer';
 			$extras[(count($extras) - 1)]['value'] = $producer;
+		}
+
+		if ($hasFrequence == false) {
+			$extras[count($extras)]['key'] = 'frequence';
+			$extras[(count($extras) - 1)]['value'] = $frequence;
 		}
 
 		if ($hasSource == false) {
