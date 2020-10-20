@@ -134,6 +134,9 @@ function addDataInTable(data){
 
         let facet='<input data-drupal-selector="edit-table-'+i+'-facet" type="checkbox" id="edit-table-'+i+'-facet" name="table['+i+'][facet]" value="1" class="form-checkbox">';
         
+        //export api td
+        let exportapi='<input data-drupal-selector="edit-table-'+i+'-exportApi" type="checkbox" id="edit-table-'+i+'-exportApi" name="table['+i+'][exportApi]" value="1" class="form-checkbox">';
+
         let table='<input data-drupal-selector="edit-table-'+i+'-table" type="checkbox" id="edit-table-'+i+'-table" name="table['+i+'][table]" value="1" class="form-checkbox">';
         
       //  let tooltip='<input data-drupal-selector="edit-table-'+i+'-tooltip" type="checkbox" id="edit-table-'+i+'-tooltip" name="table['+i+'][tooltip]" value="1" class="form-checkbox">';
@@ -169,6 +172,9 @@ function addDataInTable(data){
 
         let facet_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-facet form-item-table-'+i+'-facet form-no-label">'+facet+'</div>';
         
+        // export api div
+        let exportapi_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-exportApi form-item-table-'+i+'-facet form-no-label">'+exportapi+'</div>';
+
         let table_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-table form-item-table-'+i+'-table form-no-label">'+table+'</div>';
         
         //let tooltip_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-tooltip form-item-table-'+i+'-tooltip form-no-label">'+tooltip+'</div>';
@@ -211,7 +217,7 @@ function addDataInTable(data){
 		$('#edit-table > thead > tr > th').first().css('max-width','100px');
 		$('#edit-table > thead > tr > th').first().css('left','0px');
 		$('#edit-table > thead > tr > th').first().css('background-color','white');
-        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
+        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+exportapi_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
         //'<td>'+image_url_div+'</td>'+
         
         if(data.result.fields[i].info.notes){
@@ -229,6 +235,11 @@ function addDataInTable(data){
                 if(notes[j]=='<!--facet-->'){
                    $('#edit-table-'+i+'-facet').attr('checked', 'checked');
                    }
+
+                if(notes[j]=='<!--exportApi-->'){
+                   $('#edit-table-'+i+'-exportApi').attr('checked', 'checked');
+                   }
+                   
                 
                 if(notes[j]=='<!--table-->'){
                    

@@ -698,7 +698,6 @@ class Api{
 			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
 			$dataSetscontent = [];
 
-			//var_dump($result["result"]["results"]);die;
 			
 
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
@@ -1357,6 +1356,7 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		$result = json_decode($result,true);
+
 		
 		$geoPointnb = 0;
 
@@ -1369,6 +1369,7 @@ class Api{
 			$field = array();
 			//if($value['id'] == "_id") continue;
 			$field['name'] = $value['id'];
+
 			$isFile = false;
 			if($full){
 				$annotations = array();
@@ -1377,6 +1378,11 @@ class Api{
 					$annotations[] = array("name" => "facet");
 					$hasFacet = true; //echo "1";
 				} 
+
+
+				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
+					$annotations[] = array("name" => "exportApi");
+				}
 				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
@@ -1494,6 +1500,7 @@ class Api{
 		return $data_array;
 	}
     
+
     public function getAllFieldsForTableParam($resourceId) {
         $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
@@ -1588,16 +1595,18 @@ class Api{
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 		$params = $this->retrieveParameters($params);
+       	
        
 
+
         if($query_params['user_defined_fields']) {
-			array_pop($query_params);
+			//array_pop($query_params);
 			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 			
 		}
-		
 		 
 		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
+
 		//echo json_encode($fields);
 		$fieldId = "_id";
 		$reqFields="";
@@ -1721,6 +1730,7 @@ class Api{
 		    }
 		}
 		
+
 		if($reqFields == "") {
 			$i = 0;
 			foreach ($fields as $value) {
@@ -1735,7 +1745,7 @@ class Api{
 				
 			}
 		}
-		
+
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
 		$where = "";$limit  = "";
@@ -1829,13 +1839,17 @@ class Api{
 			$reqFieldsArray = explode(",", $reqFields);
 		}
 
+
+
 		$first = true;
 
 		/* Check if exporUserField exist and not null, means, that user has changed the attributes names of datasets */
 		$stack = array();
 
-		if($exportUserField  != null ) {
 
+
+		if($exportUserField  != null ) {
+			//set header fields with exportapi as true
 			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
 					array_push($stack, $valuefields["id"]);
@@ -1845,43 +1859,64 @@ class Api{
 
 
 		/* if exportUserField is not exist or is null, means, that the attributes names of dataset doest not changed by user, so assign the default name to fieldHeader value */
-			
+
 		foreach ($fields as $value) {
 			//We skip the column _full_text because we don't get the data and it is created by postgres
 			if ($value['name'] == "_full_text") {
 				continue;
 			}
 
-
+			//set header fields with exportapi as true
 			if($exportUserField  != null ) {
 
 				/* get all fields from exportuserfield */
 				if (in_array( $value['name'], $stack) ) {
 					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 
-						if( $valuefields["id"] == $value['name'] ){
+						if( $valuefields["id"] == $value['name']){
 							/* Get name of ever field user and assign it to fields Header*/ 
-							$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
-							$first = false;
+							if (isset($reqFieldsArray)) {
+									if (in_array($valuefields["id"], $reqFieldsArray)) {
+										$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+										$first = false;
+									}
+								}
+								else {
+									$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+									$first = false;
+								}
+
 							break;
 						}
 					}
 				}
-				else {
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-					$first = false;
+				else { 
+						if (isset($reqFieldsArray)) {
+							if (in_array($value['name'], $reqFieldsArray)) {
+								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+								$first = false;
+							}
+						}
+						else {
+							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$first = false;
+						}
+					
 				}
 			}
 			else {
-				if (isset($reqFieldsArray)) {
-					if (in_array($value['name'], $reqFieldsArray)) {
-						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+					if (isset($reqFieldsArray)) {
+						if (in_array($value['name'], $reqFieldsArray)) {
+							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$first = false;
+						}
 					}
-				}
-				else {
-					$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-				}
-				$first = false;
+					else {
+						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+						$first = false;
+					}
+					
+			
 			}
 		}
 
@@ -1906,17 +1941,21 @@ class Api{
 				$query_params['limit'] = 100000000;
 			}
 			if($query_params['user_defined_fields']) {
-				$query_params = array_pop($query_params);
+				//$query_params = array_pop($query_params);
+				unset($query_params['user_defined_fields']);
 			}
+
 			$url2 = http_build_query($query_params);
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
+
 			//echo mb_strlen($callUrl , '8bit');				  
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
 			$result2 = curl_exec($curl);
 			//echo $result2 . "\r\n";
 			curl_close($curl);
+
 	//		header('Content-Type:text/csv');
 	//		header('Content-Disposition:attachment; filename=file.csv');
 	//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
@@ -1925,12 +1964,10 @@ class Api{
 			} else {
 				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
 				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.$callUrl );
-				$records .= json_decode($result2,true)["result"]["records"];
+				$records .=json_decode($result2,true)["result"]["records"];
 			}
 		
 		}
-
-		
 		if($format == "objects"){
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
@@ -1963,8 +2000,6 @@ class Api{
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
-		/*var_dump($params);die;*/
-
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
@@ -1991,7 +2026,35 @@ class Api{
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
-		$result = $this->getRecordsDownload($params);
+		$reqFields = "";
+		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+
+		$i = 0;
+		foreach ($fieldsValue as $value) {
+
+				$exportval = true;
+
+			foreach ($value["annotations"] as $keyAnnota => $annotat) {
+				if($annotat["name"] == "exportApi") {
+					$exportval = false;
+					break;	
+				}
+			}
+			if($i > 0 && $exportval) {
+				$reqFields .= ',';
+				
+			}
+			if($exportval) {
+				$reqFields .= $value['name'];
+				$i++;
+			}
+			
+		}
+	
+
+		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
+	
+	
 		if ($format == "csv" || $format == "json" || $format == "geojson") {
 			echo $result;
 		} else if ($format == "xls") {
@@ -5606,7 +5669,6 @@ class Api{
         $callUrl = $this->urlCkan."api/action/package_update";
 		
         $return = $this->updateRequest($callUrl,$result['result'],"POST" );
-        //var_dump($return);
     }
 
     function updateRequest($callUrl, $binaryData, $requestType) {
@@ -5869,7 +5931,6 @@ class Api{
         $data = json_decode($datasetList->getContent() );
         $dataJson = $datasetList->getContent() ;
        // echo "<!Doctype html><html>";
-        //var_dump($data->result->results[4]);
         $key_found=false;
         $listbyKey = $this->getdatasetListByKey($key);
         if( $key=="nb_download"){
@@ -5960,7 +6021,6 @@ class Api{
     function getThemeArray(){
  
         $listbyKey = $this->getdatasetListByKey("theme") ;
-        //var_dump($listbyKey);
         
         for($l=0; $l<count($listbyKey);$l++ ){
             
@@ -5977,7 +6037,6 @@ class Api{
         }
         
         //echo " list apres" ;
-        //var_dump($themeList);
         
        // echo json_encode($listbyKey);
         
@@ -6072,7 +6131,6 @@ class Api{
             
         }
         
-        //var_dump( $selectedDataset ) ;
         //echo json_encode($selectedDataset );
         
         

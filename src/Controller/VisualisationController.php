@@ -59,6 +59,9 @@ class VisualisationController extends ControllerBase {
 		
 		$api = new API();
 		$dataset = $api->getPackageShow2($id,"");
+			/*	echo "<pre>";
+		var_dump($dataset);
+		echo "</pre>";die;*/
 
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
@@ -85,6 +88,10 @@ class VisualisationController extends ControllerBase {
 				$resources[] = $res;
 			}
 		}
+		/*Logger::logMessage("ressource " . json_encode($resources));*/
+	/*	echo "<pre>";
+		var_dump($resources);
+		echo "</pre>";die;*/
 		
 		if($resourcesid != ""){
 			$res = array();
