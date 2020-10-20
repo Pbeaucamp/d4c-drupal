@@ -156,7 +156,7 @@ class typeColumnsForm extends HelpFormBase {
 				),
 				//add export/api checkbox 
 				"ExportDownload" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxExportDownload" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
-					['@name' => $this->t('Cacher àl\'export'),
+					['@name' => $this->t('Cacher à l\'export'),
 					':action' => 'checkAll("-exportApi","checkboxExportDownload")'])
 				),
 
