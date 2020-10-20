@@ -1503,15 +1503,6 @@ class Api{
 	}
     
 
-    public function getExportApiValue($array, $elementValue){
-    	$exportapi = "";
-    	foreach ($array as $key => $value) {
-    		if($value["id"] == $elementValue) {
-    			$exportapi = $value["info"]["exportapi"];
-    		}
-    	}
-    	return $exportapi;
-    }
     public function getAllFieldsForTableParam($resourceId) {
         $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
@@ -1999,16 +1990,6 @@ class Api{
 //		$response->send();
 	}
 
-	public function getIndexFieldHeaders($array, $element) {
-		$index="";
-		foreach ($array as $key => $value) {
-			if($value["id"] == $element){
-				$index = $key;
-			}
-			
-		}
-		return $index ;
-	}
 	public function callDatastoreApiDownload($params) {
 		$result = $this->getRecordsDownload($params);
 
@@ -2051,29 +2032,29 @@ class Api{
 
 		$reqFields = "";
 		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
-		if($reqFields == "") {
-			$i = 0;
-			foreach ($fieldsValue as $value) {
 
-					$exportval = true;
+		$i = 0;
+		foreach ($fieldsValue as $value) {
 
-				foreach ($value["annotations"] as $keyAnnota => $annotat) {
-					if($annotat["name"] == "exportApi") {
-						$exportval = false;
-						break;	
-					}
+				$exportval = true;
+
+			foreach ($value["annotations"] as $keyAnnota => $annotat) {
+				if($annotat["name"] == "exportApi") {
+					$exportval = false;
+					break;	
 				}
-				if($i > 0 && $exportval) {
-					$reqFields .= ',';
-					
-				}
-				if($exportval) {
-					$reqFields .= $value['name'];
-					$i++;
-				}
+			}
+			if($i > 0 && $exportval) {
+				$reqFields .= ',';
 				
 			}
+			if($exportval) {
+				$reqFields .= $value['name'];
+				$i++;
+			}
+			
 		}
+	
 
 		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
 	
