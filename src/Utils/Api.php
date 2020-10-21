@@ -2531,9 +2531,15 @@ class Api{
 		$data_array["metas"]["license"]=$data_array["metas"]["license_title"];
 		//$data_array["metas"]["data_processed"]="2018-07-05T12:07:03+00:00";
 		$data_array["metas"]["publisher"]=$data_array["metas"]["organization"]["title"];
+		// set default producer in metas array
+		$data_array['metas']["producer"] = "";
 		foreach($data_array['metas']['extras'] as $value){
 			if($value["key"] == "theme"){
 				$data_array['metas']["theme"] = str_replace(",", ", ", $value["value"]);
+			}
+			//add producer to metas dataset
+			if($value["key"] == "producer"){
+				$data_array['metas']["producer"] = $value["value"];
 			}
 		}
         $result["result"]["results"][$i]["metadata_imported"] = $result["result"]["results"][$i]["metadata_modified"];
@@ -3915,6 +3921,7 @@ class Api{
 		{"widget": "geoarea", "name": "geographic_area_mode", "uri": null, "search": true, "label": "Geographic area mode", "allow_empty": true, "type": "text"}, 
 		{"widget": "geoarea", "name": "geographic_area", "uri": null, "search": true, "label": "Geographic area", "allow_empty": true, "type": "geo_shape"}, 
 		{"widget": null, "name": "data_processed", "uri": null, "search": true, "label": "Data processed", "allow_empty": true, "type": "datetime"}, 
+		{"widget": null, "name": "producer", "uri": null, "search": true, "label": "Producer", "allow_empty": true, "type": "text"}, 
 		{"widget": null, "name": "metadata_processed", "uri": null, "search": true, "label": "Metadata processed", "allow_empty": true, "type": "datetime"}, 
 		{"widget": null, "name": "publisher", "uri": "http://purl.org/dc/terms/publisher", "search": true, "label": "Publisher", "allow_empty": true, "type": "text"}, 
 		{"widget": null, "name": "references", "uri": "http://purl.org/dc/terms/references", "search": true, "label": "Reference", "allow_empty": true, "type": "text"}, 

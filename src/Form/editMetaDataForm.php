@@ -278,6 +278,57 @@ class editMetaDataForm extends HelpFormBase {
             '#title' => $this->t('Date du jeu de données'),
             '#date_date_format' => 'd/m/Y'
         );
+
+        // producteur 
+        $form['producteur'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Producteur :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // fréquence 
+        $form['frequence'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Fréquence de maj:'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // source
+
+        $form['source'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Source :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        //data source
+        $form['donnes_source'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Données source :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Mention legales 
+        $form['mention_legales'] = array(
+            '#markup' => '',
+            '#type' => 'textarea',
+            '#title' => $this->t('Mentions et droits :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 800
+        );
         
         $form['tags'] = array(
             '#type' => 'textarea',
@@ -757,6 +808,16 @@ class editMetaDataForm extends HelpFormBase {
 		$encoding = $form_state->getValue('encoding');
 		$generateColumns = $form_state->getValue('generate_cols');
 		$unzipZip = $form_state->getValue('unzip_zip');
+        //producteur
+        $producer = $form_state->getValue('producteur');
+        //frequence
+        $frequence = $form_state->getValue('frequence');
+        //source
+        $source = $form_state->getValue('source');
+        //donnees source
+        $donnees_source = $form_state->getValue('donnes_source');
+        //mentions legales
+        $mention_legales = $form_state->getValue('mention_legales');
 		
 		// Resources part
 		$table_data = $form_state->getValue('table');
@@ -842,7 +903,7 @@ class editMetaDataForm extends HelpFormBase {
 					// We build extras
 					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
+						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer,$source,$donnees_source,$mention_legales,$frequence);
 					
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 
@@ -872,7 +933,7 @@ class editMetaDataForm extends HelpFormBase {
 					$extras = $datasetToUpdate[extras];
 					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
+						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer,$source,$donnees_source,$mention_legales,$frequence);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");

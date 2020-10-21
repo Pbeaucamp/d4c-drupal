@@ -1124,7 +1124,7 @@ function manageXmlfile($url) {
 	
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security) {
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null,$frequence=null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1143,6 +1143,11 @@ function manageXmlfile($url) {
 		$hasDate = false;
 		$hasDisableFieldsEmpty = false;
 		$hasSecurity = false;
+		$hasProducer = false;
+		$hasFrequence = false;
+		$hasSource = false;
+		$hasDonneesSource = false;
+		$hasMentionLegales = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1216,6 +1221,36 @@ function manageXmlfile($url) {
 				if ($extras[$index]['key'] == 'date_dataset') {
 					$hasDate = true;
 					$extras[$index]['value'] = $dateDataset;
+				}
+
+				//producer
+				if ($extras[$index]['key'] == 'producer') {
+					$hasProducer = true;
+					$extras[$index]['value'] = $producer;
+				}
+
+				//frequence
+				if ($extras[$index]['key'] == 'frequence') {
+					$hasFrequence = true;
+					$extras[$index]['value'] = $frequence;
+				}
+
+				// source
+				if ($extras[$index]['key'] == 'source') {
+					$hasSource = true;
+					$extras[$index]['value'] = $source;
+				}
+
+				// donnees source
+				if ($extras[$index]['key'] == 'donnees_source') {
+					$hasDonneesSource = true;
+					$extras[$index]['value'] = $donnees_source;
+				}
+
+				// mention legales
+				if ($extras[$index]['key'] == 'mention_legales') {
+					$hasMentionLegales = true;
+					$extras[$index]['value'] = $mention_legales;
 				}
 	
 				if ($extras[$index]['key'] == 'disable_fields_empty') {
@@ -1292,6 +1327,31 @@ function manageXmlfile($url) {
 		if ($hasDate == false) {
 			$extras[count($extras)]['key'] = 'date_dataset';
 			$extras[(count($extras) - 1)]['value'] = $dateDataset;
+		}
+
+		if ($hasProducer == false) {
+			$extras[count($extras)]['key'] = 'producer';
+			$extras[(count($extras) - 1)]['value'] = $producer;
+		}
+
+		if ($hasFrequence == false) {
+			$extras[count($extras)]['key'] = 'frequence';
+			$extras[(count($extras) - 1)]['value'] = $frequence;
+		}
+
+		if ($hasSource == false) {
+			$extras[count($extras)]['key'] = 'source';
+			$extras[(count($extras) - 1)]['value'] = $source;
+		}
+
+		if ($hasDonneesSource == false) {
+			$extras[count($extras)]['key'] = 'donnees_source';
+			$extras[(count($extras) - 1)]['value'] = $donnees_source;
+		}
+
+		if ($hasMentionLegales == false) {
+			$extras[count($extras)]['key'] = 'mention_legales';
+			$extras[(count($extras) - 1)]['value'] = $mention_legales;
 		}
 
 		if ($hasDisableFieldsEmpty  == false) {
