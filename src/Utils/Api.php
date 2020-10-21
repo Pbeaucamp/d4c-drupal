@@ -7037,7 +7037,7 @@ class Api{
 
 function _get_id($tableName, $fieldName) {
 
-    $select = db_select($tableName, 'o');
+    $select = \Drupal::database()->select($tableName, 'o');
     $fields = array(
         $fieldName,
     );
@@ -7325,7 +7325,7 @@ function deleteStory($story_id){
 				'message' => $message,
 				'last_updated' => 'now'
 			]);
-			$query->condition(db_or()
+			$query->condition($query->orConditionGroup()
 					->condition('id', $uniqId)
 					->condition('entity_id', $uniqId));
 		}
