@@ -2000,7 +2000,7 @@ class Api{
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
-		if ($format == "csv") {
+		/*if ($format == "csv") {
 			header('Content-Type:text/csv');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
 		} else if ($format == "xls") {
@@ -2022,7 +2022,7 @@ class Api{
 		} else {
 			header('Content-Type:application/json');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		}
+		}*/
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
@@ -2050,8 +2050,13 @@ class Api{
 			}
 			
 		}
-	
+		if($reqFields == null || $reqFields == "") {
+			$actual_link = $_SERVER['HTTP_REFERER'];
 
+			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
+			
+		}
+		
 		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
 	
 	
@@ -2164,6 +2169,7 @@ class Api{
 		$response = new Response();
 		return $response;
 	}
+
 
 	/**
 	 * Creates a random unique temporary directory, with specified parameters,
