@@ -1543,6 +1543,14 @@ class Api{
 
 		$res = array();$allFields = array();
 
+		// sort array by poids
+		$fieldArray = array();
+		foreach ($result['result']['fields'] as $key => $row)
+		{
+
+		    $fieldArray[$key] = $row["info"]["poids"];
+		}
+		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
