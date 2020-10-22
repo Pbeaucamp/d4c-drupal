@@ -157,6 +157,12 @@ class typeColumnsForm extends HelpFormBase {
 					':action' => 'checkAll("-exportApi","checkboxExportDownload")'])
 				),
 
+				//add hideColumnsApi checkbox 
+				"HideColumnsApi" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxHideColumnsApi" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Cacher pour l\'API'),
+					':action' => 'checkAll("-hideColumnsApi","checkboxHideColumnsApi")'])
+				),
+
 				"facetM" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxFacetM" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('FACETTE Multiple'),
 					':action' => 'checkAll("-disjunctive","checkboxFacetM")'])
@@ -240,6 +246,12 @@ class typeColumnsForm extends HelpFormBase {
 			$form['table'][$i]['exportApi'] = array(
 				'#type' => 'checkbox',
 			);
+
+			// hideColumnsApi
+			$form['table'][$i]['hideColumnsApi'] = array(
+				'#type' => 'checkbox',
+			);
+			
 		
 			// disjunctive  
 			$form['table'][$i]['disjunctive'] = array(
@@ -487,6 +499,17 @@ class typeColumnsForm extends HelpFormBase {
                $exportapi = $table_data[$i][exportApi];
                 if($exportapi==1){
                     $notes=$notes.'<!--exportApi-->,';
+                }
+//              else{
+//                  $notes=$notes.'<!---->';
+//              }
+            }
+
+            // check if hideColumnsApi field is true and add to notes array 
+            if ($table_data[$i][hideColumnsApi]){
+               $hideColumnsApi = $table_data[$i][hideColumnsApi];
+                if($hideColumnsApi==1){
+                    $notes=$notes.'<!--hideColumnsApi-->,';
                 }
 //              else{
 //                  $notes=$notes.'<!---->';
