@@ -1383,6 +1383,9 @@ class Api{
 				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
 					$annotations[] = array("name" => "exportApi");
 				}
+				if(preg_match("/<!--.*hideColumnsApi.*-->/i",$description)) {
+					$annotations[] = array("name" => "hideColumnsApi");
+				}
 				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
@@ -2000,7 +2003,7 @@ class Api{
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
-		/*if ($format == "csv") {
+		if ($format == "csv") {
 			header('Content-Type:text/csv');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
 		} else if ($format == "xls") {
@@ -2022,7 +2025,7 @@ class Api{
 		} else {
 			header('Content-Type:application/json');
 			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		}*/
+		}
 
 		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
@@ -3520,7 +3523,6 @@ class Api{
 	}
 
 	public function callDatastoreApi_v2($params) {
-		
 		$res = $this->getDatastoreRecord_v2($params);	
 		echo json_encode($res);
 		$response = new Response();

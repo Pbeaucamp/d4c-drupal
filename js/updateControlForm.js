@@ -51,7 +51,7 @@ var validation_resurce = [];
 $('#edit-selected-org option[value=""]').attr('selected', 'selected');
 
 $('#edit-table thead tr').remove();
-$('#edit-table thead').append('<th data-type="string">nom</th><th data-type="string">Organisation hgh</th><th data-type="string">origine</th><th data-type="string">site</th><th>La date de dernière réplication</th><th>La date prévue de la prochaine réplication</th><th>État</th><th>Fréquence de moissonnage</th><th>Détails</th> <th>Supprimer</th>');
+$('#edit-table thead').append('<th data-type="string">nom</th><th data-type="string">Organisation</th><th data-type="string">origine</th><th data-type="string">site</th><th>La date de dernière réplication</th><th>La date prévue de la prochaine réplication</th><th>État</th><th>Fréquence de moissonnage</th><th>Détails</th> <th>Supprimer</th>');
 
 $('#edit-table').before('</br><div><input class="form-search" type="text"  id="search" placeholder="Recherche"></div></br>');
 

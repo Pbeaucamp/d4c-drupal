@@ -632,7 +632,7 @@ ckan_admin.joinDatasetsForm:
 ckan_admin.updateControlForm:
  path: '/admin/config/data4citizen/updateControlForm'
  defaults:
-   _title: 'chronologie'
+   _title: 'Chronologie'
    _form: 'Drupal\ckan_admin\Form\updateControlForm'
  requirements:
    _permission: 'administer site configuration'
