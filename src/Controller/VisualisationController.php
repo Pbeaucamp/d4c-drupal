@@ -242,7 +242,7 @@ class VisualisationController extends ControllerBase {
 			// define mention legales bloc
 			if($met[$i]['key']=='mention_legales'){
 
-                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions légales</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
+                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions et droits</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
 
          }
 
@@ -250,7 +250,7 @@ class VisualisationController extends ControllerBase {
 			if($met[$i]['key']=='frequence'){
 
                     $frequence ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-                    				<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de maj</div>
+                    				<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de mise à jour</div>
                     				<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
 
          }
