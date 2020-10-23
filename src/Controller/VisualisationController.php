@@ -59,7 +59,6 @@ class VisualisationController extends ControllerBase {
 		
 		$api = new API();
 		$dataset = $api->getPackageShow2($id,"");
-
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
 		

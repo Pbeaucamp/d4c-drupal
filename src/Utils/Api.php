@@ -1483,6 +1483,8 @@ class Api{
 			} else {
 				$field['type'] = $value['type'];
 			}
+
+			$field['poids'] = $value['info']['poids'];
 			$data_array[] = $field;
 		}
 		
@@ -1543,6 +1545,15 @@ class Api{
 		$result = json_decode($result,true);
 
 		$res = array();$allFields = array();
+
+		// sort array by poids
+		$fieldArray = array();
+		foreach ($result['result']['fields'] as $key => $row)
+		{
+
+		    $fieldArray[$key] = $row["info"]["poids"];
+		}
+		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
@@ -2385,8 +2396,7 @@ class Api{
 			
 			$data_array['fields'] = $this->getAllFields($resourcesid, TRUE, FALSE);
 		}
-		
-		
+
 		$visu['calendar_tooltip_html_enabled'] = false;
 		$visu['analyze_default'] = ''; //"{\"queries\":[{\"charts\":[{\"type\":\"line\",\"func\":\"COUNT\",\"color\":\"range-Accent\",\"scientificDisplay\":true}],\"xAxis\":\"nom_com\",\"maxpoints\":\"\",\"timescale\":null,\"sort\":\"\",\"seriesBreakdown\":\"emr_lb_systeme\"}],\"timescale\":\"\",\"displayLegend\":true,\"alignMonth\":true}"
 				
@@ -2588,7 +2598,7 @@ class Api{
 			$data_array["metas"]["data_visible"] = $data_array["data_visible"];
 			$data_array["metas"]["records_count"] = $records_result["nhits"];
 		}*/
-        
+
 		return $data_array;
 	}
 

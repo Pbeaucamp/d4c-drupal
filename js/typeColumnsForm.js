@@ -132,6 +132,13 @@ function addDataInTable(data){
         }
         
 
+        if (data.result.fields[i].info.poids && data.result.fields[i].info.poids!=''){
+            var poids='<input data-drupal-selector="edit-table-'+i+'-poids" min="1" type="number" id="edit-table-'+i+'-poids" name="table['+i+'][Poids]" value="'+data.result.fields[i].info.poids+'" size="15" maxlength="128" class="form-text">';
+        }
+        else{
+            var poids='<input data-drupal-selector="edit-table-'+i+'-poids" min="1" type="number" id="edit-table-'+i+'-poids" name="table['+i+'][Poids]" value="" size="15" maxlength="128" class="form-text">';
+        }
+
         let facet='<input data-drupal-selector="edit-table-'+i+'-facet" type="checkbox" id="edit-table-'+i+'-facet" name="table['+i+'][facet]" value="1" class="form-checkbox">';
         
         //export api td
@@ -213,6 +220,8 @@ function addDataInTable(data){
         
         let descr_for_timeLine_div = '<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-'+i+'-descr_for_timeLine form-item-table-'+i+'-descr_for_timeLine form-no-label">'+descr_for_timeLine+'</div>';
         
+        let poids_div='<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-'+i+'-poids form-item-table-'+i+'-poids form-no-label">'+poids+'</div>';
+
        // let image_url_div = '<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-'+i+'-image_url form-item-table-'+i+'-image_url form-no-label">'+image_url+'</div>';
         
         let date_timeLine_div='<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-'+i+'-date_timeline form-item-table-'+i+'-date_timeline form-no-label">'+date_timeLine+'</div>';
@@ -225,7 +234,7 @@ function addDataInTable(data){
 		$('#edit-table > thead > tr > th').first().css('max-width','100px');
 		$('#edit-table > thead > tr > th').first().css('left','0px');
 		$('#edit-table > thead > tr > th').first().css('background-color','white');
-        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+exportapi_div+'</td>'+'<td>'+hideColumnsApi_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'</tr>');
+        $('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-'+i+'" class="odd">'+'<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">'+data.result.fields[i].id+'</td>'+'<td>'+init_div+'</td>'+'<td>'+intit_facet+'</td>'+'<td>'+facet_div+'</td>'+'<td>'+exportapi_div+'</td>'+'<td>'+hideColumnsApi_div+'</td>'+'<td>'+disjunctive_div+'</td>'+'<td>'+table_div+'</td>'+/*'<td>'+tooltip_div+'</td>'+*/'<td>'+sortable_div+'</td>'+'<td>'+date_div+'</td>'+'<td>'+startdate_div+'</td>'+'<td>'+enddate_div+'</td>'+'<td>'+images_div+'</td>'+'<td>'+wordcount_div+'</td>'+'<td>'+wordcountNumber_div+'</td>'+'<td>'+dateTime_div+'</td>'+'<td>'+description+'</td>'+'<td>'+title_for_timeLine_div+'</td>'+'<td>'+descr_for_timeLine_div+'</td>'+'<td>'+date_timeLine_div+'</td>'+'<td>'+poids_div+'</td>'+'</tr>');
         //'<td>'+image_url_div+'</td>'+
         
         if(data.result.fields[i].info.notes){

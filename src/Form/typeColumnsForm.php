@@ -217,6 +217,8 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('DATE pour Frise Chronologique'),
 					':action' => 'checkAll("-date_timeline","checkboxDateFriseChrono")'])
 				),
+				"poids" => $this->t('Poids'),
+
 				//$this->t("image_url"),
 			),
 		);
@@ -333,6 +335,12 @@ class typeColumnsForm extends HelpFormBase {
 				'#type' => 'textfield',
 				'#size' => 15,
 			); 
+
+			//Poids
+			$form['table'][$i]['Poids'] = array(
+				'#type' => 'number',
+				'#size' => 15,
+			);
 		}
 		
 		//tooltip
@@ -479,9 +487,14 @@ class typeColumnsForm extends HelpFormBase {
             
             $notes='';
             $title='';
+            $poids ='';
 			 
             if ($table_data[$i][Intitulé]){
 				$title = $table_data[$i][Intitulé];
+            }
+
+            if ($table_data[$i][Poids]){
+				$poids = $table_data[$i][Poids];
             }
                      
             if ($table_data[$i][facet]){
@@ -669,6 +682,7 @@ class typeColumnsForm extends HelpFormBase {
 			$notes =substr($notes, 0, -1);
 			$filds[result][fields][$i][info][notes]=$notes;  
 			$filds[result][fields][$i][info][label]=$title;
+			$filds[result][fields][$i][info][poids]=$poids;
         
 			array_push($json["fields"], $filds[result][fields][$i]);
 		}
