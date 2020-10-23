@@ -293,7 +293,7 @@ class editMetaDataForm extends HelpFormBase {
         $form['frequence'] = array(
             '#markup' => '',
             '#type' => 'textfield',
-            '#title' => $this->t('Fréquence de maj:'),
+            '#title' => $this->t('Fréquence de mise à jour:'),
             '#attributes' => array('style' => 'width: 50%;'),
             '#required' => FALSE,
             '#maxlength' => 300
