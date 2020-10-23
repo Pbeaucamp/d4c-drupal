@@ -383,8 +383,6 @@ function fillData(data) {
 
     let hasHideFieldsProp = false;
     for (let g = 0; g < data.extras.length; g++) {
-        console.log(data.extras[g].key);
-        console.log(data.extras[g].value);
         // get donnees source and source value from extra data and assign it to new source and donnees_source
         if (data.extras[g].key == 'FTP_API') {
             var value = data.extras[g].value;
@@ -392,6 +390,9 @@ function fillData(data) {
                 $("#edit-donnes-source input").val(value);
                 const url = new URL(value);
                 $("#edit-source input").val(url.hostname);
+            }
+            else {
+                $("#edit-source input").val("FTP/SFTP");
             }
             
         }
