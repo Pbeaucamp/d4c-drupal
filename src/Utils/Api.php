@@ -2003,173 +2003,175 @@ class Api{
 		
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
-
-		/*if ($format == "csv") {
-			header('Content-Type:text/csv');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
-		} else if ($format == "xls") {
-			header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-			//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
-		} else if ($format == "json") {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		} else if ($format == "geojson") {
-			header('Content-Type:application/vnd.geo+json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
-		} else if ($format == "shp") {
-			header('Content-Type:application/zip');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
-		} else if ($format == "kml") {
-			header('Content-Type:application/vnd.google-earth.kml+xml');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
-		} else {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		}*/
-
-		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
-
-		$reqFields = "";
-		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
-
-		$i = 0;
-		foreach ($fieldsValue as $value) {
-
-				$exportval = true;
-
-			foreach ($value["annotations"] as $keyAnnota => $annotat) {
-				if($annotat["name"] == "exportApi") {
-					$exportval = false;
-					break;	
-				}
-			}
-			if($i > 0 && $exportval) {
-				$reqFields .= ',';
-				
-			}
-			if($exportval) {
-				$reqFields .= $value['name'];
-				$i++;
-			}
-			
-		}
 		if($reqFields == null || $reqFields == "") {
 			$actual_link = $_SERVER['HTTP_REFERER'];
 
 			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
 			
 		}
-		
-		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
-	
-	
-		if ($format == "csv" || $format == "json" || $format == "geojson") {
-			echo $result;
-		} else if ($format == "xls") {
-			//We create a tmp file in which we write the result and an output file to convert
-			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			$fileInput = fopen($pathInput, 'w');
-			fwrite($fileInput, $result);
-			fclose($fileInput);
-
-			//We rename the file because PhpSpreadsheet does not support conversion without
-			rename($pathInput, $pathInput .= '.csv');
-
-			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
-
-			// $spreadsheet = new Spreadsheet();
-			// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-			
-			// /* Set CSV parsing options */
-			// $reader->setDelimiter(';');
-			// $reader->setEnclosure('"');
-			// $reader->setSheetIndex(0);
-			
-			// /* Load a CSV file and save as a XLS */
-			// $spreadsheet = $reader->load($pathInput);
-			// $writer = new Xls($spreadsheet);
-			// $writer->save($pathOutput);
-			// $spreadsheet->disconnectWorksheets();
-			
-			// unset($spreadsheet);
-			
-			$reader = ReaderFactory::create(Type::CSV);
-			$reader->setFieldDelimiter(';');
-			$reader->setFieldEnclosure('"');
-			$reader->setEndOfLineCharacter("\r");
-			
-			$writer = WriterFactory::create(Type::XLSX);
-			
-			$reader->open($pathInput);
-			$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
-
-			foreach ($reader->getSheetIterator() as $sheet) {
-				foreach ($sheet->getRowIterator() as $row) {
-					$writer->addRow($row);
-				}
-			}//$writer->addRows($multipleRows); // add multiple rows at a time
-
-			$reader->close();
-			$writer->close();
-
-			header('Content-Length: ' . filesize($pathOutput));
-			readfile($pathOutput);
-		} else if ($format == "shp" || $format == "kml") {
-			//We create a tmp file in which we write the result and an output file to convert
-			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			$fileInput = fopen($pathInput, 'w');
-			fwrite($fileInput, $result);
-			fclose($fileInput);
-
-			//Get current Php directory to call the script
-			$dir = dirname(__FILE__);
-			$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
-
-			if ($format == "shp") {
-				$typeConvert = 'ESRI Shapefile';
-
-				//We create a temp directory
-				$pathOutput = $this->tempdir(null, 'output_convert_geo_file_');
+		else {
+			if ($format == "csv") {
+				header('Content-Type:text/csv');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
+			} else if ($format == "xls") {
+				header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
+			} else if ($format == "json") {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+			} else if ($format == "geojson") {
+				header('Content-Type:application/vnd.geo+json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
+			} else if ($format == "shp") {
+				header('Content-Type:application/zip');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
 			} else if ($format == "kml") {
-				$typeConvert = 'KML';
-			
-				//We create a temp file
-				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+				header('Content-Type:application/vnd.google-earth.kml+xml');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
+			} else {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
 			}
 
-			$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
-			$message = shell_exec($command);
+			$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
-			if ($format == "kml") {
+			$reqFields = "";
+			$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+
+			$i = 0;
+			foreach ($fieldsValue as $value) {
+
+					$exportval = true;
+
+				foreach ($value["annotations"] as $keyAnnota => $annotat) {
+					if($annotat["name"] == "exportApi") {
+						$exportval = false;
+						break;	
+					}
+				}
+				if($i > 0 && $exportval) {
+					$reqFields .= ',';
+					
+				}
+				if($exportval) {
+					$reqFields .= $value['name'];
+					$i++;
+				}
+				
+			}
+			
+			$result = $this->getRecordsDownload($params."&fields=".$reqFields);
+		
+		
+			if ($format == "csv" || $format == "json" || $format == "geojson") {
+				echo $result;
+			} else if ($format == "xls") {
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				fwrite($fileInput, $result);
+				fclose($fileInput);
+
+				//We rename the file because PhpSpreadsheet does not support conversion without
+				rename($pathInput, $pathInput .= '.csv');
+
+				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+
+				// $spreadsheet = new Spreadsheet();
+				// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+				
+				// /* Set CSV parsing options */
+				// $reader->setDelimiter(';');
+				// $reader->setEnclosure('"');
+				// $reader->setSheetIndex(0);
+				
+				// /* Load a CSV file and save as a XLS */
+				// $spreadsheet = $reader->load($pathInput);
+				// $writer = new Xls($spreadsheet);
+				// $writer->save($pathOutput);
+				// $spreadsheet->disconnectWorksheets();
+				
+				// unset($spreadsheet);
+				
+				$reader = ReaderFactory::create(Type::CSV);
+				$reader->setFieldDelimiter(';');
+				$reader->setFieldEnclosure('"');
+				$reader->setEndOfLineCharacter("\r");
+				
+				$writer = WriterFactory::create(Type::XLSX);
+				
+				$reader->open($pathInput);
+				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
+
+				foreach ($reader->getSheetIterator() as $sheet) {
+					foreach ($sheet->getRowIterator() as $row) {
+						$writer->addRow($row);
+					}
+				}//$writer->addRows($multipleRows); // add multiple rows at a time
+
+				$reader->close();
+				$writer->close();
+
 				header('Content-Length: ' . filesize($pathOutput));
 				readfile($pathOutput);
-			}
-			else if ($format == "shp") {
-				$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
+			} else if ($format == "shp" || $format == "kml") {
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				fwrite($fileInput, $result);
+				fclose($fileInput);
 
-				$zip = new ZipArchive();
-				if ($zip->open($pathOutputZip, ZipArchive::CREATE) !== TRUE) {
-					echo "Problem creating the zip file";
+				//Get current Php directory to call the script
+				$dir = dirname(__FILE__);
+				$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
+
+				if ($format == "shp") {
+					$typeConvert = 'ESRI Shapefile';
+
+					//We create a temp directory
+					$pathOutput = $this->tempdir(null, 'output_convert_geo_file_');
+				} else if ($format == "kml") {
+					$typeConvert = 'KML';
+				
+					//We create a temp file
+					$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 				}
-				if ($handle = opendir($pathOutput)) {
-					while (false !== ($entry = readdir($handle))) {
-						if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
-							$zip->addFile($pathOutput."/".$entry, $entry);
-						}
+
+				$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
+				$message = shell_exec($command);
+
+				if ($format == "kml") {
+					header('Content-Length: ' . filesize($pathOutput));
+					readfile($pathOutput);
+				}
+				else if ($format == "shp") {
+					$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
+
+					$zip = new ZipArchive();
+					if ($zip->open($pathOutputZip, ZipArchive::CREATE) !== TRUE) {
+						echo "Problem creating the zip file";
 					}
-					closedir($handle);
+					if ($handle = opendir($pathOutput)) {
+						while (false !== ($entry = readdir($handle))) {
+							if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
+								$zip->addFile($pathOutput."/".$entry, $entry);
+							}
+						}
+						closedir($handle);
+					}
+
+					$zip->close();
+
+					header('Content-Length: ' . filesize($pathOutputZip));
+					readfile($pathOutputZip);
 				}
-
-				$zip->close();
-
-				header('Content-Length: ' . filesize($pathOutputZip));
-				readfile($pathOutputZip);
+			} else {
+				echo $result;
 			}
-		} else {
-			echo $result;
-		}
 
+		}
+		
 		$response = new Response();
 		return $response;
 	}
