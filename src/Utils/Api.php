@@ -2003,6 +2003,34 @@ class Api{
 		
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
+
+
+		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+
+		$reqFields = "";
+		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+
+		$i = 0;
+		foreach ($fieldsValue as $value) {
+
+			$exportval = true;
+
+			foreach ($value["annotations"] as $keyAnnota => $annotat) {
+				if($annotat["name"] == "exportApi") {
+					$exportval = false;
+					break;	
+				}
+			}
+			if($i > 0 && $exportval) {
+				$reqFields .= ',';
+					
+			}
+			if($exportval) {
+				$reqFields .= $value['name'];
+				$i++;
+			}
+				
+		}
 		if($reqFields == null || $reqFields == "") {
 			$actual_link = $_SERVER['HTTP_REFERER'];
 
@@ -2032,33 +2060,6 @@ class Api{
 			} else {
 				header('Content-Type:application/json');
 				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-			}
-
-			$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
-
-			$reqFields = "";
-			$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
-
-			$i = 0;
-			foreach ($fieldsValue as $value) {
-
-					$exportval = true;
-
-				foreach ($value["annotations"] as $keyAnnota => $annotat) {
-					if($annotat["name"] == "exportApi") {
-						$exportval = false;
-						break;	
-					}
-				}
-				if($i > 0 && $exportval) {
-					$reqFields .= ',';
-					
-				}
-				if($exportval) {
-					$reqFields .= $value['name'];
-					$i++;
-				}
-				
 			}
 			
 			$result = $this->getRecordsDownload($params."&fields=".$reqFields);
