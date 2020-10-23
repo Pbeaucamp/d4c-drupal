@@ -327,7 +327,7 @@ class editMetaDataForm extends HelpFormBase {
             '#title' => $this->t('Mentions et droits :'),
             '#attributes' => array('style' => 'width: 50%;'),
             '#required' => FALSE,
-            '#maxlength' => 800
+            '#resizable' => true
         );
         
         $form['tags'] = array(
