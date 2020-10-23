@@ -2527,7 +2527,7 @@ class Api{
 		$data_array["metas"]["description"]= $desc;
 		$data_array["metas"]["modified"] = $this->findMostRecentDate(current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"], $result["result"]["metadata_modified"]);
 		$data_array["metas"]["visibility"]="domain";
-		$data_array["metas"]["metadata_processed"]=$result["result"]["metadata_created"];
+		$data_array["metas"]["metadata_processed"]=current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"];
 		$data_array["metas"]["license"]=$data_array["metas"]["license_title"];
 		//$data_array["metas"]["data_processed"]="2018-07-05T12:07:03+00:00";
 		$data_array["metas"]["publisher"]=$data_array["metas"]["organization"]["title"];
