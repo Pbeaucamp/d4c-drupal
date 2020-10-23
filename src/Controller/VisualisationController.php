@@ -188,7 +188,7 @@ class VisualisationController extends ControllerBase {
             if($met[$i]['key']=='FTP_API'){
                 if($met[$i][value]!='FTP'){
 					$lab_source =  parse_url($met[$i][value]);
-                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Site Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$lab_source["host"].'</div></div>';
+                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$lab_source["host"].'</div></div>';
                   
                     $source = '<div class="d4c-dataset-metadata-block">
                                 <div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div></div> </div>
@@ -198,7 +198,7 @@ class VisualisationController extends ControllerBase {
 
             // get source value
             if($met[$i]['key']=='source' && $met[$i][value]!= null){
-                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Site Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div>';
+                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div>';
             }
 
             //get donnees source value
