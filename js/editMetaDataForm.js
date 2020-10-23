@@ -383,6 +383,8 @@ function fillData(data) {
 
     let hasHideFieldsProp = false;
     for (let g = 0; g < data.extras.length; g++) {
+        console.log(data.extras[g].key);
+        console.log(data.extras[g].value);
         // get donnees source and source value from extra data and assign it to new source and donnees_source
         if (data.extras[g].key == 'FTP_API') {
             var value = data.extras[g].value;
