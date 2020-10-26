@@ -391,6 +391,9 @@ function fillData(data) {
                 const url = new URL(value);
                 $("#edit-source input").val(url.hostname);
             }
+            else {
+                $("#edit-source input").val("FTP/SFTP");
+            }
             
         }
         // get producer value
