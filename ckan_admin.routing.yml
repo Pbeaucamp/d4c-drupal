@@ -383,6 +383,7 @@ ckan_admin.api3.ods:
   path: '/api/records/1.0/search/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi_v2'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
