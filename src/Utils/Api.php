@@ -3727,8 +3727,13 @@ class Api{
 		}
 
 	  	$req = array();
-		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
-		$req['sql'] = $sql;
+	  	// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
+	  	if($query_params['fields'] != null) {
+	  		$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+	  	} else {
+	  		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+	  	}
+	  	$req['sql'] = $sql;
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
