@@ -178,9 +178,6 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
             
         },
         success: function (result) {
-
-            console.log(result);
-            
             let delimeter=result.delimiter;
             if(delimeter =='\\t') delimeter='\t';
             
@@ -254,18 +251,13 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 }
 
 
-
-
-
-
 function fillTable(data) {
-    console.log(data);
+    if(datasetvalues && datasetvalues.length > 0) {
+        data = datasetvalues;
+    }
     var dataString = JSON.stringify(data);
-    console.log(dataString);
     datasetvalues = data;
     clear();
-    /*console.log($('#edit-selected-org').val());*/
-
     if ($('#edit-selected-org').val() == '') {}
     else {
 
@@ -285,8 +277,6 @@ function fillTable(data) {
                 }
                 
                 Object.values(datasets);
-                
-                
                 datasets = datasets.sort(function (a, b) {
                     var nameA = a.title_data.toLowerCase(),
                         nameB = b.title_data.toLowerCase()
@@ -301,7 +291,6 @@ function fillTable(data) {
                     for (let i = 0; i < datasets.length; i++) {
 
                         var datasetvalueparams = datasets[i].parameters;
-                        console.log(datasets[i]);
                         if(JSON.stringify(datasets[i].parameters) == undefined){
                             datasetvalueparams = null;
                         }
@@ -361,7 +350,6 @@ function fillTable(data) {
                         let url_res="";
                         if(datasets[i].site == "Data_Gouv_fr") {
                             $.getJSON('https://www.data.gouv.fr/api/1/datasets/?q='+ datasets[i].title_data, function (result) {
-                                console.log(result);
 
                                 if (result) {
                                     result.data.sort(function (a, b) {
@@ -403,8 +391,6 @@ function fillTable(data) {
                         else if(datasets[i].site == "locale") {
 
                             $.getJSON('/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
-
-                                console.log(result);
 
                                 if (result) {
                                     result.data.sort(function (a, b) {
@@ -470,51 +456,23 @@ function fillTable(data) {
 
 
 function removeDatasetFromarray(data, id) {
-
-    const array = [2, 5, 9];
-
-    console.log(array);
-
-    const index = array.indexOf(5);
-    if (index > -1) {
-      array.splice(index, 1);
-    }
-
-    // array = [2, 9]
     for (let j = 0; j < data.length; j++) {
                 if ($('#edit-selected-org').val() == data[j].id_org) {
                     let datasets = data[j].datasets;
-                    console.log(datasets.length);
                     var ind = datasets.findIndex(x => x.id_data === id);
                      if (ind > -1) {
                       datasets.splice(ind, 1);
                     }
-                    console.log(datasets.length);
                 }
                 
     }
     return data;
-/*    currentdatasetid = data.result.results.findIndex(x => x.id === id);
-    console.log(currentdatasetid);*/
-    /*const index = array.indexOf(5);
-    if (index > -1) {
-      array.splice(index, 1);
-    }
-
-    return data;*/
 }
 
 function deleteMoissonnage(event) {
-
     var conf = confirm("Etes-vous sûr de vouloir supprimer ce moissonnage?");
-
-
     if (conf) {
-         var datasetId=event.attr("data-id-moisonnage");
-         
-        
-
-    
+        var datasetId=event.attr("data-id-moisonnage");
         $.ajax('/api/dataset/remove/'+datasetId, {
         type: 'POST',
         dataType: 'json',
@@ -522,8 +480,8 @@ function deleteMoissonnage(event) {
         success: function (data) {
             clear();
             var dataresult = removeDatasetFromarray(datasetvalues,datasetId);
+            datasetvalues = dataresult;
             fillTable(dataresult);
-
         },
         error: function (e) {
             console.log("ERROR: ", e);
