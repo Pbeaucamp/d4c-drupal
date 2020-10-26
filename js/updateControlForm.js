@@ -251,10 +251,6 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 }
 
 
-
-
-
-
 function fillTable(data) {
     if(datasetvalues && datasetvalues.length > 0) {
         data = datasetvalues;
@@ -474,7 +470,6 @@ function removeDatasetFromarray(data, id) {
 }
 
 function deleteMoissonnage(event) {
-
     var conf = confirm("Etes-vous sûr de vouloir supprimer ce moissonnage?");
     if (conf) {
         var datasetId=event.attr("data-id-moisonnage");
@@ -486,9 +481,7 @@ function deleteMoissonnage(event) {
             clear();
             var dataresult = removeDatasetFromarray(datasetvalues,datasetId);
             datasetvalues = dataresult;
-            console.log(datasetvalues);
             fillTable(dataresult);
-
         },
         error: function (e) {
             console.log("ERROR: ", e);
