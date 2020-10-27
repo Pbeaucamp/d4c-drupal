@@ -276,7 +276,7 @@ function fillTable(data) {
                       
                     }
 
-                    if(datasets[i].title_data==null){
+                    if(datasets[i] && datasets[i].title_data==null){
                         delete datasets[i];
                     }
                 }
@@ -296,7 +296,7 @@ function fillTable(data) {
                     for (let i = 0; i < datasets.length; i++) {
 
                         var datasetvalueparams = null;
-                        if(datasets[i].parameters && JSON.stringify(datasets[i].parameters) != undefined){
+                        if(datasets[i] && datasets[i].parameters && JSON.stringify(datasets[i].parameters) != undefined){
                             datasetvalueparams = encodeURIComponent(JSON.stringify(datasets[i].parameters));
                         }
    
