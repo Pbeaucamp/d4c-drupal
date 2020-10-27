@@ -270,7 +270,12 @@ function fillTable(data) {
                 let datasets = data[j].datasets;
 
                    for(let i= 0 ; i<datasets.length; i++){
-                    
+                    // if dataset is undefined, remove it from array
+                    if(datasets[i] == undefined) {
+                          datasets.splice(i, 1);
+                      
+                    }
+
                     if(datasets[i].title_data==null){
                         delete datasets[i];
                     }
@@ -291,7 +296,7 @@ function fillTable(data) {
                     for (let i = 0; i < datasets.length; i++) {
 
                         var datasetvalueparams = null;
-                        if(JSON.stringify(datasets[i].parameters) != undefined){
+                        if(datasets[i].parameters && JSON.stringify(datasets[i].parameters) != undefined){
                             datasetvalueparams = encodeURIComponent(JSON.stringify(datasets[i].parameters));
                         }
    
