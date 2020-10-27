@@ -251,6 +251,21 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 }
 
 
+function clearDatasetNull(datasets) {
+    console.log(" clear ");
+    for(let i= 0 ; i<datasets.length; i++){
+                        // if dataset is undefined, remove it from array
+                        if(datasets[i] == undefined) {
+                              datasets.splice(i, 1);
+                          
+                        }
+
+                        if(datasets[i] && datasets[i].title_data==null){
+                            delete datasets[i];
+                        }
+                    }
+    return datasets;
+}
 function fillTable(data) {
     if(datasetvalues && datasetvalues.length > 0) {
         data = datasetvalues;
@@ -269,18 +284,8 @@ function fillTable(data) {
                /*console.log(data[j]);*/
                 let datasets = data[j].datasets;
 
-                   for(let i= 0 ; i<datasets.length; i++){
-                    // if dataset is undefined, remove it from array
-                    if(datasets[i] == undefined) {
-                          datasets.splice(i, 1);
-                      
-                    }
+                datasets = clearDatasetNull(datasets);
 
-                    if(datasets[i] && datasets[i].title_data==null){
-                        delete datasets[i];
-                    }
-                }
-                
                 Object.values(datasets);
                 datasets = datasets.sort(function (a, b) {
                     var nameA = a.title_data.toLowerCase(),
