@@ -290,9 +290,9 @@ function fillTable(data) {
                 if(datasets!=null || datasets!='') {
                     for (let i = 0; i < datasets.length; i++) {
 
-                        var datasetvalueparams = datasets[i].parameters;
-                        if(JSON.stringify(datasets[i].parameters) == undefined){
-                            datasetvalueparams = null;
+                        var datasetvalueparams = null;
+                        if(JSON.stringify(datasets[i].parameters) != undefined){
+                            datasetvalueparams = encodeURIComponent(JSON.stringify(datasets[i].parameters));
                         }
    
                         let name_id = '<td><a target="_blank"  href ="/visualisation/table/?id=' + datasets[i].id_data + '">' + datasets[i].title_data + '</a><div style="display:none" class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-name-2 form-item-table-' + i + '-name-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-name-2" type="text" id="edit-table-0-name-2" name="table[' + i + '][name][2]" value="' + datasets[i].id_data + '" size="60" maxlength="128" class="form-text"></div></td>';
@@ -365,7 +365,7 @@ function fillTable(data) {
                                     let firstResource = getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data));
                                     url_res = firstResource ? firstResource.url : '', type_res='csv', type_site='DataGouvfr';
     
-                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
+                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]" value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+datasetvalueparams+'" data-type="ods" data-parameters="{}"'+
                                         ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>';
 
                                     del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
@@ -406,7 +406,7 @@ function fillTable(data) {
                                     let firstResource = getFirstRessource(getdatasetbyTitle(result,datasets[i].title_data));
                                     url_res = firstResource ? firstResource.url : '', type_res='csv', type_site='InfoCom94';
 
-                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]"  value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}"'+
+                                    details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]"  value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+datasetvalueparams+'" data-type="ods" data-parameters="{}"'+
                                         ' onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span></td>'
                                     del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
                         <span  title="Supprimer" class="fa fa-trash-o " style="cursor:pointer;vertical-align:middle;margin-left:1em;color:black;font-size:20px;"></span>
@@ -428,7 +428,7 @@ function fillTable(data) {
                             });
                         }
                         else {
-                            details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]"  value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+encodeURIComponent(JSON.stringify(datasetvalueparams))+'" data-type="ods" data-parameters="{}" onclick="openModalFilter($(this) );" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span> <input type ="hidden" name ="savedata-moio" id = "savedata-moi-"'+datasets[i].id_data_site+' value ="" /></td>'
+                            details ='<td><input type="hidden" id="valuedetails_span_'+datasets[i].id_data+'" name="table[' + i + '][valuedetails_span]"  value="" data-nhits="" /><span id="details-moisonnage-span_'+datasets[i].id_data_site+'" class=" span_'+i+' hello details-moisonnage-span_'+datasets[i].id_data_site+' btn btn-info js-open-modal" role="button" data-modal="1" data-url="https://public.opendatasoft.com/" data-id="'+datasets[i].id_data_site+'" data-id-dataset="'+datasets[i].id_data+'" data-param-values-set="'+datasetvalueparams+'" data-type="ods" data-parameters="{}" onclick="openModalFilter($(this) );" style="cursor:pointer; border-style:solid!important; border-radius:10px; border:1px; border-color:#a6a6a6; background-color:#f0f0eb; padding: 9px;"> Détails</span> <input type ="hidden" name ="savedata-moio" id = "savedata-moi-"'+datasets[i].id_data_site+' value ="" /></td>'
                             del_moissonage =`<td> <a href="#"    role="button" data-id="`+url_res+`" data-type="ods" onclick="deleteMoissonnage($(this));" data-id-moisonnage =`+datasets[i].id_data+` data-datset =`+dataString+`>
                         <span  title="Supprimer" class="fa fa-trash-o " style="cursor:pointer;vertical-align:middle;margin-left:1em;color:black;font-size:20px;"></span>
 
