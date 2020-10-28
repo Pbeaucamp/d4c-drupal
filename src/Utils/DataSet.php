@@ -1017,9 +1017,16 @@ class DataSet{
 			}
 			if($prevmod) {
 				//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}
 			}
         
