@@ -151,17 +151,6 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('FACETTE'),
 					':action' => 'checkAll("-facet","checkboxFacet")'])
 				),
-				//add export/api checkbox 
-				"ExportDownload" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxExportDownload" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
-					['@name' => $this->t('Cacher à l\'export'),
-					':action' => 'checkAll("-exportApi","checkboxExportDownload")'])
-				),
-
-				//add hideColumnsApi checkbox 
-				"HideColumnsApi" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxHideColumnsApi" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
-					['@name' => $this->t('Cacher pour l\'API'),
-					':action' => 'checkAll("-hideColumnsApi","checkboxHideColumnsApi")'])
-				),
 
 				"facetM" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxFacetM" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('FACETTE Multiple'),
@@ -175,6 +164,16 @@ class typeColumnsForm extends HelpFormBase {
 				"tri" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxTri" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('Tri'),
 					':action' => 'checkAll("-sortable","checkboxTri")'])
+				),
+				//add export/api checkbox 
+				"ExportDownload" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxExportDownload" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Cacher à l\'export'),
+					':action' => 'checkAll("-exportApi","checkboxExportDownload")'])
+				),
+				//add hideColumnsApi checkbox 
+				"HideColumnsApi" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxHideColumnsApi" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Cacher pour l\'API'),
+					':action' => 'checkAll("-hideColumnsApi","checkboxHideColumnsApi")'])
 				),
 				"datePonctuel" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxDatePonctuel" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
 					['@name' => $this->t('Date ponctuel'),
