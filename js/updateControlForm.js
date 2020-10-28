@@ -252,12 +252,10 @@ $.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
 
 function clearDatasetNull(datasets) {
-    console.log(" clear ");
     for(let i= 0 ; i<datasets.length; i++){
                         // if dataset is undefined, remove it from array
                         if(datasets[i] == undefined) {
                               datasets.splice(i, 1);
-                          
                         }
 
                         if(datasets[i] && datasets[i].title_data==null){
@@ -299,7 +297,7 @@ function fillTable(data) {
                 
                 if(datasets!=null || datasets!='') {
                     for (let i = 0; i < datasets.length; i++) {
-
+                        console.log(datasets[i]);
                         var datasetvalueparams = null;
                         if(datasets[i] && datasets[i].parameters && JSON.stringify(datasets[i].parameters) != undefined){
                             datasetvalueparams = encodeURIComponent(JSON.stringify(datasets[i].parameters));
@@ -310,6 +308,7 @@ function fillTable(data) {
                         let orgine = '<td>Moissonnage</td>';
                         /*let site = '<td>' + datasets[i].site + '</td>';*/
                         // let site = '<td><a target="_blank"  href ="' + keydataset[datasets[i].id_data] + '">'  + keydataset[datasets[i].id_data] + '</a></td>';
+                        console.log(datasets[i].siteUrl);
                         let site = '<td><a target="_blank"  href ="' + datasets[i].siteUrl + '">'  + datasets[i].siteUrl + '</a></td>';
 
                         if (datasets[i].site == 'joinDataset') {
