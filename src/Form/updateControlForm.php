@@ -194,10 +194,9 @@ class updateControlForm extends HelpFormBase {
                     for($j = 0; $j<count($datasets); $j++){
                         
                         if($datasets[$j]->id_data == $res[name][2]) {
-                            $params = $form_state->getValue('valuedetails_span-'.$datasets[$j]->id_data);
-                            
                             if($res[valuedetails_span] != null || $res[valuedetails_span] != "" ) {
                               $datasets[$j]->parameters = json_decode($res[valuedetails_span]); 
+                              $datasets[$j]->date_last_filtre = date("Y-m-d H:i:s");
                             }
                             
                             $datasets[$j]->periodic_update = $res[period][1].';'.$res[period][2].';'.$res[status];

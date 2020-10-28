@@ -571,7 +571,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"periodic_update" =>'',
 					"site"=>$site_search,
 					"site_infocom"=>$jsonValue["url"],
-					"parameters" => $jsonValue["params"]
+					"parameters" => $jsonValue["params"],
+					"date_last_filtre" => date("Y-m-d H:i:s")
 				];
            
                 $controlEx =false;
@@ -1297,7 +1298,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"periodic_update" =>'',
 					"site"=>$site_search,
 					"site_infocom"=>'',
-					"parameters" => $jsonValue["params"]
+					"parameters" => $jsonValue["params"],
+					"date_last_filtre" => date("Y-m-d H:i:s")
 				];
 				
 				//error_log($dataset_conf);
@@ -1479,7 +1481,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"periodic_update" =>'',
 					"site"=>$site_search,
 					"site_infocom"=>$site_search_url,
-					"parameters" => $jsonValue["params"]
+					"parameters" => $jsonValue["params"],
+					"date_last_filtre" => date("Y-m-d H:i:s")
 				];
            
                 $controlEx =false;
