@@ -838,8 +838,7 @@ class DataSet{
         date_default_timezone_set('Europe/Paris');
         
         //$config->set('dataForUpdateDatasets', null)->save();
-        
-        
+
         foreach($dataForUpdateDatasets as &$value){
             
             $id_org=$value->id_org;
@@ -865,8 +864,15 @@ class DataSet{
 					  	if (property_exists($dataset, 'date_last_filtre')) {
 	            			$date_last_filtre = $dataset->date_last_filtre;
 	            		}
-						$query =  DataSet::updateDatasetFromDataGouv($dataset->id_data_site, $dataset->id_data, $id_org, $dataset->site, $site_inf,$dataset->title_data, $dataset->parameters, $date_last_filtre);
+	            		$date_last_moissonnage = null;
+		            	if (property_exists($dataset, 'date_last_moissonnage')) {
+	            			$date_last_moissonnage = $dataset->date_last_moissonnage;
+	            		}
+						$query =  DataSet::updateDatasetFromDataGouv($dataset->id_data_site, $dataset->id_data, $id_org, $dataset->site, $site_inf,$dataset->title_data, $dataset->parameters, $date_last_filtre, $date_last_moissonnage);
 						$dataset->last_update = date("m/d/Y H:i:s");
+						//if (property_exists($dataset, 'date_last_moissonnage')) {
+	            			$dataset->date_last_moissonnage = date("m/d/Y H:i:s");
+	            		//}
 						$dataset->periodic_update = "D;1;A";
 						$config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
                     }
@@ -930,8 +936,15 @@ class DataSet{
 						  	if (property_exists($dataset, 'date_last_filtre')) {
 		            			$date_last_filtre = $dataset->date_last_filtre;
 		            		}
-							$query =  DataSet::updateDatasetFromDataGouv($dataset->id_data_site, $dataset->id_data, $id_org, $dataset->site, $site_inf,$dataset->title_data, $dataset->parameters, $date_last_filtre);
+		            		$date_last_moissonnage = null;
+		            		if (property_exists($dataset, 'date_last_moissonnage')) {
+	            				$date_last_moissonnage = $dataset->date_last_moissonnage;
+	            			}
+							$query =  DataSet::updateDatasetFromDataGouv($dataset->id_data_site, $dataset->id_data, $id_org, $dataset->site, $site_inf,$dataset->title_data, $dataset->parameters, $date_last_filtre, $date_last_moissonnage);
                             $dataset->last_update = date("m/d/Y H:i:s");
+                            //if (property_exists($dataset, 'date_last_moissonnage')) {
+	            				$dataset->date_last_moissonnage = date("m/d/Y H:i:s");
+	            			//}
                             $config->set('dataForUpdateDatasets', json_encode($dataForUpdateDatasets))->save();
 						}
 						else {
@@ -951,7 +964,7 @@ class DataSet{
 		return $response;
     }
     
-    static function updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org, $site, $site_search, $name, $parameters, $date_last_filtre=null)
+    static function updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org, $site, $site_search, $name, $parameters, $date_last_filtre=null, $date_last_moi =null)
     {
 		error_log('moissonage datagouv id : ' . print_r($name,true));
         $api = new Api();    
@@ -981,9 +994,16 @@ class DataSet{
 			}
 			if($prevmod) {
 				//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}
 			}
         
@@ -1171,10 +1191,18 @@ class DataSet{
 			}
 			if($prevmod) {
 				//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}
+				
 			}
         
 			$extras = $results->extras;
@@ -1376,9 +1404,16 @@ class DataSet{
 				}
 			}
 			if($prevmod) {
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}	
 			}
         
@@ -1518,9 +1553,16 @@ class DataSet{
 				}
 			}
 			if($prevmod) {
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}	
 			}
         
@@ -1652,9 +1694,16 @@ class DataSet{
 				}
 			}error_log($lastmod ." ".$prevmod);
 			if($prevmod) {
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}
 			}
         
@@ -1781,9 +1830,16 @@ class DataSet{
 				}
 			}
 			if($prevmod) {
-				if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($date_last_moi) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
+				} else {
+					if(max(strtotime($lastmod), strtotime($date_last_filtre)) <= strtotime($prevmod) ) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+					}
 				}
 			}
         
@@ -2066,9 +2122,16 @@ class DataSet{
 				}
 			}
 			if($prevmod) {
-				if(max(strtotime($lastmod1), strtotime($date_last_filtre)) <= strtotime($prevmod) && max(strtotime($lastmod2), strtotime($date_last_filtre)) <= strtotime($prevmod)) {
-					error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
-					return;
+				if($date_last_moi != null) {
+					if(max(strtotime($lastmod1), strtotime($date_last_filtre)) <= strtotime($date_last_moi) && max(strtotime($lastmod2), strtotime($date_last_filtre)) <= strtotime($date_last_moi)) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+				}
+				} else {
+					if(max(strtotime($lastmod1), strtotime($date_last_filtre)) <= strtotime($prevmod) && max(strtotime($lastmod2), strtotime($date_last_filtre)) <= strtotime($prevmod)) {
+						error_log('moissonage id : ' . print_r($name,true) . ' pas de moissonnage');
+						return;
+				}
 				}
 			}
         

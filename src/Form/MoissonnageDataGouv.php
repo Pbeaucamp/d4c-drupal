@@ -465,6 +465,7 @@ class MoissonnageDataGouv extends HelpFormBase {
         else if($site_search=='d4c'){
         
 			$org_id= $form_state->getValue('org_def');
+			
            
 			$optionst = array(
 				CURLOPT_RETURNTRANSFER => true,
@@ -569,7 +570,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"site"=>$site_search,
 					"site_infocom"=>$jsonValue["url"],
 					"parameters" => $jsonValue["params"],
-					"date_last_filtre" => date("Y-m-d H:i:s")
+					"date_last_filtre" => date("Y-m-d H:i:s"),
+					"date_last_moissonnage" => date('m/d/Y H:i:s', time())
 				];
            
                 $controlEx =false;
@@ -1180,6 +1182,7 @@ class MoissonnageDataGouv extends HelpFormBase {
         else if($site_search=='Public_OpenDataSoft_com'){
             
 			$org_id= $form_state->getValue('org_def');
+			
            
 			$optionst = array(
 				CURLOPT_RETURNTRANSFER => true,
@@ -1234,6 +1237,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
 				$extras[(count($extras) - 1)]['value'] = $results->metadata_processed;
+				
 				
 				$extras[count($extras)]['key'] = 'date_moissonnage_creation';
 				$extras[(count($extras) - 1)]['value'] = $results->modified;
@@ -1293,7 +1297,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"site"=>$site_search,
 					"site_infocom"=>'',
 					"parameters" => $jsonValue["params"],
-					"date_last_filtre" => date("Y-m-d H:i:s")
+					"date_last_filtre" => date("Y-m-d H:i:s"),
+					"date_last_moissonnage" => date('m/d/Y H:i:s', time())
 				];
 				
 				//error_log($dataset_conf);
@@ -1476,7 +1481,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					"site"=>$site_search,
 					"site_infocom"=>$site_search_url,
 					"parameters" => $jsonValue["params"],
-					"date_last_filtre" => date("Y-m-d H:i:s")
+					"date_last_filtre" => date("Y-m-d H:i:s"),
+					"date_last_moissonnage" => date('m/d/Y H:i:s', time())
 				];
            
                 $controlEx =false;
