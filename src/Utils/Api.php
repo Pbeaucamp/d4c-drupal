@@ -185,6 +185,7 @@ class Api{
 
 				//We decode parameters (replace %3D by = and + by a space)
 				$params = str_replace('%3D', '=', $params);
+				$params = str_replace('%C3%A2', 'â', $params);
 				$params = str_replace('+', ' ', $params);
 			}
 			else {
@@ -2015,10 +2016,13 @@ class Api{
 		$format = $query_params['format'];
 
 
-		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+		//$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
 		$reqFields = "";
 		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
+
+		//We check if at least one column is hidden
+		$oneColumnIsHidden = false;
 
 		$i = 0;
 		foreach ($fieldsValue as $value) {
@@ -2028,6 +2032,7 @@ class Api{
 			foreach ($value["annotations"] as $keyAnnota => $annotat) {
 				if($annotat["name"] == "exportApi") {
 					$exportval = false;
+					$oneColumnIsHidden = true;
 					break;	
 				}
 			}
@@ -2041,7 +2046,7 @@ class Api{
 			}
 				
 		}
-		if($reqFields == null || $reqFields == "") {
+		if ($oneColumnIsHidden && ($reqFields == null || $reqFields == "")) {
 			$actual_link = $_SERVER['HTTP_REFERER'];
 
 			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
@@ -3095,6 +3100,7 @@ class Api{
 													  
 	public function callDatastoreApiGeoPreview($params) {
 
+		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 		
 		$fields = $this->getAllFields($query_params['resource_id']);
@@ -3557,6 +3563,9 @@ class Api{
 		$fieldId = "_id";
 		$fieldCoordinates='';$fieldGeometries='';
 		$reqQfilter;
+
+		$params = $this->retrieveParameters($params);
+
 		$query_params = $this->proper_parse_str($params);
 		$data_array = array();
 		foreach($query_params as $key => $value) {
@@ -3750,6 +3759,7 @@ class Api{
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
