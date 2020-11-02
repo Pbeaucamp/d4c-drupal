@@ -254,6 +254,8 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                         }
                     
                         $dataset_value->last_update = date("m/d/Y H:i:s");
+                        $dataset_value->date_last_moissonnage = date("m/d/Y H:i:s");
+                        //drupal_set_message('<pre>'. date("m/d/Y H:i:s") .'</pre>');
                         
 //                         if($time_up_value==''){
 //                            $time_up_value=='1';
