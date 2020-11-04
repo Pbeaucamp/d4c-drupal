@@ -640,8 +640,8 @@ class typeColumnsForm extends HelpFormBase {
             }
             
             if ($table_data[$i][description]){
-				// $notes =$notes.'<!--description?'.str_replace(' ', '_', $table_data[$i][description]).'-->,';
-				$notes =$notes.'<!--description?'.$table_data[$i][description].'-->,';
+				$notes =$notes.'<!--description?'.str_replace(' ', '_', $table_data[$i][description]).'-->,';
+				//$notes =$notes.'<!--description?'.$table_data[$i][description].'-->,';
             }
             
             if ($table_data[$i][title_for_timeLine]){
