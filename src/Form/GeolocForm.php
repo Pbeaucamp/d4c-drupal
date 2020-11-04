@@ -111,7 +111,7 @@ class GeolocForm extends HelpFormBase
 
 		$form['separator'] = array(
 			'#type' => 'textfield',
-			'#title' => $this->t('Séparateur (, par défaut):'),
+			'#title' => $this->t('Séparateur (lors de l\'intégration d\'un fichier, la plateforme Data4Citizen utilise \',\' comme séparateur par défaut):'),
 			'#default_value' => t(','),
 		);
 

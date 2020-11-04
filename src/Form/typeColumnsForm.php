@@ -48,37 +48,33 @@ class typeColumnsForm extends HelpFormBase {
 		$this->urlCkan = $this->config->ckan->url; 
         
         $api = new Api;
-        $dataSet= $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-        $dataSet = $dataSet->getContent();
-        $dataSet = json_decode($dataSet,true);
-        $dataSet = $dataSet[result][results];
+        // $dataSet= $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
+        // $dataSet = $dataSet->getContent();
+        // $dataSet = json_decode($dataSet,true);
+        // $dataSet = $dataSet[result][results];
 		
-		uasort($dataSet, function($a, $b) {
-			$res =  strcasecmp($a['title'], $b['title']);
-			return $res;
-		});
+		// uasort($dataSet, function($a, $b) {
+		// 	$res =  strcasecmp($a['title'], $b['title']);
+		// 	return $res;
+		// });
 		
-		$this->datasets = $dataSet;
+		// $this->datasets = $dataSet;
 		
-        $ids=array();
-        $tableData=array();
+        // $ids=array();
+        // $tableData=array();
        
-        for($i=0; $i<count($dataSet); $i++){
-            for($j=0; $j<count($dataSet[$i][resources]); $j++){
-                if($dataSet[$i][resources][$j][format]=='CSV'){
-					$filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
-					$tableData[$i]=$filds;
+        // for($i=0; $i<count($dataSet); $i++){
+        //     for($j=0; $j<count($dataSet[$i][resources]); $j++){
+        //         if($dataSet[$i][resources][$j][format]=='CSV'){
+		// 			$filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
+		// 			$tableData[$i]=$filds;
 						
-					$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
+		// 			$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
 						
-					break;
-                }
-                // else{
-                    // $tableData[$i]='no_data_csv';
-                    // $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
-                // }
-            }
-        }
+		// 			break;
+        //         }
+        //     }
+        // }
 		
 		///////////////////////////////organization_list////
 
@@ -126,6 +122,7 @@ class typeColumnsForm extends HelpFormBase {
 			],
         );
 
+        $ids = array();
 		$form['selected_data'] = array(
 			'#type' => 'select',
 			'#title' => t('Sélectionner des données'),
@@ -767,47 +764,39 @@ class typeColumnsForm extends HelpFormBase {
 	}
 
 	public function datasetCallback(array &$form, FormStateInterface $form_state){
-   
-        $api = new Api;
+		$api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');
 		$orgaFilter = "";
 		if($selected_org!=''){
 			$orgaFilter = '&q=organization:"'.$selected_org.'"';
 		}
-// error_log($orgaFilter);
         $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
 			
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet, true);
-        $dataSet = $dataSet[result][results];
-        
-		$ids = array();
-
-		/*foreach($dataSet as &$ds) {
-			$ids[$ds[id]] = $ds[title];
-		}*/
+		$dataSet = $dataSet[result][results];
 		
-        $tableData=array();
-       
+		uasort($dataSet, function($a, $b) {
+			$res =  strcasecmp($a['title'], $b['title']);
+			return $res;
+		});
+
+		$ids = array();
+        // $tableData=array();
         for($i=0; $i<count($dataSet); $i++){
             for($j=0; $j<count($dataSet[$i][resources]); $j++){
                 if($dataSet[$i][resources][$j][format]=='CSV'){
-					$filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
-					$tableData[$i]=$filds;
+					// $filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
+					// $tableData[$i]=$filds;
 						
 					$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
 						
 					break;
                 }
-                // else{
-                    // $tableData[$i]='no_data_csv';
-                    // $ids[$dataSet[$i][id].'%no_data_csv']=$dataSet[$i][name];
-					// break;
-                // }
             }
-        }
-          // error_log(count($ids));
+		}
+		
 		$form['selected_data'] = [
             '#type' => 'select',
 			'#title' => t('Sélectionner des données'),
@@ -816,8 +805,8 @@ class typeColumnsForm extends HelpFormBase {
 				'onchange' => 'getTableById()',),
 			'#prefix' =>'<div id="selected_data">',
 			'#suffix' =>'</div>',
-        ];
-
+		];
+		
 		return $form['selected_data'];
-	}  
+	}
 }
