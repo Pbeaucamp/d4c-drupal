@@ -989,6 +989,7 @@ class DataSet{
     
     static function updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org, $site, $site_search, $name, $parameters, $date_last_filtre=null, $date_last_moi =null)
     {
+    	
 		error_log('moissonage datagouv id : ' . print_r($name,true));
         $api = new Api();    
         
@@ -1392,7 +1393,7 @@ class DataSet{
              
         }
         else if($site=='Data_Gouv_fr'){
-			return Dataset::harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org, $update, $resource);
+			return Dataset::harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org, $update, $resource,$date_last_moi);
         }
         else if($site=='Public_OpenDataSoft_com'){
             //drupal_set_message('<pre>Public_OpenDataSoft_com</pre>');
@@ -2624,7 +2625,7 @@ class DataSet{
                         
     }
 	
-	static function harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org) {
+	static function harvestDataGouv($ckan, $api, $id_dataset, $id_dataset_gouv, $name, $id_org, $update, $resource,$date_last_moi) {
 		Logger::logMessage("Harvest DataGouvFR " . $id_dataset_gouv ."\r\n");
 
 		$query = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/".$id_dataset_gouv);
@@ -2670,7 +2671,32 @@ class DataSet{
 		}
 		if($prevmod) {
 			//error_log('moissonage datagouv id : ' . $name . ' test : ' . strtotime($lastmod) . ' -- ' . strtotime($prevmod));
-			if (strtotime($lastmod) <= strtotime($prevmod)) {
+			if($date_last_moi != null){
+				if (strtotime($lastmod) <= strtotime($date_last_moi)) {
+
+				$datasetLastModificationLog = date('m/d/Y H:i:s', strtotime($date_last_moi));
+				
+				Logger::logMessage(" -> Dataset last modification " . $datasetLastModificationLog ." is superior to external dataset modification '" . $externalDatasetLastModificationLog . "' \r\n");
+
+				$lastHarvest = "1970-01-01T00:00:00";
+				Logger::logMessage(" -> Checking extra harvest last update ... \r\n");
+				if ($results->extras && $results->extras->{'harvest:last_update'}) {
+					$lastHarvest = $results->extras->{'harvest:last_update'};
+				}
+
+				$lastmod = $lastHarvest;
+				$externalDatasetLastModificationLog = date('m/d/Y H:i:s', strtotime($lastmod));
+
+				Logger::logMessage(" -> Found last harvest '" . $externalDatasetLastModificationLog .  "' \r\n");
+
+				if (strtotime($lastmod) <= strtotime($date_last_moi)) {
+					Logger::logMessage(" -> We do not harvest the dataset because dataset last modification " . $datasetLastModificationLog ." is superior to external dataset modification '" . $externalDatasetLastModificationLog . "' and extra harvest:last_update '" . $externalDatasetLastModificationLog . "'\r\n\r\n");
+					return;
+				}
+			}
+			}
+			else {
+				if (strtotime($lastmod) <= strtotime($prevmod)) {
 
 				$datasetLastModificationLog = date('m/d/Y H:i:s', strtotime($prevmod));
 				
@@ -2691,6 +2717,7 @@ class DataSet{
 					Logger::logMessage(" -> We do not harvest the dataset because dataset last modification " . $datasetLastModificationLog ." is superior to external dataset modification '" . $externalDatasetLastModificationLog . "' and extra harvest:last_update '" . $externalDatasetLastModificationLog . "'\r\n\r\n");
 					return;
 				}
+			}
 			}
 		}
 		

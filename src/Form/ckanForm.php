@@ -237,6 +237,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $time_up_value = $form_state->getValue('time_up_value');
         $id_org = $form_state->getValue('selected_org');
         $id_dataset = $form_state->getValue('id_dataset_selected');
+        $date_last_moissonnage ="";
         
         $saveTimeZone = date_default_timezone_get();
         date_default_timezone_set('Europe/Paris');
@@ -246,6 +247,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                 foreach($value->datasets as &$dataset_value){
                     if($dataset_value->id_data==$datasett){
                         
+
                         //drupal_set_message('<pre>'. print_r($dataset_value,true) .'</pre>');
                         $id_dataset_gouv = $dataset_value->id_data_site;
                         $site = $dataset_value->site;
@@ -258,11 +260,12 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                     
                         $dataset_value->last_update = date("m/d/Y H:i:s");
                         $dataset_value->date_last_moissonnage = date("m/d/Y H:i:s");
+                        $date_last_moissonnage = $dataset_value->date_last_moissonnage;
                         //drupal_set_message('<pre>'. date("m/d/Y H:i:s") .'</pre>');
                         
 //                         if($time_up_value==''){
 //                            $time_up_value=='1';
-//                        }
+//                        }echo "<pre>";
                           
                         //$dataset_value->periodic_update=$time_up.';'.$time_up_value.';'.$A_P;
                         
@@ -271,12 +274,12 @@ public function buildForm(array $form, FormStateInterface $form_state) {
                 }
 			}
         }
-        
+
         date_default_timezone_set($saveTimeZone);
 
 		$config->set('dataForUpdateDatasets', json_encode($dataForUpdate))->save(); 
-		$query = DataSet::updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org,$site,$site_infocom, $title_data, $parameters);
-		$query = json_decode($query);    
+		$query = DataSet::updateDatasetFromDataGouv($id_dataset_gouv, $id_dataset, $id_org,$site,$site_infocom, $title_data, $parameters,null,$date_last_moissonnage);
+		$query = json_decode($query);
     
 	}    
     
