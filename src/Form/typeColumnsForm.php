@@ -112,7 +112,7 @@ class typeColumnsForm extends HelpFormBase {
 		$form['filtr_org'] = array(
             //'#prefix' =>'',
             '#type' => 'select',
-            '#title' => t('Organisation :'),
+            '#title' => t('Filtres :'),
             '#options' => $organizationList,
             '#empty_option' => t('----'),
             '#attributes' => array('style' => 'width: 50%;','onchange' => 'baba();'),
