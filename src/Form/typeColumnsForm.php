@@ -129,10 +129,15 @@ class typeColumnsForm extends HelpFormBase {
 			'#options' => $ids,
 			'#attributes' => array(
 				'onchange' => 'getTableById()',
-				//'id' => 'selected_data'
+				'id' => 'selected_data'
 			),
 			'#prefix' =>'<div id="selected_data">',
 			'#suffix' =>'</div>',
+		);
+        
+        $form['selected_data_id'] = array(
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'display:none'),
 		);
 			
 		// table form 
@@ -461,9 +466,9 @@ class typeColumnsForm extends HelpFormBase {
 	{
         //$form['#attached']['library'][] = 'ckan_admin/typeColumns.form';
 
-		$selectData = $form_state->getValue('selected_data');
-        
-        $selectData = explode("%", $selectData);
+		// $selectData = $form_state->getValue('selected_data');
+        $selectData = $form_state->getValue('selected_data_id');
+		$selectData = explode("%", $selectData);
         $id_data = $selectData[0];
         $id_resource = $selectData[1];   
         
@@ -796,17 +801,18 @@ class typeColumnsForm extends HelpFormBase {
                 }
             }
 		}
-		
-		$form['selected_data'] = [
+
+		$elem = [
             '#type' => 'select',
 			'#title' => t('Sélectionner des données'),
-			'#options' => $ids,
-			'#attributes' => array(
-				'onchange' => 'getTableById()',),
-			'#prefix' =>'<div id="selected_data">',
-			'#suffix' =>'</div>',
+            '#options' => $ids,
+            '#attributes' => [
+                'onchange' => 'getTableById()', 
+				'id' => 'selected_data'
+			],
+       
 		];
 		
-		return $form['selected_data'];
+		return $elem;
 	}
 }

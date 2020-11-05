@@ -42,15 +42,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function getTableById(refresh=true){
 //$('#edit-table > tbody').val("");
-    $('#edit-table tbody tr').remove();
-    
-	let param = $('#selected_data select').val();    
+	$('#edit-table tbody tr').remove();
+	
+    $('#edit-selected-data-id').val('');
+    $('#edit-selected-data-id').val($('#selected_data').val());
+	
+	let param = $('#selected_data').val();
+
 	$('#selected_data select').attr("data-drupal-selector", "edit-selected-data");
 	$('#selected_data select').attr("id", "edit-selected-data");
 	$('#selected_data select').attr("name", "selected_data");
 	$('#selected_data select').attr("class", "form-select");
 	
-    if(param != null){
+    if(param != null && param != 'new'){
 		param = param.split('%');
 		datasetId = param[0];   
 		resourceId = param[1];   
