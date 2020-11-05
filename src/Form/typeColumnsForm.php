@@ -125,7 +125,6 @@ class typeColumnsForm extends HelpFormBase {
         $ids = array();
 		$form['selected_data'] = array(
 			'#type' => 'select',
-			'#title' => t('Sélectionner des données'),
 			'#options' => $ids,
 			'#attributes' => array(
 				'onchange' => 'getTableById()',
@@ -804,7 +803,6 @@ class typeColumnsForm extends HelpFormBase {
 
 		$elem = [
             '#type' => 'select',
-			'#title' => t('Sélectionner des données'),
             '#options' => $ids,
             '#attributes' => [
                 'onchange' => 'getTableById()', 
