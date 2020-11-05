@@ -241,7 +241,11 @@ class VisualisationController extends ControllerBase {
 			// define mention legales bloc
 			if($met[$i]['key']=='mention_legales'){
 
-                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions et droits</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
+                    $mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+	                    					<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions et droits</div> 
+	                    					<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].
+	                    					'</div>
+                    				  </div>';
 
          }
 
@@ -250,7 +254,9 @@ class VisualisationController extends ControllerBase {
 
                     $frequence ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
                     				<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de mise à jour</div>
-                    				<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div><br>';
+                    				<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].
+                    				'</div>
+                    			</div>';
 
          }
 
@@ -686,10 +692,7 @@ class VisualisationController extends ControllerBase {
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\']"></d4c-dataset-metadata-block>
 
 										'.$LinkedDataSet.'
-										'.$mention_legales.'
-									
-									
-									 <div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
+									<div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
 										<div class="d4c-dataset-metadata-block__metadata">
 											<div class="d4c-dataset-metadata-block__metadata-name" translate>Last processing</div>
 											<div class="d4c-dataset-metadata-block__metadata-value">
@@ -698,6 +701,7 @@ class VisualisationController extends ControllerBase {
 											</div>
 										</div>
 									</div>
+									'.$mention_legales.'
 							  
 									<d4c-dataset-metadata-block-selector metadata-templates="interopTemplates" values="ctx.dataset.interop_metas"></d4c-dataset-metadata-block-selector>
 
