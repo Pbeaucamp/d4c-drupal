@@ -162,6 +162,17 @@ class Api{
 		curl_close($curl);
 
 		$result = json_decode($result,true);
+		foreach ($result['result']['fields'] as $value) {
+			$description = $value['info']['notes'];
+			 if(preg_match("/<!--.*description.*-->/i",$description)) {
+			 	preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $description, $matches);
+
+				if($matches) {
+					$description = $matches[1][0];
+					$description = preg_replace('/_/i', ' ', $description);
+				}
+				}
+		}
 		unset($result["help"]);
 		unset($result["result"]["_links"]);
 
@@ -1438,6 +1449,7 @@ class Api{
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
 				if($matches) {
 					$descriptionLabel = $matches[1][0];
+					$descriptionLabel = preg_replace('/_/i', ' ', $descriptionLabel);
 				}
 				else {
 					$descriptionLabel = '';
