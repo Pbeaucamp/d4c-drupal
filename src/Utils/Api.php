@@ -162,6 +162,17 @@ class Api{
 		curl_close($curl);
 
 		$result = json_decode($result,true);
+		foreach ($result['result']['fields'] as $value) {
+			$description = $value['info']['notes'];
+			 if(preg_match("/<!--.*description.*-->/i",$description)) {
+			 	preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $description, $matches);
+
+				if($matches) {
+					$description = $matches[1][0];
+					$description = preg_replace('/_/i', ' ', $description);
+				}
+				}
+		}
 		unset($result["help"]);
 		unset($result["result"]["_links"]);
 
@@ -185,6 +196,7 @@ class Api{
 
 				//We decode parameters (replace %3D by = and + by a space)
 				$params = str_replace('%3D', '=', $params);
+				$params = str_replace('%C3%A2', 'â', $params);
 				$params = str_replace('+', ' ', $params);
 			}
 			else {
@@ -1383,6 +1395,9 @@ class Api{
 				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
 					$annotations[] = array("name" => "exportApi");
 				}
+				if(preg_match("/<!--.*hideColumnsApi.*-->/i",$description)) {
+					$annotations[] = array("name" => "hideColumnsApi");
+				}
 				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
@@ -1434,6 +1449,7 @@ class Api{
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
 				if($matches) {
 					$descriptionLabel = $matches[1][0];
+					$descriptionLabel = preg_replace('/_/i', ' ', $descriptionLabel);
 				}
 				else {
 					$descriptionLabel = '';
@@ -1480,6 +1496,8 @@ class Api{
 			} else {
 				$field['type'] = $value['type'];
 			}
+
+			$field['poids'] = $value['info']['poids'];
 			$data_array[] = $field;
 		}
 		
@@ -1540,6 +1558,15 @@ class Api{
 		$result = json_decode($result,true);
 
 		$res = array();$allFields = array();
+
+		// sort array by poids
+		$fieldArray = array();
+		foreach ($result['result']['fields'] as $key => $row)
+		{
+
+		    $fieldArray[$key] = $row["info"]["poids"];
+		}
+		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
@@ -2000,170 +2027,183 @@ class Api{
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
-		if ($format == "csv") {
-			header('Content-Type:text/csv');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
-		} else if ($format == "xls") {
-			header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-			//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
-		} else if ($format == "json") {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		} else if ($format == "geojson") {
-			header('Content-Type:application/vnd.geo+json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
-		} else if ($format == "shp") {
-			header('Content-Type:application/zip');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
-		} else if ($format == "kml") {
-			header('Content-Type:application/vnd.google-earth.kml+xml');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
-		} else {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
-		}
 
-		$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
+		//$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
 
 		$reqFields = "";
 		$fieldsValue = $this->getAllFields($query_params['resource_id'], TRUE, FALSE);
 
+		//We check if at least one column is hidden
+		$oneColumnIsHidden = false;
+
 		$i = 0;
 		foreach ($fieldsValue as $value) {
 
-				$exportval = true;
+			$exportval = true;
 
 			foreach ($value["annotations"] as $keyAnnota => $annotat) {
 				if($annotat["name"] == "exportApi") {
 					$exportval = false;
+					$oneColumnIsHidden = true;
 					break;	
 				}
 			}
 			if($i > 0 && $exportval) {
 				$reqFields .= ',';
-				
+					
 			}
 			if($exportval) {
 				$reqFields .= $value['name'];
 				$i++;
 			}
+				
+		}
+		if ($oneColumnIsHidden && ($reqFields == null || $reqFields == "")) {
+			$actual_link = $_SERVER['HTTP_REFERER'];
+
+			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
 			
 		}
-	
-
-		$result = $this->getRecordsDownload($params."&fields=".$reqFields);
-	
-	
-		if ($format == "csv" || $format == "json" || $format == "geojson") {
-			echo $result;
-		} else if ($format == "xls") {
-			//We create a tmp file in which we write the result and an output file to convert
-			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			$fileInput = fopen($pathInput, 'w');
-			fwrite($fileInput, $result);
-			fclose($fileInput);
-
-			//We rename the file because PhpSpreadsheet does not support conversion without
-			rename($pathInput, $pathInput .= '.csv');
-
-			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
-
-			// $spreadsheet = new Spreadsheet();
-			// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-			
-			// /* Set CSV parsing options */
-			// $reader->setDelimiter(';');
-			// $reader->setEnclosure('"');
-			// $reader->setSheetIndex(0);
-			
-			// /* Load a CSV file and save as a XLS */
-			// $spreadsheet = $reader->load($pathInput);
-			// $writer = new Xls($spreadsheet);
-			// $writer->save($pathOutput);
-			// $spreadsheet->disconnectWorksheets();
-			
-			// unset($spreadsheet);
-			
-			$reader = ReaderFactory::create(Type::CSV);
-			$reader->setFieldDelimiter(';');
-			$reader->setFieldEnclosure('"');
-			$reader->setEndOfLineCharacter("\r");
-			
-			$writer = WriterFactory::create(Type::XLSX);
-			
-			$reader->open($pathInput);
-			$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
-
-			foreach ($reader->getSheetIterator() as $sheet) {
-				foreach ($sheet->getRowIterator() as $row) {
-					$writer->addRow($row);
-				}
-			}//$writer->addRows($multipleRows); // add multiple rows at a time
-
-			$reader->close();
-			$writer->close();
-
-			header('Content-Length: ' . filesize($pathOutput));
-			readfile($pathOutput);
-		} else if ($format == "shp" || $format == "kml") {
-			//We create a tmp file in which we write the result and an output file to convert
-			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			$fileInput = fopen($pathInput, 'w');
-			fwrite($fileInput, $result);
-			fclose($fileInput);
-
-			//Get current Php directory to call the script
-			$dir = dirname(__FILE__);
-			$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
-
-			if ($format == "shp") {
-				$typeConvert = 'ESRI Shapefile';
-
-				//We create a temp directory
-				$pathOutput = $this->tempdir(null, 'output_convert_geo_file_');
+		else {
+			if ($format == "csv") {
+				header('Content-Type:text/csv');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
+			} else if ($format == "xls") {
+				header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
+			} else if ($format == "json") {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+			} else if ($format == "geojson") {
+				header('Content-Type:application/vnd.geo+json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
+			} else if ($format == "shp") {
+				header('Content-Type:application/zip');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
 			} else if ($format == "kml") {
-				$typeConvert = 'KML';
-			
-				//We create a temp file
-				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+				header('Content-Type:application/vnd.google-earth.kml+xml');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
+			} else {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
 			}
+			
+			$result = $this->getRecordsDownload($params."&fields=".$reqFields);
+		
+		
+			if ($format == "csv" || $format == "json" || $format == "geojson") {
+				echo $result;
+			} else if ($format == "xls") {
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				fwrite($fileInput, $result);
+				fclose($fileInput);
 
-			$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
-			$message = shell_exec($command);
+				//We rename the file because PhpSpreadsheet does not support conversion without
+				rename($pathInput, $pathInput .= '.csv');
 
-			if ($format == "kml") {
+				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+
+				// $spreadsheet = new Spreadsheet();
+				// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+				
+				// /* Set CSV parsing options */
+				// $reader->setDelimiter(';');
+				// $reader->setEnclosure('"');
+				// $reader->setSheetIndex(0);
+				
+				// /* Load a CSV file and save as a XLS */
+				// $spreadsheet = $reader->load($pathInput);
+				// $writer = new Xls($spreadsheet);
+				// $writer->save($pathOutput);
+				// $spreadsheet->disconnectWorksheets();
+				
+				// unset($spreadsheet);
+				
+				$reader = ReaderFactory::create(Type::CSV);
+				$reader->setFieldDelimiter(';');
+				$reader->setFieldEnclosure('"');
+				$reader->setEndOfLineCharacter("\r");
+				
+				$writer = WriterFactory::create(Type::XLSX);
+				
+				$reader->open($pathInput);
+				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
+
+				foreach ($reader->getSheetIterator() as $sheet) {
+					foreach ($sheet->getRowIterator() as $row) {
+						$writer->addRow($row);
+					}
+				}//$writer->addRows($multipleRows); // add multiple rows at a time
+
+				$reader->close();
+				$writer->close();
+
 				header('Content-Length: ' . filesize($pathOutput));
 				readfile($pathOutput);
-			}
-			else if ($format == "shp") {
-				$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
+			} else if ($format == "shp" || $format == "kml") {
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				fwrite($fileInput, $result);
+				fclose($fileInput);
 
-				$zip = new ZipArchive();
-				if ($zip->open($pathOutputZip, ZipArchive::CREATE) !== TRUE) {
-					echo "Problem creating the zip file";
+				//Get current Php directory to call the script
+				$dir = dirname(__FILE__);
+				$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
+
+				if ($format == "shp") {
+					$typeConvert = 'ESRI Shapefile';
+
+					//We create a temp directory
+					$pathOutput = $this->tempdir(null, 'output_convert_geo_file_');
+				} else if ($format == "kml") {
+					$typeConvert = 'KML';
+				
+					//We create a temp file
+					$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 				}
-				if ($handle = opendir($pathOutput)) {
-					while (false !== ($entry = readdir($handle))) {
-						if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
-							$zip->addFile($pathOutput."/".$entry, $entry);
-						}
+
+				$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
+				$message = shell_exec($command);
+
+				if ($format == "kml") {
+					header('Content-Length: ' . filesize($pathOutput));
+					readfile($pathOutput);
+				}
+				else if ($format == "shp") {
+					$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
+
+					$zip = new ZipArchive();
+					if ($zip->open($pathOutputZip, ZipArchive::CREATE) !== TRUE) {
+						echo "Problem creating the zip file";
 					}
-					closedir($handle);
+					if ($handle = opendir($pathOutput)) {
+						while (false !== ($entry = readdir($handle))) {
+							if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
+								$zip->addFile($pathOutput."/".$entry, $entry);
+							}
+						}
+						closedir($handle);
+					}
+
+					$zip->close();
+
+					header('Content-Length: ' . filesize($pathOutputZip));
+					readfile($pathOutputZip);
 				}
-
-				$zip->close();
-
-				header('Content-Length: ' . filesize($pathOutputZip));
-				readfile($pathOutputZip);
+			} else {
+				echo $result;
 			}
-		} else {
-			echo $result;
-		}
 
+		}
+		
 		$response = new Response();
 		return $response;
 	}
+
 
 	/**
 	 * Creates a random unique temporary directory, with specified parameters,
@@ -2376,8 +2416,7 @@ class Api{
 			
 			$data_array['fields'] = $this->getAllFields($resourcesid, TRUE, FALSE);
 		}
-		
-		
+
 		$visu['calendar_tooltip_html_enabled'] = false;
 		$visu['analyze_default'] = ''; //"{\"queries\":[{\"charts\":[{\"type\":\"line\",\"func\":\"COUNT\",\"color\":\"range-Accent\",\"scientificDisplay\":true}],\"xAxis\":\"nom_com\",\"maxpoints\":\"\",\"timescale\":null,\"sort\":\"\",\"seriesBreakdown\":\"emr_lb_systeme\"}],\"timescale\":\"\",\"displayLegend\":true,\"alignMonth\":true}"
 				
@@ -2579,7 +2618,7 @@ class Api{
 			$data_array["metas"]["data_visible"] = $data_array["data_visible"];
 			$data_array["metas"]["records_count"] = $records_result["nhits"];
 		}*/
-        
+
 		return $data_array;
 	}
 
@@ -3073,6 +3112,7 @@ class Api{
 													  
 	public function callDatastoreApiGeoPreview($params) {
 
+		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 		
 		$fields = $this->getAllFields($query_params['resource_id']);
@@ -3514,7 +3554,6 @@ class Api{
 	}
 
 	public function callDatastoreApi_v2($params) {
-		
 		$res = $this->getDatastoreRecord_v2($params);	
 		echo json_encode($res);
 		$response = new Response();
@@ -3536,6 +3575,9 @@ class Api{
 		$fieldId = "_id";
 		$fieldCoordinates='';$fieldGeometries='';
 		$reqQfilter;
+
+		$params = $this->retrieveParameters($params);
+
 		$query_params = $this->proper_parse_str($params);
 		$data_array = array();
 		foreach($query_params as $key => $value) {
@@ -3719,11 +3761,17 @@ class Api{
 		}
 
 	  	$req = array();
-		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
-		$req['sql'] = $sql;
+	  	// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
+	  	if($query_params['fields'] != null) {
+	  		$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+	  	} else {
+	  		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+	  	}
+	  	$req['sql'] = $sql;
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -7037,7 +7085,7 @@ class Api{
 
 function _get_id($tableName, $fieldName) {
 
-    $select = db_select($tableName, 'o');
+    $select = \Drupal::database()->select($tableName, 'o');
     $fields = array(
         $fieldName,
     );
@@ -7325,7 +7373,7 @@ function deleteStory($story_id){
 				'message' => $message,
 				'last_updated' => 'now'
 			]);
-			$query->condition(db_or()
+			$query->condition($query->orConditionGroup()
 					->condition('id', $uniqId)
 					->condition('entity_id', $uniqId));
 		}
