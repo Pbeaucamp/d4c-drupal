@@ -1004,6 +1004,7 @@ class editMetaDataForm extends HelpFormBase {
 		$validataResources = array();
 
 		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
+      
 		foreach ($results as &$result) {
 
 			foreach ($result as $key => $value) {

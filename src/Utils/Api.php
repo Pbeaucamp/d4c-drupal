@@ -3118,10 +3118,12 @@ class Api{
 		$fields = $this->getAllFields($query_params['resource_id']);
 		
 		$fieldGeometries="";
+		$fieldColor="";
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_shape") $fieldGeometries = $value['id'];
 			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
 			if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
+			if($value['name'] == "route_color") $fieldColor = $value['name'].",";
 		}
 
 		//$result = $this->getRecordsDownload($params . "&format=json");
@@ -3135,7 +3137,7 @@ class Api{
 		$where = $this->getSQLWhereRecordsDownload($params);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
-		$sql = "Select ".$fieldGeometries." as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
+		$sql = "Select  " .$fieldColor.$fieldGeometries." as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
 		Logger::logMessage("Geopreview query : " . $req['sql']);
@@ -3200,6 +3202,7 @@ class Api{
 			$res = array();
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
+			$res['route_color'] = $value["route_color"];
 			try{
 				// Logger::logMessage("Found geo  : " . $value["geo"]);
 			    $res['geometry'] = json_decode($value["geo"], true); 
