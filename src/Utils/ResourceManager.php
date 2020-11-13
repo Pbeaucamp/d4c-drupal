@@ -603,6 +603,24 @@ function manageXmlfile($url) {
 		
 		$files = $this->getDirContents($directoryPath);
 
+		$color_array = [];
+		foreach($files as $key=>$file) {
+			if (strpos($file, 'routes.txt') !== false) {
+				$key_rout_id="";
+				$key_color_route ="";
+				$array = explode("\n", file_get_contents($file));
+				foreach ($array as $key => $value) {
+					$line = explode(',', $value);
+					if($key == 0 ){
+						$key_rout_id = array_search('route_id', $line);
+						$key_color_route = array_search('route_color', $line);
+					}
+					else {
+						array_push($color_array,array("route_id"=>$line[$key_rout_id], "color_route"=>$line[$key_color_route]));
+					}
+				}
+			}
+		}
 		// We check if the zip is a GTFS. 
 		// We check if shapes.txt exist inside zip
 		foreach($files as $key=>$file) {
@@ -612,7 +630,7 @@ function manageXmlfile($url) {
 			
 			if (strpos($file, 'shapes.txt') !== false) {
 				Logger::logMessage("Found shapes.txt -> Managing GTFS");
-				$resourceUrl = $this->convertTextFileToCsv($file, "csv");
+				$resourceUrl = $this->convertTextFileToCsv($file, "csv", $color_array);
 			}
 			else {
 				$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
@@ -627,7 +645,7 @@ function manageXmlfile($url) {
 	}
 
 	//convert text file to csv
-	function convertTextFileToCsv($filepath, $new_extension) {
+	function convertTextFileToCsv($filepath, $new_extension, $color_array) {
 
 		// get content of text file
 		$filepathContent = file_get_contents($filepath);
@@ -665,7 +683,7 @@ function manageXmlfile($url) {
 				fclose($handle);
 			}
 
-			$extra_columns = array('coordinate' => null, 'geoshape' => null);
+			$extra_columns = array('coordinate' => null, 'geoshape' => null, 'route_color' => null);
 			$latIndex = "";
 			$lngIndex = "";
 			$shapeIdIndex = "";
@@ -700,6 +718,8 @@ function manageXmlfile($url) {
 			}
 			$routesvalue=[];
 
+			array_unshift($color_array,"");
+			unset($color_array[0]);
 			foreach ($Routes as $key => $value) {
 				
 				if($key == 0) {
@@ -729,17 +749,27 @@ function manageXmlfile($url) {
 				/*$geo_shape = str_replace(",",";",$routesvalue[$i]);*/
 				
 				if ($i == 0) {
-					$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+					$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
 					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
 				} else {
 
 						if (array_key_exists($i,$routesvalue)) {
 							$geo_shape = $routesvalue[$i];
-							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape);
+							if($color_array[$i]["color_route"] != null) {
+								$color = $color_array[$i]["color_route"];
+							} else {
+								$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+								 
+								 $keycolor = array_search($random_color, array_column($color_array, 'color_route'));
+								 if($keycolor ==false){
+								 	$color = $random_color;
+								 }
+							}
+							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);
 									
 						} 
 						else {
-							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "");
+							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
 						}
 						
 						$csv_data[$i] = $data = array_merge($data, $extra_columns);
