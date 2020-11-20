@@ -52,14 +52,14 @@ class portailController extends ControllerBase {
 					        <div id="filter" class="col-md-2 content-body" >
 					        	<div class="ng-scope" ng-app="d4c-widgets">
 						
-									<d4c-dataset-context style="height:100px" communesinfocom94contour-dataset="communes-infocom-94-contour" communesinfocom94contour-parameters="{\'id\':\'b8b96201-6e89-42f0-b48b-7eec54c1a6de\'}" context="communesinfocom94contour" class="ng-scope">
+									<d4c-dataset-context style="height:100px" context="mapemprise" mapemprise-dataset="nodataset" class="ng-scope">
 												<div class="row" >
 													
 													<div class="col-md-12 col-sm-4">
 														<div class="d4c-box d4c-map-wp">
-														<d4c-map basemap="osm" context="communesinfocom94contour" location="' . $config->client->default_bounding_box . '" provider="osm" scroll-wheel-zoom="false" class="ng-isolate-scope">
+														<d4c-map basemap="osm" context="mapemprise" location="' . $config->client->default_bounding_box . '" provider="osm" scroll-wheel-zoom="false" class="ng-isolate-scope">
 
-																<d4c-map-layer border-color="#FFFFFF" border-opacity="1" border-pattern="solid" border-size="1" caption="false" color="#0e7ce3" context="communesinfocom94contour" exclude-from-refit="false"  picto="d4c-" show-marker="false" size-function="linear"> 
+																<d4c-map-layer border-color="#FFFFFF" border-opacity="1" border-pattern="solid" border-size="1" caption="false" color="#0e7ce3" context="mapemprise" exclude-from-refit="false"  picto="d4c-" show-marker="false" size-function="linear"> 
 																</d4c-map-layer> 
 															</d4c-map> 
 														</div>

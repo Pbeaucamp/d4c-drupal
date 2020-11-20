@@ -101,6 +101,74 @@ class Api{
 		return $options;
 	}
 
+	/**
+	 * 
+	 * This method is specifically made for CR Reunion
+	 * The server does not react the same as the proxmox instance
+	 * 
+	 * We need to call that for the majority of the methods
+	 * 
+	 */
+	function retrieveParameters($params) {
+		$isReunion = false;
+		if ($isReunion) {
+			if ($params == '') {
+				$params = $_SERVER['QUERY_STRING'];
+
+				//We decode parameters (replace %3D by = and + by a space)
+				$params = str_replace('%3D', '=', $params);
+				$params = str_replace('%C3%A2', 'â', $params);
+				$params = str_replace('+', ' ', $params);
+				$params = str_replace('%22', '"', $params);
+			}
+			else {
+				$params;
+			}
+		}
+
+		return $params;
+	}
+
+	function proper_parse_str($str) {
+		if($str == ''){
+			$str = $_SERVER['QUERY_STRING'];
+		} else {
+			if(substr($str, 0, 1 ) == '?'){
+				$str = substr($str, 1);
+			}
+		}	  
+		$str = preg_replace('/_slash_/i',"/",$str);
+		# result array
+	  $arr = array();
+
+	  # split on outer delimiter
+	  $pairs = explode('&', $str);
+
+	  # loop through each pair
+	  foreach ($pairs as $i) {
+	    # split into name and value
+	    list($name,$value) = explode('=', $i, 2);
+	    
+	    # if name already exists
+	    if( isset($arr[$name]) ) {
+	      # stick multiple values into an array
+	      if( is_array($arr[$name]) ) {
+	        $arr[$name][] = $value;
+	      }
+	      else {
+	        $arr[$name] = array($arr[$name], $value);
+	      }
+	    }
+	    # otherwise, simply stick it in a scalar
+	    else {
+	      $arr[$name] = $value;
+	    }
+	  }
+
+	  # return result array
+	  return $arr;
+	}
+
 
 	public function callDatastoreApi($params) {
 		$result = $this->getDatastoreApi($params);
@@ -178,73 +246,6 @@ class Api{
 
 
 		return $result;
-	}
-
-	/**
-	 * 
-	 * This method is specifically made for CR Reunion
-	 * The server does not react the same as the proxmox instance
-	 * 
-	 * We need to call that for the majority of the methods
-	 * 
-	 */
-	function retrieveParameters($params) {
-		$isReunion = false;
-		if ($isReunion) {
-			if ($params == '') {
-				$params = $_SERVER['QUERY_STRING'];
-
-				//We decode parameters (replace %3D by = and + by a space)
-				$params = str_replace('%3D', '=', $params);
-				$params = str_replace('%C3%A2', 'â', $params);
-				$params = str_replace('+', ' ', $params);
-			}
-			else {
-				$params;
-			}
-		}
-
-		return $params;
-	}
-
-	function proper_parse_str($str) {
-		if($str == ''){
-			$str = $_SERVER['QUERY_STRING'];
-		} else {
-			if(substr($str, 0, 1 ) == '?'){
-				$str = substr($str, 1);
-			}
-		}	  
-		$str = preg_replace('/_slash_/i',"/",$str);
-		# result array
-	  $arr = array();
-
-	  # split on outer delimiter
-	  $pairs = explode('&', $str);
-
-	  # loop through each pair
-	  foreach ($pairs as $i) {
-	    # split into name and value
-	    list($name,$value) = explode('=', $i, 2);
-	    
-	    # if name already exists
-	    if( isset($arr[$name]) ) {
-	      # stick multiple values into an array
-	      if( is_array($arr[$name]) ) {
-	        $arr[$name][] = $value;
-	      }
-	      else {
-	        $arr[$name] = array($arr[$name], $value);
-	      }
-	    }
-	    # otherwise, simply stick it in a scalar
-	    else {
-	      $arr[$name] = $value;
-	    }
-	  }
-
-	  # return result array
-	  return $arr;
 	}
 
 	private function constructReqQToSQL($value, $append=""){
@@ -381,8 +382,11 @@ class Api{
 			$patternRefine = '/refine./i';
 			$patternDisj = '/disjunctive./i';
 			$patternSort = '/facetsort./i';
-			$reqQfilter="";$qField="";
-	//		echo json_encode($query_params);
+			$reqQfilter="";
+			$qField="";
+			$filterKey = "";
+			$filterSort = "";
+
 			foreach($query_params as $key => $value) {
 			    if (preg_match($patternRefine,$key)){
 			    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
@@ -396,6 +400,8 @@ class Api{
 			    }
 				if (preg_match($patternSort,$key)){
 			    	unset($query_params[$key]);
+					$filterKey =  preg_replace($patternSort,"",$key);
+					$filterSort =  $value;
 			    }
 			    if($key == "q"){
 			    	$reqQfilter = $this->constructReqQToSQL($value);
@@ -562,9 +568,16 @@ class Api{
 										 
 		 
 					}
-					
-					array_multisort( array_column($values, "count"), SORT_DESC, $values );
-					
+
+					if ($filterSort && $facets[$i] == $filterKey) {
+						//For now we only filter by Alphanum. Need to support other filters
+						// Logger::logMessage("TRM - For facet " . $facets[$i] . " Filter SORT " . $filterKey . " " . $filterSort);
+						array_multisort( array_column($values, "name"), SORT_ASC, $values );
+					}
+					else {
+						array_multisort( array_column($values, "count"), SORT_DESC, $values );
+					}
+
 					//echo count($values)." ". $nhitsTotal; 
 					if(count($values) > ($nhitsTotal - 5*$nhitsTotal/100)){ //protection interface
 						$values = array_slice($values, 0, 500); 
@@ -1620,8 +1633,8 @@ class Api{
 		$patternDistance = '/geofilter.distance/i';
 		$patternSerie = '/y.serie/i';
 		$filters_init = array();
-		$query_params = $this->proper_parse_str($params);
 		$params = $this->retrieveParameters($params);
+		$query_params = $this->proper_parse_str($params);
        	
        
 
@@ -1848,10 +1861,15 @@ class Api{
 		$req = array();
 		$sql = "Select ".$fieldId." as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
+
+		Logger::logMessage("TRM - Req " . $sql);
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		
+		
+		Logger::logMessage("TRM - Req " . $callUrl);
+
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -1865,8 +1883,6 @@ class Api{
 		if ($reqFields != "") {
 			$reqFieldsArray = explode(",", $reqFields);
 		}
-
-
 
 		$first = true;
 
@@ -1975,6 +1991,9 @@ class Api{
 			$url2 = http_build_query($query_params);
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
+
+
+			Logger::logMessage("TRM - Call datastore search " . json_encode($callUrl));
 
 			//echo mb_strlen($callUrl , '8bit');				  
 			$curl = curl_init($callUrl);
@@ -3197,6 +3216,9 @@ class Api{
 			// 		// }
 			// 	}
 			// }
+
+			Logger::logMessage("TRM - Geo value " . json_encode($value));
+
 			$res = array();
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
