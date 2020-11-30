@@ -58,11 +58,15 @@ class Api{
 	protected $urlCkan;// = "http://192.168.2.223/";
 	//protected $urlCkan = file_get_contents(__DIR__ ."/../../config.json");
 	protected $config;
+	protected $isSpecial;
+	protected $isPostgis;
     //-------------- 
     
 	public function __construct(){
         $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
+		$this->isSpecial = $this->config->client == 'cda2';
+		$this->isPostgis = $this->config->client == 'cda2';
     }
     
 	public function getStoreOptions(){
@@ -110,8 +114,7 @@ class Api{
 	 * 
 	 */
 	function retrieveParameters($params) {
-		$isReunion = false;
-		if ($isReunion) {
+		if ($this->isSpecial) {
 			if ($params == '') {
 				$params = $_SERVER['QUERY_STRING'];
 
@@ -1830,6 +1833,12 @@ class Api{
 				} else if($key == "geofilter.polygon"){
 					//polygon(path '((0,0),(1,1),(2,0))')
 					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
+
+					//We add a Postgis function because polygon(path) use the bounding box and with the tolerance it can contains multiples point
+					if ($this->isPostgis) {
+						$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
+					}
+
 					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else {
 					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
