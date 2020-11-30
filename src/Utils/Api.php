@@ -65,8 +65,8 @@ class Api{
 	public function __construct(){
         $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
-		$this->isSpecial = $this->config->client == 'cda2';
-		$this->isPostgis = $this->config->client == 'cda2';
+		$this->isSpecial = $this->config->client->name == 'cda2';
+		$this->isPostgis = $this->config->client->name == 'cda2';
     }
     
 	public function getStoreOptions(){
