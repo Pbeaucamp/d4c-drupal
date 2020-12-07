@@ -284,9 +284,16 @@ class Api{
 			} else if(count(explode(":", $value)) == 2){
 				$field = explode(":", $value)[0];
 				$data = explode(":", $value)[1];
-				if(is_numeric($data)){
+				if (strpos($field, "_id") !== false || is_numeric($data)) {
+					
+					if(strpos($data, "%27") !== false) {
+						$data = str_replace("%27", "", $data);
+					}
+					
+					Logger::logMessage("Search by " . $field . " '" . $data . "'");
 					$res.=  $field. " = " . $data ; 
-				} else {
+				}
+				else {
 					if(substr($data, 0, 1 ) == '"') {
 						$data = substr($data, 1, -1);
 					}
@@ -294,7 +301,6 @@ class Api{
 						$data = str_replace("%27", "", $data);
 					}
 					$res.= "CAST(" . $field . " AS TEXT)" . " ilike '%" . $data . "%'";
-					// $res.= "CAST(_id AS TEXT)" . " ilike '%30719%'"; 
 				}
 			} else if(count(explode(">=", $value)) > 1 || count(explode("<=", $value)) > 1 || count(explode("=", $value)) > 1 || count(explode(">", $value)) > 1 || count(explode("<", $value)) > 1){
 				
