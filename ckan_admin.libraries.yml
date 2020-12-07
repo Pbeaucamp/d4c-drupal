@@ -79,6 +79,7 @@ editMetaDataForm.form:
     /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     js/editMetaDataForm.js: {}
     js/progress.js: {}
+    js/progress_dataset.js: {}
   css:
     theme:
       /sites/default/files/api/portail_d4c/css/visualisation.css: {}
@@ -253,6 +254,8 @@ PackagesForm.form:
     /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
     js/packageExtension.js: {}
     /sites/default/files/api/portail_d4c/js/export_popup_script.js: {}
+    js/progress.js: {}
+    js/progress_dataset.js: {}
   css:
     theme:
       http://ajax.aspnetcdn.com/ajax/jquery.ui/1.8.9/themes/blitzer/jquery-ui.css: {}

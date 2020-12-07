@@ -6,18 +6,12 @@
 
 namespace Drupal\ckan_admin\Form;
 
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\ckan_admin\Utils\Query;
-use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
-use Drupal\Core\Ajax\AjaxResponse;
-use Drupal\Core\Ajax\SettingsCommand;
+use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\Core\Url;
-use Drupal\file\Entity\File;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use Drupal\Component\Render\FormattableMarkup; 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\ckan_admin\Utils\Logger;
 
 
@@ -171,9 +165,34 @@ class PackagesForm extends HelpFormBase {
 			'#submit' => array([$this, 'submitclear'])
 		];
 
-//-------------------------End filter form -------------------------------------------------------
+		//-------------------------End filter form -------------------------------------------------------
+		
+		$form['jdd'] = array(
+			'#title' => t('Importer un jeu de données : '),
+			'#type' => 'managed_file',
+			'#upload_location' => 'public://dataset/',
+			'#upload_validators' => array(
+				'file_validate_extensions' => array('zip'),
+			),
+			'#required' => FALSE,
+			'#size' => 10,
+			'#suffix' => '</div>',
+		);
 
-	$form['importer'] = array(
+    	$form['orga_selected_input'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'width: 50%;'),
+			'display' => none,
+			'#maxlength' => 300
+		);
+
+		$form['generated_task_id'] = array(
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'display:none'),
+        );
+
+		$form['importer'] = array(
             '#type' => 'submit',
             '#value' => $this->t('Importer'),
             '#attributes' => array(
@@ -253,17 +272,79 @@ class PackagesForm extends HelpFormBase {
 
 
     //submit form
-	public function submitForm(array &$form, FormStateInterface $form_state)
-	{
-
+	public function submitForm(array &$form, FormStateInterface $form_state) {
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-        $this->urlCkan = $this->config->ckan->url;
-        $api = new Api();
-		$callUrl = $this->urlCkan . "/api/action/package_update";
-		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
-       
-	}
+		$this->urlCkan = $this->config->ckan->url;
 
+		$userId = "*" . \Drupal::currentUser()->id() . "*";
+		$users = \Drupal\user\Entity\User::loadMultiple();
+		
+        $api = new Api();
+        $resourceManager = new ResourceManager();
+
+        $orgavalue = $form_state->getValue('orga_selected_input');
+		$generatedTaskId = $form_state->getValue('generated_task_id');
+		
+		// Define security
+		$security = $resourceManager->defineSecurity($userId, $users);
+		
+		$organization="";
+	    $orga = $api->getAllOrganisations();
+		foreach ($orga as $key => $value) {
+			if($value["display_name"] == $orgavalue || $value["title"] == $orgavalue || $value["name"] == $orgavalue) {
+				$organization = $value["id"];
+			}	
+		}
+
+        $resources = $form_state->getValue('jdd', 0);
+        if (isset($resources[0]) && !empty($resources[0])) {
+			$resourceUrl = $resourceManager->manageFile($resources[0]);
+
+			$this->manageResource($api, $resourceManager, $generatedTaskId, $resourceUrl, $security, $organization);
+		}
+	}
+	
+	function manageResource($api, $resourceManager, $generatedTaskId, $resourceUrl, $security, $organization) {
+		$validataResources = array();
+
+		$results = $resourceManager->managePackage($generatedTaskId, $resourceUrl, $security, $organization);
+
+		Logger::logMessage("Package manager result '" . json_encode($results) . "'");
+	  
+		$datasetId = $results['datasetId'];
+		$resources = $results['resources'];
+		foreach ($resources as &$result) {
+
+			foreach ($result as $key => $value) {
+				if ($value['status'] == 'complete') {
+					if ($value['type'] == 'DATAPUSHER') {
+						$validataResources[] = $value['resourceUrl'];
+
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						\Drupal::messenger()->addMessage("Les clusters ont été générés.");
+					}
+				}
+				else if ($value['status'] == 'pending') {
+					$validataResources[] = $value['resourceUrl'];
+
+					\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+				}
+				else if ($value['status'] == 'error') {
+					if ($value['type'] == 'DATAPUSHER') {
+						\Drupal::messenger()->addMessage("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+					}
+					else if ($value['type'] == 'CLUSTER') {
+						\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+					}
+				}
+			}
+		}
+
+		//We update the visualisation's icons
+		$api->calculateVisualisations($datasetId);
+	}
 
 	// filter function
 	public function submitfiltering(array &$form, FormStateInterface $form_state){ 
