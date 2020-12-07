@@ -22,7 +22,6 @@ class Export{
 	static function getJsonExport($fieldGeometries, $fieldCoordinates, $records, $query_params, $ids) {
 		$data_array = array();
 		//echo count($records);
-		$cpt=0;
 		foreach ($records as $v) {
 			$record = array();
 			// $fields = explode(',', $query_params['fields']);
@@ -48,10 +47,11 @@ class Export{
 			}
 
 			$record['datasetid'] = $query_params['resource_id'];
-			$record['recordid'] = $ids[$cpt];//$ids[array_search($v,$records)];
+			//The following mix the ID if the records are not get in order so we add it in the result previously
+			$record['recordid'] = $v['_id'];//$ids[array_search($v,$records)];
+			// $record['recordid'] = $ids[$cpt];//$ids[array_search($v,$records)];
 
-			$data_array[] = $record;
-			$cpt++;		
+			$data_array[] = $record;	
 		}
 
 		return $data_array;
