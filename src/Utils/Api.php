@@ -1847,9 +1847,9 @@ class Api{
 					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
 
 					//We add a Postgis function because polygon(path) use the bounding box and with the tolerance it can contains multiples point
-					if ($this->isPostgis) {
-						$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
-					}
+					// if ($this->isPostgis) {
+					// 	$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
+					// }
 
 					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else {
