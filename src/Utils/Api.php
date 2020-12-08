@@ -1204,6 +1204,7 @@ class Api{
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
 					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
 					$where .= $fieldCoordinates." not in ('', ',') and ";
+					
 				} else if($key == "geofilter.distance"){
 					Logger::logMessage("Build query for geofilter.distance \r\n");
 
@@ -3240,8 +3241,6 @@ class Api{
 			// 	}
 			// }
 
-			Logger::logMessage("TRM - Geo value " . json_encode($value));
-
 			$res = array();
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
@@ -4194,6 +4193,7 @@ class Api{
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
 		$patternBbox = '/geofilter.bbox/i';
+		$patternPolygon = '/geofilter.polygon/i';
 		$patternDistance = '/geofilter.distance/i';
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
@@ -4235,6 +4235,11 @@ class Api{
 		    	//$disj[] = preg_replace($patternDisj,"",$key);
 		    }
 			if (preg_match($patternDistance,$key)){
+		    	unset($query_params[$key]);
+		    	$filters_init[$key] =  $value;
+		    	//$disj[] = preg_replace($patternDisj,"",$key);
+		    }
+			if (preg_match($patternPolygon,$key)){
 		    	unset($query_params[$key]);
 		    	$filters_init[$key] =  $value;
 		    	//$disj[] = preg_replace($patternDisj,"",$key);
@@ -4317,6 +4322,11 @@ class Api{
 					$where .= $fieldCoordinates." not in ('', ',') and ";
 				} else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
+				} else if($key == "geofilter.polygon"){
+					Logger::logMessage("Build query for geofilter.polygon \r\n");
+
+					//polygon(path '((0,0),(1,1),(2,0))')
+					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
 				} else {
 					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
 						$where .= $key . "=" . $value . " and ";
