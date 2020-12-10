@@ -167,6 +167,11 @@ class PackagesForm extends HelpFormBase {
 
 		//-------------------------End filter form -------------------------------------------------------
 		
+        $form['progress-modal'] = array(
+			'#markup' => '<div id="progress" class="progress-modal" display="none">
+			</div>',
+		);
+
 		$form['jdd'] = array(
 			'#title' => t('Importer un jeu de données : '),
 			'#type' => 'managed_file',

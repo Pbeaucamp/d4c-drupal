@@ -158,10 +158,6 @@ class ResourceManager {
 		
 		Logger::logMessage("Managing file '" . $filePath . "'");
 
-
-
-
-
 		$api = new Api;
 		try {
 			$filesize = filesize(self::ROOT . $filePath);
@@ -182,7 +178,7 @@ class ResourceManager {
 		if ($type == 'csv') {
 
 			//if files > 50MB we don't do the treatments.
-			if (!$fromPackage && $filesize < 50000000) {
+			if ($filesize < 50000000) {
 				$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 				if ($encoding) {
 					Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
@@ -238,7 +234,7 @@ class ResourceManager {
 		else if ($type == 'xls' || $type == 'xlsx') {
 
 			//if files > 50MB we don't do the treatments.
-			if (!$fromPackage && $filesize < 50000000) {
+			if ($filesize < 50000000) {
 
 				$xls_file = self::ROOT . $filePath;
 				
@@ -342,14 +338,8 @@ class ResourceManager {
 			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
 			$results[] = $result;
 
-			// if (!$fromPackage) {
-				$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
-				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-			// }
-			// else {
-			// 	$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-			// 	return $results;
-			// }
+			$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
+			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 
 			if ($csv != null) {
 				//If we update the geojson, we need to get the previous CSV resource to update it
@@ -625,24 +615,17 @@ class ResourceManager {
 					Logger::logMessage("Found metadata.json, creating dataset.");
 
 					$string = file_get_contents($file);
-					Logger::logMessage("TRM - Dataset metadata " . $string);
-					$metadataJson = json_decode($string);
+					$metadataJson = json_decode($string, true);
 
-					$datasetName = $metadataJson->metas->name;
-					$title = $metadataJson->metas->title;
-					$description = $metadataJson->metas->description;
-					$licence = $metadataJson->metas->license;
-					$isPrivate = $metadataJson->metas->private;
+					$datasetName = $metadataJson['metas']['name'];
+					$title = $metadataJson['metas']['title'];
+					$description = $metadataJson['metas']['description'];
+					$licence = $metadataJson['metas']['license_id'];
+					$isPrivate = $metadataJson['metas']['private'];
 
-					Logger::logMessage("TRM - Dataset '" . $datasetName  . "' '" . $title . "' '" . $description . "' '" . $licence . "' '" . $isPrivate . "'");
-
-					// Define tags
-					$tags = $this->defineTags(null);
-					
-					//Create dataset
-					$extras = $this->defineExtras(null, null, null, null, null, null, null,
-						null, null, null, null, null, 
-						null, null, null, $security, null, null, null, null, null);
+					$tags = $metadataJson['metas']['tags'];
+					$extras = $metadataJson['metas']['extras'];
+					$fields = $metadataJson['dictionnary'];
 				
 					$datasetId = $this->createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 				}
@@ -656,7 +639,46 @@ class ResourceManager {
 			//We upload the ressources
 			$results = array();
 			$results['datasetId'] = $datasetId;
-			$results['resources'] = $this->manageFiles($datasetId, false, false, null, $directoryPath, null, true);
+			$results['resources'] = $this->manageFiles($datasetId, false, false, null, $directoryPath, 'UTF-8', true);
+
+			// We reupload the dictionnary
+			if ($fields != null) {
+				Logger::logMessage("Reuploading dictionnary.");
+				$api = new Api;
+
+				// $filds = $api->getAllFieldsForTableParam($id_resource, 'true');
+				$dataset = $api->getDataSetById($datasetId);
+				$contentdataset = json_decode($dataset->getContent(), true);
+				$resources = $contentdataset["result"]["resources"];
+
+				//We retrieve the new CSV resource
+				for($i=0; $i<count($resources); $i++){
+					if ($resources[$i]['format'] == 'CSV') {
+						$resourceId = $resources[$i]['id'];   
+						break;
+					}
+				}
+
+				if ($resourceId) {
+					Logger::logMessage("Found resource CSV " . $resourceId);
+					$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+					$data = array();
+					$data["resource_id"] = $resourceId;
+					$data["force"] = true;
+					$data["fields"] = $fields;
+					$data["uuid"] = uniqid();
+
+					// Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
+
+					$result = $api->updateRequest($callUrl, $data, "POST");
+
+					Logger::logMessage("TRM - RESULT DICTIONNARY " . $result);
+				}
+				else {
+					Logger::logMessage("Resource CSV not found. We do not reupload dictionnary.");
+				}
+			}
+
 			return $results;
 		}
 		else {
@@ -970,6 +992,8 @@ class ResourceManager {
 			$data["uuid"] = uniqid();
 			$api->updateRequest($callUrl, $data, "POST");
 
+			Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
+
 			return $datapusherResult;
 		}
 		else {
@@ -1253,7 +1277,8 @@ class ResourceManager {
 	
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null,$frequence=null) {
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,
+			$source=null, $donnees_source=null, $mention_legales=null, $frequence=null) {
 		if ($extras == null) {
 			$extras = array();
 		}

@@ -88,6 +88,7 @@ class PackageManager {
 		}
 		else {
 			$api = new Api();
+
 			Logger::logMessage("Packaging dataset with ID = '" . $id . "'");
 			$dataset = $api->getPackageShow2($id, "");
 
@@ -105,21 +106,6 @@ class PackageManager {
 		
 			if ($zip->open($zipPath, ZipArchive::CREATE)!==TRUE) {
 				exit("Impossible d'ouvrir le fichier <$filename>\n");
-			}
-
-			Logger::logMessage("Creating metadata.json '" . $zipFolder . "/metadata.json" . "'");
-			//save json file in root directory
-			$fp = fopen($zipFolder . "/metadata.json","w");
-			if( $fp == false) {
-
-			}
-			else{
-				fwrite($fp, json_encode($dataset));
-				fclose($fp);
-
-				Logger::logMessage("Adding metadata.json to zip");
-				// add datasetinfo json to zip
-				$zip->addFile("packageDataset/" . $id . "/metadata.json", "metadata.json");
 			}
 
 			/*****       create dataset resources json file   *****/
@@ -142,8 +128,6 @@ class PackageManager {
 						$value["format"] = "zip";
 					}
 
-					Logger::logMessage("Adding resource to package '" . $resourcePath . "'");
-
 					$resourceName = "ressources/" . $value["name"];
 					if (!$this->endsWith($resourceName, "." . $format) && $format != null && !empty($format)) {
 						$resourceName = $resourceName . "." . $format;
@@ -158,10 +142,40 @@ class PackageManager {
 					curl_exec ($ch);
 					curl_close ($ch);
 					fclose($fp);
+
+
+					//Retrieve CSV dictionnary
+					if ($format == 'CSV') {
+						Logger::logMessage("Found dictionnary for resource '" . $resourcePath . "'");
+	
+						$result = $api->getAllFieldsForTableParam($value['id']);
+						$fields = $result["result"]["fields"];
+					}
 				}
 
 				Logger::logMessage("Adding resource to zip");
 				$zip->addFile("packageDataset/" . $id . "/" . $resourceName, $resourceName);
+			}
+
+			Logger::logMessage("Creating metadata.json '" . $zipFolder . "/metadata.json" . "'");
+
+			$fieldsWithoutId = array();
+			foreach ($fields as $field) {
+				if ($field["id"] != "_id") {
+					$fieldsWithoutId[] = $field;
+				}
+			}
+			$dataset['dictionnary'] = $fieldsWithoutId;
+
+			//save json file in root directory
+			$fp = fopen($zipFolder . "/metadata.json","w");
+			if(! ($fp == false)) {
+				fwrite($fp, json_encode($dataset));
+				fclose($fp);
+
+				Logger::logMessage("Adding metadata.json to zip");
+				// add datasetinfo json to zip
+				$zip->addFile("packageDataset/" . $id . "/metadata.json", "metadata.json");
 			}
      
 			// close and save archive
