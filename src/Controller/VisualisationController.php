@@ -669,7 +669,7 @@ class VisualisationController extends ControllerBase {
 									<div class="d4c-dataset-metadata-block" ng-show="(ctx.dataset.metas.extras | filter:{key:\'nb_download\'})[0].value > 0">
 										<div class="d4c-dataset-metadata-block__metadata">
 											<div class="d4c-dataset-metadata-block__metadata-name" translate=""><span class="ng-scope">Téléchargements</span></div>
-											<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'nb_download\'\})[0].value \}\}</div>
+											<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{ +((ctx.dataset.metas.extras | filter:\{key:\'nb_download\'\})[0].value) \}\}</div>
 										</div>
 									</div>
 							   

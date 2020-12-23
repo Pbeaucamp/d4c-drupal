@@ -479,7 +479,6 @@ ckan_admin.updateNbDownload:
   path: '/api/datasets/{params}/update/downloads'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::updateNbDownload'
-    params: ''
     _title: ''
   requirements:
     _permission: 'access content'
@@ -488,7 +487,6 @@ ckan_admin.updateViews:
   path: '/api/datasets/{params}/update/views'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::updateNbViews'
-    params: ''
     _title: ''
   requirements:
     _permission: 'access content'

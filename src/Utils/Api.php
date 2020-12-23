@@ -1890,7 +1890,6 @@ class Api{
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		
 		
-		Logger::logMessage("TRM - Req " . $callUrl);
 
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
@@ -5759,23 +5758,19 @@ class Api{
                 $index= $i;
                 break;
             }
-        }        
+        }
         if( $keyExists ){
-            //Incrementer
-            //echo  "<h3>Cle existe deja --> incrementer </h3>";
-            $result['result']['extras'][$index]['value'] = intval($result['result']['extras'][$index]['value']) +1 ;
+			$value = intval($result['result']['extras'][$index]['value']) + 1;
+			$value = str_pad($value, 8, '0', STR_PAD_LEFT);
+            $result['result']['extras'][$index]['value'] = $value;
         }    
         else{
-            //Creer la cl�  et initialiser � 1
-            //echo  "<h3>Cle n'existe pas --> Initialiser </h3>";
+			$value = str_pad(1, 8, '0', STR_PAD_LEFT);
             $data = array(
                         "key" => $keyToUpdate,
-                        "value" => "1"
+                        "value" => $value
             );
             array_push($result['result']['extras'] , $data  ) ;
-            //echo "<h2> result apres ajout: </h2>" . "\r\n";
-            //echo json_encode($result) ;
-			
         }    
         $callUrl = $this->urlCkan."api/action/package_update";
 		
