@@ -928,7 +928,6 @@ ckan_admin.callTaskStatus:
   requirements:
     _permission: 'access content'
 
-
 ckan_admin.call.reuses:
   path: '/api/datasets/reusesManagement'
   defaults:
@@ -937,8 +936,6 @@ ckan_admin.call.reuses:
     _title: ''
   requirements:
     _permission: 'access content'
-
-
 
 ckan_admin.deleteDataset:
   path: '/api/dataset/remove/{datasetId}'

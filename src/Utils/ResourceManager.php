@@ -841,6 +841,7 @@ function manageXmlfile($url) {
 			}
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
+			$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 			
 			if ($type == 'csv' || $type == 'xls' || $type == 'xlsx') {
 				// We monitore the datapusher
@@ -889,12 +890,13 @@ function manageXmlfile($url) {
 			if ($return->success == true) {
 			
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
+				$resourceId = $return->result->id;
+				$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 				
 				if ($type == 'csv' || $type == 'xls' || $type == 'xlsx') {
 					// We monitore the datapusher
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
 					
-					$resourceId = $return->result->id;
 					$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
 
 					if ($datapusherResult[$resourceId]['status'] == 'error') {
@@ -1154,7 +1156,7 @@ function manageXmlfile($url) {
 	
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null,$frequence=null) {
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, $mention_legales=null, $frequence=null, $displayVersionning=false) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1178,6 +1180,7 @@ function manageXmlfile($url) {
 		$hasSource = false;
 		$hasDonneesSource = false;
 		$hasMentionLegales = false;
+		$hasDisplayVersionning = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1296,6 +1299,11 @@ function manageXmlfile($url) {
 					$hasAnalyse = true;
 					$extras[$index]['value'] = $analyseDefault;
 				}
+	
+				if ($extras[$index]['key'] == 'display_versionning') {
+					$hasDisplayVersionning  = true;
+					$extras[$index]['value'] = $displayVersionning;
+				}
 			}
 		}
 
@@ -1397,6 +1405,11 @@ function manageXmlfile($url) {
 		if ($hasSecurity == false) {
 			$extras[count($extras)]['key'] = 'edition_security';
 			$extras[(count($extras) - 1)]['value'] = json_encode($security);
+		}
+
+		if ($hasDisplayVersionning == false) {
+			$extras[count($extras)]['key'] = 'display_versionning';
+			$extras[(count($extras) - 1)]['value'] = $displayVersionning;
 		}
 
 		return $extras;

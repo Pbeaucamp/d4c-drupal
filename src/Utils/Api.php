@@ -2360,8 +2360,22 @@ class Api{
 			}
 		}
 
+		$resources_versions = array();
+		foreach ($result['result']['resources'] as $value) {
+			$resourceId = $value['id'];
+			$name = $value['name'];
+			$versions = $this->getResourceVersions($resourceId);
+
+			$resource = array();
+			$resource['id'] = $resourceId;
+			$resource['name'] = $name;
+			$resource['versions'] = $versions;
+			$resources_versions[] = $resource;
+		}
+
 		$data_array = array();
 		$data_array['alternative_exports'] = $alternative_exports; //[]
+		$data_array['resources_versions'] = $resources_versions; //[]
 
 		$data_array['attachments'] = array(); //[]
 		$data_array['data_visible'] = true;
@@ -7488,18 +7502,65 @@ function deleteStory($story_id){
 
 
 	function deleteDataset($datasetId) {
-
-
 		$ressourceManager = new ResourceManager();
 		$result = $ressourceManager->deleteDataset($datasetId);
-		
 
 		if($result) {
 			return new Response("true");
 		}
 		else {
-			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
+			throw new \Exception('Impossible de supprimer le dataset (' . $datasetId . ' is not supported.');
 		}
 	}
-    
+
+	/**
+	 * This method add a version for a specified resource
+	 * 
+	 */
+	function addResourceVersion($datasetId, $resourceId, $filePath) {
+		Logger::logMessage("Adding version for resource '" . $resourceId . "' from dataset '" . $datasetId . "' \r\n");
+		$table = "d4c_resource_version";
+
+		$query = \Drupal::database()->insert($table);
+		$query->fields([
+			'dataset_id',
+			'resource_id',
+			'filepath',
+			'creation_date'
+		]);
+		$query->values([
+			$datasetId,
+			$resourceId,
+			$filePath,
+			'now'
+		]);
+
+		$query->execute();
+	}
+
+	/**
+	 * This method retrieve the versions for the resource
+	 * 
+	 */
+	function getResourceVersions($resourceId) {
+		$table = "dpl_d4c_resource_version";
+		$sqlQuery = "SELECT filePath, creation_date FROM " . $table . " WHERE resource_id = '" . $resourceId ."' ORDER BY creation_date";
+		
+		$query = \Drupal::database()->query($sqlQuery);
+
+		$res= array();
+		while ($enregistrement = $query->fetch()) {
+			array_push($res, $enregistrement);
+		}
+
+		return $res;
+
+		// $result = json_encode($res);
+
+		// $response = new Response();
+		// $response->setContent($result);
+		// $response->headers->set('Content-Type', 'application/json');
+        
+		// return $response;  
+	}
 }
