@@ -2427,8 +2427,8 @@ class Api{
 				$visu["reports"] = json_decode($value["value"]);
 			}
 			if($value["key"] == "records_count"){
-				$data_array["metas"]["data_visible"] = $data_array["data_visible"];
-				$data_array["metas"]["records_count"] = floatval($value["value"]);
+				$data_array["extra_metas"]["data_visible"] = $data_array["data_visible"];
+				$data_array["extra_metas"]["records_count"] = floatval($value["value"]);
 			}
 			if($value["key"] == "features"){
 				$data_array['features'] = explode(",", $value["value"]);
@@ -2451,6 +2451,18 @@ class Api{
 				// $visu['map_marker_color']['type'] = "choropleth";
 				// $visu['map_marker_color']['field'] = $value["value"];
 				// $visu['map_marker_color']['ranges'] = $ranges;
+			}
+			if($value["key"] == "PredefinedFilters" && $value["value"] != ''){
+				$filters = explode(",", $value["value"]);
+
+				$data_array["extra_metas"]["predefined_filters"] = array();
+				foreach($filters as $filter) {
+					$myFilter = explode("==", $filter);
+					$filterName = $myFilter[0];
+					$filterValue = $myFilter[1];
+
+					$data_array["extra_metas"]["predefined_filters"][$filterName] = $filterValue;
+				}
 			}
 		}
 		
