@@ -850,6 +850,8 @@ class VisualisationController extends ControllerBase {
 												></d4c-dataset-export>
 						</d4c-pane>
 						
+						<d4c-dataset-subscription context="ctx" logged-in="'.$loggedIn.'"></d4c-dataset-subscription>
+
 						<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
 							<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
 						</d4c-pane>
