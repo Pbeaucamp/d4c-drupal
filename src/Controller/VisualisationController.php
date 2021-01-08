@@ -858,10 +858,10 @@ class VisualisationController extends ControllerBase {
                 
 					</d4c-tabs>
 			
-					<!--<d4c-disqus
+					<d4c-disqus
 						   shortname="data4citizen"
 						   identifier="'.$host."_".$dataset["datasetid"].'">
-					</d4c-disqus> -->
+					</d4c-disqus>
 				</div>
 			</div>
 
