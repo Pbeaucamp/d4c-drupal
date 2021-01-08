@@ -7575,4 +7575,37 @@ function deleteStory($story_id){
         
 		// return $response;  
 	}
+
+	/**
+	 * This method allow the user to subscribe to a dataset
+	 * 
+	 */
+	function subscribeDataset($datasetId) {
+		$status = ["result" => "success"];
+
+		$result = json_encode($status);
+
+		$response = new Response();
+		$response->setContent($result);
+		$response->headers->set('Content-Type', 'application/json');
+        
+		return $response;  
+	}
+
+	/**
+	 * This method allow the user to unsubscribe to a dataset
+	 * 
+	 */
+	function unsubscribeDataset($datasetId) {
+		$status = ["result" => "success"];
+
+		$result = json_encode($status);
+
+		$response = new Response();
+		$response->setContent($result);
+		$response->headers->set('Content-Type', 'application/json');
+        
+		return $response;  
+	}
+	
 }

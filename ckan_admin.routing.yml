@@ -943,3 +943,19 @@ ckan_admin.deleteDataset:
     _controller: '\Drupal\ckan_admin\Utils\Api::deleteDataset'
   requirements:
     _permission: 'access crawl'
+
+ckan_admin.subscribeDataset:
+  path: '/api/account/subscriptions/datasets/{datasetId}/subscribe'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::subscribeDataset'
+    _datasetId: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.unsubscribeDataset:
+  path: '/api/account/subscriptions/datasets/{datasetId}/unsubscribe'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::unsubscribeDataset'
+    _datasetId: ''
+  requirements:
+    _permission: 'access content'
