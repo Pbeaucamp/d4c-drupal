@@ -21,10 +21,10 @@ class ReusesController extends ControllerBase {
 		$reuses = $api->getReuses(null, null, null, "online", 1000, 0);
 		$html = "";
 		foreach($reuses["reuses"] as $reu){
-			$urldataset = $config->client->domain . $reu["dataset_id"];
+			$urldataset = "/visualisation/?id=" .  $reu["dataset_id"];
 			$html .= '<div class="reuse col-md-3 col-sm-6 col-xs-12">
 						<div class="thumbnail">
-						<a href='.$urldataset.' target="_blank">
+						<a href=' . $reu["url"] . ' target="_blank">
 							<img src="' . $reu["image"] . '"/>
 							<div class="caption">
 								<h2 data-id="' . $reu["id"] .'"> ' . $reu["title"] . ' </h2>
@@ -32,7 +32,7 @@ class ReusesController extends ControllerBase {
 								<p><span class="titre">Auteur</span><span class="info">' . ($reu["author_url"] != null ? '<a href="' . $reu["author_url"] . '">' . $reu["author_name"] . '</a>' : $reu["author_name"]) . '</span></p>
 								<p><span class="titre">Date de publication</span><span class="info">' . date('Y-m-d H:i:s', strtotime($reu["date"])) . '</span></p>
 								<p><span class="titre">Type</span><span class="info">' . $reu["type"] . '</span></p>
-								<p><span class="titre">Source</span><span class="info"><a href="' . $reu["url"] . '">' . $reu["url"] . '</a></span></p>
+								<p><span class="titre">Source</span><a href="' . $urldataset . '" target="_blank"><span class="info">' . $reu["dataset_title"] . '</span></a></p>
 							</div>
 							</a>
 						</div>
