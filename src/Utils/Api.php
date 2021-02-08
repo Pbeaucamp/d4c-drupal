@@ -7501,5 +7501,31 @@ function deleteStory($story_id){
 			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
 		}
 	}
+
+	function getThesaurus($params) {
+		$query_params = $this->proper_parse_str($params);
+		$spam_words = file(__DIR__ ."/../../thesaurus.txt", FILE_IGNORE_NEW_LINES);
+
+		Logger::logMessage('Thesaurus with params ' . $query_params["query"]);
+
+		$words = array();
+		foreach($spam_words as $word) {
+
+			if (strpos($word, $query_params["query"]) === 0) {
+				$wordValue = array();
+				$wordValue["value"] = $word;
+				$wordValue["data"] = $word;
+				$words[] = $wordValue;
+			}
+		}
+
+		$suggestions = ["suggestions" => $words];
+
+		$response = new Response();
+		$response->setContent(json_encode($suggestions));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
     
 }

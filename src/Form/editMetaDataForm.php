@@ -331,9 +331,12 @@ class editMetaDataForm extends HelpFormBase {
         );
         
         $form['tags'] = array(
-            '#type' => 'textarea',
+            '#markup' => '',
+            '#type' => 'textfield',
             '#title' => $this->t('Mots-clés (séparer par des virgules, les seuls symboles autorisés sont -"_"):'),
             '#attributes' => array('style' => 'width: 50%; height: 2em;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
 
         );
 

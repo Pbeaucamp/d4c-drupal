@@ -133,6 +133,14 @@ $("#selected_data select").val($('#edit-selected-data-id').val());
 $("#edit-selected-data-id").val($('#selected_data').val());
 //addPicto();
 
+$("#edit-tags input").autocomplete({
+    serviceUrl: '/api/thesaurus',
+    delimiter: ', ',
+    minChars: 3,
+    onSelect: function (suggestion) {
+        
+    }
+});
 
 function anichange(objName) {
 

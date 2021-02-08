@@ -946,3 +946,12 @@ ckan_admin.deleteDataset:
     _controller: '\Drupal\ckan_admin\Utils\Api::deleteDataset'
   requirements:
     _permission: 'access crawl'
+
+ckan_admin.api.getThesaurus:
+  path: '/api/thesaurus/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getThesaurus'
+    params: ''
+    _title: 'Thesaurus'
+  requirements:
+    _permission: 'access content'
