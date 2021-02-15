@@ -124,20 +124,15 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false) {
 		$results = array();
 
 		//Managing file (filepath and filename)
 		$fileName = parse_url($resourceUrl);
-		Logger::logMessage("TRM fileName " . $fileName);
-
 
 		$host = $fileName[host];
-		Logger::logMessage("TRM host " . $host);
 		$fileName = $fileName[path];
-		Logger::logMessage("TRM fileName " . $fileName);
 		$filePath = $fileName;
-		Logger::logMessage("TRM filePath " . $filePath);
 
 		$fileName = strtolower($fileName);
 		$fileName = urldecode($fileName);
@@ -146,6 +141,7 @@ class ResourceManager {
 		$fileName = $fileName[(count($fileName)-1)];
 		Logger::logMessage("TRM fileName " . $fileName);
 
+		Logger::logMessage("TRM filePath " . $filePath);
 		$filePathN = urldecode($filePath);
 		$filePathN = $this->nettoyage2($filePathN);
 		Logger::logMessage("TRM filePathN " . $filePathN);
@@ -272,7 +268,7 @@ class ResourceManager {
 				}
 
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage);
 				$results = array_merge($results, $result);
 			}
 			else {
@@ -377,7 +373,7 @@ class ResourceManager {
 
 				file_put_contents($rootCsv, $csv);
 
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
 				
@@ -548,10 +544,7 @@ class ResourceManager {
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/urlsheet/' . $fileName;
 	}
 
-
-	
-
-function manageXmlfile($url) {
+	function manageXmlfile($url) {
 		$api = new Api;
         // récuperer l'url xml file
         $jsonData = file_get_contents($url);
@@ -585,6 +578,123 @@ function manageXmlfile($url) {
 		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/xmlfile/' . $fileName;
 	}
 	
+	function managePackage($uniqId, $resourceUrl, $security, $organization) {
+		Logger::logMessage("Manage package file '" . $resourceUrl . "'");
+
+		$fileName = parse_url($resourceUrl);
+
+		$host = $fileName[host];
+		$fileName = $fileName[path];
+		$filePath = $fileName;
+
+		$fileName = strtolower($fileName);
+		$fileName = urldecode($fileName);
+		$fileName = $this->nettoyage2($fileName);
+		$fileName = explode("/", $fileName);
+		$fileName = $fileName[(count($fileName)-1)];
+
+		$filePathN = urldecode($filePath);
+		$filePathN = $this->nettoyage2($filePathN);
+
+		rename(self::ROOT . urldecode($filePath), self::ROOT . $filePathN); 
+		$filePath = $filePathN;
+
+		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
+		$resourceUrl = 'https://' . $host . '' . $filePath;
+
+		Logger::logMessage("Managing package with path '" . $filePath . "'");
+
+		$directoryName = 'package_extraction_' . uniqid();
+		$directoryPath = self::ROOT . 'sites/default/files/dataset/' . $directoryName;
+
+		$zip = new ZipArchive;
+		$res = $zip->open(self::ROOT . $filePath);
+		if ($res === TRUE) {
+			// extract it to the path we determined above
+			$zip->extractTo($directoryPath);
+			$zip->close();
+
+			$files = $this->getDirContents($directoryPath);
+
+			//We create the dataset and the metadata
+			foreach($files as $key=>$file) {
+				Logger::logMessage("Looking for metadata.json. Found '" . $file . "'");
+
+				if (strpos($file, 'metadata.json') !== false) {
+					Logger::logMessage("Found metadata.json, creating dataset.");
+
+					$string = file_get_contents($file);
+					$metadataJson = json_decode($string, true);
+
+					$datasetName = $metadataJson['metas']['name'];
+					$title = $metadataJson['metas']['title'];
+					$description = $metadataJson['metas']['description'];
+					$licence = $metadataJson['metas']['license_id'];
+					$isPrivate = $metadataJson['metas']['private'];
+
+					$tags = $metadataJson['metas']['tags'];
+					$extras = $metadataJson['metas']['extras'];
+					$fields = $metadataJson['dictionnary'];
+				
+					$datasetId = $this->createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+				}
+			}
+
+			if ($datasetId == null) {
+				Logger::logMessage("Unable to create dataset. Maybe metadata.json was not found.");
+				throw new \Exception('Le package ne peut pas être extrait.');
+			}
+
+			//We upload the ressources
+			$results = array();
+			$results['datasetId'] = $datasetId;
+			$results['resources'] = $this->manageFiles($datasetId, false, false, null, $directoryPath, 'UTF-8', true);
+
+			// We reupload the dictionnary
+			if ($fields != null) {
+				Logger::logMessage("Reuploading dictionnary.");
+				$api = new Api;
+
+				// $filds = $api->getAllFieldsForTableParam($id_resource, 'true');
+				$dataset = $api->getDataSetById($datasetId);
+				$contentdataset = json_decode($dataset->getContent(), true);
+				$resources = $contentdataset["result"]["resources"];
+
+				//We retrieve the new CSV resource
+				for($i=0; $i<count($resources); $i++){
+					if ($resources[$i]['format'] == 'CSV') {
+						$resourceId = $resources[$i]['id'];   
+						break;
+					}
+				}
+
+				if ($resourceId) {
+					Logger::logMessage("Found resource CSV " . $resourceId);
+					$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+					$data = array();
+					$data["resource_id"] = $resourceId;
+					$data["force"] = true;
+					$data["fields"] = $fields;
+					$data["uuid"] = uniqid();
+
+					// Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
+
+					$result = $api->updateRequest($callUrl, $data, "POST");
+
+					Logger::logMessage("TRM - RESULT DICTIONNARY " . $result);
+				}
+				else {
+					Logger::logMessage("Resource CSV not found. We do not reupload dictionnary.");
+				}
+			}
+
+			return $results;
+		}
+		else {
+			throw new \Exception('Le package ne peut pas être extrait.');
+		}
+	}
+	
 	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
 		Logger::logMessage("Manage zip file with path '" . self::ROOT . $filePath . "'");
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
@@ -599,14 +709,14 @@ function manageXmlfile($url) {
 			$zip->extractTo($directoryPath);
 			$zip->close();
 
-			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryName, $directoryPath, $encoding);
+			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, false);
 		}
 		else {
 			throw new \Exception('Le fichier ne peut pas être extrait.');
 		}
 	}
 
-	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryName, $directoryPath, $encoding) {
+	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, $fromPackage) {
 		Logger::logMessage("Managing files in '" . $directoryPath . "'");
 		$results = array();
 
@@ -644,19 +754,30 @@ function manageXmlfile($url) {
 		// We check if shapes.txt exist inside zip
 		foreach($files as $key=>$file) {
 			Logger::logMessage("Managing file '" . $file . "'");
-
-			// $fileName = pathinfo($file, PATHINFO_FILENAME);
 			
-			if (strpos($file, 'shapes.txt') !== false) {
+			if (is_dir($file)) {
+				Logger::logMessage("Ignoring '" . $file . "' because it is a folder");
+				continue;
+			}
+			else if (strpos($file, 'shapes.txt') !== false) {
 				Logger::logMessage("Found shapes.txt -> Managing GTFS");
 				$resourceUrl = $this->convertTextFileToCsv($file, "csv", $color_array);
 			}
+			else if ($fromPackage && (strpos($file, 'metadata.json') !== false) || strpos($file, "csv_gen") !== false) {
+				Logger::logMessage("Ignoring '" . $file . "' because it is autogenerated by D4C");
+				//Skipping metadata.json and autogenerated D4C's file from a package. We don't add it to the dataset
+				continue;
+			}
 			else {
+				// $fileName = pathinfo($file, PATHINFO_FILENAME);
 				// $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-				$resourceUrl = str_replace(self::ROOT, 'https://' . $_SERVER['HTTP_HOST'] . "/", $file);
+				// $resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
+
+				$resourceUrl = str_replace(self::ROOT, 'https://' . $_SERVER['HTTP_HOST'] . '/', $file);
+				Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
 			}
 
-			$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
+			$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage);
 			$results = array_merge($results, $result);
 		}
 
@@ -889,6 +1010,8 @@ function manageXmlfile($url) {
 			$data["fields"] = $fieldsWithoutId;
 			$data["uuid"] = uniqid();
 			$api->updateRequest($callUrl, $data, "POST");
+
+			Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
 
 			return $datapusherResult;
 		}
@@ -1184,7 +1307,8 @@ function manageXmlfile($url) {
 	
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,$source=null,$donnees_source=null,$mention_legales=null,$frequence=null) {
+			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null,
+			$source=null, $donnees_source=null, $mention_legales=null, $frequence=null) {
 		if ($extras == null) {
 			$extras = array();
 		}

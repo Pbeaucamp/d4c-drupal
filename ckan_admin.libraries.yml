@@ -79,12 +79,14 @@ editMetaDataForm.form:
     /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
     /sites/default/files/api/portail_d4c/js/jquery.autocomplete.js: {}
     js/editMetaDataForm.js: {}
+    js/progress_dataset.js: {}
     js/progress.js: {}
   css:
     theme:
       /sites/default/files/api/portail_d4c/css/visualisation.css: {}
     base:
       css/editMetaDataForm.css: {}
+      css/progress.css: {}
   dependencies:
     - core/jquery
     
@@ -254,9 +256,13 @@ PackagesForm.form:
     /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
     js/packageExtension.js: {}
     /sites/default/files/api/portail_d4c/js/export_popup_script.js: {}
+    js/progress_dataset.js: {}
+    js/progress.js: {}
   css:
     theme:
       http://ajax.aspnetcdn.com/ajax/jquery.ui/1.8.9/themes/blitzer/jquery-ui.css: {}
+    base:
+      css/progress.css: {}
   dependencies:
     - core/jquery
 
