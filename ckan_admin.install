@@ -213,6 +213,30 @@ function ckan_admin_schema() {
       )
     )
   );
+ 
+  $schema['d4c_dataset_subscription'] = array(
+    'description' => 'Gestion des abonnements aux jeux de données',
+    'fields' => array(
+      'id'=>array(
+        'type'=>'serial',
+        'not null' => TRUE,
+      ),
+      'dataset_id'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'user_id'=>array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'creation_date'=>array(
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+        'default' => '',
+      )
+    )
+  );
 
   return $schema;
 
@@ -379,3 +403,29 @@ function ckan_admin_update_8706(&$sandbox) {
   $schema->createTable('d4c_resource_version', $spec);
 }
 
+function ckan_admin_update_8707(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion des abonnements aux jeux de données',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE
+      ],
+      'dataset_id' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'not null' => TRUE
+      ],
+      'creation_date' => [
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_dataset_subscription', $spec);
+}

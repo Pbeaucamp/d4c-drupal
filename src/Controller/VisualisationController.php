@@ -852,6 +852,9 @@ class VisualisationController extends ControllerBase {
 												></d4c-dataset-export>
 						</d4c-pane>
 						
+						<!-- Enable this to enable dataset subscription -->
+						<!-- <d4c-dataset-subscription context="ctx" logged-in="'.$loggedIn.'" dataset-id="' . $dataset["metas"]["id"] . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-subscription> -->
+
 						<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
 							<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
 						</d4c-pane>

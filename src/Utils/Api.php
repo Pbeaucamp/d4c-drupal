@@ -1886,7 +1886,6 @@ class Api{
 		$sql = "Select ".$fieldId." as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
-		Logger::logMessage("TRM - Req " . $sql);
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -2621,6 +2620,12 @@ class Api{
 			$visu["custom_view_html"] = $html;
 		}
 		$visu['custom_view_enabled'] = $customView != null;
+
+		if (\Drupal::currentUser()->isAuthenticated()){
+			$idUser = \Drupal::currentUser()->id();
+			$isSubscribed = $this->isSubscribed($datasetid, $idUser);
+			$data_array['is_subscribed'] = $isSubscribed;
+		}
 
 		$data_array['extra_metas']['visualization'] = $visu;
 		
@@ -7823,5 +7828,87 @@ function deleteStory($story_id){
 		// $response->headers->set('Content-Type', 'application/json');
         
 		// return $response;  
+	}
+
+	/**
+	 * This method allow the user to subscribe to a dataset
+	 * 
+	 */
+	function subscribeDataset($datasetId) {
+		return $this->subscribe($datasetId, true);
+	}
+
+	/**
+	 * This method allow the user to unsubscribe to a dataset
+	 * 
+	 */
+	function unsubscribeDataset($datasetId) {
+		return $this->subscribe($datasetId, false);
+	}
+
+	function subscribe($datasetId, $subscribe) {
+		if (\Drupal::currentUser()->isAuthenticated()){
+			$userId = \Drupal::currentUser()->id();
+
+			$isSubscribed = $this->isSubscribed($datasetId, $userId);
+
+			$table = "d4c_dataset_subscription";
+			if ($isSubscribed && !$subscribe) {
+				Logger::logMessage("Unsubscribing for dataset '" . $datasetId . "'");
+
+				$query = \Drupal::database()->delete($table);
+				$query->condition($query->andConditionGroup()
+						->condition('user_id', $userId)
+						->condition('dataset_id', $datasetId));
+				$query->execute();
+			}
+			else if (!$isSubscribed && $subscribe) {
+				Logger::logMessage("Subscribing for dataset '" . $datasetId . "'");
+
+				$query = \Drupal::database()->insert($table);
+				$query->fields([
+					'dataset_id',
+					'user_id',
+					'creation_date'
+				]);
+				$query->values([
+					$datasetId,
+					$userId,
+					'now'
+				]);
+				$query->execute();
+			}
+
+			$status = ["result" => "success"];
+	
+			$result = json_encode($status);
+	
+			$response = new Response();
+			$response->setContent($result);
+			$response->headers->set('Content-Type', 'application/json');
+			
+			return $response;  
+		}
+		else {
+			$response = new Response();
+			$response->setStatusCode(404);
+			$response->headers->set('Content-Type', 'application/json');
+			
+			return $response;
+		}
+	}
+	
+	function isSubscribed($datasetId, $userId) {
+		$table = "d4c_dataset_subscription";
+
+		$query = \Drupal::database()->select($table, 's');
+		$query->condition($query->andConditionGroup()
+				->condition('s.user_id', $userId)
+				->condition('s.dataset_id', $datasetId));
+
+		$query->addExpression('COUNT(*)');
+		$count = $query->execute()->fetchField();
+
+		return $count > 0;
 	}
 }
