@@ -928,7 +928,6 @@ ckan_admin.callTaskStatus:
   requirements:
     _permission: 'access content'
 
-
 ckan_admin.call.reuses:
   path: '/api/datasets/reusesManagement'
   defaults:

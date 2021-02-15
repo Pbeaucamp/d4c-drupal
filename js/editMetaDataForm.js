@@ -219,6 +219,7 @@ function clear() {
     $("td>div").removeAttr("style");
     $("#edit-analize-false").removeAttr("checked");
     $("#edit-api-false").removeAttr("checked");
+    $("#edit-display-versionning").removeAttr("checked");
     $('#disable_fields_empty').prop("checked", true);
     $('#edit-imgback').val('');
     // clear producer value
@@ -390,6 +391,7 @@ function fillData(data) {
     }
 
     let hasHideFieldsProp = false;
+    let hasDisplayVersionning = false;
     for (let g = 0; g < data.extras.length; g++) {
         // get donnees source and source value from extra data and assign it to new source and donnees_source
         if (data.extras[g].key == 'FTP_API') {
@@ -551,10 +553,24 @@ function fillData(data) {
                 $('#disable_fields_empty').prop("checked", false);
             }
         }
+
+        if (data.extras[g].key == 'display_versionning') {
+            hasDisplayVersionning = true;
+            if(data.extras[g].value == 1 ) {
+                $('#edit-display-versionning').prop("checked", true);
+            }
+            else {
+                $('#edit-display-versionning').prop("checked", false);
+            }
+        }
     }
 
     if (!hasHideFieldsProp) {
         $('#disable_fields_empty').prop("checked", false);
+    }
+
+    if (!hasDisplayVersionning) {
+        $('#edit-display-versionning').prop("checked", false);
     }
 
     //    

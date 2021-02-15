@@ -344,6 +344,32 @@ class typeColumnsForm extends HelpFormBase {
 		}
 		
 		//tooltip
+		$form['T3'] = array(
+			'#markup' => '<h2 class="title">'.t('Configuration des Filtres prédéfinis').'</h2>',
+		);
+
+        $form['predefined_filter'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Filtres prédéfinis:'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+		
+		$form['text_message1'] = [
+			'#prefix' => '<p>',
+			'#suffix' => '</p>',
+			'#markup' => $this->t('Vous pouvez ajouter les filtres sous la forme \'nom==valeur\' (séparer les filtres par des virgules)'),
+		];
+		
+		$form['text_message2'] = [
+			'#prefix' => '<p>',
+			'#suffix' => '</p>',
+			'#markup' => $this->t('Exemple: Filtre Opel et Mercedes==refine.marque=OPEL&refine.marque=MERCEDES,Filtre Opel==refine.marque=OPEL'),
+		];
+		
+		//tooltip
 		$form['T1'] = array(
 			'#markup' => '<h2 class="title">'.t('Configuration des Infobulles Carte et Calendrier').'</h2>',
 		);
@@ -461,8 +487,28 @@ class typeColumnsForm extends HelpFormBase {
 	}
     
     
-	public function submitForm(array &$form, FormStateInterface $form_state)
-	{
+	public function submitForm(array &$form, FormStateInterface $form_state) {
+		$api = new Api;
+		
+		$selected_org = $form_state->getValue('filtr_org');
+		$orgaFilter = "";
+		if($selected_org!=''){
+			$orgaFilter = '&q=organization:"'.$selected_org.'"';
+		}
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
+			
+        $dataSet = $dataSet->getContent();
+        $dataSet = json_decode($dataSet, true);
+		$dataSet = $dataSet[result][results];
+		
+		uasort($dataSet, function($a, $b) {
+			$res =  strcasecmp($a['title'], $b['title']);
+			return $res;
+		});
+		
+		$this->datasets = $dataSet;
+
+
         //$form['#attached']['library'][] = 'ckan_admin/typeColumns.form';
 
 		// $selectData = $form_state->getValue('selected_data');
@@ -471,7 +517,6 @@ class typeColumnsForm extends HelpFormBase {
         $id_data = $selectData[0];
         $id_resource = $selectData[1];   
         
-        $api = new Api;
         $filds = $api->getAllFieldsForTableParam($id_resource, 'true');
 
         $table_data = $form_state->getValue('table');
@@ -693,12 +738,16 @@ class typeColumnsForm extends HelpFormBase {
 		
 		
 		//tooltip
-		$oldDataset;
+		$oldDataset = null;
 		foreach($this->datasets as $d){
+			Logger::logMessage("TRM - Datasets ");
 			if($d["id"] == $id_data){
+				Logger::logMessage("TRM - Test ");
 				$oldDataset = $d;
 			}
 		}
+
+		Logger::logMessage("TRM - Old dataset " . json_encode($oldDataset));
 
 		$tooltip = array();
 		$tooltip["type"] = $form_state->getValue('type');
@@ -754,10 +803,39 @@ class typeColumnsForm extends HelpFormBase {
 			$extras[count($extras)]['key'] = 'FieldColor';
 			$extras[(count($extras) - 1)]['value'] = $selectedFieldColor;
 		}
+
+
+		
+
+		//Predefined filters
+		$predefinedFilters = $form_state->getValue('predefined_filter');
+
+		Logger::logMessage("Predefined filters " . $predefinedFilters);
+
+		$found = false;
+		foreach($extras as &$e){
+			if ($e["key"] == "PredefinedFilters"){
+				if (!($predefinedFilters == '')) {
+					Logger::logMessage("Setting predefined filters " . $predefinedFilters . "\r\n");
+
+					$e["value"] = $predefinedFilters;
+				}
+				else {
+					Logger::logMessage("Clearing predefined filters \r\n");
+
+					$e["value"] = '';
+				}
+				$found = true;
+				break;
+			}
+		}
+		if(!$found && !($predefinedFilters == '')) {
+			$extras[count($extras)]['key'] = 'PredefinedFilters';
+			$extras[(count($extras) - 1)]['value'] = $predefinedFilters;
+		}
 		
 		$oldDataset["extras"] = $extras;
 
-		// Logger::logMessage("Old dataset " . json_encode($oldDataset) . "r\n");
 
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");

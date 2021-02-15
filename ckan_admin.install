@@ -172,7 +172,7 @@ function ckan_admin_schema() {
   );
   
 
-    $schema['d4c_user_story'] = array(
+  $schema['d4c_user_story'] = array(
     'description' => 'Gestion des user story',
     'fields' => array(
       'story_id'=>array(
@@ -183,8 +183,34 @@ function ckan_admin_schema() {
         'type' => 'text',
         'not null' => TRUE,
       )
-      
-      
+    )
+  );
+ 
+  $schema['d4c_resource_version'] = array(
+    'description' => 'Gestion du versionning des ressources',
+    'fields' => array(
+      'id'=>array(
+        'type'=>'serial',
+        'not null' => TRUE,
+      ),
+      'dataset_id'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'resource_id'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'filepath'=>array(
+        'type' => 'text',
+        'not null' => TRUE,
+      ),
+      'creation_date'=>array(
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+        'default' => '',
+      )
     )
   );
 
@@ -322,4 +348,34 @@ function ckan_admin_update_8705(&$sandbox) {
      return $schema;
 }
 
+function ckan_admin_update_8706(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion du versionning des ressources',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE
+      ],
+      'dataset_id' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'resource_id' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'filepath' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'creation_date' => [
+        'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE,
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_resource_version', $spec);
+}
 

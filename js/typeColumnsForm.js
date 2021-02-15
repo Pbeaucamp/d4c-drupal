@@ -522,6 +522,19 @@ function loadTooltip(idDataset, dataFields){
 				else {
 					$("#edit-selected-field").val("");
 				}
+
+				let predefinedFilterFound = false;
+				for(let i =1; i<result.metas.extras.length; i++) {
+					if (result.metas.extras[i].key == 'PredefinedFilters') {
+						$("#edit-predefined-filter input").val(result.metas.extras[i].value);
+
+						predefinedFilterFound = true;
+						break;
+					}
+				}
+				if (!predefinedFilterFound) {
+					$("#edit-predefined-filter input").val("");
+				}
 			}
 			else{
 				alert(JSON.stringify(result.error));

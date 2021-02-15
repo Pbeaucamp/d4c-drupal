@@ -600,26 +600,36 @@ class VisualisationController extends ControllerBase {
 							Filtres
 						</button>
 					</div>
-					<div class="d4c-filters"
-						 ng-class="{\'d4c-filters--expanded\': toggleState.expandedFilters}" ng-show="canAccessData()">
+					<div class="d4c-filters" ng-class="{\'d4c-filters--expanded\': toggleState.expandedFilters}" ng-show="canAccessData()">
 						
 						<h2 class="d4c-filters__count">
-								<span class="d4c-filters__count-number">\{\{ ctx.nhits | number \}\}</span>
-								<span class="d4c-filters__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
-							</h2>
-							<h2 class="d4c-filters__filters-summary" ng-show="ctx.getActiveFilters().length">
-								<span translate>Active filters</span>
-								<d4c-clear-all-filters context="ctx"></d4c-clear-all-filters>
-							</h2>
-							<d4c-filter-summary context="ctx" clear-all-button="false"></d4c-filter-summary>
-							<div ng-hide="ctx.getActiveFilters().length"
-								 class="d4c-filters__no-filters">
-								Aucun filtre actif.
-							</div>
+							<span class="d4c-filters__count-number">\{\{ ctx.nhits | number \}\}</span>
+							<span class="d4c-filters__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
+						</h2>
+						<h2 class="d4c-filters__filters-summary" ng-show="ctx.getActiveFilters().length">
+							<span translate>Active filters</span>
+							<d4c-clear-all-filters context="ctx"></d4c-clear-all-filters>
+						</h2>
+						<d4c-filter-summary context="ctx" clear-all-button="false"></d4c-filter-summary>
+						<div ng-hide="ctx.getActiveFilters().length"
+								class="d4c-filters__no-filters">
+							Aucun filtre actif.
+						</div>
 
-							<h2 class="d4c-filters__filters"><span translate>Filters</span></h2>
-							<d4c-text-search context="ctx" placeholder="Rechercher..." autofocus></d4c-text-search>
-							<d4c-facets context="ctx"></d4c-facets>
+						<h2 class="d4c-filters__filters"><span translate>Filters</span></h2>
+						<d4c-text-search context="ctx" placeholder="Rechercher..." autofocus></d4c-text-search>
+
+						<!-- Predefined filters -->
+						<h2 ng-if="ctx.dataset.getPredefinedFilters()" class="d4c-filters__filters"><span translate>Predefined Filters</span></h2>
+						<ul class="d4c-dataset-export__format-choices" ng-if="ctx.dataset.getPredefinedFilters()">
+							<li ng-repeat="(key, value) in ctx.dataset.getPredefinedFilters()" class="d4c-dataset-export__format-choice">
+								<a href="/visualisation/table/?id=\{\{ ctx.dataset.metas.id \}\}&\{\{ value }\}">
+									<span>\{\{ key }\}</span>
+								</a>
+							</li>
+						</ul>
+
+						<d4c-facets context="ctx"></d4c-facets>
 					
 					</div><div class="d4c-dataset-visualization"
 						   ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
@@ -851,7 +861,7 @@ class VisualisationController extends ControllerBase {
 					<!--<d4c-disqus
 						   shortname="data4citizen"
 						   identifier="'.$host."_".$dataset["datasetid"].'">
-					</d4c-disqus>-->
+					</d4c-disqus> -->
 				</div>
 			</div>
 
