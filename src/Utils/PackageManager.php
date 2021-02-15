@@ -483,10 +483,23 @@ die;*/
 
 					$topiccategory = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->gmdMD_TopicCategoryCode->__toString();
 					$extentdescription = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString();
-					$westBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
-					$eastBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
-					$southBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
-					$northBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
+					
+					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal != null ) {
+							$westBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
+					}
+					
+					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal != null ) {
+						$eastBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
+					}	
+					
+					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal != null ) {
+						$southBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
+					}
+					
+					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal != null ) {
+						$northBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
+					}
+					
 
 					/*echo "<pre>";
 					var_dump($value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString());
