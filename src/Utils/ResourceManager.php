@@ -57,6 +57,8 @@ class ResourceManager {
 			"groups" => [],
 			"owner_org" => $organization,
 		];
+
+		Logger::logMessage("TRM - DATASET '" . json_encode($newData) . "'");
 		
 		$coll = array('0'=>'0', '1'=>'');
 			
@@ -489,12 +491,19 @@ class ResourceManager {
 			// fclose($fileInput);
 
 			$scriptPath = self::ROOT . 'modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
+			$filePath = self::ROOT . $filePath;
 
 			$typeConvert = 'GEOJSON';
 			
+			Logger::logMessage("Building Geojson from shape file '" . $resourceUrl . "' with file path '" . $filePath . "'");
+
 			$rootJson= self::ROOT . 'sites/default/files/dataset/gen_'.uniqid().'.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
+			
+			Logger::logMessage("OGR2OGR command '" . $command . "'");
 			$message = shell_exec($command);
+			Logger::logMessage("Result from shape conversion '" . json_encode($message) . "'");
+
 			$json = file_get_contents ($rootJson);
 
 			$csv = $this->buildCSVFromGeojson($json);
@@ -600,6 +609,16 @@ function manageXmlfile($url) {
 	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryName, $directoryPath, $encoding) {
 		Logger::logMessage("Managing files in '" . $directoryPath . "'");
 		$results = array();
+
+		//We set all files to lowercase before processing
+		$di = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator($directoryPath, \FilesystemIterator::SKIP_DOTS),
+			\RecursiveIteratorIterator::LEAVES_ONLY
+		);
+		foreach($di as $name => $fio) {
+			$newname = $fio->getPath() . DIRECTORY_SEPARATOR . strtolower( $fio->getFilename() );
+			rename($name, $newname);
+		}
 		
 		$files = $this->getDirContents($directoryPath);
 
@@ -626,15 +645,15 @@ function manageXmlfile($url) {
 		foreach($files as $key=>$file) {
 			Logger::logMessage("Managing file '" . $file . "'");
 
-			$fileName = pathinfo($file, PATHINFO_FILENAME);
+			// $fileName = pathinfo($file, PATHINFO_FILENAME);
 			
 			if (strpos($file, 'shapes.txt') !== false) {
 				Logger::logMessage("Found shapes.txt -> Managing GTFS");
 				$resourceUrl = $this->convertTextFileToCsv($file, "csv", $color_array);
 			}
 			else {
-				$fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
+				// $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
+				$resourceUrl = str_replace(self::ROOT, 'https://' . $_SERVER['HTTP_HOST'] . "/", $file);
 			}
 
 			$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding);
@@ -806,7 +825,7 @@ function manageXmlfile($url) {
 		return $results;
 	}
 
-	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher) {
+	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null) {
 		
 		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher");
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
@@ -874,14 +893,23 @@ function manageXmlfile($url) {
 			return $datapusherResult;
 		}
 		else {
-			$resources = [    
-				"package_id" => $datasetId,
-				"url" => $resourceUrl,
-				"description" => '',
-				"name" => $fileName
-				// Put this ?
-				// "format" => 'csv'
-			];
+			if ($format) {
+				$resources = [    
+					"package_id" => $datasetId,
+					"url" => $resourceUrl,
+					"description" => '',
+					"name" => $fileName,
+					"format" => $format
+				];
+			}
+			else {
+				$resources = [    
+					"package_id" => $datasetId,
+					"url" => $resourceUrl,
+					"description" => '',
+					"name" => $fileName
+				];
+			}
 			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 			$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			$return = json_decode($return);
@@ -1144,7 +1172,9 @@ function manageXmlfile($url) {
 				$userlist[] = "*".$uid."*";
 			}
 		}
-		$userlist[] = $userId;
+		if ($userId) {
+			$userlist[] = $userId;
+		}
 		$userlist = array_unique($userlist);
 		if(count($userlist) == 1){
 			$userlist = array($userlist);
@@ -1675,7 +1705,13 @@ function manageXmlfile($url) {
 			}
 		}
 		else {
-			throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error->message) . ")");
+			Logger::logMessage("Impossible de créer un nouveau jeu de données (" . json_encode($resnew) . ")");
+			if ($resnew->error->message) {
+				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error->message) . ")");
+			}
+			else {
+				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error) . ")");
+			}
 		}
 
         return array('0'=>$coll, '1'=>$idNewData);

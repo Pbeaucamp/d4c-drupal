@@ -86,8 +86,6 @@ class PackageManager {
     	$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
     	$dataset = $api->getDataSetById($id);
-    	$host = \Drupal::request()->getHost();
-		$protocol = \Drupal::request()->getScheme()."://";
         $contentdataset = json_decode($dataset->getContent(),true);
         $theme = "";
         $vignette = "";

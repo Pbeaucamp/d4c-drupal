@@ -1030,11 +1030,13 @@ class Api{
         if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} 
-        error_log('url check : ' . $callUrl);
+
+        // Logger::logMessage('TRM - url check : ' . $callUrl);
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		//echo $callUrl;
+        // Logger::logMessage('TRM - Result : ' . $result);
 		curl_close($curl);
 		
 		$result = json_decode($result,true);
@@ -7474,8 +7476,6 @@ function deleteStory($story_id){
 		return $response;  
 	}
 
-
-
 	public function callPackageReutilisation($params) {
 		$reuses = $this->getReuses(null, null, null, "online", 1000, 0);
 
@@ -7485,8 +7485,7 @@ function deleteStory($story_id){
 
 		return $response;
 	}
-
-
+	
 	function deleteDataset($datasetId) {
 
 
@@ -7498,7 +7497,7 @@ function deleteStory($story_id){
 			return new Response("true");
 		}
 		else {
-			throw new \Exception('Impossible de supprimer le dataset (' . $response . ' is not supported.');
+			throw new \Exception('Impossible de supprimer le dataset (' . $result . ' is not supported.');
 		}
 	}
 
@@ -7528,4 +7527,227 @@ function deleteStory($story_id){
 		return $response;
 	}
     
+	public function callCreateDataset() {
+		Logger::logMessage("Create dataset by API");
+		$users = \Drupal\user\Entity\User::loadMultiple();
+			
+		$resourceManager = new ResourceManager;
+
+		$title = $_POST['title'];
+		$licence = $_POST['selected_lic'];
+		$organization = $_POST['selected_org'];
+		$isPrivate = $_POST['selected_private'] == "true" ? true : false;
+	
+		// Define Dataset name
+		$datasetName = $resourceManager->defineDatasetName($title);
+
+		// Define security
+		$security = $resourceManager->defineSecurity(null, $users);
+
+		// We build extras
+		$extras = $resourceManager->defineExtras(null, null, null, null, null, null, null,
+			null, null, null, null, null, 
+			null, null, null, $security);
+					
+		$generatedTaskId = uniqid();
+		$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $licence, $organization, $isPrivate, array(), $extras);
+
+		$result["result"] = $datasetId;
+		$result["status"] = "success";
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
+	public function callUploadResource() {
+		Logger::logMessage("Upload resource by API");
+
+		$result = array();
+			
+		$resourceManager = new ResourceManager;
+		
+		$datasetId = $_POST['selected_data_id'];
+		//Used for update - TODO
+		$resourceId = $_POST['selected_resource_id'];
+
+		$resourceName = $_POST['resource_name'];
+		$resourceUrl = $_POST['resource_url'];
+
+		$format = $_POST['format'];
+		$encoding = $_POST['encoding'];
+		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
+
+		//We check if we upload a resource by URL or a FILE
+		if ($resourceUrl) {
+			$results = array();
+			$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
+			$results[] = $resultUpload;
+			Logger::logMessage("TRM - Result " . json_encode($results));
+	
+			$result["result"] = $results;
+			$result["status"] = "success";
+		}
+		else {
+			$manageFileResult = $this->manageFile();
+			if ($manageFileResult["status"] == "error") {
+				$result["status"] = "error";
+				$result["result"] = $manageFileResult;
+			}
+			else if ($manageFileResult["status"] == "success") {
+				$resourceUrl = $manageFileResult["url"];
+				
+				try {
+					if (!$resourceId) {
+						//Managing resources
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
+				
+						//We update the visualisation's icons
+						$this->calculateVisualisations($datasetId);
+	
+						$result["result"] = $results;
+						$result["status"] = "success";
+					}
+					else {
+						// For now we only support new dataset
+						Logger::logMessage("Trying to update dataset - For now we only support new dataset");
+						throw new \Exception("Trying to update dataset - For now we only support new dataset");
+					}
+				} catch (\Exception $e) {
+					Logger::logMessage($e->getMessage());
+					$data_array = array();
+					$data_array["message"] = $e->getMessage();
+					
+					$result["result"] = $data_array;
+					$result["status"] = "error";
+				}
+			}
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
+	function manageFile() {
+		Logger::logMessage("Managing file received from POST");
+		Logger::logMessage("File infos : " . json_encode($_FILES['upload_file']));
+
+		$data_array = array();
+
+		// if($_POST["recaptcha_response"] != ""){
+		// 	//check captcha
+		// 	$callUrl =  "https://www.google.com/recaptcha/api/siteverify";
+		// 	$data_string = array();
+		// 	$data_string["secret"] = "6LecPMcUAAAAAMUzjOwRKlPeAd43AR_PFFAhg8cb";
+		// 	$data_string["response"] = $_POST["recaptcha_response"];
+			
+		// 	$curl = curl_init($callUrl);
+		// 	curl_setopt_array($curl, $this->getSimpleOptions());
+		// 	curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
+		// 	curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+		// 		'Content-Type: application/json',                                                                                
+		// 		'Content-Length: ' . strlen($data_string))                                                                       
+		// 	); 
+		// 	$resp = curl_exec($curl);
+		// 	curl_close($curl);//error_log($resp);
+		// 	$resp = json_decode($resp, true);
+		// 	if($resp["success"] == false){
+		// 		$data_array["status"] = "captcha_failed";
+		// 		$data_array["message"] = json_encode($resp["error-codes"]);
+		// 		echo json_encode($data_array);
+		// 		return $response;
+		// 	}
+		// }
+
+		if (
+			!isset($_FILES['upload_file']['error']) ||
+			is_array($_FILES['upload_file']['error'])
+		) {
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Invalid parameters.';
+			Logger::logMessage("Invalid parameters.");
+			return $data_array;
+		}
+		
+		switch ($_FILES['upload_file']['error']) {
+		case UPLOAD_ERR_OK:
+			break;
+		case UPLOAD_ERR_NO_FILE:
+			$data_array["status"] = "error";
+			$data_array["message"] = 'No file sent.';
+			Logger::logMessage("No file sent.");
+			return $data_array;
+		case UPLOAD_ERR_INI_SIZE:
+		case UPLOAD_ERR_FORM_SIZE:
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Exceeded filesize limit.';
+			Logger::logMessage("Exceeded filesize limit.");
+			return $data_array;
+		default:
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Unknown errors.';
+			Logger::logMessage("Unknown errors.");
+			return $data_array;
+		}
+
+		// You should also check filesize here.
+		if ($_FILES['upload_file']['size'] > 1000000) {
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Exceeded filesize limit.';
+			Logger::logMessage("Exceeded filesize limit.");
+			return $data_array;
+		}
+
+		$finfo = new finfo(FILEINFO_MIME_TYPE);
+		Logger::logMessage("Found format : " . $finfo->file($_FILES['upload_file']['tmp_name']));
+		if (false === $ext = array_search(
+			$finfo->file($_FILES['upload_file']['tmp_name']),
+			array(
+				'zip' => 'application/zip',
+			),
+			true
+		)) { 
+			Logger::logMessage("Invalid file format.");
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Invalid file format.';
+			return $data_array;
+		}
+			
+		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
+		$uploadfile = $uploaddir . basename($_FILES['upload_file']['name']);
+
+		if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadfile)) {
+			Logger::logMessage("The file is valid and has been uploaded with success");
+			$url = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
+		}
+		else {
+			Logger::logMessage("Potential attack by file upload.");
+			$data_array["status"] = "error";
+			$data_array["message"] = 'Potential attack by file upload.';
+			return $data_array;
+		}
+
+		$data_array["status"] = "success";
+		$data_array["url"] = $url;
+		return $data_array;
+
+		// $name = str_replace(" ", "-", strtolower($_POST["title"]));
+		
+		// if(\Drupal::currentUser()->isAuthenticated()){
+		// 	$user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
+		// 	//$data["author_name"] = $user->get('name')->value;
+		// 	$data["author_name"] = $_POST["author_name"];
+		// 	$data["author_email"] = $user->get('mail')->value;
+		// 	//error_log( "Connected !!");
+		// } else {
+		// 	//error_log( "Not connected ..");
+		// 	$data["author_name"] = $_POST["author_name"];
+		// 	$data["author_email"] = $_POST["author_email"];
+		// }
+	}
 }
