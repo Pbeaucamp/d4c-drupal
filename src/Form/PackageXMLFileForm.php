@@ -182,10 +182,18 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 	'#upload_validators' => array(
 		'file_validate_extensions' => array('xls xlsx xml'),
 	),
-	'#required' => TRUE,
+	'#required' => FALSE,
 	'#size' => 10,
     '#suffix' => '</div>',
 );
+
+    $form['orga_selected_input'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'width: 50%;'),
+			'display' => nona,
+			'#maxlength' => 300
+		);
 
 
 	$form['importer'] = array(
@@ -296,8 +304,19 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $api = new Api();
         $resourceManager = new ResourceManager;
 
+        $orgavalue = $form_state->getValue('orga_selected_input');
+        
+        $organization="";
+	    $orga = $api->getAllOrganisations();
+		    foreach ($orga as $key => $value) {
+		    	if($value["display_name"] == $orgavalue || $value["title"] == $orgavalue || $value["name"] == $orgavalue) {
+		    		$organization = $value["id"];
+		    	}	
+		    }
+
         $dataset_file = $form_state->getValue('jdd', 0);
-        $resourceUrl = $resourceManager->manageFile($dataset_file[0]);
+       if(sizeof($dataset_file) > 0 ) {
+        	$resourceUrl = $resourceManager->manageFile($dataset_file[0]);
 
        
 		$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
@@ -364,7 +383,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$datasetName="";
 				$description = "";
 				$licence ="";
-				$organization="";
 				$disableFieldsEmpty = 1;
 				$generatedTaskId = $this->gen_uuid();
 				$resourceUrlval="";
@@ -416,20 +434,72 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
 					}
 
-					if($key == "gmdcontact") {
+					/*if($key == "gmdcontact") {
 						$organization = $value->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString();
 
-					}
+					}*/
 
 					if($key == "gmddistributionInfo") {
 						
-						$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+						/*$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
 
+						echo "<pre>";*/
+						/*var_dump($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions);*/
+						foreach ($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine as $k => $f) {
+				
+
+							if($f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'csv' || $f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'CSV' ){
+								
+								$resourceUrlval = urldecode($f->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+
+							}
+							
+						}
+						
+
+					
 						$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
-						$newfile="";
-						$filepathContent = file_get_contents($resourceUrlval);
-						if (strpos(file_get_contents($resourceUrlval), ';') !== false) {
-							$resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
+				/*		var_dump($resourceUrlval);die;*/
+
+						/*var_dump($resourceUrlval);die;*/
+						// $newfile="";
+						// $filepathContent = file_get_contents($resourceUrlval);
+						
+						//  $delimiter = $api->getFileDelimiter($resourceUrlval);
+					
+						//  $arr1 =file($resourceUrlval);
+			   //          $arr = array();
+			   //          $a=15;
+			            
+			   //          if(count($arr1)<15){
+						// 	$a=count($arr1);
+						// }
+
+			   //          for($i=0; $i<$a; $i++){
+
+						// 	$text = $arr1[$i];
+						// 	$arr[$i] = iconv(mb_detect_encoding($text, mb_detect_order(), true), "UTF-8", $text);
+			   //          }
+
+			   //          if($arr[0]==null || $arr[0]==''){
+						// $arr[0]="Pas d'accès de ligne ou de colonne aux tables non tabulaires";
+						// }
+
+						// $resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
+		    //         	$fp = fopen($resourceUrlval, 'wb');
+						// foreach ( $arr as $line ) {
+						//     $val = explode($delimiter, $line);
+						//     foreach ($val as $key22 => $value22) {
+						//     	$value22 = str_replace('","', ',', $value22);
+						//     	$val[$key22] = trim($value22, '"');
+						    	
+						//     }
+						//     fputcsv($fp, $val);
+						// }
+						// fclose($fp);
+						// $resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $resourceUrlval);
+						/*if (strpos(file_get_contents($resourceUrlval), ';') !== false) {
+							
 
 							$commaReplace = str_replace(";",",",$filepathContent);
 							$commaReplace = str_replace('"','',$filepathContent);
@@ -453,7 +523,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 							$resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
 						
 						}
-
+*/
 
 
 
@@ -466,13 +536,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 				
 							drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
-
-				        $orga = $api->getAllOrganisations();
-				        foreach ($orga as $key => $value) {
-				        	if($value["display_name"] == $organization || $value["title"] == $organization) {
-				        		$organization = $value["id"];
-				        	}	
-				        }
 				       
 
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
@@ -480,6 +543,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);
 
 		}
+        }
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
        

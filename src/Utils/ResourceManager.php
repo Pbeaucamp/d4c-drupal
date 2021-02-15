@@ -555,6 +555,7 @@ class ResourceManager {
         $contenturlsheet = array();
        
         foreach($rows as $row) {
+        	$row = str_replace(";", ",", $row);
             $contenturlsheet[] = str_getcsv($row);
 		}
 
