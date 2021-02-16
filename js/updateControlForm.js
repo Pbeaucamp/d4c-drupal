@@ -160,7 +160,7 @@ function createTablePrew(resUrl,type_file,type_site){
 // console.log(resUrl);
  resUrl = resUrl.replace(/\//g,'!');
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',
@@ -399,7 +399,7 @@ function fillTable(data) {
                         }
                         else if(datasets[i].site == "locale") {
 
-                            $.getJSON('/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
+                            $.getJSON(fetchPrefix() + '/d4c/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
 
                                 if (result) {
                                     result.data.sort(function (a, b) {
@@ -482,7 +482,7 @@ function deleteMoissonnage(event) {
     var conf = confirm("Etes-vous sûr de vouloir supprimer ce moissonnage?");
     if (conf) {
         var datasetId=event.attr("data-id-moisonnage");
-        $.ajax('/api/dataset/remove/'+datasetId, {
+        $.ajax(fetchPrefix() + '/d4c/api/dataset/remove/'+datasetId, {
         type: 'POST',
         dataType: 'json',
         cache: true,
@@ -548,7 +548,7 @@ function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',

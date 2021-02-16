@@ -711,7 +711,7 @@ function goSearch_InfoCom94() {
 
 
 
-    $.ajax('/datasets/update/callInfocom94/' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/callInfocom94/' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -841,7 +841,7 @@ function goSearch_Opendatasoft() {
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/api/datasets/2.0/callSearchOpendatasoft/' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchOpendatasoft/' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -932,7 +932,7 @@ function goSearch_Opendatasoft_all_site() {
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/api/datasets/2.0/callSearchOpendatasoftAllSite/' +url+ ';' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchOpendatasoftAllSite/' +url+ ';' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -1036,7 +1036,7 @@ function goSearch_socrata(){
   
     //urlSocrata
 
-    $.ajax('/datasets/update/socrataCall/' +urlSocrata+';' + $('#edit-chercher').val().replace(' ', '_'), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/socrataCall/' +urlSocrata+';' + $('#edit-chercher').val().replace(' ', '_'), {
 
         type: 'POST',
         dataType: 'json',
@@ -1154,7 +1154,7 @@ function search_ckan(){
    // let param = $('#edit-chercher').val().replace(' ', '_');
 
 
-    $.ajax('/datasets/update/ckanSearchCall/' + urlCkan+';'+$('#edit-chercher').val().replace(' ', '_'), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/ckanSearchCall/' + urlCkan+';'+$('#edit-chercher').val().replace(' ', '_'), {
 
         type: 'POST',
         dataType: 'json',
@@ -1293,7 +1293,7 @@ function search_d4c(){
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/datasets/update/calld4c/' +urlD4c+ ';' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/calld4c/' +urlD4c+ ';' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -1406,7 +1406,7 @@ function goSearch_ArcGIS() {
     $('#edit-ids').empty();
 
 	//console.log(encodeURIComponent(url));
-    $.ajax('/api/datasets/2.0/callSearchArcGIS/', {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchArcGIS/', {
 		data: { url: url},
         type: 'POST',
         dataType: 'json',
@@ -1475,7 +1475,7 @@ if(resUrl.includes("?")) {
       resUrl = res[0];
  }
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',

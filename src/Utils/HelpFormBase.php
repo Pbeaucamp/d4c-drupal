@@ -17,6 +17,7 @@ abstract class HelpFormBase extends FormBase {
 	
 	public function buildForm(array $form, FormStateInterface $form_state) {
 		$form['#attached']['library'][] = 'ckan_admin/helpForm';
+		$form['#attached']['library'][] = 'ckan_admin/routing';
 		//$form['#attached']['drupalSettings']['bookmark'] = "";
 		$form['help'] = array(
 			'#type' => 'button',

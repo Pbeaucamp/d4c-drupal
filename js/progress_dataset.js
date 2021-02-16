@@ -23,7 +23,7 @@ function checkProgress() {
 }
 
 function worker(datasetId) {
-    $.ajax('/api/taskStatus/' + datasetId, {
+    $.ajax(fetchPrefix() + '/d4c/api/taskStatus/' + datasetId, {
         type: 'POST',
         dataType: 'json',
 

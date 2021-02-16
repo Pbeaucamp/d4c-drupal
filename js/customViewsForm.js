@@ -93,9 +93,9 @@ function getData() {
 //            }
 //
 //        });
-         //console.log('/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val());
+         //console.log(fetchPrefix() + '/d4c/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val());
         
-        $.ajax('/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val(), {
+        $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val(), {
         type: 'POST',
       
         dataType: 'json',
