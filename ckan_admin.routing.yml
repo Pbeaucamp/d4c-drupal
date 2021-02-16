@@ -121,7 +121,7 @@ ckan_admin.cartemap:
     _permission: 'access content'
 
 ckan_admin.api3:
-  path: '/api/records/2.0/search/{params}'
+  path: '/d4c/api/records/2.0/search/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi'
     params: ''
@@ -130,7 +130,7 @@ ckan_admin.api3:
     _permission: 'access content'
 
 ckan_admin.calculatevisu:
-  path: '/api/datasets/calculatevisu/{id}'
+  path: '/d4c/api/datasets/calculatevisu/{id}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callCalculateVisualisations'
     params: ''
@@ -139,7 +139,7 @@ ckan_admin.calculatevisu:
     _permission: 'access content'
 
 ckan_admin.callCustomView:
-  path: '/api/datasets/2.0/callCustomView/{params}'
+  path: '/d4c/api/datasets/2.0/callCustomView/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callCustomView'
     params: ''
@@ -148,7 +148,7 @@ ckan_admin.callCustomView:
     _permission: 'access content'    
     
 ckan_admin.callVanillaUrlReports:
-  path: '/api/records/2.0/callVanillaUrlReports'
+  path: '/d4c/api/records/2.0/callVanillaUrlReports'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callVanillaUrlReports'
     _title: ''
@@ -156,7 +156,7 @@ ckan_admin.callVanillaUrlReports:
     _permission: 'access content'    
     
 ckan_admin.getCsvXls:
-  path: '/datasets/update/getCsvXls/{params}'
+  path: '/d4c/datasets/update/getCsvXls/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getCsvXls'
     params: ''
@@ -166,7 +166,7 @@ ckan_admin.getCsvXls:
     
 
 ckan_admin.updatemoissonnage:
-  path: '/datasets/update/moissonnage'
+  path: '/d4c/datasets/update/moissonnage'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\DataSet::callUpdateDatasetDataGouv'
     _title: ''
@@ -174,7 +174,7 @@ ckan_admin.updatemoissonnage:
     _permission: 'access content'    
 
 ckan_admin.api2:
-  path: '/api/datasets/2.0/DATASETID/{params}'
+  path: '/d4c/api/datasets/2.0/DATASETID/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow'
     params: ''
@@ -183,7 +183,7 @@ ckan_admin.api2:
     _permission: 'access content'
 
 ckan_admin.dataGouOrg:
-  path: '/api/datasets/2.0/dataGouOrg/{params}'
+  path: '/d4c/api/datasets/2.0/dataGouOrg/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvOrg'
     params: ''
@@ -192,7 +192,7 @@ ckan_admin.dataGouOrg:
     _permission: 'access content'
 
 ckan_admin.callSearchOpendatasoft:
-  path: '/api/datasets/2.0/callSearchOpendatasoft/{params}'
+  path: '/d4c/api/datasets/2.0/callSearchOpendatasoft/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchOpendatasoft'
     params: ''
@@ -201,7 +201,7 @@ ckan_admin.callSearchOpendatasoft:
     _permission: 'access content'
     
 ckan_admin.dataGouDataSetByOrg:
-  path: '/api/datasets/2.0/dataGouDataSetByOrg/{params}'
+  path: '/d4c/api/datasets/2.0/dataGouDataSetByOrg/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvDatasetByOrg'
     params: ''
@@ -210,7 +210,7 @@ ckan_admin.dataGouDataSetByOrg:
     _permission: 'access content'
 
 ckan_admin.callSearchOpendatasoftAllSite:
-  path: '/api/datasets/2.0/callSearchOpendatasoftAllSite/{params}'
+  path: '/d4c/api/datasets/2.0/callSearchOpendatasoftAllSite/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchOpendatasoftAllSite'
     params: ''
@@ -219,7 +219,7 @@ ckan_admin.callSearchOpendatasoftAllSite:
     _permission: 'access content'
     
 ckan_admin.ckanSearchCall:
-  path: '/datasets/update/ckanSearchCall/{params}'
+  path: '/d4c/datasets/update/ckanSearchCall/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::ckanSearchCall'
     params: ''
@@ -228,7 +228,7 @@ ckan_admin.ckanSearchCall:
     _permission: 'access content'
 
 ckan_admin.dataGouDataSet:
-  path: '/api/datasets/2.0/dataGouDataSet/{params}'
+  path: '/d4c/api/datasets/2.0/dataGouDataSet/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDataGouvDataset'
     params: ''
@@ -237,7 +237,7 @@ ckan_admin.dataGouDataSet:
     _permission: 'access content'
     
 ckan_admin.SearchRes:
-  path: '/api/datasets/2.0/searchdatasetres/{params}'
+  path: '/d4c/api/datasets/2.0/searchdatasetres/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShowForSearch'
     params: ''
@@ -246,7 +246,7 @@ ckan_admin.SearchRes:
     _permission: 'access content'
 
 ckan_admin.api1:
-  path: '/api/datasets/2.0/search/{params}'
+  path: '/d4c/api/datasets/2.0/search/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch'
     params: ''
@@ -255,7 +255,7 @@ ckan_admin.api1:
     _permission: 'access content'
     
 ckan_admin.Inf94:
-  path: '/datasets/update/callInfocom94/{params}'
+  path: '/d4c/datasets/update/callInfocom94/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callInfocom94'
     params: ''
@@ -264,7 +264,7 @@ ckan_admin.Inf94:
     _permission: 'access content'
 
 ckan_admin.getResourceById:
-  path: '/datasets/update/getresourcebyid/{params}'
+  path: '/d4c/datasets/update/getresourcebyid/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getResourceById'
     params: ''
@@ -273,7 +273,7 @@ ckan_admin.getResourceById:
     _permission: 'access content'
 
 ckan_admin.d4cSearch:
-  path: '/datasets/update/calld4c/{params}'
+  path: '/d4c/datasets/update/calld4c/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callD4c'
     params: ''
@@ -282,7 +282,7 @@ ckan_admin.d4cSearch:
     _permission: 'access content'
 
 ckan_admin.socrata:
-  path: '/datasets/update/socrataCall/{params}'
+  path: '/d4c/datasets/update/socrataCall/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchSocrata'
     params: ''
@@ -291,7 +291,7 @@ ckan_admin.socrata:
     _permission: 'access content'    
         
 ckan_admin.callPackageSearchPublicPrivate:
-  path: '/api/datasets/2.0/searchPublicPrivate/{params}'
+  path: '/d4c/api/datasets/2.0/searchPublicPrivate/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch_public_private'
     params: ''
@@ -300,7 +300,7 @@ ckan_admin.callPackageSearchPublicPrivate:
     _permission: 'access content'
 
 ckan_admin.api.record.facets:
-  path: '/api/records/1.0/download/{params}'
+  path: '/d4c/api/records/1.0/download/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiFacet'
     params: ''
@@ -309,7 +309,7 @@ ckan_admin.api.record.facets:
     _permission: 'access content'
 
 ckan_admin.api.record.boundingbox:
-  path: '/api/records/1.0/boundingbox/{params}'
+  path: '/d4c/api/records/1.0/boundingbox/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiBoundingBox'
     params: ''
@@ -318,7 +318,7 @@ ckan_admin.api.record.boundingbox:
     _permission: 'access content'
 
 ckan_admin.api.record.download:
-  path: '/api/records/2.0/download/{params}'
+  path: '/d4c/api/records/2.0/download/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiDownload'
     params: ''
@@ -327,7 +327,7 @@ ckan_admin.api.record.download:
     _permission: 'access content'
 
 ckan_admin.api.record.download2:
-  path: '/api/records/2.0/downloadfile/{params}'
+  path: '/d4c/api/records/2.0/downloadfile/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiDownloadFile'
     params: ''
@@ -336,7 +336,7 @@ ckan_admin.api.record.download2:
     _permission: 'access content'
 
 ckan_admin.api.dataset.id:
-  path: '/api/datasets/1.0/{datasetid}/{params}'
+  path: '/d4c/api/datasets/1.0/{datasetid}/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow2'
     params: ''
@@ -345,7 +345,7 @@ ckan_admin.api.dataset.id:
     _permission: 'access content'
     
 ckan_admin.api.dataset.themes:
-  path: '/api/themes'
+  path: '/d4c/api/themes'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getPackageTheme'
     _title: ''
@@ -353,7 +353,7 @@ ckan_admin.api.dataset.themes:
     _permission: 'access content'
 
 ckan_admin.api.dataset.table:
-  path: '/api/table/{params}'
+  path: '/d4c/api/table/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callAllFieldsForTableParam'
     params: ''
@@ -362,7 +362,7 @@ ckan_admin.api.dataset.table:
     _permission: 'access content'
     
 ckan_admin.api.record.geocluster:
-  path: '/api/records/1.0/geocluster/{params}'
+  path: '/d4c/api/records/1.0/geocluster/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoClusterOld'
     params: ''
@@ -371,7 +371,7 @@ ckan_admin.api.record.geocluster:
     _permission: 'access content'
 
 ckan_admin.api.record.geoPreview:
-  path: '/api/records/1.0/geopreview/{params}'
+  path: '/d4c/api/records/1.0/geopreview/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiGeoPreview'
     params: ''
@@ -380,7 +380,7 @@ ckan_admin.api.record.geoPreview:
     _permission: 'access content'
 
 ckan_admin.api3.ods:
-  path: '/api/records/1.0/search/{params}'
+  path: '/d4c/api/records/1.0/search/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi_v2'
     params: ''
@@ -389,7 +389,7 @@ ckan_admin.api3.ods:
     _permission: 'access content'
 
 ckan_admin.api2.ods:
-  path: '/api/datasets/1.0/DATASETID/{params}'
+  path: '/d4c/api/datasets/1.0/DATASETID/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageShow2_v2'
     params: ''
@@ -398,7 +398,7 @@ ckan_admin.api2.ods:
     _permission: 'access content'
 
 ckan_admin.api1.ods:
-  path: '/api/datasets/1.0/search/{params}'
+  path: '/d4c/api/datasets/1.0/search/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearch_v2'
     params: ''
@@ -407,7 +407,7 @@ ckan_admin.api1.ods:
     _permission: 'access content'
 
 ckan_admin.api.basic:
-  path: '/api/metadata/1.0/basic'
+  path: '/d4c/api/metadata/1.0/basic'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::metaBasic'
     _title: ''
@@ -415,7 +415,7 @@ ckan_admin.api.basic:
     _permission: 'access content'
 
 ckan_admin.api.interop:
-  path: '/api/metadata/1.0/interop'
+  path: '/d4c/api/metadata/1.0/interop'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::metaInterop'
     _title: ''
@@ -432,7 +432,7 @@ ckan_admin.explore:
     _permission: 'access content'
 
 ckan_admin.cluster:
-  path: '/cluster/{params}'
+  path: '/d4c/cluster/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::cluster'
     params: ''
@@ -450,7 +450,7 @@ ckan_admin.visualisation.frame:
     _permission: 'access content'
 
 ckan_admin.orga.show:
-  path: '/api/orga/2.0/show/{params}'
+  path: '/d4c/api/orga/2.0/show/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::orgaShow'
     params: ''
@@ -459,7 +459,7 @@ ckan_admin.orga.show:
     _permission: 'access content'
 
 ckan_admin.license.list:
-  path: '/api/license/2.0/list'
+  path: '/d4c/api/license/2.0/list'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::licenseList'
     _title: ''
@@ -467,7 +467,7 @@ ckan_admin.license.list:
     _permission: 'access content'
 
 ckan_admin.package.list:
-  path: '/api/datasets/2.0/list'
+  path: '/d4c/api/datasets/2.0/list'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::packageList'
     _title: ''
@@ -476,7 +476,7 @@ ckan_admin.package.list:
     
     
 ckan_admin.updateNbDownload:
-  path: '/api/datasets/{params}/update/downloads'
+  path: '/d4c/api/datasets/{params}/update/downloads'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::updateNbDownload'
     _title: ''
@@ -484,7 +484,7 @@ ckan_admin.updateNbDownload:
     _permission: 'access content'
     
 ckan_admin.updateViews:
-  path: '/api/datasets/{params}/update/views'
+  path: '/d4c/api/datasets/{params}/update/views'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::updateNbViews'
     _title: ''
@@ -493,7 +493,7 @@ ckan_admin.updateViews:
     
     
 ckan_admin.sortdataset:
-  path: '/api/datasets/sort/bykey/{key}'
+  path: '/d4c/api/datasets/sort/bykey/{key}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::sortDatasetbyKey'
     key: ''
@@ -510,7 +510,7 @@ ckan_admin.plu:
     _permission: 'access content'
 
 ckan_admin.gettheme:
-  path: '/api/gettheme'
+  path: '/d4c/api/gettheme'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getThemeArray'
     _title: ''
@@ -518,7 +518,7 @@ ckan_admin.gettheme:
     _permission: 'access content'
     
 ckan_admin.getthemebydownload:
-  path: '/api/getthemebydownload'
+  path: '/d4c/api/getthemebydownload'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::themebydownload'
     _title: ''
@@ -526,7 +526,7 @@ ckan_admin.getthemebydownload:
     _permission: 'access content'
     
 ckan_admin.getdatasetbytheme:
-  path: '/api/getdatasetbytheme/{theme}'
+  path: '/d4c/api/getdatasetbytheme/{theme}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::datasetByTheme'
     theme: ''
@@ -535,7 +535,7 @@ ckan_admin.getdatasetbytheme:
     _permission: 'access content'
 
 ckan_admin.records.analyze:
-  path: '/api/records/1.0/analyze/{params}'
+  path: '/d4c/api/records/1.0/analyze/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getAnalyze'
     params: ''
@@ -544,7 +544,7 @@ ckan_admin.records.analyze:
     _permission: 'access content'
 
 ckan_admin.api.alternative.export:
-  path: '/api/datasets/1.0/{datasetid}/alternative_exports/{resourceid}'
+  path: '/d4c/api/datasets/1.0/{datasetid}/alternative_exports/{resourceid}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callAlternativeExport'
     resourceid: ''
@@ -553,7 +553,7 @@ ckan_admin.api.alternative.export:
     _permission: 'access content'
 
 ckan_admin.mapbuilder:
-  path: '/api/mapbuilder/{idmap}'
+  path: '/d4c/api/mapbuilder/{idmap}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::mapBuilder'
     _title: ''
@@ -571,7 +571,7 @@ ckan_admin.carte.edit:
     _permission: 'access content'
 
 ckan_admin.is.connected:
-  path: '/api/signup/is_logged_in'
+  path: '/d4c/api/signup/is_logged_in'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::isLoggedIn'
     _title: ''
@@ -611,7 +611,7 @@ ckan_admin.harvest_map_tiles:
     _permission: 'access map layer'
 
 ckan_admin.map.layers:
-  path: '/api/maps/layers/{params}'
+  path: '/d4c/api/maps/layers/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callMapLayers'
     params: ''
@@ -645,7 +645,7 @@ ckan_admin.VanilaForm:
    _permission: 'Vanilla'   
    
 ckan_admin.precluster:
-  path: '/precluster'
+  path: '/d4c/precluster'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::precluster'
     params: ''
@@ -654,7 +654,7 @@ ckan_admin.precluster:
     _permission: 'access content'
     
 ckan_admin.map.layers.add:
-  path: '/api/maps/addlayers'
+  path: '/d4c/api/maps/addlayers'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::updateMapLayer'
     params: ''
@@ -663,7 +663,7 @@ ckan_admin.map.layers.add:
     _permission: 'access content'
     
 ckan_admin.records.count:
-  path: '/api/datasets/2.0/records/count/{params}'
+  path: '/d4c/api/datasets/2.0/records/count/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearchWithRecordsCount'
     params: ''
@@ -688,7 +688,7 @@ ckan_admin.CubeForm:
    _permission: 'Vanilla'
 
 ckan_admin.callSearchArcgis:
-  path: '/api/datasets/2.0/callSearchArcGIS/{params}'
+  path: '/d4c/api/datasets/2.0/callSearchArcGIS/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callSearchArcGIS'
     params: ''
@@ -705,7 +705,7 @@ ckan_admin.datasets_dashboard:
     _permission: 'access dataset_board'
     
 ckan_admin.callAllOrganizations:
-  path: '/api/organizations/{params}'
+  path: '/d4c/api/organizations/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callAllOrganisations'
     params: ''
@@ -714,7 +714,7 @@ ckan_admin.callAllOrganizations:
     _permission: 'access content'
 
 ckan_admin.datasets.download:
-  path: '/api/datasets/2.0/download/{format}/{params}'
+  path: '/d4c/api/datasets/2.0/download/{format}/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageSearchDownload'
     params: ''
@@ -723,7 +723,7 @@ ckan_admin.datasets.download:
     _permission: 'access content'
 
 ckan_admin.datasets.rebuild:
-  path: '/api/datasets/rebuild'
+  path: '/d4c/api/datasets/rebuild'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::reBuildAllDataset'
     _title: ''
@@ -731,7 +731,7 @@ ckan_admin.datasets.rebuild:
     _custom_access: '\Drupal\ckan_admin\Controller\LocalAccessController::access'
 
 ckan_admin.external.facets:
-  path: '/api/external/facets/{params}'
+  path: '/d4c/api/external/facets/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callFacetsFromSource'
     _title: ''
@@ -740,7 +740,7 @@ ckan_admin.external.facets:
     _permission: 'access content'
     
 ckan_admin.external.get:
-  path: '/api/external/get/{params}'
+  path: '/d4c/api/external/get/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callDatasetFromSource'
     _title: ''
@@ -749,7 +749,7 @@ ckan_admin.external.get:
     _permission: 'access content'
     
 ckan_admin.external.records:
-  path: '/api/external/records/{params}'
+  path: '/d4c/api/external/records/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callRecordsFromSource'
     _title: ''
@@ -758,7 +758,7 @@ ckan_admin.external.records:
     _permission: 'access content'
     
 ckan_admin.external.boundingbox:
-  path: '/api/external/boundingbox/{params}'
+  path: '/d4c/api/external/boundingbox/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callBoundingBoxFromSource'
     _title: ''
@@ -767,7 +767,7 @@ ckan_admin.external.boundingbox:
     _permission: 'access content'
 
 ckan_admin.external.geopreview:
-  path: '/api/external/geopreview/{params}'
+  path: '/d4c/api/external/geopreview/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callGeoPreviewFromSource'
     _title: ''
@@ -776,7 +776,7 @@ ckan_admin.external.geopreview:
     _permission: 'access content'
 
 ckan_admin.external.geocluster:
-  path: '/api/external/geocluster/{params}'
+  path: '/d4c/api/external/geocluster/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callGeoClusterFromSource'
     _title: ''
@@ -785,7 +785,7 @@ ckan_admin.external.geocluster:
     _permission: 'access content'
     
 ckan_admin.external.download:
-  path: '/api/external/download/{params}'
+  path: '/d4c/api/external/download/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\External::callDownloadFromSource'
     _title: ''
@@ -802,7 +802,7 @@ ckan_admin.form.reuses:
     _permission: 'administer site configuration'
     
 ckan_admin.datasets.reuses:
-  path: '/api/datasets/1.0/{datasetid}/reuses'
+  path: '/d4c/api/datasets/1.0/{datasetid}/reuses'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callGetReuses'
     _title: ''
@@ -835,7 +835,7 @@ ckan_admin.menu.chart.frame:
     _permission: 'access content'
     
 ckan_admin.records.api.orange:
-  path: '/webservice/{params}'
+  path: '/d4c/webservice/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callOrangeApiGetData'
     _title: ''
@@ -844,7 +844,7 @@ ckan_admin.records.api.orange:
     _permission: 'access content'
 
 ckan_admin.calldatapuhser:
-  path: '/api/datapusher/{resourceId}'
+  path: '/d4c/api/datapusher/{resourceId}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::externalCallDatapusher'
     _title: ''
@@ -853,7 +853,7 @@ ckan_admin.calldatapuhser:
     _permission: 'access content'
 
 ckan_admin.calldatapuhserjobstatus:
-  path: '/api/datapusher/job/{jobId}'
+  path: '/d4c/api/datapusher/job/{jobId}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatapusherJobStatus'
     _title: ''
@@ -870,7 +870,7 @@ ckan_admin.dataset_datapusher:
     _permission: 'access dataset_board'
 
 ckan_admin.calculValueFiltre:
-  path: '/api/calculvaluefiltre'
+  path: '/d4c/api/calculvaluefiltre'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::calculValueFromFiltre'
     _title: ''
@@ -878,7 +878,7 @@ ckan_admin.calculValueFiltre:
     _permission: 'access content'
   
 ckan_admin.exportdataset:
-  path: '/package/exportdataset/{id}'
+  path: '/d4c/package/exportdataset/{id}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\PackageManager::createPackageZip'
     _title: ''
@@ -922,14 +922,14 @@ ckan_admin.userstory:
     _permission: 'administer site configuration'
 
 ckan_admin.callTaskStatus:
-  path: '/api/taskStatus/{id}'
+  path: '/d4c/api/taskStatus/{id}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getTaskStatus'
   requirements:
     _permission: 'access content'
 
 ckan_admin.call.reuses:
-  path: '/api/datasets/reusesManagement'
+  path: '/d4c/api/datasets/reusesManagement'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callPackageReutilisation'
     params: ''
@@ -938,14 +938,14 @@ ckan_admin.call.reuses:
     _permission: 'access content'
 
 ckan_admin.deleteDataset:
-  path: '/api/dataset/remove/{datasetId}'
+  path: '/d4c/api/dataset/remove/{datasetId}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::deleteDataset'
   requirements:
     _permission: 'access dataset'
 
 ckan_admin.api.getThesaurus:
-  path: '/api/thesaurus/{params}'
+  path: '/d4c/api/thesaurus/{params}'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::getThesaurus'
     params: ''
@@ -954,7 +954,7 @@ ckan_admin.api.getThesaurus:
     _permission: 'access content'
 
 ckan_admin.api.createDataset:
-  path: '/api/v1/dataset/create'
+  path: '/d4c/api/v1/dataset/create'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callCreateDataset'
     params: ''
@@ -965,7 +965,7 @@ ckan_admin.api.createDataset:
     _user_is_logged_in: 'TRUE'
 
 ckan_admin.api.addResource:
-  path: '/api/v1/dataset/addResource'
+  path: '/d4c/api/v1/dataset/addResource'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callUploadResource'
     params: ''
@@ -973,7 +973,7 @@ ckan_admin.api.addResource:
     _permission: 'access dataset'
 
 ckan_admin.subscribeDataset:
-  path: '/api/account/subscriptions/datasets/{datasetId}/subscribe'
+  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/subscribe'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::subscribeDataset'
     _datasetId: ''
@@ -981,7 +981,7 @@ ckan_admin.subscribeDataset:
     _permission: 'access content'
 
 ckan_admin.unsubscribeDataset:
-  path: '/api/account/subscriptions/datasets/{datasetId}/unsubscribe'
+  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/unsubscribe'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::unsubscribeDataset'
     _datasetId: ''

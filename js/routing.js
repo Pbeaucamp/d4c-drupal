@@ -1,5 +1,5 @@
 $ = jQuery;
 
 function fetchPrefix() {
-    return '/data4citizen';
+    return '/drupal';
 }
