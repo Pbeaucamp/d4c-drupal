@@ -30,3 +30,13 @@ function another_module_mail_alter(&$message) {
       break;
   }
 }
+
+/**
+ * Implements hook_page_attachments().
+ * @param array $attachments
+ */
+function ckan_admin_page_attachments(array &$attachments) {
+    //add here any conditions if you need to limit the pages
+
+    $attachments['#attached']['library'][] = 'ckan_admin/routing';
+}
