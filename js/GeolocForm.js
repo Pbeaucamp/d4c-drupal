@@ -24,7 +24,7 @@ function getDatasets(urlCkan, iduser) {
 			}
 		  }
 		);*/
-		$.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/searchPublicPrivate/include_private=true&rows=1000&q=organization:"' + datasetId + '"&fq=-(-edition_security:**'+iduser+'** OR edition_security:*)',
+		$.ajax('/api/datasets/2.0/searchPublicPrivate/include_private=true&rows=1000&q=organization:"' + datasetId + '"&fq=-(-edition_security:**'+iduser+'** OR edition_security:*)',
 		{
 			type: "POST",
 			dataType: "json",

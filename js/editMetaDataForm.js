@@ -134,7 +134,7 @@ $("#edit-selected-data-id").val($('#selected_data').val());
 //addPicto();
 
 $("#edit-tags input").autocomplete({
-    serviceUrl: fetchPrefix() + '/d4c/api/thesaurus',
+    serviceUrl: '/api/thesaurus',
     delimiter: ', ',
     minChars: 3,
     onSelect: function (suggestion) {
@@ -797,7 +797,7 @@ function deleteRowWidget(btn) {
 
 function getUrlWidgets(num) {
 
-    $.ajax(fetchPrefix() + '/d4c/api/records/2.0/callVanillaUrlReports', {
+    $.ajax('/api/records/2.0/callVanillaUrlReports', {
         type: 'POST',
 
         dataType: 'json',
