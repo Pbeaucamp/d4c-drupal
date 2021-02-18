@@ -61,7 +61,7 @@ function getTableById(refresh=true){
 		resId = resourceId;
 		
 		if(param != 'no_data_csv'){
-			$.ajax(fetchPrefix() + '/d4c/api/table/'+resourceId,
+			$.ajax('/api/table/'+resourceId,
 			{
 				type: 'POST',
 				dataType: 'json',
@@ -352,7 +352,7 @@ function cleare_column(name_col, col_row, row_selected){
 }
 
 function loadTooltip(idDataset, dataFields){
-	$.ajax(fetchPrefix() + '/d4c/api/datasets/1.0/'+idDataset,
+	$.ajax('/api/datasets/1.0/'+idDataset,
 	{
 		type: 'POST',
 		dataType: 'json',
