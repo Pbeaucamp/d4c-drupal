@@ -123,9 +123,9 @@ $('#edit-del-button-dataset').attr("style", "display: none;");
 $('#edit-filtr-org').change(function () {
     clear();
 });
-let element = document.getElementById("edit-tags");
-element.classList.add("onlyDigits");
-document.querySelector(".onlyDigits").onkeyup = onlyDigits;
+// let element = document.getElementById("edit-tags input");
+// element.classList.add("onlyDigits");
+// document.querySelector(".onlyDigits").onkeyup = onlyDigits;
 clear();
 $('#pickImg').attr("style", "overflow:scroll; height:15em; overflow-x: hidden; display: none;  width: 30%;");
 $("#btnImgHide").append(`<input class="button js-form-submit form-submit" value="Ouvrir les pictogrammes" type="button" onclick="togglePicker('#pickImg')">`);
@@ -135,7 +135,7 @@ $("#edit-selected-data-id").val($('#selected_data').val());
 
 $("#edit-tags input").autocomplete({
     serviceUrl: '/api/thesaurus',
-    delimiter: ', ',
+    delimiter: ',',
     minChars: 3,
     onSelect: function (suggestion) {
         
@@ -201,7 +201,7 @@ function addData(result) {
 function clear() {
     $('#addRowBtnWidget').remove();
     $('#edit-description').val("");
-    $('#edit-tags').val("");
+    $('#edit-tags input').val("");
     $('#edit-dataset-lies').val("");
     $('#edit-selected-theme').val("default%Default");
     $('#edit-selected-type-map').val("");
@@ -301,7 +301,7 @@ function fillData(data) {
         keywords = keywords.substring(1);
     }
 
-    $('#edit-tags').val(keywords);
+    $('#edit-tags input').val(keywords);
     // licene   
     $('#edit-selected-lic').val(data.license_id);
 
