@@ -149,6 +149,12 @@ class Api{
 
 	  # loop through each pair
 	  foreach ($pairs as $i) {
+		#Adding a trick for subdirectory - if q=d4c/ is present we remove the parameter
+		$query = 'q=d4c/';
+		if (substr( $i, 0, strlen($query) ) === $query) {
+			continue;
+		}
+
 	    # split into name and value
 	    list($name,$value) = explode('=', $i, 2);
 	    
@@ -4441,19 +4447,20 @@ class Api{
 			<a class="d4c-embed-watermark d4c-embed-watermark--'.$tab.'"
                target="_parent"
                href="'.str_replace("/frame/", "/", $request->getUri()).'">
-                <img class="d4c-embed-watermark__image" ng-src="/sites/default/files/api/portail_d4c/img/theme-default.png" />
+                <img class="d4c-embed-watermark__image" ng-src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png" />
             </a>
         
     </div>
-        <script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-		<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
-		<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
-		<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
-		<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-		<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/underscore-min.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+		<script src="'. $this->config->client->routing_prefix . '/modules/ckan_admin/js/routing.js"></script>
+        <script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/underscore-min.js"></script>
+        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	
             var app = angular.module(\'d4c.core.config\', []);
@@ -4488,8 +4495,8 @@ class Api{
                 }
             }]);
         </script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-        <script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+        <script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
 		<script type="text/javascript">
         angular.module(\'d4c.frontend\', [\'d4c\']);
 
@@ -4505,17 +4512,17 @@ class Api{
             });
         });
     </script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/embed-dataset.js"></script>
+    <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/embed-dataset.js"></script>
 
    <script>
    			$("head").append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/> ");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
 			$("head").append("<base href=\"/\">");	
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 	</script>
 
 </body>';
@@ -5429,7 +5436,7 @@ class Api{
             
             foreach($t->result->results as &$dataset){
                 $dataset->siteOfDataset = $val;
-                $dataset->url=$val.'/visualisation/table/?id='.$dataset->id;
+                $dataset->url=$val . $this->config->client->routing_prefix . '/visualisation/table/?id='.$dataset->id;
                 array_push($result,$dataset);
                 
                 
@@ -5449,7 +5456,7 @@ class Api{
 
 				for($i=0; $i<count($dataset->resources); $i++){
 					
-					$callUrl = $val . "/datasets/update/getresourcebyid/".$dataset->resources[$i]->id;
+					$callUrl = $val . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id;
 					$res= Query::callSolrServer($callUrl);
 
 					$dataset->resources[$i]->url = json_decode($res);	
@@ -5473,13 +5480,13 @@ class Api{
         $params = explode(";", $params);
 
         $result=array();
-		/*$callUrl = 'https://'.$params[0]."/api/datasets/2.0/search/q=".$params[1];
+		/*$callUrl = 'https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1];
 		$curlOrg = curl_init($callUrl);
 		curl_setopt_array($curlOrg, $this->getSimpleOptions());
         $t = curl_exec($curlOrg);
         curl_close($curlOrg);
-        echo 'https://'.$params[0]."/api/datasets/2.0/search/q=".$params[1];*/
-        $t = Query::callSolrServer('https://'.$params[0]."/api/datasets/2.0/search/q=".$params[1]);
+        echo 'https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1];*/
+        $t = Query::callSolrServer('https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1]);
 		//echo $t; 
 		$t = json_decode($t);
 		
@@ -5488,17 +5495,17 @@ class Api{
            
 		foreach($t->result->results as &$dataset){
 			$dataset->siteOfDataset = $params[0];
-			$dataset->url='https://'.$params[0].'/visualisation/table/?id='.$dataset->id;
+			$dataset->url='https://'.$params[0] . $this->config->client->routing_prefix . '/visualisation/table/?id='.$dataset->id;
 
             
 			for($i=0; $i<count($dataset->resources); $i++){
 				
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					
-					$res= Query::callSolrServer('http://'.$params[0]."/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
+					$res= Query::callSolrServer('http://'.$params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
 				}
 				else{
-					$res= Query::callSolrServer('https://'.$params[0]."/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
+					$res= Query::callSolrServer('https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
 				}
             
                         
@@ -5629,10 +5636,10 @@ class Api{
     function callSearchOpendatasoftAllSite($params){
         
          $params = explode(";", $params);
-         $result = Query::callSolrServer("https://".$params[0]."/api/datasets/1.0/search/?q=".$params[1]);
+         $result = Query::callSolrServer("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
         
         
-         error_log("https://".$params[0]."/api/datasets/1.0/search/?q=".$params[1]);
+         error_log("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
         
         $response = new Response();
 		$response->setContent($result);
@@ -6298,7 +6305,7 @@ class Api{
 		} 
         $result = Query::callSolrServer($query_params["url"]."?f=pjson");
     //error_log($result); 
-        //error_log("https://".$params[0]."/api/datasets/1.0/search/?q=".$params[1]);
+        //error_log("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
         
         $response = new Response();
 		$response->setContent($result);
@@ -6722,7 +6729,7 @@ class Api{
 					if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
 						error_log( "Le fichier est valide, et a été téléchargé avec succès. Voici plus d'informations :\n");
 						$protocol = /*isset($_SERVER['HTTPS']) ? */'https://' /*: 'http://'*/;
-						$url = $protocol.$_SERVER['HTTP_HOST'].'/sites/default/files/reuses/'.basename($_FILES['file']['name']);
+						$url = $protocol.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/reuses/'.basename($_FILES['file']['name']);
 					} else {
 						error_log( "Attaque potentielle par téléchargement de fichiers. Voici plus d'informations :\n");
 					}
@@ -6783,7 +6790,7 @@ class Api{
 											array('@sitename' => $sitename,'@name' => $name,'@author' => $data["author_email"]));
 				$params['message'][] = t('Titre de la réutilisation : @name', array('@name' => $name));
 				$params['message'][] = t('Jeu de données concerné : @name', array('@name' => $data["dataset_title"]));
-				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://".$_SERVER['HTTP_HOST']."/admin/config/data4citizen/reusesManagement"));
+				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://".$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . "/admin/config/data4citizen/reusesManagement"));
 				$params['message'][] = t("Cordialement.");
 				$params['subject'] = t('Nouvelle réutilisation à valider');
 				//$params['options']['username'] = "KMO";
@@ -7751,7 +7758,7 @@ function deleteStory($story_id){
 
 		if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadfile)) {
 			Logger::logMessage("The file is valid and has been uploaded with success");
-			$url = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
+			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
 		}
 		else {
 			Logger::logMessage("Potential attack by file upload.");

@@ -91,7 +91,7 @@ class VisualisationControllerOLD extends ControllerBase {
 
 					<div id="info" class="info"></div>
 					<div class="bckPanel">
-						<img class="btnBackground" src="/sites/default/files/api/portail_anfr/img/ic_map_layers_64.png" alt="Fond de Carte" onclick="$(\'#layers-panel\').show();"/>
+						<img class="btnBackground" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_map_layers_64.png" alt="Fond de Carte" onclick="$(\'#layers-panel\').show();"/>
 					</div>
 					<div id="layers-panel" class="layersMenu" style="display:none" onmouseleave="$(this).hide()">
 						<ul class="layersList">
@@ -102,8 +102,8 @@ class VisualisationControllerOLD extends ControllerBase {
 						</ul>
 					</div>
 					<div class=float-panel>
-						<img class="imgExpand" src="/sites/default/files/api/portail_anfr/img/ic_expand.png" alt="Développer"/>
-						<img class="imgCollapse" src="/sites/default/files/api/portail_anfr/img/ic_collapse.png" alt="Réduire"/>
+						<img class="imgExpand" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_expand.png" alt="Développer"/>
+						<img class="imgCollapse" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_collapse.png" alt="Réduire"/>
 						<p class="lblDatas">Données</p>
 						<div class=float-panel-content>
 							<div class="caption-panel">
@@ -128,7 +128,7 @@ class VisualisationControllerOLD extends ControllerBase {
 		<div class="chart-visu">
 			<div class="inner">
 				<div class="choice">
-					<img id="saveButton" src="/sites/default/files/api/portail_anfr/img/ic_download_chart.png" title="Exporter votre graphe"></img>
+					<img id="saveButton" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_download_chart.png" title="Exporter votre graphe"></img>
 					<div id="chart-type">
 						<span class="chart-select-label">Représentation</span>
 						<select id="choice-chart-select" class="table-per-page-select" onchange="onChangeChart()">
@@ -224,27 +224,27 @@ class VisualisationControllerOLD extends ControllerBase {
 		</div>
 	</div>
 </div>				
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/jquery-3.2.1.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/ol.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/ol.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
 	<script type="text/javascript" src="https://d3js.org/topojson.v1.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>	
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/pagination.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/shp.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/xlsx.full.min.js"></script>  
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/canvas-to-blob.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/FileSaver.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>	
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/pagination.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/shp.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/xlsx.full.min.js"></script>  
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/canvas-to-blob.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/FileSaver.min.js"></script>
 	
-    <script src="/sites/default/files/api/portail_anfr/js/script_visualisation.js"></script>
-    <!--<script src="/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>-->
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/script_visualisation.js"></script>
+    <!--<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>-->
 	
 	<script>
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/bootstrap-theme.custom.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/bootstrap.custom.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/style_visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/ol.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/map_bfc.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/bootstrap-theme.custom.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/bootstrap.custom.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/style_visualisation.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/ol.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/map_bfc.css\" rel=\"stylesheet\">");
 
 	</script>
 						

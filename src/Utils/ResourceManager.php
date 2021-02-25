@@ -301,7 +301,7 @@ class ResourceManager {
 						Logger::logMessage("Found the previous ZIP resource '" . $resourceId . "' with name '" . $name . "'");
 
 
-						$rootDirectory = 'sites/default/files/dataset/';
+						$rootDirectory = substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/';
 						
 						$rootOldFile = self::ROOT . $rootDirectory . $name;
 						$oldFile = '/' . $rootDirectory . $name;
@@ -368,8 +368,8 @@ class ResourceManager {
 					$isUpdate = false;
 				}
 				
-				$rootCsv = self::ROOT . 'sites/default/files/dataset/' . $name;
-				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $name;
+				$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $name;
+				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $name;
 
 				file_put_contents($rootCsv, $csv);
 
@@ -493,7 +493,7 @@ class ResourceManager {
 			
 			Logger::logMessage("Building Geojson from shape file '" . $resourceUrl . "' with file path '" . $filePath . "'");
 
-			$rootJson= self::ROOT . 'sites/default/files/dataset/gen_'.uniqid().'.geojson';
+			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/gen_'.uniqid().'.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
 			
 			Logger::logMessage("OGR2OGR command '" . $command . "'");
@@ -526,13 +526,13 @@ class ResourceManager {
 
         // save the content of GSheeturl in csv file and get url of resource
 		$data = $contenturlsheet;
-		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/")) {
-			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/", 0777, true);
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/", 0777, true);
 		}
 
 		$fileName = $datasetId . ".csv";
 
-		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/urlsheet/" . $fileName, "wb");
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
 			fputcsv($fp, $line);
@@ -541,7 +541,7 @@ class ResourceManager {
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
 
-		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/urlsheet/' . $fileName;
+		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/urlsheet/' . $fileName;
 	}
 
 	function manageXmlfile($url) {
@@ -558,14 +558,14 @@ class ResourceManager {
 
         // save the content of xml url in csv file and get url of resource
 		$data = $contenturlsheet;
-		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/")) {
-			mkdir($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/", 0777, true);
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/", 0777, true);
 		}
 		
 		$query_params = $api->proper_parse_str($url);
 		$fileName = $query_params["resource_id"] . "-xml" . ".csv";
 
-		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/sites/default/files/dataset/xmlfile/" . $fileName, "wb");
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
 			
@@ -575,7 +575,7 @@ class ResourceManager {
 		fclose($fp);
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
 
-		return 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/xmlfile/' . $fileName;
+		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/xmlfile/' . $fileName;
 	}
 	
 	function managePackage($uniqId, $resourceUrl, $security, $organization) {
@@ -605,7 +605,7 @@ class ResourceManager {
 		Logger::logMessage("Managing package with path '" . $filePath . "'");
 
 		$directoryName = 'package_extraction_' . uniqid();
-		$directoryPath = self::ROOT . 'sites/default/files/dataset/' . $directoryName;
+		$directoryPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $directoryName;
 
 		$zip = new ZipArchive;
 		$res = $zip->open(self::ROOT . $filePath);
@@ -700,7 +700,7 @@ class ResourceManager {
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$directoryName = 'zip_extraction_' . uniqid();
-		$directoryPath = self::ROOT . 'sites/default/files/dataset/' . $directoryName;
+		$directoryPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $directoryName;
 
 		$zip = new ZipArchive;
 		$res = $zip->open(self::ROOT . $filePath);
@@ -771,7 +771,7 @@ class ResourceManager {
 			else {
 				// $fileName = pathinfo($file, PATHINFO_FILENAME);
 				// $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-				// $resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
+				// $resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
 
 				$resourceUrl = str_replace(self::ROOT, 'https://' . $_SERVER['HTTP_HOST'] . '/', $file);
 				Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
@@ -1198,7 +1198,7 @@ class ResourceManager {
 
 			$url_pict = explode("/", $url_pict);
 			$url_pict = explode(".", $url_pict[(count($url_pict) - 1)]);
-			$url_pict = "/sites/default/files/theme_logo/".$url_pict[0].".svg";
+			$url_pict = $this->config->client->routing_prefix . "/sites/default/files/theme_logo/".$url_pict[0].".svg";
 
 			return $url_pict;
 

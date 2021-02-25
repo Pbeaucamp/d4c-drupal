@@ -134,7 +134,7 @@ $("#edit-selected-data-id").val($('#selected_data').val());
 //addPicto();
 
 $("#edit-tags input").autocomplete({
-    serviceUrl: '/api/thesaurus',
+    serviceUrl: fetchPrefix() + '/d4c/api/thesaurus',
     delimiter: ', ',
     minChars: 3,
     onSelect: function (suggestion) {
@@ -448,7 +448,7 @@ function fillData(data) {
         if (data.extras[g].key == 'Picto') {
 			var path = data.extras[g].value;
 			if(!path.startsWith('/')){
-				path = '/sites/default/files/api/portail_d4c/img/set-v3/pictos/' + path.replace("d4c-", "") + ".svg";
+				path = fetchPrefix() + '/sites/default/files/api/portail_d4c/img/set-v3/pictos/' + path.replace("d4c-", "") + ".svg";
 			}
             $("#old_img").append('<span id="img" style=" background-image: url('+path+'); margin-top: 0px;  display: inline-block; width: 30px; height: 30px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 20em; margin-top: -4em;"></span>');
         }
@@ -797,7 +797,7 @@ function deleteRowWidget(btn) {
 
 function getUrlWidgets(num) {
 
-    $.ajax('/api/records/2.0/callVanillaUrlReports', {
+    $.ajax(fetchPrefix() + '/d4c/api/records/2.0/callVanillaUrlReports', {
         type: 'POST',
 
         dataType: 'json',

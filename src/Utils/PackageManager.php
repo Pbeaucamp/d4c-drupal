@@ -215,7 +215,7 @@ class PackageManager {
 		$codepostal ="";
 		$cityValue ="";
 		$adresseValue="";
-		$urllogo = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
+		$urllogo = $protocol . $host . $this->config->client->routing_prefix . "/visualisation?id=" . $dataset["datasetid"];
 		$resources = array();
 		$resourcesid = "";
 		$useLimitationsContent =array();
@@ -254,7 +254,7 @@ class PackageManager {
 				}
 				
 				$res["encodingFormat"] = $value['name'];
-				$res["contentUrl"] = $protocol . $host . "/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
 				$resources[] = $res;
 		
 
@@ -265,37 +265,37 @@ class PackageManager {
 				$res = array();
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				$res["encodingFormat"] = "CSV";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				$res["encodingFormat"] = "JSON";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				$res["encodingFormat"] = "Excel";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 		
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				$res["encodingFormat"] = "GeoJSON";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["type"] = "WWW:KML";
 				$res["encodingFormat"] = "KML";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				$res["encodingFormat"] = "Shapefile";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
 				$resources[] = $res;
 		}
 

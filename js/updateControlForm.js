@@ -160,7 +160,7 @@ function createTablePrew(resUrl,type_file,type_site){
 // console.log(resUrl);
  resUrl = resUrl.replace(/\//g,'!');
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',
@@ -303,7 +303,7 @@ function fillTable(data) {
                             datasetvalueparams = encodeURIComponent(JSON.stringify(datasets[i].parameters));
                         }
    
-                        let name_id = '<td><a target="_blank"  href ="/visualisation/table/?id=' + datasets[i].id_data + '">' + datasets[i].title_data + '</a><div style="display:none" class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-name-2 form-item-table-' + i + '-name-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-name-2" type="text" id="edit-table-0-name-2" name="table[' + i + '][name][2]" value="' + datasets[i].id_data + '" size="60" maxlength="128" class="form-text"></div></td>';
+                        let name_id = '<td><a target="_blank"  href = "' + fetchPrefix() + '/visualisation/table/?id=' + datasets[i].id_data + '">' + datasets[i].title_data + '</a><div style="display:none" class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-name-2 form-item-table-' + i + '-name-2 form-no-label"><input data-drupal-selector="edit-table-' + i + '-name-2" type="text" id="edit-table-0-name-2" name="table[' + i + '][name][2]" value="' + datasets[i].id_data + '" size="60" maxlength="128" class="form-text"></div></td>';
                         let org = '<td>' + data[j].name_org + '</td>';
                         let orgine = '<td>Moissonnage</td>';
                         /*let site = '<td>' + datasets[i].site + '</td>';*/
@@ -399,7 +399,7 @@ function fillTable(data) {
                         }
                         else if(datasets[i].site == "locale") {
 
-                            $.getJSON('/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
+                            $.getJSON(fetchPrefix() + '/d4c/datasets/update/callInfocom94/'+ datasets[i].title_data, function (result) {
 
                                 if (result) {
                                     result.data.sort(function (a, b) {
@@ -482,7 +482,7 @@ function deleteMoissonnage(event) {
     var conf = confirm("Etes-vous sûr de vouloir supprimer ce moissonnage?");
     if (conf) {
         var datasetId=event.attr("data-id-moisonnage");
-        $.ajax('/api/dataset/remove/'+datasetId, {
+        $.ajax(fetchPrefix() + '/d4c/api/dataset/remove/'+datasetId, {
         type: 'POST',
         dataType: 'json',
         cache: true,
@@ -548,7 +548,7 @@ function createTablePrew(resUrl,type_file,type_site){
 
  resUrl = resUrl.replace(/\//g,'!');
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',
@@ -792,7 +792,7 @@ function getDataset() {
                             
                             
                             
-                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
+                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
                               //console.log(result.data[f].resources[g].url);
                               break;
                         }

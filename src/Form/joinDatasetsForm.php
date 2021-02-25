@@ -786,15 +786,15 @@ class joinDatasetsForm extends HelpFormBase {
 			$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
 		}
 		else{
-			$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
+			$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 		}
     
 		$host = $_SERVER['HTTP_HOST'];
 		if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-			 $url_res = 'http://'.$host.'/sites/default/files/dataset/';
+			 $url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 		}
 		else{
-			$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+			$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 		} 
           
         $url_res = $url_res.$nameFile.'.csv';      

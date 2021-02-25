@@ -63,7 +63,7 @@ class VisualisationController extends ControllerBase {
 		$description = $dataset["metas"]["description"];
 		
 		
-		$url = $protocol . $host . "/visualisation?id=" . $dataset["datasetid"];
+		$url = $protocol . $host . $this->config->client->routing_prefix . "/visualisation?id=" . $dataset["datasetid"];
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$license = $dataset["metas"]["license"];
@@ -80,7 +80,7 @@ class VisualisationController extends ControllerBase {
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = $value['format'];
-				$res["contentUrl"] = $protocol . $host . "/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
 				$resources[] = $res;
 			}
 		}
@@ -90,38 +90,38 @@ class VisualisationController extends ControllerBase {
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "CSV";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "JSON";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "Excel";
-			$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
 			$resources[] = $res;
 			
 			if($isGeo){
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "GeoJSON";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "KML";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
 				$resources[] = $res;
 				
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "Shapefile";
-				$res["contentUrl"] = $protocol . $host . "/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
+				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
 				$resources[] = $res;
 			}
 		}
@@ -160,7 +160,7 @@ class VisualisationController extends ControllerBase {
                     $link = explode(":", $links[$j]);
                     
                     if($link[0]!='false'){
-                        $url = 'visualisation?id='. $link[1];
+                        $url = $config->client->routing_prefix . '/visualisation?id='. $link[1];
                          $LinkedDataSet = $LinkedDataSet.'&nbsp<p style="margin: -1.1em 0 -1em;" ><code style="cursor: pointer;" onclick="window.open(`'.$url.'`, `_blank`);">'.$link[0].'</code></p><br>';
                     }
                 }
@@ -623,7 +623,7 @@ class VisualisationController extends ControllerBase {
 						<h2 ng-if="ctx.dataset.getPredefinedFilters()" class="d4c-filters__filters"><span translate>Predefined Filters</span></h2>
 						<ul class="d4c-dataset-export__format-choices" ng-if="ctx.dataset.getPredefinedFilters()">
 							<li ng-repeat="(key, value) in ctx.dataset.getPredefinedFilters()" class="d4c-dataset-export__format-choice">
-								<a href="/visualisation/table/?id=\{\{ ctx.dataset.metas.id \}\}&\{\{ value }\}">
+								<a href = "' . $config->client->routing_prefix . '/visualisation/table/?id=\{\{ ctx.dataset.metas.id \}\}&\{\{ value }\}">
 									<span>\{\{ key }\}</span>
 								</a>
 							</li>
@@ -874,14 +874,14 @@ class VisualisationController extends ControllerBase {
 
     <footer class="ng-scope"></footer>
         
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         
 	<script type="text/javascript">
 		$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
@@ -895,19 +895,19 @@ class VisualisationController extends ControllerBase {
 			}
 		}]);
 	</script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-	<script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
 
 	<script>
-		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-		//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
-		$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+		//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+		//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+		//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+		$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
 		$("head").append("<base href=\"/\">");
             
 	</script>

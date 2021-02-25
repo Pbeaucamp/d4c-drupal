@@ -127,7 +127,7 @@ function fillTable(data) {
 function loadFields(urlCkan) {
   let datasetId = $("#edit-selected-dataset").val();
   if (datasetId != "" && datasetId != "----") {
-    $.ajax("/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
+    $.ajax(fetchPrefix() + "/d4c/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
       {
         type: "POST",
         dataType: "json",

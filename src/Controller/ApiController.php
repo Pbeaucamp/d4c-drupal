@@ -259,7 +259,7 @@ class ApiController extends ControllerBase {
                      <span class="service-label ng-binding">Consulter un jeu de données</span>
                      <div class="service-techinfo">
                          <span class="service-method ng-binding">GET</span>
-                         <span class="service-url ng-binding">/api/datasets/1.0/DATASETID/</span>
+                         <span class="service-url ng-binding">' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/DATASETID/</span>
                      </div>
                  </div>
                  <div class="d4c-api-console ng-isolate-scope" service="service" api="api[service.id]">
@@ -328,8 +328,8 @@ class ApiController extends ControllerBase {
 				    </div>
 
 				    <code class="d4c-api-console-page__service-url">
-				        <a href="/api/datasets/1.0/emprise-batie-paris/" target="_blank" class="ng-binding">
-				            <i class="fa fa-link"></i> /api/datasets/1.0/emprise-batie-paris/
+				        <a href="' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/emprise-batie-paris/" target="_blank" class="ng-binding">
+				            <i class="fa fa-link"></i> ' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/emprise-batie-paris/
 				        </a>
 				    </code>
 				</div> 
@@ -338,7 +338,7 @@ class ApiController extends ControllerBase {
                  <span class="service-label ng-binding">Recherche d\'enregistrements</span>
                  <div class="service-techinfo">
                      <span class="service-method ng-binding">GET</span>
-                     <span class="service-url ng-binding">/api/records/1.0/search//</span>
+                     <span class="service-url ng-binding">' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//</span>
                  </div>
              </div>
              <div class="d4c-api-console ng-isolate-scope" service="service" api="api[service.id]">
@@ -548,8 +548,8 @@ class ApiController extends ControllerBase {
 			    </div>
 
 			    <code class="d4c-api-console-page__service-url">
-			        <a href="/api/records/1.0/search//" target="_blank" class="ng-binding">
-			            <i class="fa fa-link"></i> /api/records/1.0/search//
+			        <a href="' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//" target="_blank" class="ng-binding">
+			            <i class="fa fa-link"></i> ' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//
 			        </a>
 			    </code>
 			</div>
@@ -557,35 +557,35 @@ class ApiController extends ControllerBase {
     </div>
                 
 </div>				
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/jquery-1.12.0.min.js"></script>
 	<script>
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/bootstrap.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/od.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/font-awesome.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/anfr.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/v.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/bootstrap.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/od.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/font-awesome.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/anfr.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/v.css\" rel=\"stylesheet\">");
 			$("head").append("<base href=\"/anfr/carte\">");
 
 	
 
 	</script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/ol.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/ol.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>
 	<script>
 
 			loadGlobalMap("\'. $config->get(\'ckan\').\'");
 	</script>
 	
 			
-	<script src="/sites/default/files/api/portail_anfr/js/jquery-3.2.1.js"></script>
-	<script src="/sites/default/files/api/portail_anfr/js/angular.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/jquery-3.2.1.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/angular.js"></script>
 
- 	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/4cd679879fd2.js"></script>
+ 	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/4cd679879fd2.js"></script>
 
-    <script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/96e9131c3992.js"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/96e9131c3992.js"></script>
 
     <script type="text/javascript">
             var app = angular.module("bpm.core.config", []);
@@ -599,9 +599,9 @@ class ApiController extends ControllerBase {
            
         </script>
 
-    <script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/5e09f3e0b946.js"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/5e09f3e0b946.js"></script>
 
-    <script src="/sites/default/files/api/portail_anfr/js/supported-browsers-message.js" type="text/javascript"></script>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/supported-browsers-message.js" type="text/javascript"></script>
 
  	<script>
  		
@@ -626,7 +626,7 @@ class ApiController extends ControllerBase {
                     {
                         id: \'records_search\',
                         label: \'Recherche d\'enregistrements\',
-                        url: \'/api/records/1.0/search//\',
+                        url: fetchPrefix() + \'/d4c/api/records/1.0/search//\',
                         method: \'GET\',
                         parameters: RecordsSearchParameters
                     }
@@ -635,7 +635,7 @@ class ApiController extends ControllerBase {
         
 			
  	</script>
- 	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/18b1e9266e57.js"></script>			
+ 	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/18b1e9266e57.js"></script>			
 </body>',
 						
 				],

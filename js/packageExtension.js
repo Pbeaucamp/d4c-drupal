@@ -101,7 +101,7 @@ function openExportPopup(event,xml=false){
 
     console.log(id);
 	//get zip file from packageManger.php
-	$.ajax('/package/exportdataset/'+id, {
+	$.ajax(fetchPrefix() + '/d4c/package/exportdataset/'+id, {
         type: 'GET',
         dataType: "json",
         data: { 'xml': xml },

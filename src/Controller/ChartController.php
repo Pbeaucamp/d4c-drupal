@@ -80,10 +80,10 @@ class ChartController extends ControllerBase {
 				</div>
 		</main>
 		
-		<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+		<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	//$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
 			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" ).css( "background-color", "#eee" );
@@ -95,17 +95,17 @@ class ChartController extends ControllerBase {
                 }
             }]);
         </script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-        <script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-chart.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+        <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-chart.js"></script>
 
 		<script>
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 			$("head").append("<base href=\"/chart/\">");
 		</script>',
 						
@@ -123,9 +123,9 @@ class ChartController extends ControllerBase {
 		$element = '
 		<head>
 			<base href="/chart/frame">
-			<link href="/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet">
-			<link href="/sites/default/files/api/portail_d4c/css/normalize.css" rel="stylesheet">
-			<link href="/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'" rel="stylesheet">
+			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet">
+			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css" rel="stylesheet">
+			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'" rel="stylesheet">
 			<style>main{position:absolute;top:0;bottom:0;right:0;left:0}main>div{position:absolute;top:0;bottom:0;right:0;left:0}.chart-container{position:absolute;top:0;bottom:0;right:0;left:0}</style>
 		</head>
 		<body>
@@ -148,10 +148,10 @@ class ChartController extends ControllerBase {
 			</div>
 		</main>
 		
-		<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+		<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	//$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
 			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
@@ -163,9 +163,9 @@ class ChartController extends ControllerBase {
                 }
             }]);
         </script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-        <script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-chart.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+        <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-chart.js"></script>
 
 		
 		</body>';

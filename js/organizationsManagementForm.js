@@ -192,18 +192,18 @@ function buildWidgetCode(selectedOrganisation) {
         content += '        </div>\n';
         content += '    </div>\n';
         content += '</div>\n';
-        content += '<p><script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>\n';
-        content += '<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>\n';
-        content += '<script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>\n';
-        content += '<script src="/sites/default/files/api/portail_d4c/js/script_portail_fullscreen.js"></script>\n';
+        content += '<p><script src="' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>\n';
+        content += '<script src="' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>\n';
+        content += '<script src="' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>\n';
+        content += '<script src="' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/script_portail_fullscreen.js"></script>\n';
         content += '<script>\n';
         content += '    $(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );\n';
-        content += '    $("head").append("<link href=\\\"/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\\\" rel=\\\"stylesheet\\\">");\n';
-        content += '    $("head").append("<link href=\\\"/sites/default/files/api/portail_d4c/css/style.css\\\" rel=\\\"stylesheet\\\">");\n';
-        content += '    $("head").append("<link href=\\\"/sites/default/files/api/portail_d4c/css/\'.$config->client->css_file.\'\\\" rel=\\\"stylesheet\\\">");\n';
-        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\\\">");\n';
-        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\\\">");\n';
-        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\\\">");\n';
+        content += '    $("head").append("<link href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\\\" rel=\\\"stylesheet\\\">");\n';
+        content += '    $("head").append("<link href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/css/style.css\\\" rel=\\\"stylesheet\\\">");\n';
+        content += '    $("head").append("<link href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/css/\'.$config->client->css_file.\'\\\" rel=\\\"stylesheet\\\">");\n';
+        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\\\">");\n';
+        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\\\">");\n';
+        content += '    $("head").append("<link rel=\\\"stylesheet\\\" type=\\\"text/css\\\" href=\\\"' + fetchPrefix() + '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\\\">");\n';
         content += '</script></p>\n';
     }
 

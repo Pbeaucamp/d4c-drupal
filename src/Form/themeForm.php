@@ -62,6 +62,7 @@ class themeForm extends HelpFormBase {
     
 	public function buildForm(array $form, FormStateInterface $form_state) {
         $form = parent::buildForm($form, $form_state);
+$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
          
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         $form['#attached']['library'][] = 'ckan_admin/theme.form';
@@ -70,23 +71,23 @@ class themeForm extends HelpFormBase {
         if($config->get('themes')==null ){
            
             $themes_defolt = array(
-				array("title"=>"administration-gouvernement-finances-publiques-citoyennete", "label"=>"Administration gouvernement finances publiques citoyennete", "url"=>"/sites/default/files/api/portail_d4c/img/theme-administration-gouvernement-finances-publiques-citoyennete.svg"),
+				array("title"=>"administration-gouvernement-finances-publiques-citoyennete", "label"=>"Administration gouvernement finances publiques citoyennete", "url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-administration-gouvernement-finances-publiques-citoyennete.svg"),
                      
-				array( "title"=>"amenagement-du-territoire-urbanisme-batiments-equipements-logement", "label"=>"Amenagement du territoire urbanisme batiments equipements logement","url"=>"/sites/default/files/api/portail_d4c/img/theme-amenagement-du-territoire-urbanisme-batiments-equipements-logement.svg"),
+				array( "title"=>"amenagement-du-territoire-urbanisme-batiments-equipements-logement", "label"=>"Amenagement du territoire urbanisme batiments equipements logement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-amenagement-du-territoire-urbanisme-batiments-equipements-logement.svg"),
                      
-				array("title"=>"culture-patrimoine","label"=>"Culture patrimoine","url"=>"/sites/default/files/api/portail_d4c/img/theme-culture-patrimoine.svg"),
+				array("title"=>"culture-patrimoine","label"=>"Culture patrimoine","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-culture-patrimoine.svg"),
                      
-				array("title"=>"economie-business-pme-developpement-economique-emploi","label"=>"Economie business pme developpement economique emploi","url"=>"/sites/default/files/api/portail_d4c/img/theme-economie-business-pme-developpement-economique-emploi.svg"),
+				array("title"=>"economie-business-pme-developpement-economique-emploi","label"=>"Economie business pme developpement economique emploi","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-economie-business-pme-developpement-economique-emploi.svg"),
                      
-				array("title"=>"education-formation-recherche-enseignement","label"=>"Education formation recherche enseignement","url"=>"/sites/default/files/api/portail_d4c/img/theme-education-formation-recherche-enseignement.svg"),
+				array("title"=>"education-formation-recherche-enseignement","label"=>"Education formation recherche enseignement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-education-formation-recherche-enseignement.svg"),
                      
-				array("title"=>"environnement","label"=>"Environnement","url"=>"/sites/default/files/api/portail_d4c/img/theme-environnement.svg"),
+				array("title"=>"environnement","label"=>"Environnement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-environnement.svg"),
                      
-				array("title"=>"services-sociaux","label"=>"Services sociaux","url"=>"/sites/default/files/api/portail_d4c/img/theme-services-social.svg"),
+				array("title"=>"services-sociaux","label"=>"Services sociaux","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-services-social.svg"),
                      
-				array("title"=>"transports-deplacements","label"=>"Transports deplacements","url"=>"/sites/default/files/api/portail_d4c/img/theme-transports-deplacements.svg"),
+				array("title"=>"transports-deplacements","label"=>"Transports deplacements","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-transports-deplacements.svg"),
                      
-				array("title"=>"default","label"=>"Default","url"=>"/sites/default/files/api/portail_d4c/img/theme-default.png"),
+				array("title"=>"default","label"=>"Default","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png"),
        
 			);
             
@@ -102,40 +103,40 @@ class themeForm extends HelpFormBase {
             $themes_defolt = array();
             
             $themes_defolt[0]->label = "Administration gouvernement finances publiques citoyennete";
-            $themes_defolt[0]->url = '/sites/default/files/api/portail_d4c/img/theme-administration-gouvernement-finances-publiques-citoyennete.svg';
+            $themes_defolt[0]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-administration-gouvernement-finances-publiques-citoyennete.svg';
             $themes_defolt[0]->title = 'administration-gouvernement-finances-publiques-citoyennete';
             
             $themes_defolt[1]->label = "Amenagement du territoire urbanisme batiments equipements logement";
-            $themes_defolt[1]->url = '/sites/default/files/api/portail_d4c/img/theme-amenagement-du-territoire-urbanisme-batiments-equipements-logement.svg';
+            $themes_defolt[1]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-amenagement-du-territoire-urbanisme-batiments-equipements-logement.svg';
             $themes_defolt[1]->title = 'amenagement-du-territoire-urbanisme-batiments-equipements-logement';
             
             $themes_defolt[2]->title = 'culture-patrimoine';
             $themes_defolt[2]->label = "Culture patrimoine";
-            $themes_defolt[2]->url = '/sites/default/files/api/portail_d4c/img/theme-culture-patrimoine.svg';
+            $themes_defolt[2]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-culture-patrimoine.svg';
             
             $themes_defolt[3]->title = 'economie-business-pme-developpement-economique-emploi';
             $themes_defolt[3]->label = "Economie business pme developpement economique emploi";
-            $themes_defolt[3]->url = '/sites/default/files/api/portail_d4c/img/theme-economie-business-pme-developpement-economique-emploi.svg';
+            $themes_defolt[3]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-economie-business-pme-developpement-economique-emploi.svg';
             
             $themes_defolt[4]->title = 'education-formation-recherche-enseignement';
             $themes_defolt[4]->label = "Education formation recherche enseignement";
-            $themes_defolt[4]->url = '/sites/default/files/api/portail_d4c/img/theme-education-formation-recherche-enseignement.svg';
+            $themes_defolt[4]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-education-formation-recherche-enseignement.svg';
             
             $themes_defolt[5]->title = 'environnement';
             $themes_defolt[5]->label = "Environnement";
-            $themes_defolt[5]->url = '/sites/default/files/api/portail_d4c/img/theme-environnement.svg';
+            $themes_defolt[5]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-environnement.svg';
             
             $themes_defolt[6]->title = 'services-social';
             $themes_defolt[6]->label = "Services social";
-            $themes_defolt[6]->url = '/sites/default/files/api/portail_d4c/img/theme-services-social.svg';
+            $themes_defolt[6]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-services-social.svg';
            
             $themes_defolt[7]->title = 'transports-deplacements';
             $themes_defolt[7]->label = "Transports deplacements";
-            $themes_defolt[7]->url = '/sites/default/files/api/portail_d4c/img/theme-transports-deplacements.svg';
+            $themes_defolt[7]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-transports-deplacements.svg';
             
 			$themes_defolt[8]->title = 'default';
             $themes_defolt[8]->label = "Default";
-			$themes_defolt[8]->url = '/sites/default/files/api/portail_d4c/img/theme-default.png';
+			$themes_defolt[8]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png';
             
 			for($i=9; $i<count($themes); $i++){
 				if(!$themes[$i]->label){
@@ -278,6 +279,7 @@ class themeForm extends HelpFormBase {
 	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
+$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         
@@ -315,10 +317,10 @@ class themeForm extends HelpFormBase {
 			
 			}
 			else if($form_state->getValue('imgBack')!=''|| $form_state->getValue('imgBack')!=null){
-				$themes[count($themes)-1]->url = "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
+				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
             }
             else{
-				$themes[count($themes)-1]->url ="/sites/default/files/api/portail_d4c/img/theme-default.png";
+				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png";
             }
             
             
@@ -375,7 +377,7 @@ class themeForm extends HelpFormBase {
 					$themes[$selectThem]->url =$url_t["path"];
                 }
                 else if($form_state->getValue('imgBack')!=''|| $form_state->getValue('imgBack')!=null){
-                    $themes[$selectThem]->url = "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
+                    $themes[$selectThem]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
                 }
             
             }

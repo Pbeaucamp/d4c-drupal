@@ -21,7 +21,7 @@ class ReusesController extends ControllerBase {
 		$reuses = $api->getReuses(null, null, null, "online", 1000, 0);
 		$html = "";
 		foreach($reuses["reuses"] as $reu){
-			$urldataset = "/visualisation/?id=" .  $reu["dataset_id"];
+			$urldataset = $config->client->routing_prefix . "/visualisation/?id=" .  $reu["dataset_id"];
 			$html .= '<div class="reuse col-md-3 col-sm-6 col-xs-12">
 						<div class="thumbnail">
 						<a href=' . $reu["url"] . ' target="_blank">
@@ -150,18 +150,18 @@ class ReusesController extends ControllerBase {
         
 
     </div>
-    <script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-    <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
 	<script src="https://unpkg.com/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
 	<script>
 			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
 			
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-			$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\">");
-    		$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\">");
+    		$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\">");
 			setTimeout(function(){$("#reuses").masonry({
 				itemSelector: ".reuse",
 				percentPosition: true

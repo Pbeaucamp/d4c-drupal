@@ -16,7 +16,7 @@ class MapControllerOLD extends ControllerBase {
 	 */
 	public function myPage() {
 
-		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
+		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 
 		$idUser = 0;
     	if(\Drupal::currentUser()->isAuthenticated()){
@@ -39,7 +39,7 @@ class MapControllerOLD extends ControllerBase {
 
 		<div id="info" class="info"></div>
 		<div class="bckPanel">
-			<img class="btnBackground" src="/sites/default/files/api/portail_anfr/img/ic_map_layers_64.png" alt="Fond de Carte" onclick="$(\'#layers-panel\').show();"/>
+			<img class="btnBackground" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_map_layers_64.png" alt="Fond de Carte" onclick="$(\'#layers-panel\').show();"/>
 		</div>
 		<div id="layers-panel" class="layersMenu" style="display:none" onmouseleave="$(this).hide()">
 			<ul class="layersList">
@@ -51,7 +51,7 @@ class MapControllerOLD extends ControllerBase {
 		</div>
 
 		<div class="savePanel">
-			<img id="saveMap" class="btnBackground" src="/sites/default/files/api/portail_anfr/img/ic_save_48.png" alt="Sauvegarder"/>
+			<img id="saveMap" class="btnBackground" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/img/ic_save_48.png" alt="Sauvegarder"/>
 		</div>
 
 		<div class="mapTitle">
@@ -102,18 +102,18 @@ class MapControllerOLD extends ControllerBase {
 		</div>
 	</div>
 </div>				
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/jquery-1.12.0.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/jquery-1.12.0.min.js"></script>
 	<script>
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/bootstrap.custom.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/ol.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_anfr/css/map_bfc.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/bootstrap.custom.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/ol.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/css/map_bfc.css\" rel=\"stylesheet\">");
 
 	</script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/ol.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/ol.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/d3.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/underscore-min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_anfr/js/map_bfc.js"></script>
 	<script>
 
 			loadGlobalMap();

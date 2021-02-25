@@ -119,7 +119,7 @@ class DatasetsBoardForm extends HelpFormBase {
 					 break;
 				 }
 			 }
-			$viewLink = "/visualisation/?id=".$row["name"];
+			$viewLink = $this->config->client->routing_prefix . "/visualisation/?id=".$row["name"];
 			if(isset($default_chart)) {
 				$viewLink = $viewLink . '&' . $default_chart;
 			}
@@ -145,11 +145,11 @@ class DatasetsBoardForm extends HelpFormBase {
 				
 				
 				'datapusher' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;">@name</a>', 
-					[':link' => "/admin/config/data4citizen/datasetsManagement/datasetDatapusher?datasetId=".$row["id"], 
+					[':link' => $this->config->client->routing_prefix . "/admin/config/data4citizen/datasetsManagement/datasetDatapusher?datasetId=".$row["id"], 
 					'@name' => $this->t('Datapusher')])
 				),
 				'edit' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
-					[':link' => "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
+					[':link' => $this->config->client->routing_prefix . "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
 					'@name' => $this->t('Editer')])
 				),
 				'view' => array('data' => new FormattableMarkup('<a data-toggle="modal" data-target="#myModal" href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 

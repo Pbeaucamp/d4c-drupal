@@ -5,6 +5,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Provides route responses for the Example module.
@@ -81,10 +82,10 @@ class MapController extends ControllerBase {
 
         </div>
         
-		<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+		<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
 		$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
@@ -97,19 +98,19 @@ class MapController extends ControllerBase {
                 }
             }]);
         </script>
-        <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-        <script src="/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-carto.js"></script>
+        <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+        <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-carto.js"></script>
 
 
    <script>
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
-			$("head").append("<base href=\"/carte/\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+			$("head").append("<base href=\"'. $config->client->routing_prefix . '/carte/\">");
 	</script>
 
 </body>',
@@ -129,7 +130,7 @@ class MapController extends ControllerBase {
 	
 	public function manage(Request $request) {
 		
-		$uri = $request->getUri();
+		$uri = \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]);
 		$port = $request->getPort();
 		
 		/*if(\Drupal::currentUser()->isAuthenticated()){
@@ -141,7 +142,7 @@ class MapController extends ControllerBase {
 			
 			if(count($maps) == 0){
 				$id = uniqid();
-				header('Location: '.$uri.'/+'.$id.'/edit/');
+				header('Location: '.$uri.'carte/+'.$id.'/edit/');
 			} else {
 				$last = $maps[count($maps)-1];
 				$id = $last->id;
@@ -149,7 +150,7 @@ class MapController extends ControllerBase {
 			}
     	} else {*/
 			$id = uniqid();
-			header('Location: '.$uri.'/+'.$id.'/edit/');
+			header('Location: '.$uri.'carte/+'.$id.'/edit/');
 		/*}*/
 		
 		//header('Location: '.$uri."/+627081d6c3704a3d/edit/");

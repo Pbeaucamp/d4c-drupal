@@ -161,24 +161,24 @@ class portailController extends ControllerBase {
 					        </div>
     					</div>
 
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"/>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"/>
-    <script src="/sites/default/files/api/portail_d4c/js/script_portail.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/i18n.js"/>
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"/>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-carto.js"/>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/widget-card-dataset.js"/>
-	<link href="/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet" />
-	<link href="/sites/default/files/api/portail_d4c/css/font-awesome.min.css" rel="stylesheet" />
-	<link href="/sites/default/files/api/portail_d4c/css/client.css" rel="stylesheet" />
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="/modules/ckan_admin/js/libraries.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-	<script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"/>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"/>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/script_portail.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"/>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"/>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-carto.js"/>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/widget-card-dataset.js"/>
+	<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet" />
+	<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css" rel="stylesheet" />
+	<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/client.css" rel="stylesheet" />
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/modules/ckan_admin/js/libraries.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+	<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
 	<script type="text/javascript">
 		$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
 		$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
@@ -191,20 +191,20 @@ class portailController extends ControllerBase {
 			}
 		}]);
 	</script>
-    <script type="text/javascript" src="/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
+    <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
   
-	<script src="/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-    <script src="/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-    <script src="/sites/default/files/api/portail_d4c/js/script_portail.js"></script>
+	<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+    <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/script_portail.js"></script>
 	<script>
 			$(".main-container").removeClass("container").removeClass("main-container").css( "margin-top", "-20px" ).css( "margin-bottom", "-45px" );
 			
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-			$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\">");
-    		$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\">");
-            $("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/sites/default/files/api/portail_d4c/css/font-awesome.min.css\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\">");
+    		$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\">");
+            $("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\">");
 			//$("head").append("<meta http-equiv=\"Content-Security-Policy\" content=\"upgrade-insecure-requests\">");
 	</script>
 						

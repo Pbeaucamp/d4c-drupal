@@ -269,7 +269,7 @@ iframe {
   <script src="https://code.jquery.com/jquery-1.9.1.js"></script>
   <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.js"></script> 
   <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-  <script src="/sites/default/files/api/portail_d4c/js/jquery.slides.min.js"></script>
+  <script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery.slides.min.js"></script>
 
 
 <script>
@@ -321,7 +321,7 @@ $("head").append("<link href=\"https://code.jquery.com/ui/1.9.2/themes/base/jque
 <script src="https://code.jquery.com/jquery-1.9.1.js"></script>
 <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.js"></script> 
 <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-<script src="/sites/default/files/api/portail_d4c/js/jquery.slides.min.js"></script>
+<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery.slides.min.js"></script>
             
             '
           

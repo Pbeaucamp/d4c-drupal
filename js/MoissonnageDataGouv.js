@@ -469,7 +469,7 @@ function getDataset() {
                             type_site='DataGouvfr'; 
                
                             
-                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
+                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
                               //console.log(result.data[f].resources[g].url);
 							  break;
                         }
@@ -578,7 +578,7 @@ function addDatasetCheckBox() {
                             
                             
 							added = true;
-                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
+                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result.data[f].id + ' form-item-ids-' + result.data[f].id + '">&nbsp; <input data-drupal-selector="edit-ids-' + result.data[f].id + '" type="checkbox" id="edit-ids-' + result.data[f].id + '" name="ids[' + result.data[f].id + ']" value="' + result.data[f].id + '" class="form-checkbox"> &nbsp;<a href="' + result.data[f].page + '" target="_blank">' + result.data[f].slug + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
                              break;
                         }
                         
@@ -711,7 +711,7 @@ function goSearch_InfoCom94() {
 
 
 
-    $.ajax('/datasets/update/callInfocom94/' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/callInfocom94/' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -765,7 +765,7 @@ function goSearch_InfoCom94() {
                             type_site='InfoCom94'; 
 
                             
-                    $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + ' form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" type="checkbox" id="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" name="ids[' + result[f].id + '|' + result[f].siteOfDataset + ']" value="' + result[f].id + '|' + result[f].siteOfDataset + '" class="form-checkbox"> &nbsp;<a href="' + result[f].url + '" target="_blank">' + result[f].title + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
+                    $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + ' form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" type="checkbox" id="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" name="ids[' + result[f].id + '|' + result[f].siteOfDataset + ']" value="' + result[f].id + '|' + result[f].siteOfDataset + '" class="form-checkbox"> &nbsp;<a href="' + result[f].url + '" target="_blank">' + result[f].title + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
                         
                         
                         
@@ -841,7 +841,7 @@ function goSearch_Opendatasoft() {
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/api/datasets/2.0/callSearchOpendatasoft/' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchOpendatasoft/' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -932,7 +932,7 @@ function goSearch_Opendatasoft_all_site() {
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/api/datasets/2.0/callSearchOpendatasoftAllSite/' +url+ ';' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchOpendatasoftAllSite/' +url+ ';' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -973,7 +973,7 @@ function goSearch_Opendatasoft_all_site() {
 						</a>
 					</div>`);
                   
-                    /*$('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].datasetid+'|'+url+' form-item-ids-' + result[f].datasetid+'|'+url+ '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].datasetid+'|'+url+ '" type="checkbox" id="edit-ids-' + result[f].datasetid+'|'+url+ '" name="ids[' + result[f].datasetid+'|'+url+ ']" value="' + result[f].datasetid+'|'+url+ '" class="form-checkbox"> &nbsp;<a href="https://'+url+'/explore/dataset/' + result[f].datasetid+'" target="_blank">' + result[f].metas.title+ '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');*/
+                    /*$('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].datasetid+'|'+url+' form-item-ids-' + result[f].datasetid+'|'+url+ '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].datasetid+'|'+url+ '" type="checkbox" id="edit-ids-' + result[f].datasetid+'|'+url+ '" name="ids[' + result[f].datasetid+'|'+url+ ']" value="' + result[f].datasetid+'|'+url+ '" class="form-checkbox"> &nbsp;<a href="https://'+url+'/explore/dataset/' + result[f].datasetid+'" target="_blank">' + result[f].metas.title+ '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');*/
 
                     if (result.length == (f + 1)) {
                         $('html,body').removeAttr("style");
@@ -1036,7 +1036,7 @@ function goSearch_socrata(){
   
     //urlSocrata
 
-    $.ajax('/datasets/update/socrataCall/' +urlSocrata+';' + $('#edit-chercher').val().replace(' ', '_'), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/socrataCall/' +urlSocrata+';' + $('#edit-chercher').val().replace(' ', '_'), {
 
         type: 'POST',
         dataType: 'json',
@@ -1081,7 +1081,7 @@ function goSearch_socrata(){
                     
                    //console.log(result);
                         
-                     $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].resource.id + '|' + urlSocrata + ' form-item-ids-' + result[f].resource.id + '|' + urlSocrata + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" type="checkbox" id="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" name="ids[' + result[f].resource.id + '|' + urlSocrata + ']" value="' + result[f].resource.id + '|' + urlSocrata + '" class="form-checkbox"> &nbsp;<a href="' + result[f].link + '" target="_blank">' + result[f].resource.name + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
+                     $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].resource.id + '|' + urlSocrata + ' form-item-ids-' + result[f].resource.id + '|' + urlSocrata + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" type="checkbox" id="edit-ids-' + result[f].resource.id + '|' + urlSocrata + '" name="ids[' + result[f].resource.id + '|' + urlSocrata + ']" value="' + result[f].resource.id + '|' + urlSocrata + '" class="form-checkbox"> &nbsp;<a href="' + result[f].link + '" target="_blank">' + result[f].resource.name + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');
                     
 
                     if (result.length == (f + 1)) {
@@ -1154,7 +1154,7 @@ function search_ckan(){
    // let param = $('#edit-chercher').val().replace(' ', '_');
 
 
-    $.ajax('/datasets/update/ckanSearchCall/' + urlCkan+';'+$('#edit-chercher').val().replace(' ', '_'), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/ckanSearchCall/' + urlCkan+';'+$('#edit-chercher').val().replace(' ', '_'), {
 
         type: 'POST',
         dataType: 'json',
@@ -1211,7 +1211,7 @@ function search_ckan(){
                             type_site='Ckan'; 
                             
                             
-                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' +result[f].id+'|'+urlCkan+ ' form-item-ids-' +result[f].id+'|'+urlCkan+ '">&nbsp; <input data-drupal-selector="edit-ids-' +result[f].id+'|'+urlCkan+ '" type="checkbox" id="edit-ids-' +result[f].id+'|'+urlCkan+ '" name="ids[' +result[f].id+'|'+urlCkan+ ']" value="' +result[f].id+'|'+urlCkan+ '" class="form-checkbox"> &nbsp;<a href="http://'+urlCkan+'/dataset/' + result[f].id+ '" target="_blank">' +result[f].title+ '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
+                            $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' +result[f].id+'|'+urlCkan+ ' form-item-ids-' +result[f].id+'|'+urlCkan+ '">&nbsp; <input data-drupal-selector="edit-ids-' +result[f].id+'|'+urlCkan+ '" type="checkbox" id="edit-ids-' +result[f].id+'|'+urlCkan+ '" name="ids[' +result[f].id+'|'+urlCkan+ ']" value="' +result[f].id+'|'+urlCkan+ '" class="form-checkbox"> &nbsp;<a href="http://'+urlCkan+'/dataset/' + result[f].id+ '" target="_blank">' +result[f].title+ '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a> </div>');
                             
                             break;
                            
@@ -1293,7 +1293,7 @@ function search_d4c(){
     let org = $('#edit-selected-org').val();
     $('#edit-ids').empty();
 
-    $.ajax('/datasets/update/calld4c/' +urlD4c+ ';' + $('#edit-chercher').val(), {
+    $.ajax(fetchPrefix() + '/d4c/datasets/update/calld4c/' +urlD4c+ ';' + $('#edit-chercher').val(), {
 
         type: 'POST',
         dataType: 'json',
@@ -1346,7 +1346,7 @@ function search_d4c(){
 									</a>
 								</div>`);
 								
-								/*$('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + ' form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" type="checkbox" id="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" name="ids[' + result[f].id + '|' + result[f].siteOfDataset + ']" value="' + result[f].id + '|' + result[f].siteOfDataset + '" class="form-checkbox"> &nbsp;<a href="' + result[f].url + '" target="_blank">' + result[f].title + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');*/
+								/*$('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + ' form-item-ids-' + result[f].id + '|' + result[f].siteOfDataset + '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" type="checkbox" id="edit-ids-' + result[f].id + '|' + result[f].siteOfDataset + '" name="ids[' + result[f].id + '|' + result[f].siteOfDataset + ']" value="' + result[f].id + '|' + result[f].siteOfDataset + '" class="form-checkbox"> &nbsp;<a href="' + result[f].url + '" target="_blank">' + result[f].title + '</a>|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>');*/
                         
 							}
                         }
@@ -1406,7 +1406,7 @@ function goSearch_ArcGIS() {
     $('#edit-ids').empty();
 
 	//console.log(encodeURIComponent(url));
-    $.ajax('/api/datasets/2.0/callSearchArcGIS/', {
+    $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callSearchArcGIS/', {
 		data: { url: url},
         type: 'POST',
         dataType: 'json',
@@ -1442,7 +1442,7 @@ function goSearch_ArcGIS() {
                     //   type_site='arcgis:'+url;
                     
                     $('#edit-ids').append('<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-ids-' + result[f].id+'|'+url+' form-item-ids-' + result[f].id+'|'+url+ '">&nbsp; <input data-drupal-selector="edit-ids-' + result[f].id+'|'+url+ '" type="checkbox" id="edit-ids-' + result[f].id+'|'+url+ '" name="ids[' + result[f].id+'|'+url+ ']" value="' + result[f].id+'|'+url+ '" class="form-checkbox"> &nbsp;<a href="'+ url+"/"+ result[f].id +'" target="_blank">' + result[f].name+ '</a>'
-					/*+'|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>'*/);
+					/*+'|<a href="#" id="prew" class="js-open-modal" data-modal="1" onclick="createTablePrew(`'+url_res+'`,`'+type_res+'`,`'+type_site+'`);"><span style=" cursor: pointer; background-image: url(' + fetchPrefix() + '/sites/default/files/api/portail_d4c/img/preview.svg); display: inline-block; width: 20px; height: 20px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span></a></div>'*/);
 
                     if (result.length == (f + 1)) {
                         $('html,body').removeAttr("style");
@@ -1475,7 +1475,7 @@ if(resUrl.includes("?")) {
       resUrl = res[0];
  }
 
-$.ajax('/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
+$.ajax(fetchPrefix() + '/d4c/datasets/update/getCsvXls/' + resUrl+';'+type_file+';'+type_site , {
 
         type: 'POST',
         dataType: 'json',

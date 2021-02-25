@@ -24,7 +24,7 @@ function getDatasets(urlCkan, iduser) {
 			}
 		  }
 		);*/
-		$.ajax('/api/datasets/2.0/searchPublicPrivate/include_private=true&rows=1000&q=organization:"' + datasetId + '"&fq=-(-edition_security:**'+iduser+'** OR edition_security:*)',
+		$.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/searchPublicPrivate/include_private=true&rows=1000&q=organization:"' + datasetId + '"&fq=-(-edition_security:**'+iduser+'** OR edition_security:*)',
 		{
 			type: "POST",
 			dataType: "json",
@@ -60,7 +60,7 @@ function getResources(urlCkan) {
   // $("textfield[name='title']").val() == 'Test';
   let datasetId = $("#edit-selected-dataset").val();
   if (datasetId != "" && datasetId != "----") {
-    $.ajax("/api/datasets/1.0/" + datasetId,
+    $.ajax(fetchPrefix() + "/d4c/api/datasets/1.0/" + datasetId,
       {
         type: "POST",
         dataType: "json",
@@ -99,7 +99,7 @@ function getFields(urlCkan) {
   // $("textfield[name='title']").val() == 'Test';
   let datasetId = $("#edit-selected-dataset").val();
   if (datasetId != "" && datasetId != "----") {
-    $.ajax("/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
+    $.ajax(fetchPrefix() + "/d4c/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
       {
         type: "POST",
         dataType: "json",

@@ -24,7 +24,7 @@ $(document).ready(function () {
 
 function showHelp(e, bookmark){
 	
-	$.get("/sites/default/files/api/portail_d4c/files/Data4Citizen-Documentation-Administration.html", function(data, event){
+	$.get(fetchPrefix() + "/sites/default/files/api/portail_d4c/files/Data4Citizen-Documentation-Administration.html", function(data, event){
 		
 		/*var el = document.createElement( 'html' );
 		el.innerHTML = data;
