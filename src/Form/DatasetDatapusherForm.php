@@ -58,17 +58,18 @@ class DatasetDatapusherForm extends HelpFormBase {
 		$output = array();
 		foreach ($resources as $row) {
 			$id = $row["id"];
-			$datapusherResult = $api->getDatapusherJobStatus($id);
-			$datapusherInfos = json_decode($datapusherResult, true);
 			
 			$title = $row["name"];
 			$format = $row["format"];
-			$dpStatus = $datapusherInfos["status"];
 
 			Logger::logMessage("Found resource '" . $datapusherResult . "' \r\n");
 
 			//If the format is manageable by the datastore we display the options
 			if(($format == 'CSV' || $format == 'XLS' || $format == 'XLSX')){
+				$datapusherResult = $api->getDatapusherJobStatus($id);
+				$datapusherInfos = json_decode($datapusherResult, true);
+				
+				$dpStatus = $datapusherInfos["status"];
 
 				$form['#attached']['drupalSettings']['ckan'][$title] = $datapusherResult;
 

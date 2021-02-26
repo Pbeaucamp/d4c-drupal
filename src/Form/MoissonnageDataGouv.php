@@ -393,8 +393,8 @@ class MoissonnageDataGouv extends HelpFormBase {
                 foreach($results->resources as &$res){
             
 					$host = $_SERVER['HTTP_HOST']; 
-					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-					$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
             
 					if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
 						$add_tres=true;
@@ -497,7 +497,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				if(substr($jsonValue["url"], -1) === "/"){
 					$jsonValue["url"] = substr($jsonValue["url"], 0, -1);
 				}
-                $query = Query::callSolrServer($jsonValue["url"]."/api/datasets/2.0/searchdatasetres/id=".$jsonValue["id"]);
+                $query = Query::callSolrServer($jsonValue["url"]."/d4c/api/datasets/2.0/searchdatasetres/id=".$jsonValue["id"]);
                 $results = json_decode($query);
                 $results = $results->result;
                 $private = true;
@@ -605,8 +605,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$url_res = 'http://'.$host.'/sites/default/files/dataset/';
 					}
 					else{
-						$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-						$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+						$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+						$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 					}
             
 					if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -909,7 +909,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
 					}
 					else{
-						$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
+						$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 					}
 				   
 					$host = $_SERVER['HTTP_HOST'];
@@ -929,7 +929,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 							$url_res = 'http://'.$host.'/sites/default/files/dataset/';
 						}
 						else{
-							$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+							$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 						}        
 					  
 						if( $res->format == 'XLS' || $res->format == 'XLSX'  || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -1099,9 +1099,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 					// on créé un csv
 					error_log("on créée un csv");
 					$name = $label . "_" . uniqid();
-					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.csv';
-					$rootJson='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$name.'.geojson';
-					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$name.'.csv';
+					$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name.'.csv';
+					$rootJson='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name.'.geojson';
+					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name.'.csv';
 					if($geo_res["geojson"] != null){
 						error_log("la source est un geojson");
 						$url = $geo_res["geojson"];
@@ -1700,8 +1700,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$url_res = 'http://'.$host.'/sites/default/files/dataset/';
 				}
 				else{
-					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-					$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
                 }
                
                 $filepathN = $value[1].'/resource/'.$value[0].'.csv';
@@ -1902,8 +1902,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 						$url_res = 'http://'.$host.'/sites/default/files/dataset/';
 					}
 					else{
-						$root='/home/user-client/drupal-d4c/sites/default/files/dataset/';
-						$url_res = 'https://'.$host.'/sites/default/files/dataset/';
+						$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+						$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
 					}
 					
 					if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -2215,8 +2215,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$command = NULL;
 				
 				if(strpos($supportedQueryFormats, "geoJSON") !== false){
-					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.geojson';
-					$url = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.geojson';
+					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
+					$url = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
 					
 					$url_resource = $site_search_url.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=geojson';
 					error_log($url_resource);
@@ -2351,8 +2351,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$data_csv[] = strtolower(implode($cols, ";"));
 					$data_csv = array_merge($data_csv, $rows);
 					$fileName = $fileName . "_" . uniqid();
-					$rootCsv='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.csv';
-					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.csv';
+					$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
+					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 					//$data_csv = mb_convert_encoding( $data_csv, 'Windows-1252', 'UTF-8');
 					
 					//$string = iconv('ASCII', 'UTF-8//IGNORE', implode($data_csv, "\n"));
@@ -2390,8 +2390,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 				} else {
 					
-					$root='/home/user-client/drupal-d4c/sites/default/files/dataset/'.$fileName.'.json';
-					$url = 'https://'.$_SERVER['HTTP_HOST'].'/sites/default/files/dataset/'.$fileName.'.json';
+					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
+					$url = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
 					
 					$url_resource = $site_search_url.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=json';
 					$arr = file($url_resource);

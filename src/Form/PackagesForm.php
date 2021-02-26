@@ -50,21 +50,29 @@ class PackagesForm extends HelpFormBase {
 		$page = pager_find_page();
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
+
+		$orga = $_GET["orga"];
+		$queryParam = $_GET["q"];
+		$type = $_GET["type"];
+
+		if (strpos($queryParam, 'admin/config') !== false) {
+			$queryParam = "";
+		}
 		
 		$filterQuery = "";
-		if ($_GET["orga"] != "" || $_GET["q"] != "" || $_GET["type"] != "") {
+		if ($orga != "" || $queryParam != "" || $type != "") {
 			$filterQuery = "&q=";
 			$qo = "";
 			$qt = "";
 			$qs = "";
-			if($_GET["orga"] != ""){
-				$qo = 'organization:"'.$_GET["orga"].'" AND ';
+			if($orga != ""){
+				$qo = 'organization:"'.$orga.'" AND ';
 			}
-			if($_GET["q"] != ""){
-				$qs = 'text:"*'.strtolower($_GET["q"]).'*" AND ';
+			if($queryParam != ""){
+				$qs = 'text:"*'.strtolower($queryParam).'*" AND ';
 			}
-			if($_GET["type"] != ""){
-				$qt = $_GET["type"] == "private" ?  'private:"true" AND ' : 'private:"false" AND ';
+			if($type != ""){
+				$qt = $type == "private" ?  'private:"true" AND ' : 'private:"false" AND ';
 			}
 			$filterQuery .= $qo . $qs . $qt;
 			if(strlen($filterQuery) > 5){
@@ -113,7 +121,7 @@ class PackagesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["orga"]
+			'#default_value' => $orga
         );
 		//----------------End filter by organisaton --------------------------
 
@@ -126,7 +134,7 @@ class PackagesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["q"]
+			'#default_value' => $queryParam
 		];
 
 		//---------------- end filter by name of dataset --------------------------
@@ -141,7 +149,7 @@ class PackagesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["type"]
+			'#default_value' => $type
         );
 		//---------------- end filter by visibility of dataset --------------------------
 

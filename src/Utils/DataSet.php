@@ -975,7 +975,7 @@ class DataSet{
         
         if($site=='InfoCom94'){
            
-            $query = Query::callSolrServer($site_search."/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
+            $query = Query::callSolrServer($site_search."/d4c/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
             $results = json_decode($query);
             $results = $results->result;
 			
@@ -1172,7 +1172,7 @@ class DataSet{
             if(strpos($site_search, 'https://') === false){
 				$site_search = 'https://'.$site_search;
 			}
-            $query = Query::callSolrServer($site_search."/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
+            $query = Query::callSolrServer($site_search."/d4c/api/datasets/2.0/searchdatasetres/id=".$id_dataset_gouv);
             
             $results = json_decode($query);
             $results = $results->result;

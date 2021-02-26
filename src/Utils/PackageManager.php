@@ -66,13 +66,20 @@ class PackageManager {
     }
 
 	public function createPackageZip($id){
+		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
+		$filename = $id . ".zip";
+
+		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id;
+		$zipFile = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
+		Logger::logMessage("TRM - Document ROOT " . $documentRoot . " and package " . $zipFolder);
+
 		// search dataset data by id in array of all datasets 
-        if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id)) {
-		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id, 0777, true);
+        if (!file_exists($zipFolder)) {
+		    mkdir($zipFolder, 0777, true);
 		}
 
-		if (!file_exists($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/ressources")) {
-		    mkdir($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/ressources", 0777, true);
+		if (!file_exists($zipFolder . "/ressources")) {
+		    mkdir($zipFolder . "/ressources", 0777, true);
 		}
 
 		//$_GET['xml'] = "true";
@@ -81,7 +88,7 @@ class PackageManager {
 			$dataset = json_decode($datasetinfo->getContent(),true);
 			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
 
-    	 	$xmlfile = $this->createXMLFile($dataset);
+    	 	$xmlfile = $this->createXMLFile($dataset, $zipFolder);
 			$response = new Response(json_encode(array('filename' => $xmlfile)));
 		}
 		else {
@@ -93,9 +100,7 @@ class PackageManager {
 			/*****       create datasetinfo json file   *****/
 			$zip = new ZipArchive();
 
-			$filename = $id . ".zip";
-			$zipPath = $_SERVER['DOCUMENT_ROOT'] . "/packageDataset/" . $filename;
-			$zipFolder = $_SERVER['DOCUMENT_ROOT'] . "/packageDataset/" . $id;
+			$zipPath = $zipFile;
 
 			Logger::logMessage("Checking if zip exist '" . $zipPath . "'");
 			if (file_exists($zipPath)) {
@@ -152,7 +157,7 @@ class PackageManager {
 				}
 
 				Logger::logMessage("Adding resource to zip");
-				$zip->addFile("packageDataset/" . $id . "/" . $resourceName, $resourceName);
+				$zip->addFile($resourcePath, $resourceName);
 			}
 
 			Logger::logMessage("Creating metadata.json '" . $zipFolder . "/metadata.json" . "'");
@@ -173,13 +178,13 @@ class PackageManager {
 
 				Logger::logMessage("Adding metadata.json to zip");
 				// add datasetinfo json to zip
-				$zip->addFile("packageDataset/" . $id . "/metadata.json", "metadata.json");
+				$zip->addFile($zipFolder . "/metadata.json", "metadata.json");
 			}
      
 			// close and save archive
 			$zip->close(); 
 
-			$response = new Response(json_encode(array('filename' => "/packageDataset/" . $id . ".zip")));
+			$response = new Response(json_encode(array('filename' => $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id . ".zip")));
 		}
 
 		return $response;
@@ -193,7 +198,7 @@ class PackageManager {
 		return strcasecmp(substr( $haystack, -$length ), $needle) == 0;
 	}
 
-    public function createXMLFile($contentdataset){
+    public function createXMLFile($contentdataset, $zipFolder){
     	$doc = new \DOMDocument('1.0',"UTF-8");
 
     	$api = new API();
@@ -305,20 +310,14 @@ class PackageManager {
 	    	if($value["format"] == "csw" || strpos($value["name"], "Vue XML des métadonnées")== true) {
 
 	    		$xmlfile = true;
-	    	$xml = file_get_contents($value['url']); 
-
-	    	if (!file_exists($_SERVER['DOCUMENT_ROOT']."/". $id)) {
-		    	mkdir($_SERVER['DOCUMENT_ROOT']."/". $id, 0777, true);
+				$xml = file_get_contents($value['url']); 
+				file_put_contents($zipFolder . "/metadata_xml_view.xml", $xml);
+				break;
 			}
-			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml", $xml);
-			
-			break;
 	    }
 
-	    }
-
-		if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $contentdataset["result"]["id"]."/metadata_xml_view.xml")) {
-		 		$xml = simplexml_load_file($contentdataset["result"]["id"]."/metadata_xml_view.xml");
+		if (file_exists($zipFolder . "/metadata_xml_view.xml")) {
+		 		$xml = simplexml_load_file($zipFolder . "/metadata_xml_view.xml");
 
 		 		foreach ($xml as $key => $value) {
 		 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
@@ -1159,9 +1158,8 @@ class PackageManager {
 			//var_dump($lineage);die;
 
 			$gmdfileIdentifier->setAttribute("id",1);
-			$doc->save($_SERVER['DOCUMENT_ROOT']."/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml") or die("Error, ot created");
+			$doc->save($zipFolder . "/" . $contentdataset["result"]["name"].".xml") or die("Error, ot created");
 			
-
-			return "/packageDataset/".$id."/".$contentdataset["result"]["name"].".xml";
+			return $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $contentdataset["result"]["id"] . "/" . $contentdataset["result"]["name"].".xml";
     }
 }

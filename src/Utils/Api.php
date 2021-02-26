@@ -1037,12 +1037,12 @@ class Api{
 			$callUrl .= "?" . $params;
 		} 
 
-        // Logger::logMessage('TRM - url check : ' . $callUrl);
+        Logger::logMessage('TRM - url check : ' . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-        // Logger::logMessage('TRM - Result : ' . $result);
+        Logger::logMessage('TRM - Result : ' . $result);
 		curl_close($curl);
 		
 		$result = json_decode($result,true);
@@ -6033,18 +6033,20 @@ class Api{
 	}
 
 	function getDatapusherJobStatus($resourceId) {
-		Logger::logMessage("Get datapusher status for resource '" . $resourceId . "' \r\n");
+		Logger::logMessage("Get datapusher status for resource '" . $resourceId . "'");
 
 		$database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
 		$query = $database->query("SELECT id, entity_id, value, state, error FROM task_status WHERE entity_id = '" . $resourceId . "' and task_type = 'datapusher'");
 		$task = $query->fetchAssoc();
+
+		Logger::logMessage("Found task '" . json_encode($task) . "'");
 
 		if ($task) {
 			$jobValue = json_decode($task["value"], true);
 			$jobId = $jobValue["job_id"];
 
 			$callUrl = 'http://127.0.0.1:8800/job/' .$jobId;
-			Logger::logMessage("Getting datapusher infos '" . $callUrl . "' \r\n");
+			Logger::logMessage("Getting datapusher infos '" . $callUrl . "'");
 	
 			$cle = $this->config->ckan->datapusher_key; 
 			$url = $this->config->ckan->url; 
