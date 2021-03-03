@@ -1239,6 +1239,7 @@ class ResourceManager {
         
         
         $widget = $hasWidget ? substr($widget_html, 0, -11) : null;
+		return $widget;
 	}
 
 	function defineAnalyse($analyseDefault) {

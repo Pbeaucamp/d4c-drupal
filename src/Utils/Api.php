@@ -1006,18 +1006,28 @@ class Api{
 		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));	 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 		
+		$current_user = \Drupal::currentUser();
+		Logger::logMessage("TRM - User roles " . json_encode($current_user->getRoles()));
+		if(in_array("administrator", $current_user->getRoles())){
+			$isAdmin = true;
+		}
         if($iduser != NULL){
 			
 			$query_params = $this->proper_parse_str($params);
 			
-			$orgs = implode($orgs_private, " OR ");
+			// $orgs = implode($orgs_private, " OR ");
+			if ($isAdmin) {
+				$req = "-(-edition_security:*administrator* OR edition_security:*)";
+			}
+			else {
 				$req = "-(-edition_security:**".$iduser."** OR edition_security:*)";
+			}
 				
-				if($query_params["fq"] == null){
-					$query_params["fq"] = $req;
-				} else {
-					$query_params["fq"] .= " AND " . $req;
-				}
+			if($query_params["fq"] == null){
+				$query_params["fq"] = $req;
+			} else {
+				$query_params["fq"] .= " AND " . $req;
+			}
 
 			//We encode url again
 			$params = http_build_query($query_params);
