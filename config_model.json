@@ -1,19 +1,26 @@
 {
-	"ckan":
-	{
+	"ckan": {
 		"url":"https://xxx-backoffice.data4citizen.com/",
-		"api_key": "xxx"
+		"api_key": "xxx",
+		"datapusher_key": "xxx"
 	},
-	"cluster":
-	{
-		"url":"https://localhost:1337/"
+	"cluster": {
+		"url": "https://127.0.0.1:1337/"
 	},
-	"client":
-	{
-		"name":"XXX",
-		"domain":"xxx.data4citizen.com",
-		"css_file":"client.css",
+	"client": {
+		"cache_time": 1,
+		"name": "XXX",
+		"domain": "xxx.data4citizen.com",
+		"css_file": "client.css",
 		"default_bounding_box" : "5,46.85218,2.36996"
+	},
+    "sitesSearch": [
+        "https://yyy.data4citizen.com/",
+        "https://zzz.data4citizen.com/"
+    ],
+	"gravitee": {
+		"url": "",
+		"api_key": ""
 	},
 	"map_tiles": [
         {
@@ -27,9 +34,5 @@
             "key": "",
             "attribution": ""
         }
-    ],
-    "sitesSearch": [
-        "https:\/\/yyy.data4citizen.com\/",
-        "https:\/\/zzz.data4citizen.com\/"
     ]
 }
