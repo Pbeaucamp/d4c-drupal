@@ -124,7 +124,7 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true) {
 		$results = array();
 
 		//Managing file (filepath and filename)
@@ -180,7 +180,7 @@ class ResourceManager {
 		if ($type == 'csv') {
 
 			//if files > 50MB we don't do the treatments.
-			if ($filesize < 50000000) {
+			if ($transformFile && $filesize < 50000000) {
 				$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 				if ($encoding) {
 					Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
@@ -236,7 +236,7 @@ class ResourceManager {
 		else if ($type == 'xls' || $type == 'xlsx') {
 
 			//if files > 50MB we don't do the treatments.
-			if ($filesize < 50000000) {
+			if ($transformFile && $filesize < 50000000) {
 
 				$xls_file = self::ROOT . $filePath;
 				

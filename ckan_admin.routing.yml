@@ -970,7 +970,10 @@ ckan_admin.api.addResource:
     _controller: '\Drupal\ckan_admin\Utils\Api::callUploadResource'
     params: ''
     _title: ''
-    _permission: 'access dataset'
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
 
 ckan_admin.subscribeDataset:
   path: '/d4c/api/account/subscriptions/datasets/{datasetId}/subscribe'
