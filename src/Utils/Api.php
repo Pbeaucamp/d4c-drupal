@@ -7579,6 +7579,8 @@ function deleteStory($story_id){
 		// Define Dataset name
 		$datasetName = $resourceManager->defineDatasetName($title);
 
+		Logger::logMessage("TRM - DatasetName " . $datasetName . " and title " . $title);
+
 		// Define security
 		$security = $resourceManager->defineSecurity(null, $users);
 

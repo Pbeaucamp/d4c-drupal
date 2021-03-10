@@ -124,7 +124,7 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true) {
 		$results = array();
 
 		//Managing file (filepath and filename)
@@ -180,12 +180,14 @@ class ResourceManager {
 		if ($type == 'csv') {
 
 			//if files > 50MB we don't do the treatments.
-			if ($filesize < 50000000) {
+			if ($transformFile && $filesize < 50000000) {
 				$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
 				if ($encoding) {
 					Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
 					$reader->setInputEncoding($encoding);
 				}
+				Logger::logMessage("TRM - Loading spreadsheet ROOT " . self::ROOT);
+				Logger::logMessage("TRM - Loading spreadsheet filePath " . $filePath);
 				$spreadsheet = $reader->load(self::ROOT . $filePath);
 				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
@@ -236,7 +238,7 @@ class ResourceManager {
 		else if ($type == 'xls' || $type == 'xlsx') {
 
 			//if files > 50MB we don't do the treatments.
-			if ($filesize < 50000000) {
+			if ($transformFile && $filesize < 50000000) {
 
 				$xls_file = self::ROOT . $filePath;
 				
@@ -373,7 +375,7 @@ class ResourceManager {
 
 				file_put_contents($rootCsv, $csv);
 
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
 				
@@ -1916,11 +1918,13 @@ class ResourceManager {
 		$str = str_replace('\'', "_", $str);
 		$str = str_replace("/", "_", $str);
 		$str = str_replace("|", "_", $str);
+		$str = str_replace("[", "", $str);
+		$str = str_replace("]", "", $str);
 		$str = strtolower($str);
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
 		$str = preg_replace( '#&[^;]+;#', '', $str );
-		$str = str_replace("-", "_", $str); 
+		$str = str_replace("-", "_", $str);
 		return $str;
 	}
 
