@@ -114,19 +114,19 @@ class Api{
 	 * 
 	 */
 	function retrieveParameters($params) {
-		if ($this->isSpecial) {
-			if ($params == '') {
-				$params = $_SERVER['QUERY_STRING'];
+		if ($params == '') {
+			$params = $_SERVER['QUERY_STRING'];
 
+			if ($this->isSpecial) {
 				//We decode parameters (replace %3D by = and + by a space)
 				$params = str_replace('%3D', '=', $params);
 				$params = str_replace('%C3%A2', 'â', $params);
 				$params = str_replace('+', ' ', $params);
 				$params = str_replace('%22', '"', $params);
 			}
-			else {
-				$params;
-			}
+		}
+		else {
+			$params;
 		}
 
 		return $params;
@@ -649,6 +649,8 @@ class Api{
 	
 
 	public function callPackageShow($params) {
+		$params = $this->retrieveParameters($params);
+		
 		$result = $this->getPackageShow($params);
 		unset($result["help"]);
 		foreach($result["result"]["resources"] as $j => $value) {
