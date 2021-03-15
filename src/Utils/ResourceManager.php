@@ -1681,7 +1681,10 @@ class ResourceManager {
 					Logger::logMessage("Found column " . $key);
 
 					$cols[] = $key;
-					$colNames[] = $this->clearGeoProperties($key, $index);
+					
+					$label = $this->clearGeoProperties($key, $index);
+					$label = $this->nettoyage($label);
+					$colNames[] = $label;
 					$index++;
 				}
 			}
