@@ -961,6 +961,7 @@ class ResourceManager {
 				"description" => $description,
 				//TODO: Add format
 				// "format" => "csv",
+				"last_modified" => date('Y-m-d\TH:i:s'),
 				"clear_upload" => true,
 				"uuid" => uniqid()
 			];
@@ -1313,7 +1314,8 @@ class ResourceManager {
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning=false) {
+			$mention_legales=null, $frequence=null, $displayVersionning=false, $territory=null,
+			$contactMail=null, $bbox_east_longb=null, $bbox_north_lat=null, $bbox_south_lat=null, $bbox_west_long=null, $spatial=null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1338,6 +1340,13 @@ class ResourceManager {
 		$hasDonneesSource = false;
 		$hasMentionLegales = false;
 		$hasDisplayVersionning = false;
+		$hasTerritory = false;
+		$hasContactMail = false;
+		$hasBboxEastLongb = false;
+		$hasBboxNorthLat = false;
+		$hasBboxSouthLat = false;
+		$hasBboxWestLong = false;
+		$hasSpatial = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1441,6 +1450,48 @@ class ResourceManager {
 				if ($extras[$index]['key'] == 'mention_legales') {
 					$hasMentionLegales = true;
 					$extras[$index]['value'] = $mention_legales;
+				}
+
+				// territory
+				if ($extras[$index]['key'] == 'territory') {
+					$hasTerritory = true;
+					$extras[$index]['value'] = $territory;
+				}
+
+				// Contact mail
+				if ($extras[$index]['key'] == 'contact_mail') {
+					$hasContactMail = true;
+					$extras[$index]['value'] = $contactMail;
+				}
+
+				// BB East long
+				if ($extras[$index]['key'] == 'bbox-east-long') {
+					$hasBboxEastLongb = true;
+					$extras[$index]['value'] = $bbox_east_longb;
+				}
+
+				// BB North lat
+				if ($extras[$index]['key'] == 'bbox-north-lat') {
+					$hasBboxNorthLat = true;
+					$extras[$index]['value'] = $bbox_north_lat;
+				}
+
+				// BB South lat
+				if ($extras[$index]['key'] == 'bbox-south-lat') {
+					$hasBboxSouthLat = true;
+					$extras[$index]['value'] = $bbox_south_lat;
+				}
+
+				// BB West long
+				if ($extras[$index]['key'] == 'bbox-west-long') {
+					$hasBboxWestLong = true;
+					$extras[$index]['value'] = $bbox_west_long;
+				}
+
+				// Spatial
+				if ($extras[$index]['key'] == 'spatial') {
+					$hasSpatial = true;
+					$extras[$index]['value'] = $spatial;
 				}
 	
 				if ($extras[$index]['key'] == 'disable_fields_empty') {
@@ -1547,6 +1598,41 @@ class ResourceManager {
 		if ($hasMentionLegales == false) {
 			$extras[count($extras)]['key'] = 'mention_legales';
 			$extras[(count($extras) - 1)]['value'] = $mention_legales;
+		}
+
+		if ($hasTerritory == false) {
+			$extras[count($extras)]['key'] = 'territory';
+			$extras[(count($extras) - 1)]['value'] = $territory;
+		}
+
+		if ($hasContactMail == false) {
+			$extras[count($extras)]['key'] = 'contact_mail';
+			$extras[(count($extras) - 1)]['value'] = $contactMail;
+		}
+
+		if ($hasBboxEastLongb == false) {
+			$extras[count($extras)]['key'] = 'bbox-east-long';
+			$extras[(count($extras) - 1)]['value'] = $bbox_east_longb;
+		}
+
+		if ($hasBboxNorthLat == false) {
+			$extras[count($extras)]['key'] = 'bbox-north-lat';
+			$extras[(count($extras) - 1)]['value'] = $bbox_north_lat;
+		}
+
+		if ($hasBboxSouthLat == false) {
+			$extras[count($extras)]['key'] = 'bbox-south-lat';
+			$extras[(count($extras) - 1)]['value'] = $bbox_south_lat;
+		}
+
+		if ($hasBboxWestLong == false) {
+			$extras[count($extras)]['key'] = 'bbox-west-long';
+			$extras[(count($extras) - 1)]['value'] = $bbox_west_long;
+		}
+
+		if ($hasSpatial == false) {
+			$extras[count($extras)]['key'] = 'spatial';
+			$extras[(count($extras) - 1)]['value'] = $spatial;
 		}
 
 		if ($hasDisableFieldsEmpty  == false) {

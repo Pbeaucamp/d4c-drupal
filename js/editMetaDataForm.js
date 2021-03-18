@@ -232,6 +232,8 @@ function clear() {
     $('#edit-donnes-source input').val('');
     // clear mentions legales value
     $('#edit-mention-legales textarea').val('');
+    // clear territory value
+    $('#edit-territory input').val('');
  
 
     //$("#edit-table-widgets ").remove();
@@ -409,14 +411,22 @@ function fillData(data) {
         // get producer value
         if (data.extras[g].key == 'producer') {
             var producer = data.extras[g].value;
-                $("#edit-producteur input").val(producer);
+            $("#edit-producteur input").val(producer);
             
+        }
+
+        // get territory value
+        if (data.extras[g].key == 'territory') {
+            var territory = data.extras[g].value;
+            if (territory != null) {
+                $("#edit-territory input").val(territory);
+            }
         }
 
         // get frequence value
         if (data.extras[g].key == 'frequence') {
             var frequence = data.extras[g].value;
-                $("#edit-frequence input").val(frequence);
+            $("#edit-frequence input").val(frequence);
             
         }
 
