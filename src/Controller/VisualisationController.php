@@ -725,7 +725,7 @@ class VisualisationController extends ControllerBase {
 									<d4c-dataset-metadata-block metadata-schema="basicTemplate" values="ctx.dataset.metas" blacklist="[\'theme\',\'title\',\'description\',\'records_count\',\'source_domain\',\'source_domain_title\',\'source_domain_address\',\'source_dataset\',\'data_processed\',\'metadata_processed\',\'parent_domain\',\'geographic_area_mode\',\'modified\']"></d4c-dataset-metadata-block>
 
 										'.$LinkedDataSet.'
-									<div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
+									<!--<div class="d4c-dataset-metadata-block d4c-dataset-metadata-block--subtle" ng-if="ctx.dataset.metas.data_processed || ctx.dataset.metas.metadata_processed">
 										<div class="d4c-dataset-metadata-block__metadata">
 											<div class="d4c-dataset-metadata-block__metadata-name" translate>Last processing</div>
 											<div class="d4c-dataset-metadata-block__metadata-value">
@@ -733,7 +733,7 @@ class VisualisationController extends ControllerBase {
 												<span ng-if="ctx.dataset.metas.data_processed">\{\{ ctx.dataset.metas.data_processed|formatMeta:\'datetime\' \}\} (<span translate>data</span>)</span>
 											</div>
 										</div>
-									</div>
+									</div>-->
 									'.$mention_legales.'
 							  
 									<d4c-dataset-metadata-block-selector metadata-templates="interopTemplates" values="ctx.dataset.interop_metas"></d4c-dataset-metadata-block-selector>
