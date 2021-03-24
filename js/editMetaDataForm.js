@@ -234,9 +234,13 @@ function clear() {
     $('#edit-mention-legales textarea').val('');
     // clear territory value
     $('#edit-territory input').val('');
- 
-
-    //$("#edit-table-widgets ").remove();
+    
+    $('#edit-contact-mail input').val('');
+    $('#edit-bbox-east-long input').val('');
+    $('#edit-bbox-north-lat input').val('');
+    $('#edit-bbox-south-lat input').val('');
+    $('#edit-bbox-west-long input').val('');
+    $('#edit-spatial input').val('');
 
 
     $("#img").remove();
@@ -420,6 +424,48 @@ function fillData(data) {
             var territory = data.extras[g].value;
             if (territory != null) {
                 $("#edit-territory input").val(territory);
+            }
+        }
+
+        if (data.extras[g].key == 'contact_mail') {
+            var contactMail = data.extras[g].value;
+            if (contactMail != null) {
+                $("#edit-contact-mail input").val(contactMail);
+            }
+        }
+
+        if (data.extras[g].key == 'bbox-east-long') {
+            var bboxEastLong = data.extras[g].value;
+            if (bboxEastLong != null) {
+                $("#edit-bbox-east-long input").val(bboxEastLong);
+            }
+        }
+
+        if (data.extras[g].key == 'bbox-north-lat') {
+            var bboxNorthLat = data.extras[g].value;
+            if (bboxNorthLat != null) {
+                $("#edit-bbox-north-lat input").val(bboxNorthLat);
+            }
+        }
+
+        if (data.extras[g].key == 'bbox-south-lat') {
+            var bboxSouthLat = data.extras[g].value;
+            if (bboxSouthLat != null) {
+                $("#edit-bbox-south-lat input").val(bboxSouthLat);
+            }
+        }
+
+        if (data.extras[g].key == 'bbox-west-long') {
+            var bboxWestLong = data.extras[g].value;
+            if (bboxWestLong != null) {
+                $("#edit-bbox-west-long input").val(bboxWestLong);
+            }
+        }
+
+        if (data.extras[g].key == 'spatial') {
+            var spatial = data.extras[g].value;
+            if (spatial != null) {
+                $("#edit-spatial textarea").val(spatial);
             }
         }
 
