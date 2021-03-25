@@ -94,7 +94,6 @@ class VisualisationController extends ControllerBase {
 			if (!isset($currentDataDate)) {
 				$currentDataDate = $value['created'];
 			}
-			$strTime = strtotime($currentDataDate);
 
 			//We compare with the others resources
 			if (!isset($lastDataUpdateDate) || strtotime($currentDataDate) > strtotime($lastDataUpdateDate)) {
@@ -305,6 +304,7 @@ class VisualisationController extends ControllerBase {
  
 		//For GE. Disable for now
 		// $xmlInformations = $this->manageXMLFile($dataset, $id);
+		$xmlInformations = '';
 		if ($config->client->ressources_download_links) {
 			$resourcesInformations = $this->manageAdditionnalResources($dataset);
 		}
