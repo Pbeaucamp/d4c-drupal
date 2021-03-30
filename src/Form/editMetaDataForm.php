@@ -20,6 +20,7 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Drupal\Core\Url;
 use Drupal\ckan_admin\Utils\Logger;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
  * 
@@ -979,13 +980,15 @@ class editMetaDataForm extends HelpFormBase {
 				}
 			}
 			
-			Logger::logMessage("We redirect user");
-			$redirect_path = "/admin/config/data4citizen/editMetaDataForm" . ($datasetId != null ? '?id=' . $datasetId : '');
-			$url = url::fromUserInput($redirect_path);
+			$redirect_path = $this->config->client->routing_prefix . "/admin/config/data4citizen/editMetaDataForm" . ($datasetId != null ? '?id=' . $datasetId : '');
+			$response = new RedirectResponse($redirect_path);
+			$response->send();
+			
+			// $url = url::fromUserInput($redirect_path);
+			// Logger::logMessage("We redirect user to " . json_encode($url));
 
-			// set redirect
-			$form_state->setRedirectUrl($url);
-			Logger::logMessage("User redirected");
+			// // set redirect
+			// $form_state->setRedirectUrl($url);
 		} catch (\Exception $e) {
 			Logger::logMessage($e->getMessage());
 			\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');

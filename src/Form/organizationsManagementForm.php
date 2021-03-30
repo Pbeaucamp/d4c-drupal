@@ -12,6 +12,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Implements an example form.
@@ -205,6 +206,7 @@ class organizationsManagementForm extends HelpFormBase
             
             $callUrlCreate = $this->urlCkan . "/api/action/organization_create";
             $return = $api->updateRequest($callUrlCreate, $context, "POST");
+
             $return = json_decode($return, true);
             
             if ($return[success] == true) {

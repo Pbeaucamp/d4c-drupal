@@ -374,11 +374,14 @@ class Api{
 
 
 	public function callDatastoreApiFacet($params) {
+		Logger::logMessage("TRM - callDatastoreApiFacet ");
+
 		$params = $this->retrieveParameters($params);
 	
 		//error_log('params = ' . $params);
 		$query_params = $this->proper_parse_str($params);
 		if(array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
+			Logger::logMessage("TRM - Found fields or facet ");
 
 			$nhits;$nhitsTotal=0;
 			$facet_groups = array();
@@ -460,6 +463,7 @@ class Api{
 			
 			$nhits = 0;
 			if(!array_key_exists('rows', $query_params) || $query_params["rows"] == 0){
+				
 				for($i = 0; $i < count($facets); ++$i) {
 					$group = array();
 					$query_params['fields'] = $facets[$i];
@@ -529,13 +533,10 @@ class Api{
 					$req = array();
 					$sql = "Select \"".$query_params['fields']."\", count(\"".$query_params['fields']."\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"".$query_params['fields'] . "\"";
 					
-					error_log($sql);
-					
 					$req['sql'] = $sql;
 					//echo $sql;
 					$url2 = http_build_query($req);
 					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-
 
 					$curl = curl_init($callUrl);
 					curl_setopt_array($curl, $this->getStoreOptions());
@@ -628,7 +629,6 @@ class Api{
 
 			if(array_key_exists("rows", $query_params) && $query_params["rows"] > 0){
 				$data = $this->getDatastoreRecord_v2($params);
-//echo json_encode($data);
 				$data_array['records'] = $data['records'];
 				$data_array['nhits'] = $data['nhits'];
 			}
@@ -2350,10 +2350,13 @@ class Api{
 			$result = $datasetid;
 		}
  
-		$resourcesid = "";$isGeo = false;$resourceCSV=NULL;
+		$resourcesid = "";
+		$isGeo = false;
+		$resourceCSV=NULL;
+		
 		$alternative_exports = array(); 
 		foreach ($result['result']['resources'] as $value) {
-		 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){
+		 	if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 		 		$resourcesid = $value['id'];
 				$resourceCSV = $value;
 		 	}
@@ -2478,6 +2481,7 @@ class Api{
 				}
 			}
 		}
+		Logger::logMessage("TRM - TEST 1");
 		
 		if($resourcesid == ""){
 			$visu['table_fields'] =  array();
@@ -2486,6 +2490,8 @@ class Api{
 			
 			$data_array['fields'] =array();
 		} else {
+			Logger::logMessage("TRM - TEST 2 with ressourceId " . $resourcesid);
+
 			$visu['table_fields'] = $this->getTableFields($resourcesid); //["code_insee","en_service","mutualisation_public","sup_id","mutualisation","nom_reg","nom_com","nom_dept"]
 			if(count($visu['map_tooltip_fields']) == 0){
 				$visu['map_tooltip_fields'] = $this->getMapTooltipFields($resourcesid);// ["emr_lb_systeme","emr_dt_service","generation","coord","nom_com","nom_dept","nom_reg"]fields
@@ -3857,9 +3863,14 @@ class Api{
 	  		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 	  	}
 	  	$req['sql'] = $sql;
+
+		Logger::logMessage("TRM - QUERY " . $sql);
+
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+
+		Logger::logMessage("TRM - CALL URL " . $callUrl);
 
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
@@ -7576,27 +7587,55 @@ function deleteStory($story_id){
 			
 		$resourceManager = new ResourceManager;
 
+		$datasetName = $_POST['name'];
 		$title = $_POST['title'];
+		$description = $_POST['description'];
 		$licence = $_POST['selected_lic'];
 		$organization = $_POST['selected_org'];
 		$isPrivate = $_POST['selected_private'] == "true" ? true : false;
+		$extrasAsJson = $_POST['extras'];
+		$tagsAsJson = $_POST['tags'];
 	
 		// Define Dataset name
-		$datasetName = $resourceManager->defineDatasetName($title);
+		if (!isset($datasetName)) {
+			$datasetName = $resourceManager->defineDatasetName($title);
+		}
 
 		// Define security
 		$security = $resourceManager->defineSecurity(null, $users);
 
 		// We build extras
-		$extras = $resourceManager->defineExtras(null, null, null, null, null, null, null,
+		if (isset($extrasAsJson)) {
+			$extrasAsJson = json_decode($extrasAsJson, true);
+			$extras = array();
+			foreach ($extrasAsJson as $key=>$value) {
+				$extraValue = array();
+				$extraValue['key'] = $key;
+				$extraValue['value'] = $value;
+				$extras[] = $extraValue;
+			}
+		}
+
+		$tags = $resourceManager->defineTags(json_decode($tagsAsJson, true));
+
+		$extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
 			null, null, null, null, null, 
 			null, null, null, $security);
 					
 		$generatedTaskId = uniqid();
-		$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $licence, $organization, $isPrivate, array(), $extras);
+		try {
+			$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $licence, $organization, $isPrivate, $tags, $extras);
 
-		$result["result"] = $datasetId;
-		$result["status"] = "success";
+			$result["result"] = $datasetId;
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
 
 		$response = new Response();
 		$response->setContent(json_encode($result));
@@ -7622,16 +7661,40 @@ function deleteStory($story_id){
 		$format = $_POST['format'];
 		$encoding = $_POST['encoding'];
 		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
+		$manageFile = $_POST['manage_file'] == "true" ? true : false;
 
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
 			$results = array();
-			$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
-			$results[] = $resultUpload;
-			Logger::logMessage("TRM - Result " . json_encode($results));
-	
-			$result["result"] = $results;
-			$result["status"] = "success";
+			try {
+				if ($manageFile) {
+					$manageFileResult = $this->manageFileByUrl($resourceUrl);
+					$resourceUrl = $manageFileResult["url"];
+					//Managing resources
+					$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
+			
+					//We update the visualisation's icons
+					$this->calculateVisualisations($datasetId);
+
+					$result["result"] = $results;
+					$result["status"] = "success";
+				}
+				else {
+					$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
+					$results[] = $resultUpload;
+					Logger::logMessage("TRM - Result " . json_encode($results));
+			
+					$result["result"] = $results;
+					$result["status"] = "success";
+				}
+			} catch (\Exception $e) {
+				Logger::logMessage($e->getMessage());
+				$data_array = array();
+				$data_array["message"] = $e->getMessage();
+				
+				$result["result"] = $data_array;
+				$result["status"] = "error";
+			}
 		}
 		else {
 			$manageFileResult = $this->manageFile();
@@ -7676,37 +7739,36 @@ function deleteStory($story_id){
 		return $response;
 	}
 
+	function manageFileByUrl($resourceUrl) {
+		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
+		$data_array = array();
+
+		$fileName = basename($resourceUrl);
+
+		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
+		$uploadfile = $uploaddir . $fileName;
+   
+		if (file_put_contents($uploadfile, file_get_contents($resourceUrl))) {
+			Logger::logMessage("File downloaded successfully");
+			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $fileName;
+
+			$data_array["status"] = "success";
+			$data_array["url"] = $url;
+			return $data_array;
+		}
+		else {
+			$data_array["status"] = "error";
+			$data_array["message"] = 'File downloading failed.';
+			Logger::logMessage("File downloading failed.");
+		}
+		return $data_array;
+	}
+
 	function manageFile() {
 		Logger::logMessage("Managing file received from POST");
 		Logger::logMessage("File infos : " . json_encode($_FILES['upload_file']));
 
 		$data_array = array();
-
-		// if($_POST["recaptcha_response"] != ""){
-		// 	//check captcha
-		// 	$callUrl =  "https://www.google.com/recaptcha/api/siteverify";
-		// 	$data_string = array();
-		// 	$data_string["secret"] = "6LecPMcUAAAAAMUzjOwRKlPeAd43AR_PFFAhg8cb";
-		// 	$data_string["response"] = $_POST["recaptcha_response"];
-			
-		// 	$curl = curl_init($callUrl);
-		// 	curl_setopt_array($curl, $this->getSimpleOptions());
-		// 	curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
-		// 	curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-		// 		'Content-Type: application/json',                                                                                
-		// 		'Content-Length: ' . strlen($data_string))                                                                       
-		// 	); 
-		// 	$resp = curl_exec($curl);
-		// 	curl_close($curl);//error_log($resp);
-		// 	$resp = json_decode($resp, true);
-		// 	if($resp["success"] == false){
-		// 		$data_array["status"] = "captcha_failed";
-		// 		$data_array["message"] = json_encode($resp["error-codes"]);
-		// 		echo json_encode($data_array);
-		// 		return $response;
-		// 	}
-		// }
-
 		if (
 			!isset($_FILES['upload_file']['error']) ||
 			is_array($_FILES['upload_file']['error'])
@@ -7778,20 +7840,6 @@ function deleteStory($story_id){
 		$data_array["status"] = "success";
 		$data_array["url"] = $url;
 		return $data_array;
-
-		// $name = str_replace(" ", "-", strtolower($_POST["title"]));
-		
-		// if(\Drupal::currentUser()->isAuthenticated()){
-		// 	$user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
-		// 	//$data["author_name"] = $user->get('name')->value;
-		// 	$data["author_name"] = $_POST["author_name"];
-		// 	$data["author_email"] = $user->get('mail')->value;
-		// 	//error_log( "Connected !!");
-		// } else {
-		// 	//error_log( "Not connected ..");
-		// 	$data["author_name"] = $_POST["author_name"];
-		// 	$data["author_email"] = $_POST["author_email"];
-		// }
 	}
 
 	/**
