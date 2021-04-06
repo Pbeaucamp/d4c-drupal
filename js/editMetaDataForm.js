@@ -404,6 +404,10 @@ function fillData(data) {
             var value = data.extras[g].value;
             if(value != "FTP") {
                 $("#edit-donnes-source input").val(value);
+
+                if (!value.includes("http")) {
+                    value = "https://" + value;
+                }
                 const url = new URL(value);
                 $("#edit-source input").val(url.hostname);
             }
@@ -479,7 +483,7 @@ function fillData(data) {
         // get source value
         if (data.extras[g].key == 'source') {
             var source = data.extras[g].value;
-            if(source != null) {
+            if (source) {
                 $("#edit-source input").val(source);
             }
             
@@ -488,7 +492,7 @@ function fillData(data) {
         // get donnees source value
         if (data.extras[g].key == 'donnees_source') {
             var donnees_source = data.extras[g].value;
-            if(donnees_source != null){
+            if (donnees_source) {
                 $("#edit-donnes-source input").val(donnees_source);
             }
             

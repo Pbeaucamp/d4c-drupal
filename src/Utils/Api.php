@@ -19,7 +19,7 @@ use SplFileObject;
 use finfo;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
-
+use SimpleXMLElement;
 
 
 ini_set('memory_limit', '2048M'); // or you could use 1G
@@ -7046,8 +7046,9 @@ class Api{
 		//ex : /webservice/?service=getData&key=nXG9o1MSJxHbs1qH&db=stationnement&table=disponibilite_parking&format=json
 		
 		$query_params = $this->proper_parse_str($params);
-		$response = new Response();
-		$response->headers->set('Content-Type', 'application/json; charset=utf-8');
+        $response = new Response();
+        $contentType = ($query_params['format'] == 'xml') ? 'application/xml' : 'application/json; charset=utf-8';
+		$response->headers->set('Content-Type', $contentType);
 		if($query_params["service"] != "getData"){
 			echo "Ce service n'est pas supporté";
 			$response->setStatusCode(404);
@@ -7101,14 +7102,40 @@ class Api{
 			$opendata["request"] = $url;
 			$opendata["answer"] = $answer;
 			$result["opendata"] = $opendata;
-			
-			echo json_encode($result);
+
+            if ($query_params['format'] == 'xml'){
+
+
+                $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><opendata/>');
+
+                $status="";
+                $attributs = array();
+
+                array_walk_recursive($result, function ($value, $key) use ($xml) {
+                    // Conformation de l'enveloppe à la façon de l'ancienne API La Rochelle avril 2020
+                    global $status, $answer, $data, $row, $attributs, $nextRowAttribut;
+                    if(!in_array($key,$attributs)){$attributs[]=$key;}
+                    else if(!isset($nextRowAttribut)){$nextRowAttribut=$key;$row = $data->addChild("row");}
+                    else if($key==$nextRowAttribut){$row = $data->addChild("row");}
+                    if($key=="request"){$xml->addChild($key, htmlspecialchars($value));$answer = $xml->addChild("answer");}
+                    else if($key=="code"){$status.="code=".$value;}
+                    else if($key=="resume" || $key=="texte"){$row->addChild($key, str_replace("nbsp","#160",$value));}
+                    else if($key=="message"){$status.=" message=\"".$value."\""; $answer->addChild("status", $status);$data = $answer->addChild("data");$row = $data->addChild("row");}
+                    else if($key!="total_count"){$row->addChild($key, $value);}
+               });
+
+               echo $xml->asXML();
+
+            }
+			else{
+                  echo json_encode($result);
+            }
 		}
 
 		
 		return $response;
 	}
-	
+
 	function updateResourceAndPushDatastore($resource){
 		
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resource["id"] . "&limit=0";
