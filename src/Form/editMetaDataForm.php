@@ -980,15 +980,11 @@ class editMetaDataForm extends HelpFormBase {
 				}
 			}
 			
-			$redirect_path = $this->config->client->routing_prefix . "/admin/config/data4citizen/editMetaDataForm" . ($datasetId != null ? '?id=' . $datasetId : '');
-			$response = new RedirectResponse($redirect_path);
-			$response->send();
-			
-			// $url = url::fromUserInput($redirect_path);
-			// Logger::logMessage("We redirect user to " . json_encode($url));
+			$redirect_path = "/admin/config/data4citizen/editMetaDataForm" . ($datasetId != null ? '?id=' . $datasetId : '');
+			$url = url::fromUserInput($redirect_path);
 
-			// // set redirect
-			// $form_state->setRedirectUrl($url);
+			// set redirect
+			$form_state->setRedirectUrl($url);
 		} catch (\Exception $e) {
 			Logger::logMessage($e->getMessage());
 			\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');

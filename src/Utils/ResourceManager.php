@@ -959,6 +959,7 @@ class ResourceManager {
 				"description" => $description,
 				//TODO: Add format
 				// "format" => "csv",
+				"last_modified" => date('Y-m-d\TH:i:s'),
 				"clear_upload" => true,
 				"uuid" => uniqid()
 			];
@@ -1239,6 +1240,7 @@ class ResourceManager {
         
         
         $widget = $hasWidget ? substr($widget_html, 0, -11) : null;
+		return $widget;
 	}
 
 	function defineAnalyse($analyseDefault) {
@@ -1686,7 +1688,10 @@ class ResourceManager {
 					Logger::logMessage("Found column " . $key);
 
 					$cols[] = $key;
-					$colNames[] = $this->clearGeoProperties($key, $index);
+					
+					$label = $this->clearGeoProperties($key, $index);
+					$label = $this->nettoyage($label);
+					$colNames[] = $label;
 					$index++;
 				}
 			}
@@ -1923,11 +1928,13 @@ class ResourceManager {
 		$str = str_replace('\'', "_", $str);
 		$str = str_replace("/", "_", $str);
 		$str = str_replace("|", "_", $str);
+		$str = str_replace("[", "", $str);
+		$str = str_replace("]", "", $str);
 		$str = strtolower($str);
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
 		$str = preg_replace( '#&[^;]+;#', '', $str );
-		$str = str_replace("-", "_", $str); 
+		$str = str_replace("-", "_", $str);
 		return $str;
 	}
 
