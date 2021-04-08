@@ -399,6 +399,41 @@ class ResourceManager {
 		return $results;
 	}
 
+	function manageCSWXmlFile($organization, $datasetId, $datasetName) {
+		Logger::logMessage("Checking if CSW is configure");
+		try {
+			if ($this->config->csw_server) {
+				$cswPath = $this->config->csw_server->csw_path;
+
+				$api = new Api;
+				$result = $api->getOrganization("id=" . $organization);
+				$organizationName = $result['result']['name'];
+	
+				Logger::logMessage("Generate CSW XML");
+				$cswPath = $cswPath . "/" . $organizationName;
+				//The drupal unix user must have the right on the folder
+				if (!file_exists($cswPath)) {
+					Logger::logMessage("Creating node for organisation " . $organizationName);
+					mkdir($cswPath, 0777, true);
+				}
+
+				//We generate an XML file to share with your CSW server
+				$packageManager = new PackageManager;
+				$result = $packageManager->generateMEditXML($datasetId);
+
+				$cswFile = $cswPath . "/" . $datasetName . ".xml";
+				
+				Logger::logMessage("File has been generated in " . $result[0] . " and will be copied to " . $cswFile);
+				copy($result[0], $cswFile);
+			}
+			else {
+				Logger::logMessage("Skip CSW generation");
+			}
+		} catch (\Exception $e) {
+			Logger::logMessage('Unable to generate CSW file ' . $e->getMessage());
+		}
+	}
+
 	function array_key_first(array $array) { foreach ($array as $key => $value) { return $key; } }
 
 	/**

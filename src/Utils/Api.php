@@ -4156,7 +4156,7 @@ class Api{
 		return "(".$maxLat.",".$long."),(".$lat.",".$maxLong."),(".$minLat.",".$long."),(".$lat.",".$minLong.")";
 	}
 	
-	public function orgaShow($params) {
+	public function getOrganization($params) {
 		$callUrl =  $this->urlCkan . "api/action/organization_show?" . $params;
 				
 		$curl = curl_init($callUrl);
@@ -4167,6 +4167,11 @@ class Api{
 
 		$result = json_decode($result,true);
 		unset($result["help"]);
+		return $result;
+	}
+	
+	public function orgaShow($params) {
+		$result = $this->getOrganization($params);
 		
 		echo json_encode($result);
 		$response = new Response();

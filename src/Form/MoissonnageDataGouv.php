@@ -7,6 +7,7 @@
 namespace Drupal\ckan_admin\Form;
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\External;
@@ -218,6 +219,7 @@ class MoissonnageDataGouv extends HelpFormBase {
         
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $api = new Api;
+        $resourceManager = new ResourceManager;
         $this->urlCkan = $this->config->ckan->url;
         $site_search =  $org_id= $form_state->getValue('site_search');
 		
@@ -355,6 +357,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
                 $NewTitle= $NewData[2];
+				$NewName= $NewData[3];
             
            
                 $dataset_conf=[
@@ -460,6 +463,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				}
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 			}
 		}
         else if($site_search=='d4c'){
@@ -561,6 +565,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
                 $NewTitle= $NewData[2];
+				$NewName= $NewData[3];
                 $dataset_conf=[
 					"id_data" => $idNewData,
 					"id_data_site"=>$results->id,
@@ -676,6 +681,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				}
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
             }
 		}         
         else if($site_search=='Data_Gouv_fr'){
@@ -1172,6 +1178,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 				// if($command != NULL){
 				// 	error_log($command);
 				// 	$output = shell_exec($command);
@@ -1288,6 +1295,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData= $this->saveData($newData, $coll);
 				$idNewData= $NewData[1];
 				$NewTitle= $NewData[2];
+				$NewName= $NewData[3];
 				$dataset_conf=[
 					"id_data" => $idNewData,
 					"id_data_site"=>$query->datasetid,
@@ -1365,6 +1373,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$this->renderResourceLog($resources["name"], $return);
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 			}
         }
         else if($site_search=='odsall'){
@@ -1471,6 +1480,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $NewData= $this->saveData($newData, $coll);
                 $idNewData= $NewData[1];
                 $NewTitle= $NewData[2];
+				$NewName= $NewData[3];
             
                 $dataset_conf=[
 					"id_data" => $idNewData,
@@ -1546,6 +1556,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$this->renderResourceLog($resources["name"], $return);
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 			}
         }        
         else if($site_search=='socrata'){
@@ -1658,6 +1669,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData= $this->saveData($newData, $coll);
 				$idNewData= $NewData[1];
 				$NewTitle= $NewData[2];
+				$NewName= $NewData[3];
 				$dataset_conf=[
 					"id_data" => $idNewData,
 					"id_data_site"=>$results->id,
@@ -1742,6 +1754,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$this->renderResourceLog($resources["name"], $return);
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 			}	
 		} 
         else if($site_search=='ckan'){
@@ -1858,6 +1871,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$NewData= $this->saveData($newData, $coll);
 				$idNewData= $NewData[1];
 				$NewTitle= $NewData[2];
+				$NewName= $NewData[3];
 				
 				$dataset_conf=[
 					"id_data" => $idNewData,
@@ -2071,6 +2085,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				} 
 				sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 			}
      
 		}        
@@ -2413,6 +2428,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
                 sleep(20);
 				$api->calculateVisualisations($idNewData);
+				$resourceManager->manageCSWXmlFile($org_id, $idNewData, $NewName);
 				if($command != NULL){
 					error_log($command);
 					$output = shell_exec($command);

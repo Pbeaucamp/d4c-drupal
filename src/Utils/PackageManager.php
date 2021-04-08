@@ -65,6 +65,31 @@ class PackageManager {
 		return $contentdataset["result"]["resources"];
     }
 
+	public function generateMEditXML($id) {
+		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
+		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id;
+
+		// search dataset data by id in array of all datasets 
+        if (!file_exists($zipFolder)) {
+		    mkdir($zipFolder, 0777, true);
+		}
+
+		if (!file_exists($zipFolder . "/ressources")) {
+		    mkdir($zipFolder . "/ressources", 0777, true);
+		}
+
+		$datasetinfo = $this->getDatasetInformations($id);
+		$dataset = json_decode($datasetinfo->getContent(), true);
+
+		$xmlFile = $zipFolder . "/" . $dataset["result"]["name"].".xml";
+		$relativeFileUrl = $this->createXMLFile($dataset, $zipFolder, $xmlFile);
+
+		$result = array();
+		$result[] = $xmlFile;
+		$result[] = $relativeFileUrl;
+		return $result;
+	}
+
 	public function createPackageZip($id){
 		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
 		$filename = $id . ".zip";
@@ -83,13 +108,9 @@ class PackageManager {
 		}
 
 		//$_GET['xml'] = "true";
-		if(isset($_GET['xml']) && $_GET['xml'] == "true") {
-			$datasetinfo = $this->getDatasetInformations($id);
-			$dataset = json_decode($datasetinfo->getContent(),true);
-			$response = new Response(json_encode(array('filename' => $_GET['xml'])));
-
-    	 	$xmlfile = $this->createXMLFile($dataset, $zipFolder);
-			$response = new Response(json_encode(array('filename' => $xmlfile)));
+		if (isset($_GET['xml']) && $_GET['xml'] == "true") {
+			$result = $this->generateMEditXML($id);
+			$response = new Response(json_encode(array('filename' => $result[1])));
 		}
 		else {
 			$api = new Api();
@@ -198,15 +219,13 @@ class PackageManager {
 		return strcasecmp(substr( $haystack, -$length ), $needle) == 0;
 	}
 
-    public function createXMLFile($contentdataset, $zipFolder){
-    	$doc = new \DOMDocument('1.0',"UTF-8");
-
+    public function createXMLFile($contentdataset, $zipFolder, $xmlFile) {
     	$api = new API();
     	$dataset = $api->getPackageShow2($contentdataset["result"]["id"],"");
+
     	$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
-		$loggedIn = \Drupal::currentUser()->isAuthenticated();
-
+		// $loggedIn = \Drupal::currentUser()->isAuthenticated();
 
     	$description = $dataset["metas"]["description"];
     	$dateModified = $dataset["metas"]["modified"];
@@ -238,78 +257,80 @@ class PackageManager {
 		$northBoundLatitudeValue="";
 		$lineagetitle ="";
 
-		/*var_dump($keywords);die;*/
-
 		foreach($dataset["metas"]["resources"] as $value){
 
-            if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
+            if ($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') {
 		 		$resourcesid = $value['id'];
-                
 		 	}
-			if($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'){
+
+			if ($value['format'] != 'CSV' 
+					&& $value['format'] != 'XLS' 
+					&& $value['format'] != 'XLSX' 
+					&& $value['format'] != 'GeoJSON' 
+					&& $value['format'] != 'JSON' 
+					&& $value['format'] != 'KML' 
+					&& $value['format'] != 'SHP') {
 				$res = array();
 				$url = $value["url"];
 				$array = get_headers($url);
 				$string = $array[0];
-				if(strpos($string,"200")){
-					    $res["type"] = "WWW:LINK-1.0-http--link";
-					  }
-				else{
-					    $res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+
+				if (strpos($string,"200")) {
+					$res["type"] = "WWW:LINK-1.0-http--link";
+				}
+				else {
+					$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
 				}
 				
 				$res["encodingFormat"] = $value['name'];
 				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
 				$resources[] = $res;
-		
-
 			}
 		}
 	
-			if($resourcesid != ""){
-				$res = array();
-				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
-				$res["encodingFormat"] = "CSV";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
-				$resources[] = $res;
-				
-				$res = array();
-				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
-				$res["encodingFormat"] = "JSON";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
-				$resources[] = $res;
-				
-				$res = array();
-				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
-				$res["encodingFormat"] = "Excel";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
-				$resources[] = $res;
-				
-		
-				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
-				$res["encodingFormat"] = "GeoJSON";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
-				$resources[] = $res;
-				
-				$res = array();
-				$res["type"] = "WWW:KML";
-				$res["encodingFormat"] = "KML";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
-				$resources[] = $res;
-				
-				$res = array();
-				$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
-				$res["encodingFormat"] = "Shapefile";
-				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
-				$resources[] = $res;
+		if ($resourcesid != "") {
+			$res = array();
+			$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+			$res["encodingFormat"] = "CSV";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+			$res["encodingFormat"] = "JSON";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+			$res["encodingFormat"] = "Excel";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+	
+			$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+			$res["encodingFormat"] = "GeoJSON";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["type"] = "WWW:KML";
+			$res["encodingFormat"] = "KML";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
+			$resources[] = $res;
+			
+			$res = array();
+			$res["type"] = "WWW:DOWNLOAD-1.0-http--download";
+			$res["encodingFormat"] = "Shapefile";
+			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
+			$resources[] = $res;
 		}
 
-		$xmlfile =false;
+		// $xmlfile =false;
 	    foreach($dataset["metas"]["resources"] as $key=>$value){
 	    	
 	    	if($value["format"] == "csw" || strpos($value["name"], "Vue XML des métadonnées")== true) {
-
-	    		$xmlfile = true;
+	    		// $xmlfile = true;
 				$xml = file_get_contents($value['url']); 
 				file_put_contents($zipFolder . "/metadata_xml_view.xml", $xml);
 				break;
@@ -317,240 +338,228 @@ class PackageManager {
 	    }
 
 		if (file_exists($zipFolder . "/metadata_xml_view.xml")) {
-		 		$xml = simplexml_load_file($zipFolder . "/metadata_xml_view.xml");
+			$xml = simplexml_load_file($zipFolder . "/metadata_xml_view.xml");
 
-		 		foreach ($xml as $key => $value) {
-		 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
-		 				/*echo "<pre>";
-		 				var_dump($key2);*/
-		 				
-		 				if($value2->gmdMD_Keywords->gmdthesaurusName) {
-		 					//var_dump($value2->gmdMD_Keywords->gmdtype->gmdMD_KeywordTypeCode["codeListValue"]->__toString());
-		 					$thesaurusValue = $value2->gmdMD_Keywords->gmdthesaurusName->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
-		 					$thesaruskeyword = $value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString();
-		 					$thesarustype = $value2->gmdMD_Keywords->gmdtype->gmdMD_KeywordTypeCode["codeListValue"]->__toString();
-		 					break;
-		 				}
-		 				else {
-
-		 					array_push($otherkeyword, $value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString());
-		
-		 				}
+			foreach ($xml as $key => $value) {
+				foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
+					if ($value2->gmdMD_Keywords->gmdthesaurusName) {
+						$thesaurusValue = $value2->gmdMD_Keywords->gmdthesaurusName->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+						$thesaruskeyword = $value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString();
+						$thesarustype = $value2->gmdMD_Keywords->gmdtype->gmdMD_KeywordTypeCode["codeListValue"]->__toString();
+						break;
 					}
-
-					//echo "</pre>";
-					$codepostal = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString();
-					$cityValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString();
-					$mailadress = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString();
-					$adresseValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString();
-
-
-					foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
-				
-						foreach ($value2->gmdMD_LegalConstraints->gmduseLimitation as $limitation) {
-							array_push($useLimitationsContent, $limitation->gcoCharacterString->__toString());
-						}	
-
-						if($value2->gmdMD_LegalConstraints->gmdotherConstraints != null ){
-							$otherrestriction = $value2->gmdMD_LegalConstraints->gmdotherConstraints->gcoCharacterString->__toString();
-						}
-
-						if($value2->gmdMD_LegalConstraints->gmdaccessConstraints != null )
-						 	$accessconstraint = $value2->gmdMD_LegalConstraints->gmdaccessConstraints->gmdMD_RestrictionCode->__toString();
-
-
-						if($value2->gmdMD_LegalConstraints->gmduseConstraints != null )
-						 	$useconstraintvalue = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+					else {
+						array_push($otherkeyword, $value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString());
 					}
+				}
 
-					$topiccategory = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->gmdMD_TopicCategoryCode->__toString();
-					$extentdescription = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString();
-					
-					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal != null ) {
-							$westBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
-					}
-					
-					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal != null ) {
-						$eastBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
+				$codepostal = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString();
+				$cityValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString();
+				$mailadress = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString();
+				$adresseValue = $value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString();
+
+				foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+			
+					foreach ($value2->gmdMD_LegalConstraints->gmduseLimitation as $limitation) {
+						array_push($useLimitationsContent, $limitation->gcoCharacterString->__toString());
 					}	
-					
-					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal != null ) {
-						$southBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
-					}
-					
-					if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal != null ) {
-						$northBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
-					}
-					
 
-					/*echo "<pre>";
-					var_dump($value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString());
-					echo "</pre>";*/
-					$lineagetitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString();
+					if ($value2->gmdMD_LegalConstraints->gmdotherConstraints != null)
+						$otherrestriction = $value2->gmdMD_LegalConstraints->gmdotherConstraints->gcoCharacterString->__toString();
 
-					$reporttitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdspecification->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+					if ($value2->gmdMD_LegalConstraints->gmdaccessConstraints != null)
+						$accessconstraint = $value2->gmdMD_LegalConstraints->gmdaccessConstraints->gmdMD_RestrictionCode->__toString();
+
+
+					if ($value2->gmdMD_LegalConstraints->gmduseConstraints != null)
+						$useconstraintvalue = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+				}
+
+				$topiccategory = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->gmdMD_TopicCategoryCode->__toString();
+				$extentdescription = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString();
+				
+				if ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal != null) {
+					$westBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
+				}
+				
+				if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal != null) {
+					$eastBoundLongitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
+				}	
+				
+				if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal != null) {
+					$southBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
+				}
+				
+				if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal != null) {
+					$northBoundLatitudeValue=$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
+				}
+				
+				$lineagetitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString();
+
+				$reporttitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdspecification->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
 				$reportdate = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdspecification->gmdCI_Citation->gmddate->gmdCI_Date->gmddate->gcoDate->__toString();
 				$explanationtitle = $value->gmddataQualityInfo->gmdDQ_DataQuality->gmdreport->gmdDQ_DomainConsistency->gmdresult->gmdDQ_ConformanceResult->gmdexplanation->gcoCharacterString->__toString();
-					
-		 		}
-		 		
+			}	
+		}
+
+
+		$doc = new \DOMDocument('1.0',"UTF-8");
+    	
+		// create Ms_Metadata element with attributes
+		$metadata = $doc->createElement("gmd:MD_Metadata");
+		$metadata->setAttribute("xmlns:gmd","http://www.isotc211.org/2005/gmd");
+		$metadata->setAttribute("xmlns:gmx","http://www.isotc211.org/2005/gmx");
+		$metadata->setAttribute("xmlns:gco","http://www.isotc211.org/2005/gco");
+		$metadata->setAttribute("xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
+		$metadata->setAttribute("xmlns:gml","http://www.opengis.net/gml");
+		$metadata->setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");
+		$metadata->setAttribute("xmlns:geonet","http://www.fao.org/geonetwork");
+		$metadata->setAttribute("xsi:schemaLocation","http://www.isotc211.org/2005/gmd http://schemas.opengis.net/iso/19139/20060504/gmd/gmd.xsd");
+		$doc->appendChild($metadata);
+
+		// create fileIdentifier element with attributes
+		$gmdfileIdentifier = $doc->createElement("gmd:fileIdentifier");
+		$gcoCharacterStringFileIdentifier = $doc->createElement("gco:CharacterString", "FR-" .$contentdataset["result"]["id"]);
+		$gmdfileIdentifier->appendChild($gcoCharacterStringFileIdentifier);
+		$metadata->appendChild($gmdfileIdentifier);	
+
+		// create language element 
+		$gmdlanguage = $doc->createElement("gmd:language");
+		if ($dataset["metas"]["language"] == "fr") {
+			$langue = "fre";
+		}
+		if ($dataset["metas"]["language"] == "en") {
+			$langue = "eng";
+		}
+		if ($dataset["metas"]["language"] == "ge") {
+			$langue = "ger";
+		}
+		else {
+			$langue = "fre";
+		}
 				
-		 }
+		$gmdlanguagecode = $doc->createElement("gmd:LanguageCode", $langue);
+		$gmdlanguagecode->setAttribute("codeListValue",$langue);
+		$gmdlanguagecode->setAttribute("codeList","http://www.loc.gov/standards/iso639-2/");
+		$gmdlanguage->appendChild($gmdlanguagecode);
+		$metadata->appendChild($gmdlanguage);
 
-	//die;
-    		// create Ms_Metadata element with attributes
-			$metadata = $doc->createElement("gmd:MD_Metadata");
-			$metadata->setAttribute("xmlns:gmd","http://www.isotc211.org/2005/gmd");
-			$metadata->setAttribute("xmlns:gmx","http://www.isotc211.org/2005/gmx");
-			$metadata->setAttribute("xmlns:gco","http://www.isotc211.org/2005/gco");
-			$metadata->setAttribute("xmlns:xsi","http://www.w3.org/2001/XMLSchema-instance");
-			$metadata->setAttribute("xmlns:gml","http://www.opengis.net/gml");
-			$metadata->setAttribute("xmlns:xlink","http://www.w3.org/1999/xlink");
-			$metadata->setAttribute("xmlns:geonet","http://www.fao.org/geonetwork");
-			$metadata->setAttribute("xsi:schemaLocation","http://www.isotc211.org/2005/gmd http://schemas.opengis.net/iso/19139/20060504/gmd/gmd.xsd");
-			$doc->appendChild($metadata);
+		// create characterSet element with attributes
+		$gmdcharacterSet = $doc->createElement("gmd:characterSet");
+		$MD_CharacterSetCode = $doc->createElement("gmd:MD_CharacterSetCode", "utf8");
+		$MD_CharacterSetCode->setAttribute("codeList","http://www.isotc211.org/2005/resources/codeList.xml#MD_CharacterSetCode");
+		$MD_CharacterSetCode->setAttribute("codeListValue","utf8");
+		$gmdcharacterSet->appendChild($MD_CharacterSetCode);
+		$metadata->appendChild($gmdcharacterSet);	
 
-				// create fileIdentifier element with attributes
-				$gmdfileIdentifier = $doc->createElement("gmd:fileIdentifier");
-				$gcoCharacterStringFileIdentifier = $doc->createElement("gco:CharacterString", "FR-" .$contentdataset["result"]["id"]);
-				$gmdfileIdentifier->appendChild($gcoCharacterStringFileIdentifier);
-				$metadata->appendChild($gmdfileIdentifier);	
+		// create hierarchyLevel element
+		$hierarchyLevel = $doc->createElement("gmd:hierarchyLevel");
+		$MD_ScopeCode = $doc->createElement("gmd:MD_ScopeCode", "dataset");
+		$MD_ScopeCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmxCodelists.xml#MD_ScopeCode");
+		$MD_ScopeCode->setAttribute("codeListValue","dataset");
+		$hierarchyLevel->appendChild($MD_ScopeCode);
+		$metadata->appendChild($hierarchyLevel);
 
-				// create language element 
-				$gmdlanguage = $doc->createElement("gmd:language");
-				if($dataset["metas"]["language"] == "fr") {
-					$langue = "fre";
-				}
-				if($dataset["metas"]["language"] == "en") {
-					$langue = "eng";
-				}
-				if($dataset["metas"]["language"] == "ge") {
-					$langue = "ger";
-				}
-				else {
-					$langue = "fre";
-				}
-						
-				$gmdlanguagecode = $doc->createElement("gmd:LanguageCode", $langue);
-				$gmdlanguagecode->setAttribute("codeListValue",$langue);
-				$gmdlanguagecode->setAttribute("codeList","http://www.loc.gov/standards/iso639-2/");
-				$gmdlanguage->appendChild($gmdlanguagecode);
-				$metadata->appendChild($gmdlanguage);
+		/*$hierarchyLevelName = $doc->createElement("gmd:hierarchyLevelName");
+		$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "jeu de données");
+		$hierarchyLevelName->appendChild($gcoCharacterString);
+		$metadata->appendChild($hierarchyLevelName);*/	
 
-				// create characterSet element with attributes
-				$gmdcharacterSet = $doc->createElement("gmd:characterSet");
-				$MD_CharacterSetCode = $doc->createElement("gmd:MD_CharacterSetCode", "utf8");
-				$MD_CharacterSetCode->setAttribute("codeList","http://www.isotc211.org/2005/resources/codeList.xml#MD_CharacterSetCode");
-				$MD_CharacterSetCode->setAttribute("codeListValue","utf8");
-				$gmdcharacterSet->appendChild($MD_CharacterSetCode);
-				$metadata->appendChild($gmdcharacterSet);	
+		// create contact element
+		$contact = $doc->createElement("gmd:contact");
 
-				// create hierarchyLevel element
-				$hierarchyLevel = $doc->createElement("gmd:hierarchyLevel");
-				$MD_ScopeCode = $doc->createElement("gmd:MD_ScopeCode", "dataset");
-				$MD_ScopeCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/Codelist/ML_gmxCodelists.xml#MD_ScopeCode");
-				$MD_ScopeCode->setAttribute("codeListValue","dataset");
-				$hierarchyLevel->appendChild($MD_ScopeCode);
-				$metadata->appendChild($hierarchyLevel);
+			// create CI_ResponsibleParty element
+			$CI_ResponsibleParty = $doc->createElement("gmd:CI_ResponsibleParty");
 
-			/*$hierarchyLevelName = $doc->createElement("gmd:hierarchyLevelName");
-			$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "jeu de données");
-			$hierarchyLevelName->appendChild($gcoCharacterString);
-			$metadata->appendChild($hierarchyLevelName);*/	
+				// create individualName element
+				$individualName = $doc->createElement("gmd:individualName");
+				$gcoCharacterStringcontact = $doc->createElement("gco:CharacterString", "Cyprien");
+				$individualName->appendChild($gcoCharacterStringcontact);
 
-				// create contact element
-				$contact = $doc->createElement("gmd:contact");
+				// create organisationName element
+				$organisationName = $doc->createElement("gmd:organisationName");
+				$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", $contentdataset["result"]['organization']["title"]);
+				$organisationName->appendChild($gcoCharacterStringorganisation);
 
-					// create CI_ResponsibleParty element
-					$CI_ResponsibleParty = $doc->createElement("gmd:CI_ResponsibleParty");
+				// create positionName element
+				$positionName = $doc->createElement("gmd:positionName");
+				$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "consultant");
+				$positionName->appendChild($gcoCharacterStringorganisation);
 
-						// create individualName element
-						$individualName = $doc->createElement("gmd:individualName");
-						$gcoCharacterStringcontact = $doc->createElement("gco:CharacterString", "Cyprien");
-						$individualName->appendChild($gcoCharacterStringcontact);
+				// create contactInfo element
+				$contactInfo = $doc->createElement("gmd:contactInfo");
 
-						// create organisationName element
-						$organisationName = $doc->createElement("gmd:organisationName");
-						$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", $contentdataset["result"]['organization']["title"]);
-						$organisationName->appendChild($gcoCharacterStringorganisation);
+					// create CI_Contact element
+					$CI_Contact = $doc->createElement("gmd:CI_Contact");
 
-						// create positionName element
-						$positionName = $doc->createElement("gmd:positionName");
-						$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "consultant");
-						$positionName->appendChild($gcoCharacterStringorganisation);
+						// create phone element
+						$phone = $doc->createElement("gmd:phone");
 
-						// create contactInfo element
-						$contactInfo = $doc->createElement("gmd:contactInfo");
+							// create CI_Telephone element
+							$CI_Telephone = $doc->createElement("gmd:CI_Telephone");
 
-							// create CI_Contact element
-							$CI_Contact = $doc->createElement("gmd:CI_Contact");
+								// create voice element
+								$voice = $doc->createElement("gmd:voice");
+									$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "");
+								$voice->appendChild($gcoCharacterStringorganisation);
 
-								// create phone element
-								$phone = $doc->createElement("gmd:phone");
-									// create CI_Telephone element
-									$CI_Telephone = $doc->createElement("gmd:CI_Telephone");
-											// create voice element
-										$voice = $doc->createElement("gmd:voice");
-											$gcoCharacterStringorganisation = $doc->createElement("gco:CharacterString", "");
-										$voice->appendChild($gcoCharacterStringorganisation);
+							$CI_Telephone->appendChild($voice);
+						$phone->appendChild($CI_Telephone);
+					$CI_Contact->appendChild($phone);
 
-									$CI_Telephone->appendChild($voice);
-								$phone->appendChild($CI_Telephone);
-							$CI_Contact->appendChild($phone);
+						// create address element
+						$address = $doc->createElement("gmd:address");
+							// create CI_Address element
+							$CI_Address = $doc->createElement("gmd:CI_Address");
 
-								// create address element
-								$address = $doc->createElement("gmd:address");
-									// create CI_Address element
-									$CI_Address = $doc->createElement("gmd:CI_Address");
+								// create deliveryPoint element
+								$deliveryPoint = $doc->createElement("gmd:deliveryPoint");
+									$gcoCharacterString = $doc->createElement("gco:CharacterString", $adresseValue);
+								$deliveryPoint->appendChild($gcoCharacterString);
 
-										// create deliveryPoint element
-										$deliveryPoint = $doc->createElement("gmd:deliveryPoint");
-											$gcoCharacterString = $doc->createElement("gco:CharacterString", $adresseValue);
-										$deliveryPoint->appendChild($gcoCharacterString);
+								// create city element
+								$city = $doc->createElement("gmd:city");
+									$gcoCharacterString = $doc->createElement("gco:CharacterString", $cityValue);
+								$city->appendChild($gcoCharacterString);
 
-										// create city element
-										$city = $doc->createElement("gmd:city");
-											$gcoCharacterString = $doc->createElement("gco:CharacterString", $cityValue);
-										$city->appendChild($gcoCharacterString);
+								// create postalCode element
+								$postalCode = $doc->createElement("gmd:postalCode");
+									$gcoCharacterString = $doc->createElement("gco:CharacterString", $codepostal);
+								$postalCode->appendChild($gcoCharacterString);
 
-										// create postalCode element
-										$postalCode = $doc->createElement("gmd:postalCode");
-											$gcoCharacterString = $doc->createElement("gco:CharacterString", $codepostal);
-										$postalCode->appendChild($gcoCharacterString);
+								// create electronicMailAddress element
+								$electronicMailAddress = $doc->createElement("gmd:electronicMailAddress");
+									$gcoCharacterString = $doc->createElement("gco:CharacterString", $mailadress);
+								$electronicMailAddress->appendChild($gcoCharacterString);
 
-										// create electronicMailAddress element
-										$electronicMailAddress = $doc->createElement("gmd:electronicMailAddress");
-											$gcoCharacterString = $doc->createElement("gco:CharacterString", $mailadress);
-										$electronicMailAddress->appendChild($gcoCharacterString);
+							$CI_Address->appendChild($deliveryPoint);
+							$CI_Address->appendChild($city);
+							$CI_Address->appendChild($postalCode);
+							$CI_Address->appendChild($electronicMailAddress);
+						$address->appendChild($CI_Address);
+					$CI_Contact->appendChild($address);
 
-									$CI_Address->appendChild($deliveryPoint);
-									$CI_Address->appendChild($city);
-									$CI_Address->appendChild($postalCode);
-									$CI_Address->appendChild($electronicMailAddress);
-								$address->appendChild($CI_Address);
-							$CI_Contact->appendChild($address);
-
-								// create contactInstructions element
-								$contactInstructions = $doc->createElement("gmd:contactInstructions");
-									// create FileName element
-									$FileName = $doc->createElement("gmx:FileName");
-									$FileName->setAttribute("src",$urllogo);
-								$contactInstructions->appendChild($FileName);	
-							$CI_Contact->appendChild($contactInstructions);
+						// create contactInstructions element
+						$contactInstructions = $doc->createElement("gmd:contactInstructions");
+							// create FileName element
+							$FileName = $doc->createElement("gmx:FileName");
+							$FileName->setAttribute("src",$urllogo);
+						$contactInstructions->appendChild($FileName);	
+					$CI_Contact->appendChild($contactInstructions);
 
 
 
-								/*$OnlineResource = $doc->createElement("gmd:OnlineResource");
-									$CI_OnlineResource = $doc->createElement("gmd:CI_OnlineResource");
-										$CI_linkage = $doc->createElement("gmd:linkage");
-											$URL = $doc->createElement("gmd:URL", "ND");
+					/*$OnlineResource = $doc->createElement("gmd:OnlineResource");
+						$CI_OnlineResource = $doc->createElement("gmd:CI_OnlineResource");
+							$CI_linkage = $doc->createElement("gmd:linkage");
+								$URL = $doc->createElement("gmd:URL", "ND");
 
-										$CI_linkage->appendChild($URL);
-									$CI_OnlineResource->appendChild($CI_linkage);
-								$OnlineResource->appendChild($CI_OnlineResource);
-							$CI_Contact->appendChild($OnlineResource);*/
+							$CI_linkage->appendChild($URL);
+						$CI_OnlineResource->appendChild($CI_linkage);
+					$OnlineResource->appendChild($CI_OnlineResource);
+				$CI_Contact->appendChild($OnlineResource);*/
 
-						$contactInfo->appendChild($CI_Contact);
+				$contactInfo->appendChild($CI_Contact);
 
 						// create role element
 						$role = $doc->createElement("gmd:role");
@@ -1089,77 +1098,77 @@ class PackageManager {
 						$scope->appendChild($DQ_Scope);
 					$DQ_DataQuality->appendChild($scope);
 
-			$report = $doc->createElement("gmd:report");
-			$DQ_DomainConsistency = $doc->createElement("gmd:DQ_DomainConsistency");
-			$result = $doc->createElement("gmd:result");
-			$DQ_ConformanceResult = $doc->createElement("gmd:DQ_ConformanceResult");
+		$report = $doc->createElement("gmd:report");
+		$DQ_DomainConsistency = $doc->createElement("gmd:DQ_DomainConsistency");
+		$result = $doc->createElement("gmd:result");
+		$DQ_ConformanceResult = $doc->createElement("gmd:DQ_ConformanceResult");
 
-			$specification = $doc->createElement("gmd:specification");
-			$CI_Citation = $doc->createElement("gmd:CI_Citation");
+		$specification = $doc->createElement("gmd:specification");
+		$CI_Citation = $doc->createElement("gmd:CI_Citation");
 
-			$gmdtitle = $doc->createElement("gmd:title");
-				$CharacterString = $doc->createElement("gco:CharacterString",$reporttitle);
-			
-			$gmdtitle->appendChild($CharacterString);
-			$CI_Citation->appendChild($gmdtitle);
-
-
-			$date = $doc->createElement("gmd:date");
-			$CI_Date = $doc->createElement("gmd:CI_Date");
-
-			$gmddate = $doc->createElement("gmd:dateType");
-			$gcoDate = $doc->createElement("gco:Date",$reportdate);
-			
-			$gmddate->appendChild($gcoDate);
-			$CI_Date->appendChild($gmddate);
+		$gmdtitle = $doc->createElement("gmd:title");
+			$CharacterString = $doc->createElement("gco:CharacterString",$reporttitle);
+		
+		$gmdtitle->appendChild($CharacterString);
+		$CI_Citation->appendChild($gmdtitle);
 
 
-			$dateType = $doc->createElement("gmd:dateType");
-			$CI_DateTypeCode = $doc->createElement("gmd:CI_DateTypeCode");
-			$CI_DateTypeCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/ML_gmxCodelists.xml#CI_DateTypeCode");
-			$dateType->appendChild($CI_DateTypeCode);
-			$CI_Date->appendChild($dateType);
+		$date = $doc->createElement("gmd:date");
+		$CI_Date = $doc->createElement("gmd:CI_Date");
 
-			$date->appendChild($CI_Date);
-			$CI_Citation->appendChild($date);
-
-
-			$specification->appendChild($CI_Citation);
-			$DQ_ConformanceResult->appendChild($specification);
-
-			$gmdexplanation = $doc->createElement("gmd:explanation");
-
-				$CharacterString = $doc->createElement("gco:CharacterString",$explanationtitle);
-			
-			$gmdexplanation->appendChild($CharacterString);
-
-			$DQ_ConformanceResult->appendChild($gmdexplanation);
+		$gmddate = $doc->createElement("gmd:dateType");
+		$gcoDate = $doc->createElement("gco:Date",$reportdate);
+		
+		$gmddate->appendChild($gcoDate);
+		$CI_Date->appendChild($gmddate);
 
 
+		$dateType = $doc->createElement("gmd:dateType");
+		$CI_DateTypeCode = $doc->createElement("gmd:CI_DateTypeCode");
+		$CI_DateTypeCode->setAttribute("codeList","http://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_19139_Schemas/resources/codelist/ML_gmxCodelists.xml#CI_DateTypeCode");
+		$dateType->appendChild($CI_DateTypeCode);
+		$CI_Date->appendChild($dateType);
 
-			$result->appendChild($DQ_ConformanceResult);
-			$DQ_DomainConsistency->appendChild($result);
-			$report->appendChild($DQ_DomainConsistency);
-			$DQ_DataQuality->appendChild($report);
+		$date->appendChild($CI_Date);
+		$CI_Citation->appendChild($date);
 
 
-			$lineage = $doc->createElement("gmd:lineage");
-			$LI_Lineage = $doc->createElement("gmd:LI_Lineage");
-			$statement = $doc->createElement("gmd:statement");
-			$CharacterString = $doc->createElement("gco:CharacterString",$lineagetitle);
-			$statement->appendChild($CharacterString);
-			$LI_Lineage->appendChild($statement);
-			$lineage->appendChild($LI_Lineage);
-			$DQ_DataQuality->appendChild($lineage);
+		$specification->appendChild($CI_Citation);
+		$DQ_ConformanceResult->appendChild($specification);
 
-			$dataQualityInfo->appendChild($DQ_DataQuality);
-			$metadata->appendChild($dataQualityInfo);
+		$gmdexplanation = $doc->createElement("gmd:explanation");
 
-			//var_dump($lineage);die;
+			$CharacterString = $doc->createElement("gco:CharacterString",$explanationtitle);
+		
+		$gmdexplanation->appendChild($CharacterString);
 
-			$gmdfileIdentifier->setAttribute("id",1);
-			$doc->save($zipFolder . "/" . $contentdataset["result"]["name"].".xml") or die("Error, ot created");
-			
-			return $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $contentdataset["result"]["id"] . "/" . $contentdataset["result"]["name"].".xml";
+		$DQ_ConformanceResult->appendChild($gmdexplanation);
+
+
+
+		$result->appendChild($DQ_ConformanceResult);
+		$DQ_DomainConsistency->appendChild($result);
+		$report->appendChild($DQ_DomainConsistency);
+		$DQ_DataQuality->appendChild($report);
+
+
+		$lineage = $doc->createElement("gmd:lineage");
+		$LI_Lineage = $doc->createElement("gmd:LI_Lineage");
+		$statement = $doc->createElement("gmd:statement");
+		$CharacterString = $doc->createElement("gco:CharacterString",$lineagetitle);
+		$statement->appendChild($CharacterString);
+		$LI_Lineage->appendChild($statement);
+		$lineage->appendChild($LI_Lineage);
+		$DQ_DataQuality->appendChild($lineage);
+
+		$dataQualityInfo->appendChild($DQ_DataQuality);
+		$metadata->appendChild($dataQualityInfo);
+
+		//var_dump($lineage);die;
+
+		$gmdfileIdentifier->setAttribute("id",1);
+		$doc->save($xmlFile) or die("Error, ot created");
+		
+		return $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $contentdataset["result"]["id"] . "/" . $contentdataset["result"]["name"].".xml";
     }
 }

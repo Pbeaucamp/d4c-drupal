@@ -920,7 +920,7 @@ class editMetaDataForm extends HelpFormBase {
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
 
 					//Managing resources
-					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
+					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
 				}
 				else {
 					//Fow now we use the old system but after we should look the dataset by ID
@@ -950,7 +950,7 @@ class editMetaDataForm extends HelpFormBase {
 
 					//Managing resources
 					Logger::logMessage("TRM - Managing resource");
-					$this->manageFileResource($api, $resourceManager, $datasetId, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
+					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
 
 					// Manage other resources
 					Logger::logMessage("TRM - " . count($table_data));
@@ -974,7 +974,7 @@ class editMetaDataForm extends HelpFormBase {
 						}
 						else if ($needUpdate == 1 && $resourceUrl != "") {
 							Logger::logMessage("TRM - Need update " . $needUpdate);
-							$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, true, $resourceDescription, $encoding, $validata, $unzipZip);
+							$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, true, $resourceDescription, $encoding, $validata, $unzipZip);
 						}
 					}
 				}
@@ -991,24 +991,24 @@ class editMetaDataForm extends HelpFormBase {
 		}
 	}
 
-	function manageFileResource($api, $resourceManager, $datasetId, $resourceId, $resources, $generateColumns, $isUpdate, $encoding, $validata, $urlGsheet, $unzipZip) {
+	function manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resources, $generateColumns, $isUpdate, $encoding, $validata, $urlGsheet, $unzipZip) {
 		if ($urlGsheet) {
 			Logger::logMessage("TRM - Integrating GSheet '" . $urlGsheet . "'");
 			$resourceUrl = $resourceManager->manageGsheet($datasetId, $urlGsheet);
 
 			Logger::logMessage("TRM - Found resource '" . $resourceUrl . "'");
-			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
+			$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
 		}
 		else if (isset($resources[0]) && !empty($resources[0])) {
 
 			$resourceUrl = $resourceManager->manageFile($resources[0]);
         
 
-			$this->manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
+			$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
 		}
 	}
 	
-	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata, $unzipZip) {
+	function manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata, $unzipZip) {
 		$validataResources = array();
 
 		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
@@ -1069,6 +1069,9 @@ class editMetaDataForm extends HelpFormBase {
 
 		//We update the visualisation's icons
 		$api->calculateVisualisations($datasetId);
+
+		//We generate the CSW File according to the config file
+		$resourceManager->manageCSWXmlFile($organization, $datasetId, $datasetName);
 	}
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
