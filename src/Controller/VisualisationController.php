@@ -143,13 +143,7 @@ class VisualisationController extends ControllerBase {
         
         $met=$dataset[metas][extras];
         $LinkedDataSet='';
-        //add mention legales bloc
-        $mention_legales='';
-        $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-						<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div>   
-						<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"> FTP/SFTP</div>
-					</div>';
-        $source = '';
+        // $source = '';
         $themes = '';
         $theme_label_ex = false;
         $theme = false;
@@ -191,28 +185,53 @@ class VisualisationController extends ControllerBase {
                 $themes ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">'.$themes.'</div></div>'; 
             }
             
-            if($met[$i]['key']=='FTP_API'){
-                if($met[$i][value]!='FTP'){
-					$lab_source =  parse_url($met[$i][value]);
-                    $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$lab_source["host"].'</div></div>';
-                  
-                    $source = '<div class="d4c-dataset-metadata-block">
-                                <div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div></div> </div>
-                            </div>';
-                } 
-            }
 
+			//We remove this part which seems a bit shaky
+            // if ($met[$i]['key'] == 'FTP_API') {
+            //     if ($met[$i][value] != 'FTP') {
+			// 		$lab_source =  parse_url($met[$i][value]);
+            //         $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 			<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> 
+			// 			<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$lab_source["host"].'</div>
+			// 		</div>';
+                  
+            //         $source = '<div class="d4c-dataset-metadata-block">
+			// 			<div class="d4c-dataset-metadata-block__metadata">
+			// 				<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 					<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   
+			// 					<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div>
+			// 				</div>
+			// 			</div>
+            //         </div>';
+            //     }
+			// 	else {
+			// 		$ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 			<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div>   
+			// 			<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"> FTP/SFTP</div>
+			// 		</div>';
+			// 	}
+            // }
+
+			//We set this part directly in angular
             // get source value
-            if ($met[$i]['key']=='source' && $met[$i][value]!= null){
-                $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div></div>';
-            }
+            // if ($met[$i]['key']=='source' && $met[$i][value]!= null){
+            //     $ftp_api ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> 
+			// 		<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].'</div>
+			// 	</div>';
+            // }
 
             //get donnees source value
-           	if ($met[$i]['key']=='donnees_source' && $met[$i][value]!= null){
-				$source = '<div class="d4c-dataset-metadata-block">
-					<div class="d4c-dataset-metadata-block__metadata"><div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;"><div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   <div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div></div> </div>
-				</div>';
-            }
+           	// if ($met[$i]['key']=='donnees_source' && $met[$i][value] != null){
+			// 	$source = '<div class="d4c-dataset-metadata-block">
+			// 		<div class="d4c-dataset-metadata-block__metadata">
+			// 			<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 				<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   
+			// 				<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p ><code style="cursor: pointer;" onclick="window.open(`'.$met[$i][value].'`, `_blank`);">'.$met[$i][value].'</code></p></div>
+			// 			</div> 
+			// 		</div>
+			// 	</div>';
+            // }
 
 			if($met[$i]['key']=='custom_view'){
 				$view = json_encode($met[$i][value]);
@@ -242,15 +261,6 @@ class VisualisationController extends ControllerBase {
                 }
                 
 				$visWidget = $result_w;
-			}
-
-			// define mention legales bloc
-			if($met[$i]['key']=='mention_legales'){
-				$mention_legales ='<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-						<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Mentions et droits</div> 
-						<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  '.$met[$i][value].
-						'</div>
-					</div>';
 			}
 		}
 
@@ -447,22 +457,32 @@ class VisualisationController extends ControllerBase {
 										</div>
 									</div>
 
-									<div class="d4c-dataset-metadata-block">
+									<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'source\'} : true)[0].value" class="d4c-dataset-metadata-block">
 										<div class="d4c-dataset-metadata-block__metadata">
-										   '.$ftp_api.'
+											<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+												<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Source</div> 
+												<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'source\'\}: true)[0].value \}\}</div>
+											</div>
 										</div>
 									</div>
 									
-										   '.$source.'
+									<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'donnees_source\'})[0].value" class="d4c-dataset-metadata-block">
+										<div class="d4c-dataset-metadata-block__metadata">
+											<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+												<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Données Source</div>   
+												<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope"><p><code style="cursor: pointer;"><a href="\{\{ (ctx.dataset.metas.extras | filter:\{key:\'donnees_source\'\})[0].value \}\}" target="_blank">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'donnees_source\'\})[0].value \}\}</a></code></p></div>
+											</div> 
+										</div>
+									</div>
 
 									<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'territory\'})[0].value" class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
 										<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Territoire</div>
-										<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'spatial\'})[0].value">
+										<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'spatial\'})[0].value" class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default">
 											<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">
 												<d4c-geotooltip width="300" height="300" geojson="(ctx.dataset.metas.extras | filter:{key:\'spatial\'})[0].value">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'territory\'\})[0].value \}\}</d4c-geotooltip>
 											</div>
 										</div>
-										<div ng-hide="(ctx.dataset.metas.extras | filter:{key:\'spatial\'})[0].value">
+										<div ng-hide="(ctx.dataset.metas.extras | filter:{key:\'spatial\'})[0].value" class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default">
 											<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">
 												\{\{ (ctx.dataset.metas.extras | filter:\{key:\'territory\'\})[0].value \}\}
 											</div>
@@ -493,7 +513,12 @@ class VisualisationController extends ControllerBase {
 											</div>
 										</div>
 									</div>-->
-									'.$mention_legales.'
+
+									
+									<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'mention_legales\'})[0].value" class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+										<div class="d4c-dataset-metadata-block__metadata-name ng-binding">Mentions et droits</div> 
+										<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'mention_legales\'\})[0].value \}\}</div>
+									</div>
 							  
 									<d4c-dataset-metadata-block-selector metadata-templates="interopTemplates" values="ctx.dataset.interop_metas"></d4c-dataset-metadata-block-selector>
 

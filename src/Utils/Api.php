@@ -2426,8 +2426,9 @@ class Api{
 			if($value["key"] == "tooltip"){
 				$val = json_decode($value["value"], true);
 				if($val["type"] == "html"){
+					$mapTooltip = $this->getMapTooltip(true, $val["value"]);
 					$visu['map_tooltip_html_enabled'] = true;
-					$visu['map_tooltip_html'] = $this->getMapTooltip(true, $val["value"]);
+					$visu['map_tooltip_html'] = $mapTooltip;
 				} else {
 					$visu['map_tooltip_html_enabled'] = false;
 					$visu['map_tooltip_fields'] =  explode(",", $val["value"]["fields"]);
@@ -3310,15 +3311,16 @@ class Api{
   
 
 	public function getMapTooltip($hasCustomHtml, $html){
-		$res = "<div class=\"tooltipcustom\">";
 		if($hasCustomHtml){
 			$res = $html;
-		} else {
-			$res = "<h2 class=\"d4cwidget-map-tooltip__header\" ng-show=\"!!getTitle(record)\"><span ng-bind=\"getTitle(record)\"></span></h2>".
-			"<ul style=\"display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;\">".
-			"<li  ng-repeat=\"field in context.dataset.extra_metas.visualization.map_tooltip_fields\"><strong>{{field}}</strong> : {{record.fields[field]}}</li>".
-			"</ul>";
+			return $res;
 		}
+
+		$res = "<div class=\"tooltipcustom\">";
+		$res = "<h2 class=\"d4cwidget-map-tooltip__header\" ng-show=\"!!getTitle(record)\"><span ng-bind=\"getTitle(record)\"></span></h2>".
+		"<ul style=\"display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;\">".
+		"<li  ng-repeat=\"field in context.dataset.extra_metas.visualization.map_tooltip_fields\"><strong>{{field}}</strong> : {{record.fields[field]}}</li>".
+		"</ul>";
 		$res .= "<div  ng-repeat=\"report in context.dataset.extra_metas.visualization.reports\">".
 			"<strong>Rapport de d\u00e9tail</strong> : <a ng-href=\"{{getReportUrl(report[0], record)}}\" target=\"_blank\">Voir</a>".
 			"</div>";

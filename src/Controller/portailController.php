@@ -88,7 +88,7 @@ class portailController extends ControllerBase {
 										<option value="telechargement_minus">Le - de téléchargements</option>
 										<option value="populaire_plus">Les + populaires</option>
 										<option value="populaire_minus">Les - populaires</option>
-										<option value="producteur">Producteur</option>
+										<option value="producteur">Organisation</option>
 										<!-- <option value="granularite">Echelle territoriale</option>
 										<option value="reutilisation">Réutilisations</option> -->
 									</select>
@@ -114,7 +114,7 @@ class portailController extends ControllerBase {
 								<h3> Visualisations</h3>
 								<ul id="list-visu" class="list-group"></ul>
 								
-								<h3> Producteurs</h3>
+								<h3> Organisations </h3>
 								<ul id="list-producteur" class="list-group"></ul>
 								<input id="input-producteur" type="hidden" class="hidden-filter">
 								<input id="input-map-coordinate" type="hidden" class="hidden-filter">

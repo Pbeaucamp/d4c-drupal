@@ -405,11 +405,18 @@ function fillData(data) {
             if(value != "FTP") {
                 $("#edit-donnes-source input").val(value);
 
-                if (!value.includes("http")) {
-                    value = "https://" + value;
+                if (value) {
+                    if (!value.includes("http")) {
+                        value = "https://" + value;
+                    }
+    
+                    try {
+                        const url = new URL(value);
+                        $("#edit-source input").val(url.hostname);
+                    } catch (e) {
+                        $("#edit-source input").val(value);
+                    }
                 }
-                const url = new URL(value);
-                $("#edit-source input").val(url.hostname);
             }
             else {
                 $("#edit-source input").val("FTP/SFTP");
