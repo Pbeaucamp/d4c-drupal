@@ -7045,6 +7045,7 @@ class Api{
 	function callOrangeApiGetData($params){
 		//ex : /webservice/?service=getData&key=nXG9o1MSJxHbs1qH&db=stationnement&table=disponibilite_parking&format=json
 		
+		
 		$query_params = $this->proper_parse_str($params);
         $response = new Response();
         $contentType = ($query_params['format'] == 'xml') ? 'application/xml' : 'application/json; charset=utf-8';
