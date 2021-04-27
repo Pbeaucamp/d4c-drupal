@@ -6048,7 +6048,7 @@ class Api{
 	function callDatapusherJobStatus($resourceId) {
 		$result = $this->getDatapusherJobStatus($resourceId);
 
-		echo json_encode($result);
+		echo $result;
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
@@ -7585,9 +7585,45 @@ function deleteStory($story_id){
 
 		return $response;
 	}
+	
+	public function callFindDataset() {
+		$datasetId = $_POST['dataset_id'];
+
+		try {
+			$dataset = $this->findDataset($datasetId);
+
+			$result["result"] = $dataset;
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
+	private function findDataset($datasetId) {
+		$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$dataset = curl_exec($curl);
+		curl_close($curl);
+
+		$dataset = json_decode($dataset, true);
+		return $dataset[result];
+	}
     
-	public function callCreateDataset() {
-		Logger::logMessage("Create dataset by API");
+	public function callManageDataset() {
+		Logger::logMessage("Create or update dataset by API");
 		$users = \Drupal\user\Entity\User::loadMultiple();
 			
 		$resourceManager = new ResourceManager;
@@ -7600,6 +7636,9 @@ function deleteStory($story_id){
 		$isPrivate = $_POST['selected_private'] == "true" ? true : false;
 		$extrasAsJson = $_POST['extras'];
 		$tagsAsJson = $_POST['tags'];
+
+		//Options for update
+		$datasetId = $_POST['dataset_id'];
 	
 		// Define Dataset name
 		if (!isset($datasetName)) {
@@ -7629,7 +7668,23 @@ function deleteStory($story_id){
 					
 		$generatedTaskId = uniqid();
 		try {
-			$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $licence, $organization, $isPrivate, $tags, $extras);
+			if (!$datasetId) {
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+			}
+			else {
+				$datasetToUpdate = $this->findDataset($datasetId);
+
+				$datasetName = $datasetToUpdate[name];
+
+				//Update extras
+				//TODO: We have to compare extras or we just replace ?
+				// $extras = $datasetToUpdate[extras];
+				$extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
+					null, null, null, null, null, 
+					null, null, null, $security);
+
+				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+			}
 
 			$result["result"] = $datasetId;
 			$result["status"] = "success";
@@ -7657,8 +7712,6 @@ function deleteStory($story_id){
 		$resourceManager = new ResourceManager;
 		
 		$datasetId = $_POST['selected_data_id'];
-		//Used for update - TODO
-		$resourceId = $_POST['selected_resource_id'];
 
 		$resourceName = $_POST['resource_name'];
 		$resourceUrl = $_POST['resource_url'];
@@ -7668,27 +7721,46 @@ function deleteStory($story_id){
 		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
 		$manageFile = $_POST['manage_file'] == "true" ? true : false;
 
+		//Options for update
+		$resourceId = $_POST['selected_resource_id'];
+
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
 			$results = array();
 			try {
-				if ($manageFile) {
-					$manageFileResult = $this->manageFileByUrl($resourceUrl);
-					$resourceUrl = $manageFileResult["url"];
-					//Managing resources
-					$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
-			
-					//We update the visualisation's icons
-					$this->calculateVisualisations($datasetId);
-
+				if (!$resourceId) {
+					if ($manageFile) {
+						$manageFileResult = $this->manageFileByUrl($resourceUrl);
+						$resourceUrl = $manageFileResult["url"];
+						//Managing resources
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
+				
+						//We update the visualisation's icons
+						$this->calculateVisualisations($datasetId);
+					}
+					else {
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
+						$results[] = $resultUpload;
+					}
+	
 					$result["result"] = $results;
 					$result["status"] = "success";
 				}
 				else {
-					$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
-					$results[] = $resultUpload;
-					Logger::logMessage("TRM - Result " . json_encode($results));
-			
+					if ($manageFile) {
+						$manageFileResult = $this->manageFileByUrl($resourceUrl);
+						$resourceUrl = $manageFileResult["url"];
+						//Managing resources
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, null, $encoding, $unzipZip);
+				
+						//We update the visualisation's icons
+						$this->calculateVisualisations($datasetId);
+					}
+					else {
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", "", false, $format);
+						$results[] = $resultUpload;
+					}
+				
 					$result["result"] = $results;
 					$result["status"] = "success";
 				}
@@ -7714,18 +7786,17 @@ function deleteStory($story_id){
 					if (!$resourceId) {
 						//Managing resources
 						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
-				
-						//We update the visualisation's icons
-						$this->calculateVisualisations($datasetId);
-	
-						$result["result"] = $results;
-						$result["status"] = "success";
 					}
-					else {
-						// For now we only support new dataset
-						Logger::logMessage("Trying to update dataset - For now we only support new dataset");
-						throw new \Exception("Trying to update dataset - For now we only support new dataset");
+					else {	
+						//Managing resources
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, null, $encoding, $unzipZip);
 					}
+
+					//We update the visualisation's icons
+					$this->calculateVisualisations($datasetId);
+
+					$result["result"] = $results;
+					$result["status"] = "success";
 				} catch (\Exception $e) {
 					Logger::logMessage($e->getMessage());
 					$data_array = array();
@@ -7743,6 +7814,12 @@ function deleteStory($story_id){
 
 		return $response;
 	}
+
+	//TODO - Delete API function for resource
+	// function deleteResource() {
+		
+	// 	$resourceManager->deleteResource($resourceId);
+	// }
 
 	function manageFileByUrl($resourceUrl) {
 		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
@@ -7819,6 +7896,9 @@ function deleteStory($story_id){
 			$finfo->file($_FILES['upload_file']['tmp_name']),
 			array(
 				'zip' => 'application/zip',
+				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+				'csv' => 'text/csv',
+				'text' => 'text/plain',
 			),
 			true
 		)) { 
