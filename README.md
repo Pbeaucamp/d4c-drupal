@@ -51,4 +51,13 @@ Il est impératif d'indiquer, l'url ckan, la clé api ckan, l'url cluster et le 
 	
 	Note: Il faut peut être installer composer pour pouvoir l'utiliser dans Drupal
 	https://getcomposer.org/download/ (Suivre Command Line Installation)
+	
+---
+
+## Configuration Recaptcha
+
+Pour la configuration du recaptcha, il faut se rendre sur https://www.google.com/u/2/recaptcha/admin
+L'adminstration pour D4C se fait avec le compte vanillaapps@gmail.com
+
+Il faut ajouter chaque domain (ex: data4citizen.com, example.com, etc)
 

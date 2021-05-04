@@ -106,7 +106,7 @@ class ChartController extends ControllerBase {
 			//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
 			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
 			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
-			$("head").append("<base href=\"/chart/\">");
+			$("head").append("<base href=\"'. $config->client->routing_prefix . '/chart/\">");
 		</script>',
 						
 			],
@@ -122,7 +122,7 @@ class ChartController extends ControllerBase {
 				
 		$element = '
 		<head>
-			<base href="/chart/frame">
+			<base href="'. $config->client->routing_prefix . '/chart/frame">
 			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css" rel="stylesheet">
 			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css" rel="stylesheet">
 			<link href="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'" rel="stylesheet">

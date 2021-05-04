@@ -6670,7 +6670,7 @@ class Api{
 					//check captcha
 					$callUrl =  "https://www.google.com/recaptcha/api/siteverify";
 					$data_string = array();
-					$data_string["secret"] = "6LecPMcUAAAAAMUzjOwRKlPeAd43AR_PFFAhg8cb";
+					$data_string["secret"] = "6LcT58UaAAAAAM3TgHCvTYpTv0ziCuOfGrfUGUt0";
 					$data_string["response"] = $_POST["recaptcha_response"];
 					
 					$curl = curl_init($callUrl);
@@ -7815,7 +7815,7 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	//TODO - Delete API function for resource
+	//TODO - Delete API function for resource - Attention search deleteDataset dans Api.php
 	// function deleteResource() {
 		
 	// 	$resourceManager->deleteResource($resourceId);
