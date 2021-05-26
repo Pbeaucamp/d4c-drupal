@@ -924,18 +924,21 @@ class editMetaDataForm extends HelpFormBase {
 				}
 				else {
 					//Fow now we use the old system but after we should look the dataset by ID
-					$datasets = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
-					$datasets = $datasets->getContent();
-					$datasets = json_decode($datasets, true);
-					$datasets = $datasets[result][results];
+					// $datasets = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
+					// $datasets = $datasets->getContent();
+					// $datasets = json_decode($datasets, true);
+					// $datasets = $datasets[result][results];
 
-					$datasetToUpdate = null;
-					foreach ($datasets as &$value) {
-						if ($value[id] == $datasetId) {
-							$datasetToUpdate = $value;
-							break;
-						}
-					}
+					// $datasetToUpdate = null;
+					// foreach ($datasets as &$value) {
+					// 	if ($value[id] == $datasetId) {
+					// 		$datasetToUpdate = $value;
+					// 		break;
+					// 	}
+					// }
+
+					$datasetToUpdate = $api->findDataset($datasetId);
+					Logger::logMessage("TRM - Found dataset " . json_encode($datasetToUpdate));
 
 					$datasetName = $datasetToUpdate[name];
 

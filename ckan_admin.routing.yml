@@ -953,10 +953,42 @@ ckan_admin.api.getThesaurus:
   requirements:
     _permission: 'access content'
 
+ckan_admin.subscribeDataset:
+  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/subscribe'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::subscribeDataset'
+    _datasetId: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.unsubscribeDataset:
+  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/unsubscribe'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::unsubscribeDataset'
+    _datasetId: ''
+  requirements:
+    _permission: 'access content'
+
+
+
+
+    
+
 ckan_admin.api.findDataset:
   path: '/d4c/api/v1/dataset/find'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callFindDataset'
+    params: ''
+    _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+ckan_admin.api.searchDatasets:
+  path: '/d4c/api/v1/datasets'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callSearchDatasets'
     params: ''
     _title: ''
   options:
@@ -975,6 +1007,17 @@ ckan_admin.api.manageDataset:
   requirements:
     _user_is_logged_in: 'TRUE'
 
+ckan_admin.api.removeDataset:
+  path: '/d4c/api/v1/dataset/remove'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callRemoveDataset'
+    params: ''
+    _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
 ckan_admin.api.addResource:
   path: '/d4c/api/v1/dataset/resource_add'
   defaults:
@@ -985,19 +1028,3 @@ ckan_admin.api.addResource:
     _auth: [ 'basic_auth' ]
   requirements:
     _user_is_logged_in: 'TRUE'
-
-ckan_admin.subscribeDataset:
-  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/subscribe'
-  defaults:
-    _controller: '\Drupal\ckan_admin\Utils\Api::subscribeDataset'
-    _datasetId: ''
-  requirements:
-    _permission: 'access content'
-
-ckan_admin.unsubscribeDataset:
-  path: '/d4c/api/account/subscriptions/datasets/{datasetId}/unsubscribe'
-  defaults:
-    _controller: '\Drupal\ckan_admin\Utils\Api::unsubscribeDataset'
-    _datasetId: ''
-  requirements:
-    _permission: 'access content'

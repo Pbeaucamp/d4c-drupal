@@ -7586,6 +7586,44 @@ function deleteStory($story_id){
 		return $response;
 	}
 	
+	public function callSearchDatasets() {
+		$query = $_POST['q'];
+
+		try {
+			$datasets = $this->searchDataset($query);
+
+			$result["result"] = $datasets;
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
+	private function searchDataset($params) {
+		$callUrl =  $this->urlCkan . "api/action/package_search?" . $params;
+
+		Logger::logMessage("TRM - CALL CKAN " . $callUrl);
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$dataset = curl_exec($curl);
+		curl_close($curl);
+
+		$dataset = json_decode($dataset, true);
+		return $dataset[result];
+	}
+
 	public function callFindDataset() {
 		$datasetId = $_POST['dataset_id'];
 
@@ -7610,7 +7648,7 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	private function findDataset($datasetId) {
+	public function findDataset($datasetId) {
 		$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 
 		$curl = curl_init($callUrl);
@@ -7620,6 +7658,30 @@ function deleteStory($story_id){
 
 		$dataset = json_decode($dataset, true);
 		return $dataset[result];
+	}
+	
+	public function callRemoveDataset() {
+		$datasetId = $_POST['dataset_id'];
+
+		try {
+			Logger::logMessage("Delete dataset " . $datasetId);
+			$this->deleteDataset($datasetId);
+
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
 	}
     
 	public function callManageDataset() {
@@ -7815,12 +7877,6 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	//TODO - Delete API function for resource - Attention search deleteDataset dans Api.php
-	// function deleteResource() {
-		
-	// 	$resourceManager->deleteResource($resourceId);
-	// }
-
 	function manageFileByUrl($resourceUrl) {
 		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
 		$data_array = array();
@@ -7883,7 +7939,7 @@ function deleteStory($story_id){
 		}
 
 		// You should also check filesize here.
-		if ($_FILES['upload_file']['size'] > 1000000) {
+		if ($_FILES['upload_file']['size'] > 100000000) {
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Exceeded filesize limit.';
 			Logger::logMessage("Exceeded filesize limit.");

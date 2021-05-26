@@ -1716,6 +1716,7 @@ class ResourceManager {
 				if ($index == 1) {
 					$cols[] = "geo_point_2d";
 					$colNames[] = "geo_point_2d";
+					$index++;
 				}
 
 				//We check if the key already exist
