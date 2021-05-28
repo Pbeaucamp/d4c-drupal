@@ -7,18 +7,11 @@
 namespace Drupal\ckan_admin\Form;
 
 use Drupal\ckan_admin\Utils\Api;
-use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\HelpFormBase;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\file\Entity\File;
-use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
-use \PhpOffice\PhpSpreadsheet\Reader\Xls;
-use \PhpOffice\PhpSpreadsheet\Writer\Csv;;
-use Drupal\ckan_admin\Utils\DataSet;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Drupal\Component\Render\FormattableMarkup; 
+use Drupal\ckan_admin\Utils\Logger;
 	
 
 /**
@@ -52,9 +45,6 @@ class DatasetsBoardForm extends HelpFormBase {
 			$isAdmin = true;
 		}
 
-		
-		
-		
         $option_org=array();
 		
 		$page = pager_find_page();
@@ -69,33 +59,33 @@ class DatasetsBoardForm extends HelpFormBase {
 			$queryParam = "";
 		}
 		
-		$filterQuery = "";
-		if ($orga != "" || $queryParam != "" || $type != "") {
-			//$store = $form_state->getStorage();
-			
-			$filterQuery = "&q=";
-			$qo = "";
-			$qt = "";
-			$qs = "";
-			if($orga != ""){
-				$qo = 'organization:"'.$orga.'" AND ';
+		// $allowedOrganizations = $api->getUserOrganisations();
+		
+		// $organizationParameter = $api->getUserOrganizationsParameter($allowedOrganizations);
+		// if ($orga != "" && $api->isOrganizationAllowed($orga, $allowedOrganizations)) {
+		// 	$qo = 'organization:"' . $orga . '"';
+		// }
+		// else {
+		// 	$qo = $organizationParameter;
+		// }
+
+		// Logger::logMessage("TRM - Organizations parameters " . $organizationParameter);
+
+		$filterQuery = null;
+		if ($queryParam != "" || $type != "") {
+			if ($queryParam != "") {
+				$filterQuery = '&q=text:"*'.strtolower($queryParam).'*"';
 			}
-			if($queryParam != ""){
-				$qs = 'text:"*'.strtolower($queryParam).'*" AND ';
+
+			if ($type != "") {
+				$filterQuery = ($queryParam != "" ? " AND " : "&q=") . ($type == "private" ?  'private:"true" AND ' : 'private:"false"');
 			}
-			if($type != ""){
-				$qt = $type == "private" ?  'private:"true" AND ' : 'private:"false" AND ';
-			}
-			$filterQuery .= $qo . $qs . $qt;
-			if(strlen($filterQuery) > 5){
-				$filterQuery = substr($filterQuery, 0, -5);
-			}
-			
 		}
-        //rows=10&start=0&q=organization:ariam-idf%20AND%20text:*de*
-		$query = 'include_private=true&rows='.$num_per_page.'&start='.$offset.$filterQuery;
-		//error_log($query);
-        $result = $api->callPackageSearch_public_private($query, $current_user->id());
+
+		Logger::logMessage("TRM - Filter query " . $filterQuery);
+
+		$query = 'include_private=true&rows=' . $num_per_page . '&start='  .$offset . $filterQuery;
+        $result = $api->callPackageSearch_public_private($query, $current_user->id(), $orga, true);
 							   
         $result = $result->getContent();
 		
@@ -189,7 +179,7 @@ class DatasetsBoardForm extends HelpFormBase {
 			$output[] = $uirow;
 		}
         
-        $orgas = $api->getAllOrganisations();
+        $orgas = $api->getAllOrganisations(true, false, true);
 	
         foreach ($orgas as $value) {
             $option_org[$value["name"]] = $value["display_name"];

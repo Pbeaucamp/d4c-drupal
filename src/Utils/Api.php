@@ -1006,14 +1006,36 @@ class Api{
 	}
     
     
- 	public function callPackageSearch_public_private($params, $iduser = NULL, $selected_org = null) {
+ 	public function callPackageSearch_public_private($params, $iduser = NULL, $selectedOrg = null, $applyOrganizationSecurity = false) {
 		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);
 		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));
 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 
-		if (isset($selected_org) && $selected_org != '') {
-			$params = $params . '&q=organization:"'.$selected_org.'"';
+		$query_params = $this->proper_parse_str($params);
+
+		//If the user has a role for the organization we do not apply the security
+		$allowedOrganizations = $this->getUserOrganisations();
+		if (isset($selectedOrg) && $selectedOrg != '') {
+			$organizationParameter = 'organization:"' . $selectedOrg . '"';
+
+			if ($query_params["q"] == null) {
+				$query_params["q"] = $organizationParameter;
+			}
+			else {
+				$query_params["q"] .= " AND " . $organizationParameter;
+			}
+		}
+		else if ($applyOrganizationSecurity) {
+			$organizationParameter = $this->getUserOrganizationsParameter($allowedOrganizations);
+			if (isset($organizationParameter)) {
+				if ($query_params["q"] == null) {
+					$query_params["q"] = $organizationParameter;
+				}
+				else {
+					$query_params["q"] .= " AND " . $organizationParameter;
+				}
+			}
 		}
 
 		$current_user = \Drupal::currentUser();
@@ -1022,15 +1044,8 @@ class Api{
 		}
 
         if ($iduser != NULL) {
-			$query_params = $this->proper_parse_str($params);
-
-			Logger::logMessage("TRM - Checking security role for " . $selected_org);
-
-			//If the user has a role for the organization we do not apply the security
-			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isOrganizationAllowed($selected_org, $allowedOrganizations)) {
-				Logger::logMessage("TRM - No role for " . $selected_org . " for user");
-
+			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
+			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
 				}
@@ -1038,25 +1053,27 @@ class Api{
 					$req = "-(-edition_security:**".$iduser."** OR edition_security:*)";
 				}
 
-				if($query_params["fq"] == null){
+				if ($query_params["fq"] == null) {
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
 			}
 			else {
-				Logger::logMessage("User has the role for organization " . $selected_org . ". We do not filter.");
+				Logger::logMessage("User has the role for organization " . $selectedOrg . ". We do not filter.");
 			}
+		}
+		// else {
+		// 	//We replace space here as we do not encode url again
+		// 	$params = str_replace(" ", "+", $params);	 
+		// }
 
-			//We encode url again
-			$params = http_build_query($query_params);
-		}
-		else {
-			//We replace space here as we do not encode url again
-			$params = str_replace(" ", "+", $params);	 
-		}
+		//We encode url again
+		$params = http_build_query($query_params);
+
+		Logger::logMessage("TRM - PARAMS " . $params);
 		
-        if(!is_null($params)){
+        if (!is_null($params)) {
 			$callUrl .= "?" . $params;
 		}
 
@@ -6352,25 +6369,6 @@ class Api{
 		}
 		return $orgs;
     }
-
-	function isOrganizationAllowed($organization, $allowedOrganizations) {
-		foreach ($allowedOrganizations as $org) {
-			if ($org == "*" || $org == $organization) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	function isDatasetAllowed($organization, $allowedOrganizations) {
-		foreach ($allowedOrganizations as $org) {
-			if ($org == "*" || $org == $organization) {
-				return true;
-			}
-		}
-
-		return false;
-	}
 	
 	function callAllOrganisations($params){
 		$query_params = $this->proper_parse_str($params);
@@ -8140,13 +8138,17 @@ function deleteStory($story_id){
 		return $count > 0;
 	}
 
+
+
+	/* SECURITY PART WITH ROLES AND ORGANIZATION */
+
 	function getUserOrganisations() {
 		$allowedOrganizations = array();
 
 		$current_user = \Drupal::currentUser();
-		Logger::logMessage("TRM - User roles " . json_encode($current_user->getRoles()));
 		if (in_array("administrator", $current_user->getRoles())) {
-			return $allowedOrganizations[] = "*";
+			$allowedOrganizations[] = "*";
+			return $allowedOrganizations;
 		}
 
 		foreach ($current_user->getRoles() as $role) {
@@ -8157,4 +8159,53 @@ function deleteStory($story_id){
 
 		return $allowedOrganizations;
 	}
+
+	function getUserOrganizationsParameter($allowedOrganizations) {
+		$hasParameter = false;
+
+		//We add all the organization allowed for the user
+		$organizationParameter = "(";
+		foreach ($allowedOrganizations as $org) {
+			Logger::logMessage("TRM - Allowed organizations " . $org);
+
+			if ($org == "*") {
+				Logger::logMessage("TRM - User is admin we return null");
+				return null;
+			}
+
+			if ($hasParameter) {
+				$organizationParameter = $organizationParameter . " OR ";
+			}
+
+			$organizationParameter = $organizationParameter . 'organization:"' . $org . '"';
+
+			Logger::logMessage("TRM - Organization parameter " . $organizationParameter);
+
+			$hasParameter = true;
+		}
+		$organizationParameter = $organizationParameter . ")";
+
+		return $hasParameter ? $organizationParameter : null;
+	}
+
+	function isOrganizationAllowed($organization, $allowedOrganizations) {
+		foreach ($allowedOrganizations as $org) {
+			if ($org == "*" || $org == $organization) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function isDatasetAllowed($organization, $allowedOrganizations) {
+		foreach ($allowedOrganizations as $org) {
+			if ($org == "*" || $org == $organization) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/* END SECURITY PART WITH ROLES AND ORGANIZATION */
 }
