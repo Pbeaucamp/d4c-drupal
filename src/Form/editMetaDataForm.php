@@ -75,16 +75,10 @@ class editMetaDataForm extends HelpFormBase {
 
         $api = new Api;
 
-        // $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-        // $dataSet = $dataSet->getContent();
-		// $dataSet2 = json_encode($dataSet, true);
-
-        // $dataSet = json_decode($dataSet, true);
-        // $dataSet = $dataSet[result][results];
 		$selectedDatasetId = \Drupal::request()->query->get('id');
 		if ($selectedDatasetId) {
 			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
-			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null);
+			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null, true, true);
 			$selectedDataset = $selectedDataset['metas'];
 
 			//We simulate the previous process - We have to encode it twice
@@ -93,67 +87,21 @@ class editMetaDataForm extends HelpFormBase {
 			$selectedData = json_encode($selectedData);
 			$selectedData = json_encode($selectedData, true);
 		}
-		
-		// uasort($dataSet, function($a, $b) {
-		// 	$res =  strcasecmp($a['title'], $b['title']);
-		// 	return $res;
-		// });
-		
-		///////////////////////////////organization_list////
 
-        $cle = $this->config->ckan->api_key;
-        $optionst = array(
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_HTTPHEADER => array(
-                'Content-type:application/json',
-                'Content-Length: ' . strlen($jsonData),
-                'Authorization:  ' . $cle,
-            ),
-        );
-
-        $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
-        $curlOrg = curl_init($callUrlOrg);
-		//error_log($callUrlOrg, true);
-        curl_setopt_array($curlOrg, $optionst);
-        $orgs = curl_exec($curlOrg);
-        curl_close($curlOrg);
-        $orgs = json_decode($orgs, true);
-        
-		///////////////////////////////organization_list////
-
-		///////////////////////////////license_list////
-           
-        $callUrllic = $this->urlCkan . "api/action/license_list";
-        $curllic = curl_init($callUrllic);
-
-        curl_setopt_array($curllic, $optionst);
-        $lic = curl_exec($curllic);
-
-        curl_close($curllic);
-        $lic = json_decode($lic, true);
-
-		///////////////////////////////license_list////
+		$orgs = $api->getAllOrganisations(true, false, true);
+		$lic = $api->getLicenses();
 
         $ids = array();
-
-
-
 		$ids["new"] = "Сréer un jeu de données";
 		if ($selectedDataset) {
 			Logger::logMessage("Set dataset with id " . $selectedDataset[id] . " and name " . $selectedDataset[name]);
 			$ids[$selectedDataset[id]] = $selectedDataset[title];
 		}
-        // foreach($dataSet as &$ds) {
-        //     $ids[$ds[id]] = $ds[title];
-        // }
-
-         
 
         $organizationList = array();
         $organizationList2 = array();
 
-        foreach ($orgs[result] as &$value) {
+        foreach ($orgs as &$value) {
             $organizationList[$value[id]] = $value[display_name];
             $organizationList2[$value[name]] = $value[display_name];
         }
@@ -161,10 +109,8 @@ class editMetaDataForm extends HelpFormBase {
 
 		
         $licList = array();
-
         foreach ($lic[result] as &$value) {
             $licList[$value[id]] = $value[title];
-
         }
 
 		///// themes /////
@@ -1237,12 +1183,7 @@ class editMetaDataForm extends HelpFormBase {
         $api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');
-		$orgaFilter = "";
-		if($selected_org!=''){
-			$orgaFilter = '&q=organization:"'.$selected_org.'"';
-		}
-
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id(), $selected_org);
 			
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);

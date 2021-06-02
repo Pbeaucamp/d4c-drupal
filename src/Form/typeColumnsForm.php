@@ -35,74 +35,21 @@ class typeColumnsForm extends HelpFormBase {
 	/**
 	 * {@inheritdoc}
 	 */
-    
-
 	public function buildForm(array $form, FormStateInterface $form_state) {
 		
         $form = parent::buildForm($form, $form_state);
         $form['#attached']['library'][] = 'ckan_admin/typeColumns.form'; 
-        //$config = \Drupal::service('config.factory')->getEditable('ckan_admin.typeColumnsForm');
-        
-		
+
         $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url; 
         
+		///////////////////////////////organization_list////
+		
         $api = new Api;
-        // $dataSet= $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-        // $dataSet = $dataSet->getContent();
-        // $dataSet = json_decode($dataSet,true);
-        // $dataSet = $dataSet[result][results];
-		
-		// uasort($dataSet, function($a, $b) {
-		// 	$res =  strcasecmp($a['title'], $b['title']);
-		// 	return $res;
-		// });
-		
-		// $this->datasets = $dataSet;
-		
-        // $ids=array();
-        // $tableData=array();
-       
-        // for($i=0; $i<count($dataSet); $i++){
-        //     for($j=0; $j<count($dataSet[$i][resources]); $j++){
-        //         if($dataSet[$i][resources][$j][format]=='CSV'){
-		// 			$filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
-		// 			$tableData[$i]=$filds;
-						
-		// 			$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
-						
-		// 			break;
-        //         }
-        //     }
-        // }
-		
-		///////////////////////////////organization_list////
+		$orgs = $api->getAllOrganisations(true, false, true);
 
-        $cle = $this->config->ckan->api_key;
-        $optionst = array(
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_HTTPHEADER => array(
-                'Content-type:application/json',
-                'Content-Length: ' . strlen($jsonData),
-                'Authorization:  ' . $cle,
-            ),
-        );
-
-        $callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
-        $curlOrg = curl_init($callUrlOrg);
-		error_log($callUrlOrg, true);
-		error_log($cle, true);
-        curl_setopt_array($curlOrg, $optionst);
-        $orgs = curl_exec($curlOrg);
-        curl_close($curlOrg);
-        $orgs = json_decode($orgs, true);
-        
-		///////////////////////////////organization_list////
-		
 		$organizationList = array();
-
-        foreach ($orgs[result] as &$value) {
+        foreach ($orgs as &$value) {
             $organizationList[$value[name]] = $value[display_name];
         }
 		
@@ -849,11 +796,7 @@ class typeColumnsForm extends HelpFormBase {
 		$api = new Api;
 		
 		$selected_org = $form_state->getValue('filtr_org');
-		$orgaFilter = "";
-		if($selected_org!=''){
-			$orgaFilter = '&q=organization:"'.$selected_org.'"';
-		}
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc'.$orgaFilter, \Drupal::currentUser()->id());
+        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id(), $selected_org);
 			
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet, true);

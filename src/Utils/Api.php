@@ -1006,24 +1006,46 @@ class Api{
 	}
     
     
- 	public function callPackageSearch_public_private($params, $iduser=NULL) {
-		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
-		//$params = str_replace(" ", "+", $params);	 
-		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));	 
+ 	public function callPackageSearch_public_private($params, $iduser = NULL, $selectedOrg = null, $applyOrganizationSecurity = false) {
+		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);
+		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));
+
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 
-		
+		$query_params = $this->proper_parse_str($params);
+
+		//If the user has a role for the organization we do not apply the security
+		$allowedOrganizations = $this->getUserOrganisations();
+		if (isset($selectedOrg) && $selectedOrg != '') {
+			$organizationParameter = 'organization:"' . $selectedOrg . '"';
+
+			if ($query_params["q"] == null) {
+				$query_params["q"] = $organizationParameter;
+			}
+			else {
+				$query_params["q"] .= " AND " . $organizationParameter;
+			}
+		}
+		else if ($applyOrganizationSecurity) {
+			$organizationParameter = $this->getUserOrganizationsParameter($allowedOrganizations);
+			if (isset($organizationParameter)) {
+				if ($query_params["q"] == null) {
+					$query_params["q"] = $organizationParameter;
+				}
+				else {
+					$query_params["q"] .= " AND " . $organizationParameter;
+				}
+			}
+		}
+
 		$current_user = \Drupal::currentUser();
-		Logger::logMessage("TRM - User roles " . json_encode($current_user->getRoles()));
-		if(in_array("administrator", $current_user->getRoles())){
+		if (in_array("administrator", $current_user->getRoles())) {
 			$isAdmin = true;
 		}
-		
-        if($iduser != NULL){
-			
-			$query_params = $this->proper_parse_str($params);
-			
-			// $orgs = implode($orgs_private, " OR ");
+
+        if ($iduser != NULL) {
+			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
+			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
 				}
@@ -1031,23 +1053,31 @@ class Api{
 					$req = "-(-edition_security:**".$iduser."** OR edition_security:*)";
 				}
 
-				if($query_params["fq"] == null){
+				if ($query_params["fq"] == null) {
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
+			}
+			else {
+				Logger::logMessage("User has the role for organization " . $selectedOrg . ". We do not filter.");
+			}
+		}
+		// else {
+		// 	//We replace space here as we do not encode url again
+		// 	$params = str_replace(" ", "+", $params);	 
+		// }
 
-			//We encode url again
-			$params = http_build_query($query_params);
-		}
-		else {
-			//We replace space here as we do not encode url again
-			$params = str_replace(" ", "+", $params);	 
-		}
+		//We encode url again
+		$params = http_build_query($query_params);
+
+		Logger::logMessage("TRM - PARAMS " . $params);
 		
-        if(!is_null($params)){
+        if (!is_null($params)) {
 			$callUrl .= "?" . $params;
 		}
+
+		Logger::logMessage("TRM - Call URL " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -1057,36 +1087,14 @@ class Api{
         
 		unset($result["help"]);//echo count($result["result"]["results"]);
 		foreach($result["result"]["results"] as $i => $dataset) {
-            
-            //error_log('aaaaaa');
-            //$dataset['result'] = $result["result"]["results"][$i];
-            //$paramForRightBar = $this->getPackageShow2($dataset['result'], '', false);
-            
-            //error_log($paramForRightBar);
-            //$result["result"]["results"]["features"]=array();
-            
 			$result["result"]["results"][$i]["metas"] = array();
 			$result["result"]["results"][$i]["metas"]["records_count"] = 0;
-			/*foreach($dataset["resources"] as $j => $value) {
-				//unset($result["result"]["results"][$i]["resources"][$j]["url"]);	//echo $value["url"];
-				
-				$format = $result["result"]["results"][$i]["resources"][$j]["format"];
-				if(($format == "CSV" || $format = "XLS" || $format == "XLSX") && $result["result"]["results"][$i]["resources"][$j]["datastore_active"] == true){
-					//$records_result = $this->getDatastoreRecord_v2("dataset=".$result["result"]["results"][$i]["name"]."&rows=1");
-					$records_result = $this->getDatastoreApi("resource_id=".$result["result"]["results"][$i]["resources"][$j]["id"]."&limit=0");
-					$result["result"]["results"][$i]["metas"]["records_count"] = $records_result["result"]["total"];
-                    //error_log(print_r($records_result,true));
-					break;
-				}	
-			}*/
-            
 		}
-				
-		//echo json_encode($result);
-		foreach( $arr_dell as &$value){
-            
-            unset($result["result"]["results"][$value]);
-        }
+		
+		// foreach($arr_dell as &$value) {
+        //     unset($result["result"]["results"][$value]);
+        // }
+
 		$result["result"]["results"]= array_merge($result["result"]["results"]);
 
 		$response = new Response();
@@ -2323,22 +2331,13 @@ class Api{
 		return $this->callPackageShow2($datasetid, $params);
 	}
     
-    
-   
-
-
-	public function getPackageShow2($datasetid,$params, $callCkan = true) {
-
-
-        
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false) {
         $result = '';
         
 		if($callCkan) {
-        
-			$query_params = $this->proper_parse_str($params);
+			// $query_params = $this->proper_parse_str($params);
 			//$callUrl =  $this->urlCkan . "api/action/package_show?" . $params . "&id=" . $datasetid;
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
-			
 
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -2348,6 +2347,14 @@ class Api{
 			$result = json_decode($result,true);
 		} else {
 			$result = $datasetid;
+		}
+
+		if ($applySecurity) {
+			$datasetOrganization = $result['result']['organization']['name'];
+			$allowedOrganizations = $this->getUserOrganisations();
+			if (!$this->isDatasetAllowed($datasetOrganization, $allowedOrganizations)) {
+				return array();
+			}
 		}
  
 		$resourcesid = "";
@@ -2481,17 +2488,15 @@ class Api{
 				}
 			}
 		}
-		Logger::logMessage("TRM - TEST 1");
-		
+
 		if($resourcesid == ""){
 			$visu['table_fields'] =  array();
 			//$visu['map_tooltip_fields'] =  array();
 			//$visu['map_tooltip_title'] = '';
 			
 			$data_array['fields'] =array();
-		} else {
-			Logger::logMessage("TRM - TEST 2 with ressourceId " . $resourcesid);
-
+		}
+		else {
 			$visu['table_fields'] = $this->getTableFields($resourcesid); //["code_insee","en_service","mutualisation_public","sup_id","mutualisation","nom_reg","nom_com","nom_dept"]
 			if(count($visu['map_tooltip_fields']) == 0){
 				$visu['map_tooltip_fields'] = $this->getMapTooltipFields($resourcesid);// ["emr_lb_systeme","emr_dt_service","generation","coord","nom_com","nom_dept","nom_reg"]fields
@@ -4180,17 +4185,22 @@ class Api{
 		return $response;
 	}
 
-	public function licenseList() {
+	function getLicenses() {
 		$callUrl =  $this->urlCkan . "api/action/license_list" ;
 				
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		//echo $result . "\r\n";
 
 		$result = json_decode($result,true);
 		unset($result["help"]);
+
+		return $result;
+	}
+
+	public function licenseList() {
+		$result = $this->getLicenses();
 		
 		echo json_encode($result);
 		$response = new Response();
@@ -6338,14 +6348,26 @@ class Api{
 		return $response;    
     }
 	
-	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE){
-		$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=".($allFields ? 'true' : 'false')."&include_extras=".($include_extra ? 'true' : 'false');
-        $curlOrg = curl_init($callUrlOrg);
+	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE, $applySecurity = false){
+		$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=" . ($allFields ? 'true' : 'false') . "&include_extras=" . ($include_extra ? 'true' : 'false');
+        
+		$curlOrg = curl_init($callUrlOrg);
 		curl_setopt_array($curlOrg, $this->getSimpleOptions());
         $orgs = curl_exec($curlOrg);
         curl_close($curlOrg);
         $orgs = json_decode($orgs, true);
-		return $orgs["result"];
+		$orgs = $orgs["result"];
+
+		if ($applySecurity) {
+			$allowedOrganizations = $this->getUserOrganisations();
+	
+			foreach ($orgs as $valueKey => $org) {
+				if (!$this->isOrganizationAllowed($org["name"], $allowedOrganizations)) {
+					unset($orgs[$valueKey]);
+				}
+			}
+		}
+		return $orgs;
     }
 	
 	function callAllOrganisations($params){
@@ -8115,4 +8137,75 @@ function deleteStory($story_id){
 
 		return $count > 0;
 	}
+
+
+
+	/* SECURITY PART WITH ROLES AND ORGANIZATION */
+
+	function getUserOrganisations() {
+		$allowedOrganizations = array();
+
+		$current_user = \Drupal::currentUser();
+		if (in_array("administrator", $current_user->getRoles())) {
+			$allowedOrganizations[] = "*";
+			return $allowedOrganizations;
+		}
+
+		foreach ($current_user->getRoles() as $role) {
+			if (strpos($role, 'admin_') !== false) {
+				$allowedOrganizations[] = substr($role, strlen('admin_'), strlen($role));
+			}
+		}
+
+		return $allowedOrganizations;
+	}
+
+	function getUserOrganizationsParameter($allowedOrganizations) {
+		$hasParameter = false;
+
+		//We add all the organization allowed for the user
+		$organizationParameter = "(";
+		foreach ($allowedOrganizations as $org) {
+			Logger::logMessage("TRM - Allowed organizations " . $org);
+
+			if ($org == "*") {
+				Logger::logMessage("TRM - User is admin we return null");
+				return null;
+			}
+
+			if ($hasParameter) {
+				$organizationParameter = $organizationParameter . " OR ";
+			}
+
+			$organizationParameter = $organizationParameter . 'organization:"' . $org . '"';
+
+			Logger::logMessage("TRM - Organization parameter " . $organizationParameter);
+
+			$hasParameter = true;
+		}
+		$organizationParameter = $organizationParameter . ")";
+
+		return $hasParameter ? $organizationParameter : null;
+	}
+
+	function isOrganizationAllowed($organization, $allowedOrganizations) {
+		foreach ($allowedOrganizations as $org) {
+			if ($org == "*" || $org == $organization) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	function isDatasetAllowed($organization, $allowedOrganizations) {
+		foreach ($allowedOrganizations as $org) {
+			if ($org == "*" || $org == $organization) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/* END SECURITY PART WITH ROLES AND ORGANIZATION */
 }
