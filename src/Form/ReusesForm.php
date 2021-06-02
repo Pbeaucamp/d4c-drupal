@@ -52,35 +52,17 @@ class ReusesForm extends HelpFormBase {
 		$page = pager_find_page();
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
-		
-		$filterQuery = "";
-		/*if ($_GET["orga"] != "" || $_GET["dataset"] != "" || $_GET["q"] != "" || $_GET["status"] != "") {
-			
-			$filterQuery = "&q=";
-			$qo = "";
-			$qd = "";
-			$qs = "";
-			$q = "";
-			if($_GET["orga"] != ""){
-				$qo = 'organization:"'.$_GET["orga"].'"%20AND%20';
-			}
-			if($_GET["q"] != ""){
-				$qs = 'text:"*'.strtolower($_GET["q"]).'*"%20AND%20';
-			}
-			if($_GET["type"] != ""){
-				$qt = $_GET["type"] == "private" ?  'private:"true"%20AND%20' : 'private:"false"%20AND%20';
-			}
-			$filterQuery .= $qo . $qs . $qt;
-			if(strlen($filterQuery) > 9){
-				$filterQuery = substr($filterQuery, 0, -9);
-			}
-			
-		}*/
-        
-		//$query = 'include_private=true&rows='.$num_per_page.'&sort=title_string%20asc&start='.$offset.$filterQuery;
-		var_dump($_GET["dataset"]);
-		var_dump($_GET["orga"]);
-        $result = $api->getReuses($_GET["orga"], $_GET["dataset"], $_GET["q"], $_GET["status"], $num_per_page, $offset);
+
+		$orga = $_GET["orga"];
+		$queryParam = $_GET["q"];
+		$dataset = $_GET["dataset"];
+		$status = $_GET["status"];
+
+		if (strpos($queryParam, 'admin/config') !== false) {
+			$queryParam = "";
+		}
+
+        $result = $api->getReuses($orga, $dataset, $queryParam, $status, $num_per_page, $offset);
 		$result = json_decode(json_encode($result), true);
 		$reuses = $result["reuses"];
 		pager_default_initialize($result["nhits"], $num_per_page);
@@ -142,8 +124,8 @@ class ReusesForm extends HelpFormBase {
         }
 		
 		$req = "include_private=true&rows=10000";
-		if($_GET["orga"] != ""){
-			$req .= "&q=organization:".$_GET["orga"];
+		if ($orga != "") {
+			$req .= "&q=organization:".$orga;
 		}
 		$datasets = $api->callPackageSearch_public_private($req, \Drupal::currentUser()->id());
 		$datasets = $datasets->getContent();
@@ -179,7 +161,7 @@ class ReusesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["orga"]
+			'#default_value' => $orga
         );
 		
 		$form['filters']['selected_dataset'] = array(
@@ -191,7 +173,7 @@ class ReusesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["dataset"]
+			'#default_value' => $dataset
         );
 
 		$form['filters']['selected_text'] = [
@@ -200,7 +182,7 @@ class ReusesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["q"]
+			'#default_value' => $queryParam
 		];
 
 		$form['filters']['selected_status'] = array(
@@ -211,7 +193,7 @@ class ReusesForm extends HelpFormBase {
 			'#attributes' => array(
 				'style' => "display: inline-block;width: 50%;",
 			),
-			'#default_value' => $_GET["status"]
+			'#default_value' => $status
 			//'#suffix' => '</div>',
         );
 

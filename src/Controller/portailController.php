@@ -104,7 +104,7 @@ class portailController extends ControllerBase {
 									<div class="input-group" id="barreRecherche">
 										<input id="search_bar" type="text"  class="form-control" aria-label="recherche" placeholder="Rechercher un jeu de données...">
 										<div class="input-group-btn">
-											<button class="btn btn-default" type="submit">
+											<button class="btn-filter btn btn-default" type="submit">
 											<i class="glyphicon glyphicon-search"></i>
 											</button>
 										</div>
