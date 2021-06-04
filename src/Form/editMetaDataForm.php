@@ -791,41 +791,41 @@ class editMetaDataForm extends HelpFormBase {
         
 		////////////////Jeux de donnees lies///////////////////////////////////////
 
-		$form['m5'] = array(
-			'#markup' => '<div id="datasetLies" >',
-    	); 
+		// $form['m5'] = array(
+		// 	'#markup' => '<div id="datasetLies" >',
+    	// ); 
         
-		$form['dataset_lies'] = array(
-			'#type' => 'textfield',
-			//'#title' => $this->t('Dataset liés:'),
-			'#attributes' => array('style' => 'width: 50%; display: none;'),
-		);
+		// $form['dataset_lies'] = array(
+		// 	'#type' => 'textfield',
+		// 	//'#title' => $this->t('Dataset liés:'),
+		// 	'#attributes' => array('style' => 'width: 50%; display: none;'),
+		// );
 
-		$form['Dataset_lies_table'] = array(
-			'#type' => 'table',
-			//'#prefix' => '<div id="datasetLies" >',
-			'#header' => array(
-				$this->t('Jeux de données liés'),
-			),
-			'#attributes' => array('style' => 'width: 100%;'),
-			//'#attributes' => array('style' =>'display: none'),
-			//            '#suffix' => '</div>',
-		);
+		// $form['Dataset_lies_table'] = array(
+		// 	'#type' => 'table',
+		// 	//'#prefix' => '<div id="datasetLies" >',
+		// 	'#header' => array(
+		// 		$this->t('Jeux de données liés'),
+		// 	),
+		// 	'#attributes' => array('style' => 'width: 100%;'),
+		// 	//'#attributes' => array('style' =>'display: none'),
+		// 	//            '#suffix' => '</div>',
+		// );
 
-		foreach ($dataSet as &$value) {
-			$form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
-				'#prefix' => '<div id="id_row_'.$value[id].'" >',
-				'#type' => 'checkbox',
-				'#title' => $this->t($value[title]),
-				'#suffix' => '</div>',
+		// foreach ($dataSet as &$value) {
+		// 	$form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
+		// 		'#prefix' => '<div id="id_row_'.$value[id].'" >',
+		// 		'#type' => 'checkbox',
+		// 		'#title' => $this->t($value[title]),
+		// 		'#suffix' => '</div>',
 
-			);
-		}
+		// 	);
+		// }
         
         
-		$form['m5_2'] = array(
-		'#markup' => '</div>',
-		);
+		// $form['m5_2'] = array(
+		// '#markup' => '</div>',
+		// );
 
 		////////////////Jeux de donnees lies///////////////////////////////////////        
 		$form['valider'] = array(

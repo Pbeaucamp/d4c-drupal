@@ -865,6 +865,7 @@ class typeColumnsForm extends HelpFormBase {
 		});
 
 		$ids = array();
+        $ids["new"] = "";
         // $tableData=array();
         for($i=0; $i<count($dataSet); $i++){
             for($j=0; $j<count($dataSet[$i][resources]); $j++){

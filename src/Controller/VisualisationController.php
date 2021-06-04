@@ -583,9 +583,9 @@ class VisualisationController extends ControllerBase {
 						</d4c-pane>
                     
 						<d4c-pane pane-auto-unload="true" title="Analyze" icon="chart-bar" translate="title" slug="analyze"
-								  do-not-register="!ctx.dataset.hasFeature(\'analyze\')">
+								  do-not-register="!ctx.dataset.hasFeature(\'analyze\') || (ctx.dataset.metas.extras | filter:{key:\'dont_visualize_tab\'})[0].value.includes(\'analize\')">
 							<d4c-analyze context="ctx" sync-to-url="true"></d4c-analyze>
-							
+
 								<d4c-embed-control context="ctx"
 												   force-embed-dataset-card="false"
 												   anonymous-access="true"
@@ -663,7 +663,7 @@ class VisualisationController extends ControllerBase {
 						<!-- Enable this to enable dataset subscription -->
 						<!-- <d4c-dataset-subscription context="ctx" logged-in="'.$loggedIn.'" dataset-id="' . $dataset["metas"]["id"] . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-subscription> -->
 
-						<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
+						<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api" do-not-register="!ctx.dataset.hasFeature(\'api\') || (ctx.dataset.metas.extras | filter:{key:\'dont_visualize_tab\'})[0].value.includes(\'api\')">
 							<d4c-dataset-api-console context="ctx" service-url="' . $config->gravitee->url . '" service-header-key="' . $config->gravitee->header_key . '" service-api-key="' . $config->gravitee->api_key . '"></d4c-dataset-api-console>
 						</d4c-pane>
                 

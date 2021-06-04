@@ -6433,7 +6433,7 @@ class Api{
 			
 			$found = false;
 			foreach($dataset['extras'] as $value){
-				if($value["key"] == "dont_visualize_tab"){
+				if ($value["key"] == "dont_visualize_tab") {
 					if(strpos($value["value"], "api") === false){
 						$features[] = "api";
 					}
