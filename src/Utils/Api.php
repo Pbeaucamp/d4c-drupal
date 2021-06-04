@@ -4628,29 +4628,29 @@ class Api{
 					$f = "cast(count(". $y["expr"] .") as integer)";
 					break;
 				case "AVG":
-					$f = "cast(avg(". $y["expr"] .") as DOUBLE PRECISION)";
+					$f = "cast(avg(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "MIN":
-					$f = "cast(min(". $y["expr"] .") as DOUBLE PRECISION)";
+					$f = "cast(min(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "MAX":
-					$f = "cast(max(". $y["expr"] .") as DOUBLE PRECISION)";
+					$f = "cast(max(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "STDDEV":
-					$f = "cast(stddev_pop(". $y["expr"] .") as DOUBLE PRECISION)";
+					$f = "cast(stddev_pop(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "SUM":
-					$f = "cast(sum(". $y["expr"] .") as DOUBLE PRECISION)";
+					$f = "cast(sum(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "QUANTILES":
 					$n = $y["subsets"];
 					$f = "percentile_cont(".($n/100).") within group ( order by ". $y["expr"] .")";
 					break;
 				default:
-					$f = "cast(count(". $y["expr"] .") as integer)";
+					$f = "cast(count(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as integer)";
 					break;
 			}
-			
+
 			if($y["subsets"] == NULL){
 				$fields .= $f . " as \"". $y["name"] ."\",";
 			} else {
