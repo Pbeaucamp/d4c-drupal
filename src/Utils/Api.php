@@ -1600,18 +1600,30 @@ class Api{
 		curl_close($curl);
 		$result = json_decode($result,true);
 
-		$res = array();$allFields = array();
+		$resultFields = $result['result']['fields'];
+
+		$res = array();
+		$allFields = array();
 
 		// sort array by poids
 		$fieldArray = array();
-		foreach ($result['result']['fields'] as $key => $row)
-		{
+		$index = 0;
+		foreach ($resultFields as $key => $row) {
+			$poids = $row["info"]["poids"];
+			if (isset($poids) && $poids > 0) {
+				$poids = $poids - 100;
+			}
+			else {
+				$poids = $index;
+			}
 
-		    $fieldArray[$key] = $row["info"]["poids"];
+		    $fieldArray[$key] = $poids;
+			$index += 1;
 		}
-		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
-		foreach ($result['result']['fields'] as $value) {
+		array_multisort($fieldArray, SORT_ASC, $resultFields);
+
+		foreach ($resultFields as $value) {
 			$description = $value['info']['notes'];
 			if(preg_match("/<!--\s*table\s*-->/i",$description)) {				
 				$res[] =  $value['id'];
@@ -1619,12 +1631,12 @@ class Api{
 			if($value['id'] == "_id") continue;
 			$allFields[] =  $value['id'];
 		}
-		if(count($res) > 0){
+		if (count($res) > 0){
 			return $res;
-		} else {
+		}
+		else {
 			return $allFields;
 		}
-		
 	 }
 
 	public function getMapTooltipFields($id) {
