@@ -12,6 +12,7 @@ use Drupal\ckan_admin\Utils\Query;
 use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\ckan_admin\Utils\Logger;
 
 
 
@@ -51,112 +52,73 @@ class customViewsForm extends HelpFormBase {
 	 */
     
 	public function getFormId() {
-        
 		return 'custom_views_form';
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-    
-    public function getCustomView($idDataset) {
-        
-      
-		$table = "d4c_custom_views";
-		$query = \Drupal::database()->select($table, 'map');
-
-		$query->fields('map', [
-			'cv_id',
-			'cv_name',
-			'cv_title',
-			'cv_icon',
-			'cv_template'
-		]);
-		
-		$query->condition('cv_dataset_id',$idDataset);		
-		$prep=$query->execute();
-        
-        
-        
-		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
-		while ($enregistrement = $prep->fetch()) {
-			array_push($res, $enregistrement);
-		}
-		if(count($res) > 0){
-			$cv = $res[count($res)-1];
-			
-			$table = "d4c_custom_views_html";
-			$query = \Drupal::database()->select($table, 'map');
-
-			$query->fields('map', [
-				'cvh_html',
-				'cvh_order'
-			]);
-			
-			$query->condition('cvh_id_cv',$cv->cv_id);
-			$query->orderBy('cvh_order', 'ASC');
-			
-			$prep=$query->execute();
-			//$prep->setFetchMode(PDO::FETCH_OBJ);
-			$html= array();
-			while ($enregistrement = $prep->fetch()) {
-				array_push($html, $enregistrement);
-			}
-			$cv->html = $html;
-            
-           
-			
-			return $cv;
-		} else {
-			return null;
-		}
-        
-        
-//        $api = new API();
-//      $result = json_decode($api->callCustomView($idDataset));
-//      
-//        return $result;
-        
 	}
     
 	public function buildForm(array $form, FormStateInterface $form_state) {
-
         $form = parent::buildForm($form, $form_state);
        
         $form['#attached']['library'][] = 'ckan_admin/custom_views.form';
         
-		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		$config->set('ids', null)->save();
-		$organisations = $config->get('organisations');
+		// $config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
+		// $config->set('ids', null)->save();
+        
         $api = new API();
-		$dataset = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
-        $dataset = json_decode($dataset->getContent());
-        $dataset= $dataset->result->results;
-        $Select_data = array();
+		$orgs = $api->getAllOrganisations(true, false, true);
         
-        
-        for ($i = 0; $i < count($dataset); $i++){
-            $Select_data[$dataset[$i]->id] = $dataset[$i]->title;  
+		$organizationList = array();
+        foreach ($orgs as &$value) {
+            $organizationList[$value[name]] = $value[display_name];
         }
-        
-        
-        $form['selected_Data'] = array(
-        
-           '#type' => 'select',
-           '#title' => t('Sélectionner des données:'),
-           '#options' => $Select_data,
 
-            '#attributes' => [
-                'onchange' => 'getData()',
-            ],
-       );
+		$form['filtr_org'] = array(
+            //'#prefix' =>'',
+            '#type' => 'select',
+            '#title' => t('Filtres :'),
+            '#options' => $organizationList,
+            '#empty_option' => t('----'),
+            '#attributes' => array('style' => 'width: 50%;','onchange' => 'baba();'),
+            '#ajax'         => [
+                'callback'  => '::datasetCallback',
+                'wrapper'   => 'selected_data',
+			],
+        );
+
+        $ids = array();
+		$ids["new"] = "Сréer un jeu de données";
+        // $form['selected_Data'] = array(
         
-		// $form['name'] = array(
-				// '#type' => 'textfield',
-				// '#title' => $this->t('Nom:'),
-                
-		// );
+        //     '#type' => 'select',
+        //     '#title' => t('Sélectionner des données:'),
+        //     '#options' => $ids,
+ 
+        //      '#attributes' => [
+        //          'onchange' => 'getData()',
+        //          'id' => 'selected_Data',
+        //          'name' => 'selected_Data'
+        //      ],
+        // );
+
+        $ids = array();
+		$form['selected_data'] = array(
+			'#type' => 'select',
+			'#options' => $ids,
+			'#attributes' => array(
+				'onchange' => 'getData()',
+				'id' => 'selected_data'
+			),
+			'#prefix' =>'<div id="selected_data">',
+			'#suffix' =>'</div>',
+		);
+        
+        $form['selected_data_id'] = array(
+            '#type' => 'textfield',
+            '#attributes' => array('style' => 'display:none'),
+		);
+
+
+
+
         
         $form['title'] = array(
 				'#type' => 'textfield',
@@ -229,12 +191,61 @@ class customViewsForm extends HelpFormBase {
 	
 		return $form;
 	}
+
+    public function datasetCallback(array &$form, FormStateInterface $form_state){
+		$api = new Api;
+		
+		$selected_org = $form_state->getValue('filtr_org');
+
+        $ids = array();
+        $ids["new"] = "";
+        if ($selected_org != "" && $selected_org != "----") {
+            $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id(), $selected_org);
+                
+            $dataSet = $dataSet->getContent();
+            $dataSet = json_decode($dataSet, true);
+            $dataSet = $dataSet[result][results];
+            
+            uasort($dataSet, function($a, $b) {
+                $res =  strcasecmp($a['title'], $b['title']);
+                return $res;
+            });
+
+            for ($i = 0; $i < count($dataSet); $i++){
+                $ids[$dataSet[$i][id]] = $dataSet[$i][title];
+            }
+        }
+
+		// $ids = array();
+        // $ids["new"] = "";
+        // for($i=0; $i<count($dataSet); $i++){
+        //     for($j=0; $j<count($dataSet[$i][resources]); $j++){
+        //         if($dataSet[$i][resources][$j][format]=='CSV'){
+		// 			$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    	
+		// 			break;
+        //         }
+        //     }
+		// }
+
+		$elem = [
+            '#type' => 'select',
+            '#options' => $ids,
+            '#attributes' => [
+                'onchange' => 'getData()', 
+				'id' => 'selected_data'
+			],
+       
+		];
+		
+		return $elem;
+	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state){ 
         $selected_templ = $form_state->getValue('selected_templ');
         
         $data = array();
-        $data["cv_dataset_id"]=$form_state->getValue('selected_Data');
+        $data["cv_dataset_id"]=$form_state->getValue('selected_data_id');
+        // $data["cv_dataset_id"]=$form_state->getValue('selected_Data');
         $data["cv_name"]=$form_state->getValue('title');
         $data["cv_title"]=$form_state->getValue('title');
         $data["cv_icon"]='tachometer';
@@ -258,7 +269,7 @@ class customViewsForm extends HelpFormBase {
         $old_Data = $this->getCustomView($data["cv_dataset_id"]);
         // add data to db
         if($old_Data != null){
-            
+
             $cv_id = $old_Data->cv_id;
             $query = \Drupal::database()->update('d4c_custom_views');
             $query->fields([
@@ -300,7 +311,6 @@ class customViewsForm extends HelpFormBase {
 			}
         }
         else{
-
             $query = \Drupal::database()->insert('d4c_custom_views');
             $query->fields([
                 'cv_dataset_id',
@@ -321,14 +331,12 @@ class customViewsForm extends HelpFormBase {
 
             $query->execute();
             
-
             $new_custom_view = $this->getCustomView($data["cv_dataset_id"]);
             $new_id_cv = $new_custom_view->cv_id;
             
 			// isert data html in custom_views_html
             
             for ($i = 0; $i < $data["cv_template"]; $i++){
-  
 				$query_html = \Drupal::database()->insert('d4c_custom_views_html');  
 				$query_html->fields([
 					'cvh_id_cv',
@@ -357,20 +365,70 @@ class customViewsForm extends HelpFormBase {
 	}
     
     public function validateForm(array &$form, FormStateInterface $form_state){
-        
-        $selected_Data = $form_state->getValue('selected_Data');
-        //$name = $form_state->getValue('name');
+        $selected_Data = $form_state->getValue('selected_data_id');
         $title = $form_state->getValue('title');
      
-        if( $selected_Data == '') $form_state->setErrorByName('selected_Data', $this->t('Aucune donnée sélectionnée'));   
-       // if( $name == '') $form_state->setErrorByName('name', $this->t('Aucune donnée sélectionnée'));   
+        if( $selected_Data == '') $form_state->setErrorByName('selected_Data', $this->t('Aucune donnée sélectionnée'));  
         if( $title == '') $form_state->setErrorByName('title', $this->t('Aucune donnée sélectionnée'));   
-        
-    } 
+    }
 
-    public function delCustomView(array &$form, FormStateInterface $form_state) {
-         
-		$id_dataset = $form_state->getValue('selected_Data');
+	/**
+	 * {@inheritdoc}
+	 */
+    public function getCustomView($idDataset) {
+		$table = "d4c_custom_views";
+		$query = \Drupal::database()->select($table, 'map');
+
+		$query->fields('map', [
+			'cv_id',
+			'cv_name',
+			'cv_title',
+			'cv_icon',
+			'cv_template'
+		]);
+		
+		$query->condition('cv_dataset_id',$idDataset);		
+		$prep=$query->execute();
+        
+        
+        
+		//$prep->setFetchMode(PDO::FETCH_OBJ);
+		$res= array();
+		while ($enregistrement = $prep->fetch()) {
+			array_push($res, $enregistrement);
+		}
+		if(count($res) > 0){
+			$cv = $res[count($res)-1];
+			
+			$table = "d4c_custom_views_html";
+			$query = \Drupal::database()->select($table, 'map');
+
+			$query->fields('map', [
+				'cvh_html',
+				'cvh_order'
+			]);
+			
+			$query->condition('cvh_id_cv',$cv->cv_id);
+			$query->orderBy('cvh_order', 'ASC');
+			
+			$prep=$query->execute();
+			//$prep->setFetchMode(PDO::FETCH_OBJ);
+			$html= array();
+			while ($enregistrement = $prep->fetch()) {
+				array_push($html, $enregistrement);
+			}
+			$cv->html = $html;
+
+			return $cv;
+		}
+        else {
+			return null;
+		}
+	}
+
+    public function delCustomView(array &$form, FormStateInterface $form_state) {  
+        $id_dataset = $form_state->getValue('selected_data_id');
+		// $id_dataset = $form_state->getValue('selected_Data');
          
         $new_custom_view = $this->getCustomView($id_dataset);
         $cv_id = $new_custom_view->cv_id;

@@ -4,7 +4,11 @@ $ = jQuery;
 
 $(document).ready(function () {
     hide_temp();
-    $("#edit-selected-data").append("<option value='' selected>---</option>");
+    $("#selected_data").append("<option value='' selected>---</option>");
+    
+    $("#selected_data").val($('#edit-selected-data-id').val());
+    $("#edit-selected-data-id").val($('#selected_data').val());
+
     $('#edit-selected-templ').val('1');
     getTemplate(); 
     
@@ -42,7 +46,7 @@ function getData() {
 
     hide_temp();
 
-    if ($("select[name='selected_Data']").val() == '') {
+    if ($("#selected_data").val() == '') {
        
         
         $("input[name='name']").val("");
@@ -54,6 +58,8 @@ function getData() {
 
     } 
     else {
+        $('#edit-selected-data-id').val('');
+        $('#edit-selected-data-id').val($('#selected_data').val());
        
  
 //        $.post("/admin/config/data4citizen/custom_views/", {
@@ -95,59 +101,42 @@ function getData() {
 //        });
          //console.log('/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val());
         
-        $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callCustomView/'+$("select[name='selected_Data']").val(), {
-        type: 'POST',
-      
-        dataType: 'json',
-        cache: true,
-        beforeSend: function () {
-            $('html,body').attr('style', 'cursor:wait !important;');
-            $('input[type="submit"]').attr('disabled', true);
+        $.ajax(fetchPrefix() + '/d4c/api/datasets/2.0/callCustomView/'+$("#selected_data").val(), {
+            type: 'POST',
+            dataType: 'json',
+            cache: true,
+            beforeSend: function () {
+                $('html,body').attr('style', 'cursor:wait !important;');
+                $('input[type="submit"]').attr('disabled', true);
+                
+                $("input[name='name']").attr('style', 'display:none;');
+                $("input[name='title']").attr('style', 'display:none;');
+                $("#edit-selected-templ").attr('style', 'display:none;');
+                $("#edit-template-1").attr('style', 'display:none;');  
+            },
+            complete: function () {
+                $("input[name='name']").removeAttr('style');
+                $("input[name='title']").removeAttr('style');
+                $("#edit-selected-templ").removeAttr('style');
+                $("#edit-template-1").removeAttr('style');
             
-        $("input[name='name']").attr('style', 'display:none;');
-        $("input[name='title']").attr('style', 'display:none;');
-        $("#edit-selected-templ").attr('style', 'display:none;');
-        $("#edit-template-1").attr('style', 'display:none;');
-            
-        },
-        complete: function () {
-            
-            
-        $("input[name='name']").removeAttr('style');
-        $("input[name='title']").removeAttr('style');
-        $("#edit-selected-templ").removeAttr('style');
-        $("#edit-template-1").removeAttr('style');
-            
-            $('html,body').removeAttr("style");
-            $('input[type="submit"]').attr('disabled', false);
-            $('#org_div').attr('style', 'width: 50%;');
-            
-            
-            
-            
+                $('html,body').removeAttr("style");
+                $('input[type="submit"]').attr('disabled', false);
+                $('#org_div').attr('style', 'width: 50%;');
         },
         success: function (data) {
-           
             console.log(data);
-            //data = jQuery.parseJSON(data.split("<!DOCTYPE html>")[0]);
-            //data = data.split("<!DOCTYPE html>")[0];
-           
-
             if (data == null) {
                 
-        $("input[name='name']").val("");
-        $("input[name='title']").val("");
-        $("#edit-selected-templ").val("1");
-        $("#edit-template-1").attr('style', '');
-        
-        getTemplate();
+                $("input[name='name']").val("");
+                $("input[name='title']").val("");
+                $("#edit-selected-templ").val("1");
+                $("#edit-template-1").attr('style', '');
                 
+                getTemplate();
 
             } 
             else {
-                
-               
-
                 $("#edit-name").val(data.cv_name);
                 $("#edit-title").val(data.cv_title);
                // $("#edit-icon").append($("<option value='" + data.cv_id + "'><i class='icon-" + data.cv_icon + "'></i></option>"));
@@ -183,7 +172,7 @@ function getData() {
 
 function getTemplate() {
     
-    if($("select[name='selected_Data']").val() == ''){
+    if($("#selected_data").val() == ''){
        
        
     
