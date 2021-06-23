@@ -57,7 +57,7 @@ class portailController extends ControllerBase {
 													
 													<div class="col-md-12 col-sm-4">
 														<div class="d4c-box d4c-map-wp">
-														<d4c-map basemap="osm" context="mapemprise" location="' . $config->client->default_bounding_box . '" provider="osm" scroll-wheel-zoom="false" class="ng-isolate-scope">
+														<d4c-map context="mapemprise" location="' . $config->client->default_bounding_box . '" scroll-wheel-zoom="false" class="ng-isolate-scope">
 
 																<d4c-map-layer border-color="#FFFFFF" border-opacity="1" border-pattern="solid" border-size="1" caption="false" color="#0e7ce3" context="mapemprise" exclude-from-refit="false"  picto="d4c-" show-marker="false" size-function="linear"> 
 																</d4c-map-layer> 

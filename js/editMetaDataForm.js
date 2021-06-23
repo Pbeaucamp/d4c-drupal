@@ -95,19 +95,19 @@ $('#infoTab').before(`<p><h3>INFORMATION GENERALE</h3></p>`);
 $('#cartoTab').before(`<p><h3 onclick="anichange('#cartoTab')" style="cursor: pointer" >CARTOGRAPHIE</h3></p><hr size="2"/>`);
 $('#resEtValidTab').before(`<p><h3 onclick="anichange('#resEtValidTab')" style="cursor: pointer" >RESSOURCES ET VALIDATION</h3></p><hr size="2"/>`);
 $('#configurationTab').before(`<p><h3 onclick="anichange('#configurationTab')" style="cursor: pointer" >TABLEAU DE BORD DANS L'INFORMATION</h3></p><hr size="2"/>`);
-$('#datasetLies').before(`<p><h3 onclick="anichange('#datasetLies')" style="cursor: pointer" >JEUX DE DONNEES LIES</h3></p> <hr size="2"/>`);
+// $('#datasetLies').before(`<p><h3 onclick="anichange('#datasetLies')" style="cursor: pointer" >JEUX DE DONNEES LIES</h3></p> <hr size="2"/>`);
 $('#filters').attr('style', ' background-color: #ddddda; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em ');
 $('#infoTab').attr('style', ' background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em ');
 $('#cartoTab').attr('style', ' display: none; background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em');
 $('#resEtValidTab').attr('style', ' display: none; background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em');
 $('#configurationTab').attr('style', ' display: none; background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px; padding:1em');
-$('#datasetLies').attr('style', ' display: none; background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px;  overflow:scroll; height:20em; width: 30%; overflow-x: hidden; padding:1em');
+// $('#datasetLies').attr('style', ' display: none; background-color: #fcfcfa; border: 1px solid #bfbfbf; border-radius: 3px;  overflow:scroll; height:20em; width: 30%; overflow-x: hidden; padding:1em');
 //$('#filters').after('<br>');
 $('#infoTab').after('<br>');
 $('#cartoTab').after('<br>');
 $('#resEtValidTab').after('<br>');
 $('#configurationTab').after('<br>');
-$('#datasetLies').after('<br>');
+// $('#datasetLies').after('<br>');
 //$("#edit-img-picto-upload").after('<div id= "old_img"></div><div id="btnImgHide"><br></div><div style=" overflow:scroll; height:15em; overflow-x: hidden; display: none;  width: 30%;" id="pickImg"></div><br>');
 $('#edit-selected-type-map').val("");
 $('#edit-table').after('<div id="up-stock" style="display:none"></div>');
@@ -123,9 +123,9 @@ $('#edit-del-button-dataset').attr("style", "display: none;");
 $('#edit-filtr-org').change(function () {
     clear();
 });
-let element = document.getElementById("edit-tags");
-element.classList.add("onlyDigits");
-document.querySelector(".onlyDigits").onkeyup = onlyDigits;
+// let element = document.getElementById("edit-tags input");
+// element.classList.add("onlyDigits");
+// document.querySelector(".onlyDigits").onkeyup = onlyDigits;
 clear();
 $('#pickImg').attr("style", "overflow:scroll; height:15em; overflow-x: hidden; display: none;  width: 30%;");
 $("#btnImgHide").append(`<input class="button js-form-submit form-submit" value="Ouvrir les pictogrammes" type="button" onclick="togglePicker('#pickImg')">`);
@@ -201,8 +201,8 @@ function addData(result) {
 function clear() {
     $('#addRowBtnWidget').remove();
     $('#edit-description').val("");
-    $('#edit-tags').val("");
-    $('#edit-dataset-lies').val("");
+    $('#edit-tags input').val("");
+    // $('#edit-dataset-lies').val("");
     $('#edit-selected-theme').val("default%Default");
     $('#edit-selected-type-map').val("");
     //$("#edit-title").attr('style', 'display: none;');
@@ -245,26 +245,26 @@ function clear() {
     $('#edit-analyse-default').val('');
 
     // clear dataset lies
-    var tableChecks = $('#edit-dataset-lies-table').find('input');
+    // var tableChecks = $('#edit-dataset-lies-table').find('input');
 
     //var options = $('#selected_data option');
 
     $("#edit-table-widgets tbody tr").remove();
     $("#edit-table-widgets").after('<input id="addRowBtnWidget" class="button js-form-submit form-submit" value="Ajouter un widget" type="button" onclick="addWidgetRow(1)"">');
 
-    var values = $.map(tableChecks, function (tableChecks) {
-        return tableChecks.id;
-    });
+    // var values = $.map(tableChecks, function (tableChecks) {
+    //     return tableChecks.id;
+    // });
 
 
-    for (let i = 0; i < values.length; i++) {
+    // for (let i = 0; i < values.length; i++) {
 
-        if (values[i] != '' || values[i] != 'new') {
+    //     if (values[i] != '' || values[i] != 'new') {
 
-            $('#edit-dataset-lies-table-' + values[i] + '-dt').removeAttr("checked")
+    //         $('#edit-dataset-lies-table-' + values[i] + '-dt').removeAttr("checked")
 
-        }
-    }
+    //     }
+    // }
 
 
 
@@ -301,7 +301,7 @@ function fillData(data) {
         keywords = keywords.substring(1);
     }
 
-    $('#edit-tags').val(keywords);
+    $('#edit-tags input').val(keywords);
     // licene   
     $('#edit-selected-lic').val(data.license_id);
 
@@ -398,8 +398,19 @@ function fillData(data) {
             var value = data.extras[g].value;
             if(value != "FTP") {
                 $("#edit-donnes-source input").val(value);
-                const url = new URL(value);
-                $("#edit-source input").val(url.hostname);
+
+                if (value) {
+                    if (!value.includes("http")) {
+                        value = "https://" + value;
+                    }
+    
+                    try {
+                        const url = new URL(value);
+                        $("#edit-source input").val(url.hostname);
+                    } catch (e) {
+                        $("#edit-source input").val(value);
+                    }
+                }
             }
             else {
                 $("#edit-source input").val("FTP/SFTP");
@@ -409,21 +420,21 @@ function fillData(data) {
         // get producer value
         if (data.extras[g].key == 'producer') {
             var producer = data.extras[g].value;
-                $("#edit-producteur input").val(producer);
+            $("#edit-producteur input").val(producer);
             
         }
 
         // get frequence value
         if (data.extras[g].key == 'frequence') {
             var frequence = data.extras[g].value;
-                $("#edit-frequence input").val(frequence);
+            $("#edit-frequence input").val(frequence);
             
         }
 
         // get source value
         if (data.extras[g].key == 'source') {
             var source = data.extras[g].value;
-            if(source != null) {
+            if (source) {
                 $("#edit-source input").val(source);
             }
             
@@ -432,7 +443,7 @@ function fillData(data) {
         // get donnees source value
         if (data.extras[g].key == 'donnees_source') {
             var donnees_source = data.extras[g].value;
-            if(donnees_source != null){
+            if (donnees_source) {
                 $("#edit-donnes-source input").val(donnees_source);
             }
             
@@ -458,10 +469,11 @@ function fillData(data) {
             let links = data.extras[g].value;
             links = links.split(';');
 
-            for (let f = 0; f < links.length; f++) {
-                $('#edit-dataset-lies-table-' + (links[f].replace(/:/, '')) + '-dt').attr('checked', 'checked');
-                $('#edit-dataset-lies-table-' + links[f] + '-dt').val(1);
-            }
+            //Disable for now until a better solution is found
+            // for (let f = 0; f < links.length; f++) {
+            //     $('#edit-dataset-lies-table-' + (links[f].replace(/:/, '')) + '-dt').attr('checked', 'checked');
+            //     $('#edit-dataset-lies-table-' + links[f] + '-dt').val(1);
+            // }
         }
 		
 		if (data.extras[g].key == 'default_visu') {

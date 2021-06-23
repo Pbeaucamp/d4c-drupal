@@ -1,19 +1,19 @@
 $ = jQuery;
-var users;
+// var users;
 var currentuser;
 
 
 $(document).ready(function(){
 	$("#edit-roles-list-administrator").attr("disabled", "disabled");
-	for (let [key, user] of Object.entries(users)) {
-		// if(user.roles.includes('administrator')) {
-			// $("#edit-users-list-" + user.id).attr("disabled", "disabled");
-		// }
-		// console.log(currentuser);
-		if(currentuser == user.id) {
-			$("#edit-users-list-" + user.id).attr("disabled", "disabled");
-		}
-	}
+	// for (let [key, user] of Object.entries(users)) {
+	// 	// if(user.roles.includes('administrator')) {
+	// 		// $("#edit-users-list-" + user.id).attr("disabled", "disabled");
+	// 	// }
+	// 	// console.log(currentuser);
+	// 	if(currentuser == user.id) {
+	// 		$("#edit-users-list-" + user.id).attr("disabled", "disabled");
+	// 	}
+	// }
 });
 
 /////////////modal/////////////
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			
 			$("#edit-selected-type").val("");
 			$("#edit-selected-id").val("");
-			$("#edit-selected-users").val("");
+			// $("#edit-selected-users").val("");
 			
         });
 
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			
 			$("#edit-selected-type").val("");
 			$("#edit-selected-id").val("");
-			$("#edit-selected-users").val("");
+			// $("#edit-selected-users").val("");
 			
         });
 
@@ -77,18 +77,18 @@ document.addEventListener('DOMContentLoaded', function () {
 	$("#edit-roles-list").css("column-count", 2);
 	$("#edit-roles-list .form-type-checkbox").css("display", "inline-block");
 	
-	$("#edit-users-list").css("overflow", "auto").css("max-height", "200px");
+	// $("#edit-users-list").css("overflow", "auto").css("max-height", "200px");
 	
 	$("#edit-roles-list .form-type-checkbox input").click(function(event){
 		console.log(event);
 		var checked = event.target.checked;
 		var role = event.target.value;
 	
-		for (let [key, user] of Object.entries(users)) {
-			if(user.roles.indexOf(role) != -1 || (role == "administrator" && user.id == "1")){
-				$("#edit-users-list-"+parseInt(user.id)).prop("checked", checked);
-			}
-		}
+		// for (let [key, user] of Object.entries(users)) {
+		// 	if(user.roles.indexOf(role) != -1 || (role == "administrator" && user.id == "1")){
+		// 		$("#edit-users-list-"+parseInt(user.id)).prop("checked", checked);
+		// 	}
+		// }
 	});
 
 }); // end ready   
@@ -171,9 +171,9 @@ function openecurityPopup(event){
 		for(var role of sec.roles){
 			$("#edit-roles-list-"+role).prop("checked", true);
 		}
-		for(var user of sec.users){
-			$("#edit-users-list-"+user).prop("checked", true);
-		}
+		// for(var user of sec.users){
+		// 	$("#edit-users-list-"+user).prop("checked", true);
+		// }
 	}
 	
 	let overlay = document.querySelector('.js-overlay-modal-security');
@@ -189,24 +189,24 @@ function end(){
 function saveSecurity(){
 	var res = {"roles":[], "users":[]};
 	cbRoles = document.querySelectorAll('#edit-roles-list .form-type-checkbox input');
-    cbUsers = document.querySelectorAll('#edit-users-list .form-type-checkbox input');
+    // cbUsers = document.querySelectorAll('#edit-users-list .form-type-checkbox input');
 	cbRoles.forEach(function (item) {
 		if(item.checked == true){
 			res.roles.push(item.value);
 		}
     });
-	cbUsers.forEach(function (item) {
-		if(item.checked == true){
-			res.users.push("*"+parseInt(item.value)+"*");
-		}
-    });
-	$("#edit-selected-users").val(JSON.stringify(res));
+	// cbUsers.forEach(function (item) {
+	// 	if(item.checked == true){
+	// 		res.users.push("*"+parseInt(item.value)+"*");
+	// 	}
+    // });
+	// $("#edit-selected-users").val(JSON.stringify(res));
 	
 	$("#edit-search").click();
 }
 
 (function($, Drupal, drupalSettings) {
-    users = JSON.parse(drupalSettings.users);
+    // users = JSON.parse(drupalSettings.users);
 	currentuser = drupalSettings.currentuser;
 	// console.log(currentuser);
 })(jQuery, Drupal, drupalSettings);

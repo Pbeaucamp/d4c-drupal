@@ -327,29 +327,29 @@ class DatasetsBoardForm extends HelpFormBase {
 			'#options'       => $roles
 		);
 		
-		$form['security']['users'] = [
-			'#type'  => 'details',
-			'#title' => t('Utilisateurs'),
-			'#open'  => true
-		];
-		
-		$users = \Drupal\user\Entity\User::loadMultiple();
-		$userlist = array();
-		$userListComplete = array();
-		foreach($users as $user){
-			$username = $user->get('name')->value;
-			$uid = $user->get('uid')->value;
-			$uroles = $user->getRoles();
-			if($username != ""){
-				$userlist[$uid] = $username;
-				$userListComplete[$uid] = array("id" => $uid, "name" => $username, "roles" => $uroles);
-			}
-		}
-		$form['security']['users']['users_list'] = array(
-			'#type'          => 'checkboxes',
-			// '#default_value' => $settings['tynt_roles'],
-			'#options'       => $userlist
-		);
+		//We remove the security by user
+		// $form['security']['users'] = [
+		// 	'#type'  => 'details',
+		// 	'#title' => t('Utilisateurs'),
+		// 	'#open'  => true
+		// ];
+		// $users = \Drupal\user\Entity\User::loadMultiple();
+		// $userlist = array();
+		// $userListComplete = array();
+		// foreach($users as $user){
+		// 	$username = $user->get('name')->value;
+		// 	$uid = $user->get('uid')->value;
+		// 	$uroles = $user->getRoles();
+		// 	if($username != ""){
+		// 		$userlist[$uid] = $username;
+		// 		$userListComplete[$uid] = array("id" => $uid, "name" => $username, "roles" => $uroles);
+		// 	}
+		// }
+		// $form['security']['users']['users_list'] = array(
+		// 	'#type'          => 'checkboxes',
+		// 	// '#default_value' => $settings['tynt_roles'],
+		// 	'#options'       => $userlist
+		// );
 		
 		// drupal_add_js('$(document).ready(function(){
                        // $("#edit-users-list-1").attr("disabled", "disabled");
@@ -357,7 +357,7 @@ class DatasetsBoardForm extends HelpFormBase {
 
 		
 		
-		$form['#attached']['drupalSettings']['users'] = json_encode($userListComplete);
+		// $form['#attached']['drupalSettings']['users'] = json_encode($userListComplete);
 		$form['#attached']['drupalSettings']['currentuser'] = $current_user->id();
 		return $form;
 	}

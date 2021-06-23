@@ -22,7 +22,7 @@ use Drupal\ckan_admin\Utils\ResourceManager;
 
 
 
-ini_set('memory_limit', '2048M'); // or you could use 1G
+ini_set('memory_limit', '4G'); // or you could use 1G
 ini_set('max_execution_time', 200);
 
 /*
@@ -7709,8 +7709,20 @@ function deleteStory($story_id){
     
 	public function callManageDataset() {
 		Logger::logMessage("Create or update dataset by API");
-		$users = \Drupal\user\Entity\User::loadMultiple();
-			
+
+		// Taking too much time, we now load only admin users
+		// $users = \Drupal\user\Entity\User::loadMultiple();
+
+		$userStorage = \Drupal::entityTypeManager()->getStorage('user');
+
+		$query = $userStorage->getQuery();
+		$uids = $query
+			->condition('status', '1')
+			->condition('roles', 'administrator')
+			->execute();
+
+		$users = $userStorage->loadMultiple($uids);
+
 		$resourceManager = new ResourceManager;
 
 		$datasetName = $_POST['name'];
@@ -7801,6 +7813,7 @@ function deleteStory($story_id){
 		$resourceName = $_POST['resource_name'];
 		$resourceUrl = $_POST['resource_url'];
 
+		$description = $_POST['description'];
 		$format = $_POST['format'];
 		$encoding = $_POST['encoding'];
 		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
@@ -7818,13 +7831,13 @@ function deleteStory($story_id){
 						$manageFileResult = $this->manageFileByUrl($resourceUrl);
 						$resourceUrl = $manageFileResult["url"];
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip);
 				
 						//We update the visualisation's icons
 						$this->calculateVisualisations($datasetId);
 					}
 					else {
-						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", "", false, $format);
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
 					}
 	
@@ -7836,13 +7849,13 @@ function deleteStory($story_id){
 						$manageFileResult = $this->manageFileByUrl($resourceUrl);
 						$resourceUrl = $manageFileResult["url"];
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, null, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
 				
 						//We update the visualisation's icons
 						$this->calculateVisualisations($datasetId);
 					}
 					else {
-						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", "", false, $format);
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
 					}
 				
@@ -7870,11 +7883,11 @@ function deleteStory($story_id){
 				try {
 					if (!$resourceId) {
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, null, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip);
 					}
 					else {	
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, null, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
 					}
 
 					//We update the visualisation's icons
