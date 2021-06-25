@@ -6361,7 +6361,6 @@ class Api{
 
 		if ($applySecurity) {
 			$allowedOrganizations = $this->getUserOrganisations();
-	
 			foreach ($orgs as $valueKey => $org) {
 				if (!$this->isOrganizationAllowed($org["name"], $allowedOrganizations)) {
 					unset($orgs[$valueKey]);
@@ -8167,7 +8166,15 @@ function deleteStory($story_id){
 
 		foreach ($current_user->getRoles() as $role) {
 			if (strpos($role, 'admin_') !== false) {
-				$allowedOrganizations[] = substr($role, strlen('admin_'), strlen($role));
+				$loadedRole = \Drupal::entityTypeManager()->getStorage('user_role')->load($role);
+				$loadedRoleName = $loadedRole->label();
+
+				//We extract the organization
+				$organizationName = substr($loadedRoleName, strlen('admin_'), strlen($loadedRoleName));
+				//We lowercase
+				$organizationName = strtolower($organizationName);
+
+				$allowedOrganizations[] = $organizationName;
 			}
 		}
 
@@ -8180,10 +8187,7 @@ function deleteStory($story_id){
 		//We add all the organization allowed for the user
 		$organizationParameter = "(";
 		foreach ($allowedOrganizations as $org) {
-			Logger::logMessage("TRM - Allowed organizations " . $org);
-
 			if ($org == "*") {
-				Logger::logMessage("TRM - User is admin we return null");
 				return null;
 			}
 
@@ -8192,8 +8196,6 @@ function deleteStory($story_id){
 			}
 
 			$organizationParameter = $organizationParameter . 'organization:"' . $org . '"';
-
-			Logger::logMessage("TRM - Organization parameter " . $organizationParameter);
 
 			$hasParameter = true;
 		}
@@ -8204,7 +8206,7 @@ function deleteStory($story_id){
 
 	function isOrganizationAllowed($organization, $allowedOrganizations) {
 		foreach ($allowedOrganizations as $org) {
-			if ($org == "*" || $org == $organization) {
+			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
 			}
 		}
@@ -8213,7 +8215,7 @@ function deleteStory($story_id){
 
 	function isDatasetAllowed($organization, $allowedOrganizations) {
 		foreach ($allowedOrganizations as $org) {
-			if ($org == "*" || $org == $organization) {
+			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
 			}
 		}
