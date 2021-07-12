@@ -1171,6 +1171,18 @@ class ResourceManager {
 		}
 	}
 
+	function deleteDatasetResources($datasetId) {
+		$api = new Api;
+		
+		$dataset = $api->getDataSetById($datasetId);
+		$contentdataset = json_decode($dataset->getContent(), true);
+		$resources = $contentdataset["result"]["resources"];
+
+		for($i=0; $i<count($resources); $i++) {
+			$this->deleteResource($resources[$i]['id']);
+		}
+	}
+
 	function deleteResource($resourceId) {
 		$api = new Api;
 		
@@ -1181,6 +1193,7 @@ class ResourceManager {
 
 		$callUrl = $this->urlCkan . "/api/action/resource_delete";
 		$result = $api->updateRequest($callUrl, $delRes, "POST");
+		$result = json_decode($result);
 
 		if ($result->success != true) {
 			throw new \Exception("La ressource n'a pas pu être supprimé ' (" . $result->error->message . ").");

@@ -7705,6 +7705,32 @@ function deleteStory($story_id){
 
 		return $response;
 	}
+	
+	public function callRemoveResources() {
+		$datasetId = $_POST['dataset_id'];
+
+		try {
+			$resourceManager = new ResourceManager;
+
+			Logger::logMessage("Delete dataset resources " . $datasetId);
+			$resourceManager->deleteDatasetResources($datasetId);
+
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
     
 	public function callManageDataset() {
 		Logger::logMessage("Create or update dataset by API");
@@ -8016,6 +8042,32 @@ function deleteStory($story_id){
 		$data_array["status"] = "success";
 		$data_array["url"] = $url;
 		return $data_array;
+	}
+	
+	public function callRemoveResource() {
+		$resourceId = $_POST['resource_id'];
+
+		try {
+			$resourceManager = new ResourceManager;
+
+			Logger::logMessage("Delete resource " . $resourceId);
+			$resourceManager->deleteResource($resourceId);
+
+			$result["status"] = "success";
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
 	}
 
 	/**

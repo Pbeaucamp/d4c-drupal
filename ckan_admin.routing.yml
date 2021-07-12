@@ -1018,10 +1018,32 @@ ckan_admin.api.removeDataset:
   requirements:
     _user_is_logged_in: 'TRUE'
 
+ckan_admin.api.removeResources:
+  path: '/d4c/api/v1/dataset/resources_remove'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callRemoveResources'
+    params: ''
+    _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
 ckan_admin.api.addResource:
   path: '/d4c/api/v1/dataset/resource_add'
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callUploadResource'
+    params: ''
+    _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+ckan_admin.api.removeResource:
+  path: '/d4c/api/v1/dataset/resource_remove'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callRemoveResource'
     params: ''
     _title: ''
   options:

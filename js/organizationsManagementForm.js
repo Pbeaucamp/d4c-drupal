@@ -11,10 +11,9 @@ function addData(data) {
     let org_id = $('#edit-selected-org').val();
 
     if (org_id == 'new') {
-
         clear();
-
-    } else {
+    }
+    else {
 
         clear();
 
@@ -22,11 +21,11 @@ function addData(data) {
 
             if (data[i].id == org_id) {
                 $('#edit-title ').val(data[i].display_name);
+                $('#edit-id ').val(data[i].name);
                 $('#edit-description').val(data[i].description);
+
                 if(data[i].image_display_url!=''){
-                   
                     $('#org_img').append('<span id="img" style=" background-image: url(' + data[i].image_display_url + '); margin-top: 0px;  display: inline-block; width: 8em; height: 8em; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 20em; margin-top: -4em;"></span>');
-                    
                 }
                 
                 $('#org_img').append('<div id="count_package"><label>Jeux de données:' + data[i].package_count + '</label></div>');
@@ -46,55 +45,35 @@ function addData(data) {
 				} else {
 					$('#edit-selected-private').val('0');
 				}
-                /*if(data[i].extras[0].value == "true"){
-                     $('#edit-selected-private').val('0');
-                }
-                else {
-                      $('#edit-selected-private').val('1');
-                }*/
-                
 
                 buildWidgetCode(data[i].name);
 
                 break;
             }
-
         }
-
-
-
-
     }
-
 }
 
 function clear() {
-    
     $('#edit-title input').val('');
+    $('#edit-id input').val('');
     $('#edit-description').val('');
     $('#org_img').empty();
     $('#count_package').remove();
 
     buildWidgetCode(null);
-
 }
 
 function validUpload(event, name) {//backgr//resours
-
     if ($("[name='files["+name+"]']").val() != '' && $("[name='files["+name+"]']").val() != null && typeof($("[name='files["+name+"]']").val())!='undefined') {
-        
-         alert("Veuillez attendre la fin du chargement des ressources!");
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            if (!event.isDefaultPrevented()) {
-                event.returnValue = false;
-            }
+        alert("Veuillez attendre la fin du chargement des ressources!");
 
- 
-        
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.isDefaultPrevented()) {
+            event.returnValue = false;
+        }
     }
-
-
 }
 
 function buildWidgetCode(selectedOrganisation) {

@@ -40,7 +40,7 @@ class organizationsManagementForm extends HelpFormBase
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $this->urlCkan = $this->config->ckan->url;
 
-        $api = new Api;
+        // $api = new Api;
 //        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string%20asc');
 //        $dataSet = $dataSet->getContent();
 //        $dataSet = json_decode($dataSet, true);
@@ -74,20 +74,28 @@ class organizationsManagementForm extends HelpFormBase
         }
         
 		$form['selected_org'] = array(
-           
             '#type' => 'select',
             '#title' => t('*Organisation :'),
             '#options' => $organizationList,
             '#attributes' => array('onchange' => 'addData('.$orgsData.')',
 				'style' => 'width: 50%;'),
-        ); 
-        
+        );
+
 		$form['title'] = array(
             '#markup' => '',
             '#type' => 'textfield',
-            '#title' => $this->t('*Titre :'),
-				'#attributes' => array('style' => 'width: 50%;'),
+            '#title' => $this->t('*Nom de l\'organisation'),
+            '#required' => TRUE,
+            '#attributes' => array('style' => 'width: 50%;'),
         );
+        
+        $form['id'] = [
+            '#type' => 'textfield',
+            '#title' => $this->t('ID de l\'organisation'),
+            '#required' => false,
+            '#disabled' => false,
+            '#description' => $this->t('Définition d\'un ID personalisé pour l\'organisation. Si le champ est vide, l\'ID est généré automatiquement. Ne peut contenir que des lettres minuscules, chiffres, et tirets.'),
+        ];
             
 		$form['description'] = array(
             '#type' => 'textarea',
@@ -159,8 +167,10 @@ class organizationsManagementForm extends HelpFormBase
         
         $api = new Api;
         $this->urlCkan = $this->config->ckan->url;
+
         $selected_org = $form_state->getValue('selected_org');
         $title = $form_state->getValue('title');
+        $id = $form_state->getValue('id');
         $description = $form_state->getValue('description');
         $form_file = $form_state->getValue('img_org');
         $private=$form_state->getValue('selected_private');
@@ -171,22 +181,18 @@ class organizationsManagementForm extends HelpFormBase
         else {
             $private = false;
         }
-        
-        $name = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $title)));
-        $name = str_replace(" ", "_", $name);
-        $name = strtolower($name);
-        $name = htmlentities($name, ENT_NOQUOTES, $charset);
-	    $name = preg_replace('#\&([A-za-z])(?:acute|cedil|circ|grave|ring|tilde|uml)\;#', '\1', $name);
-	    $name = preg_replace('#\&([A-za-z]{2})(?:lig)\;#', '\1', $name); // pour les ligatures e.g. '&oelig;'
-	    $name = preg_replace('#\&[^;]+\;#', '', $name); // supprime les autres caractères
-	    $name = preg_replace('@[^a-zA-Z0-9_]@','',$name);
+
+        if ($id == '') {
+            //If the ID is not defined, we clear the name to transform to a valid ID
+            $id = $this->clearTitle($title);
+        }
         
         $extras=array();
         
         array_push($extras,['key'=>'private', 'value'=>$private]);
         
         $context =[
-			'name'=>$name,
+			'name'=>$id,
 			'title'=>$title,
 			'description'=>$description,
 			'state'=>'active',//'active'/ 'deleted' /draft
@@ -195,7 +201,7 @@ class organizationsManagementForm extends HelpFormBase
 			'users'=>array()
 		];
         
-        if($selected_org=='new'){
+        if ($selected_org=='new') {
             
             if (isset($form_file[0]) && !empty($form_file[0])) {
 				$file = File::load($form_file[0]);
@@ -215,15 +221,13 @@ class organizationsManagementForm extends HelpFormBase
             else {
 				\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées! '.$return[error][name][0]), 'error');
                 $context =[
-					'id'=>$name,
+					'id'=>$id,
 					'state'=>'active',//'active'/ 'deleted' /draft
 				];
             
 				$callUrlUpdate = $this->urlCkan . "/api/action/organization_update";
 				$return = $api->updateRequest($callUrlUpdate, $context, "POST");  
-			}
-            
-            
+			} 
         }
         else{
             $context[id]=$selected_org;
@@ -248,19 +252,39 @@ class organizationsManagementForm extends HelpFormBase
 			}
           
         }
-		exec("/usr/lib/ckan/default/bin/paster --plugin=ckan search-index rebuild -c /etc/ckan/default/production.ini > /dev/null &", $output, $code);
-		//error_log(json_encode($output . $code));
+		
+        // Deactivate reindexing as it can lead to failed reindexing. We will see if it works without
+        // exec("/usr/lib/ckan/default/bin/paster --plugin=ckan search-index rebuild -c /etc/ckan/default/production.ini > /dev/null &", $output, $code);
+    }
+
+    function clearTitle($title) {
+        $name = trim(preg_replace('/\s\s+/', ' ', str_replace("\n", " ", $title)));
+        $name = str_replace(" ", "_", $name);
+        $name = strtolower($name);
+	    $name = preg_replace('#\&([A-za-z])(?:acute|cedil|circ|grave|ring|tilde|uml)\;#', '\1', $name);
+	    $name = preg_replace('#\&([A-za-z]{2})(?:lig)\;#', '\1', $name); // pour les ligatures e.g. '&oelig;'
+	    $name = preg_replace('#\&[^;]+\;#', '', $name); // supprime les autres caractères
+	    $name = preg_replace('@[^a-zA-Z0-9_-]@','',$name);
+
+        Logger::logMessage("TRM - Orga ID " . $name);
+
+        return $name;
     }
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
         
         $title = $form_state->getValue('title');
-        
         if ($title == '') {
-            $form_state->setErrorByName('title', $this->t('Titre'));
+            $form_state->setErrorByName('title', $this->t('Nom de l\'organisation'));
         }
         
+        $id = $form_state->getValue('id');
+        if ($id != '' && !$this->checkId($id)) {
+            $form_state->setErrorByName('id', $this->t('Champ non valide'));
+        }
 	}
     
-
+    function checkId($id) {
+        return preg_match('/^[\w-]+$/', $id);
+    }
 }
