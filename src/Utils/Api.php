@@ -7738,15 +7738,7 @@ function deleteStory($story_id){
 		// Taking too much time, we now load only admin users
 		// $users = \Drupal\user\Entity\User::loadMultiple();
 
-		$userStorage = \Drupal::entityTypeManager()->getStorage('user');
-
-		$query = $userStorage->getQuery();
-		$uids = $query
-			->condition('status', '1')
-			->condition('roles', 'administrator')
-			->execute();
-
-		$users = $userStorage->loadMultiple($uids);
+		$users = $this->getAdministrators();
 
 		$resourceManager = new ResourceManager;
 
@@ -8273,6 +8265,18 @@ function deleteStory($story_id){
 		}
 
 		return false;
+	}
+
+	function getAdministrators() {
+		$userStorage = \Drupal::entityTypeManager()->getStorage('user');
+
+		$query = $userStorage->getQuery();
+		$uids = $query
+			->condition('status', '1')
+			->condition('roles', 'administrator')
+			->execute();
+
+		return $userStorage->loadMultiple($uids);
 	}
 
 	/* END SECURITY PART WITH ROLES AND ORGANIZATION */

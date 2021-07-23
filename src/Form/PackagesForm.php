@@ -290,9 +290,10 @@ class PackagesForm extends HelpFormBase {
 		$this->urlCkan = $this->config->ckan->url;
 
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
-		$users = \Drupal\user\Entity\User::loadMultiple();
+		// $users = \Drupal\user\Entity\User::loadMultiple();
 		
         $api = new Api();
+		$users = $api->getAdministrators();
         $resourceManager = new ResourceManager();
 
         $orgavalue = $form_state->getValue('orga_selected_input');

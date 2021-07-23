@@ -225,7 +225,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 		
 		###### security #######
 		$idUser = "*".\Drupal::currentUser()->id()."*";
-		$users = \Drupal\user\Entity\User::loadMultiple();
+
+		// $users = \Drupal\user\Entity\User::loadMultiple();
+		$users = $api->getAdministrators();
+
 		$userlist = array();
 		foreach($users as $user){
 			$username = $user->get('name')->value;

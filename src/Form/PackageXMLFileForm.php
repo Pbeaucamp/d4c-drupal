@@ -386,7 +386,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				}
 				$tags = array();
 				$userId = "*" . \Drupal::currentUser()->id() . "*";
-				$users = \Drupal\user\Entity\User::loadMultiple();
+				// $users = \Drupal\user\Entity\User::loadMultiple();
 				$title="";
 				$datasetName="";
 				$description = "";
