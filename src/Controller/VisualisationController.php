@@ -198,6 +198,7 @@ class VisualisationController extends ControllerBase {
 		$disqus = $this->buildDisqus($config, $host, $dataset);
 		$imports = $this->buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources);
 
+		// <a href="javascript:history.back()"><i class="fa fa-fw fa-twitter"></i></a>
 		return '
 			<body>
 				<div class="d4c-content">
@@ -218,7 +219,6 @@ class VisualisationController extends ControllerBase {
 							<div class="d4c-dataset-visualization__header">
 								<h1 class="d4c-dataset-visualization__dataset-title">
 									<d4c-social-buttons></d4c-social-buttons>
-								
 									<div class="box_3">
 										<div style=" background-image: url('. $imgTheme . '); display: inline-block; width: 40px; height: 40px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-right: 8px;"/>
 									</div>
@@ -338,10 +338,10 @@ class VisualisationController extends ControllerBase {
 		$limitesEtConditionsUtilisation = $this->buildLimitesEtConditionsUtilisation($metadataExtras);
 
 		//MÉTHODE DE PRODUCTION ET QUALITÉ
-		$methodeProductionEtQualite = $this->buildMethodeProductionEtQualite($metadataExtras, $themes);
+		$methodeProductionEtQualite = $this->buildMethodeProductionEtQualite($metadataExtras);
 
 		//INFORMATIONS GÉOGRAPHIQUES
-		$informationsGeo = $this->buildInformationsGeo($metadataExtras, $themes);
+		$informationsGeo = $this->buildInformationsGeo($metadataExtras);
 
 		//SYNTHÈSE
 		$synthese = $this->buildSynthese($metadataExtras, $themes);
@@ -648,10 +648,15 @@ class VisualisationController extends ControllerBase {
 		$mentionLegales = $this->exportExtras($metadataExtras, 'mention_legales');
 
 		if ($licence != null) {
-			$licence = json_decode($licence, true);
-
-			foreach ($licence as $value) {	
-				$licence = '<li>' . html_entity_decode($value) . '</li>';
+			$licenceJson = json_decode($licence, true);
+			if (json_last_error() === JSON_ERROR_NONE) {
+				$licence = $licenceJson;
+				foreach ($licence as $value) {	
+					$licence = '<li>' . html_entity_decode($value) . '</li>';
+				}
+			}
+			else {
+				$licence = '<li>' . $licence . '</li>';
 			}
 		}
 
@@ -664,6 +669,7 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if ($useConstraints != null) {
+			$useConstraints = $this->cleanSimpleJson($useConstraints);
 			$useConstraints = '<li>' . $useConstraints . '</li>';
 		}
 
@@ -718,65 +724,32 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildMethodeProductionEtQualite() {
+	function buildMethodeProductionEtQualite($metadataExtras) {
 		$lineage = $this->exportExtras($metadataExtras, 'lineage');
 		return $lineage;
 	}
 
-	function buildInformationsGeo() {
-		// <div class="m-1 mb-3 card" style="">
-		// 	<div class="card-body">
-		// 		<div class="h5 text-uppercase"><small>Informations géographiques</small></div>
-		// 		<div class="row">
-		// 			<div class="col">
-		// 				<p><strong>Type de représentation:</strong> Vecteur</p>
-		// 				<p><strong>Etendue géographique:</strong> BdOCS CIGAL 2000 V2</p>
-		// 				<ul>
-		// 					<li>Ouest: </li>
-		// 					<li>Est: </li>
-		// 					<li>Sud: </li>
-		// 					<li>Nord: </li>
-		// 				</ul>
-		// 				<p><strong>Etendue géographique:</strong> Alsace</p>
-		// 				<ul>
-		// 					<li>Ouest: 6.84</li>
-		// 					<li>Est: 8.23</li>
-		// 					<li>Sud: 47.42</li>
-		// 					<li>Nord: 49.08</li>
-		// 				</ul>
-		// 			</div>
-		// 			<div class="col">
-		// 				<p><strong>Système de projection:</strong> 3948</p>
-		// 				<p><strong>Echelle:</strong> 10000</p>
-		// 				<p><strong>Résolution:</strong> non renseignée</p>
-		// 			</div>
-		// 		</div>
-		// 	</div>
-		// </div>
+	function buildInformationsGeo($metadataExtras) {
+		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
+
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
 		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
 		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
 		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
 		
 		$equivalentScale = $this->exportExtras($metadataExtras, 'equivalent-scale');
-		// if ($equivalentScale != null) {
-		// 	$equivalentScale = json_decode($equivalentScale, true);
-		// }
-		// equivalent-scale	{100000}
-
+		if ($equivalentScale != null) {
+			$equivalentScale = $this->cleanSimpleJson($equivalentScale);
+		}
 		
-		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$referenceSystem = $this->exportExtras($metadataExtras, 'spatial-reference-system');
 		$resolution = $this->exportExtras($metadataExtras, 'spatial-resolution-units');
-		
-		
-
 
 		// spatial-reference-system	2154
 		return '
 			<div class="row">
-				<div class="col">
-					<p><strong>Type de représentation:</strong> ' . $representationType . '</p>
+				<div class="col-sm-7">
+					<p><strong>Type de représentation:</strong> ' . ($representationType != null ? $representationType : 'non renseignée') . '</p>
 					<p><strong>Etendue géographique:</strong></p>
 					<ul>
 						<li>Ouest: ' . $bboxWestLong . '</li>
@@ -785,13 +758,20 @@ class VisualisationController extends ControllerBase {
 						<li>Nord: ' . $bboxNorthLat . '</li>
 					</ul>
 				</div>
-				<div class="col">
+				<div class="col-sm-3">
 					<p><strong>Système de projection:</strong> ' . ($referenceSystem != null ? $referenceSystem : 'non renseignée') . '</p>
-					<p><strong>Echelle:</strong> ' . ($equivalentScale != null ? $equivalentScale : 'non renseignée') . '</p>
+					<p><strong>Echelle:</strong> ' . ($equivalentScale != null ? '1/' . $equivalentScale : 'non renseignée') . '</p>
 					<p><strong>Résolution:</strong> ' . ($resolution != null ? $resolution : 'non renseignée') . '</p>
 				</div>
 			</div>
 		';
+	}
+
+	function cleanSimpleJson($value) {
+		$value = str_replace('{', '', $value);
+		$value = str_replace('}', '', $value);
+		$value = str_replace('"', '', $value);
+		return $value;
 	}
 	
 	function buildContacts($metadataExtras) {

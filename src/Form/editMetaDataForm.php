@@ -744,9 +744,10 @@ class editMetaDataForm extends HelpFormBase {
 
     public function submitForm(array &$form, FormStateInterface $form_state) {
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
-		$users = \Drupal\user\Entity\User::loadMultiple();
+		// $users = \Drupal\user\Entity\User::loadMultiple();
 
 		$api = new Api;
+		$users = $api->getAdministrators();
 		$resourceManager = new ResourceManager;
         
 
@@ -873,7 +874,7 @@ class editMetaDataForm extends HelpFormBase {
 					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning);
-					
+
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
