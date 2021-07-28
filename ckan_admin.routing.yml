@@ -46,14 +46,6 @@ ckan_admin.controDataslForm:
   requirements:
     _permission: 'access data site'
     
-ckan_admin.addThemeInDatasetForm:
-  path: '/admin/config/data4citizen/theme_dataset'
-  defaults:
-    _form: 'Drupal\ckan_admin\Form\addThemeInDatasetForm'
-    _title: 'Thèmes'
-  requirements:
-    _permission: 'access theme'
-    
 ckan_admin.typeColumnsForm:
   path: '/admin/config/data4citizen/dictionnaire'
   defaults:

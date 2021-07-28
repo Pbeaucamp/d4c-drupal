@@ -1365,7 +1365,7 @@ class ResourceManager {
 		return array("roles" => array("administrator"), "users" => $userlist);
 	}
 	
-	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
 			$mention_legales=null, $frequence=null, $displayVersionning=false) {
@@ -1376,8 +1376,8 @@ class ResourceManager {
 		$hasPicto = false;
 		$hasBackground = false;
 		$hasLinkDatasets = false;
-		$hasTheme = false;
-		$hasThemeLabel = false;
+		$hasThemes = false;
+		// $hasThemeLabel = false;
 		$hasTypeMap = false;
 		$hasOverlays = false;
 		$hasVisualizeTab = false;
@@ -1419,15 +1419,20 @@ class ResourceManager {
 					$extras[$index]['value'] = $linkDatasets;
 				}
 												
-				if ($extras[$index]['key'] == 'theme') {
-					$hasTheme = true;
-					$extras[$index]['value'] = $theme;
+				if ($extras[$index]['key'] == 'themes') {
+					$hasThemes = true;
+					$extras[$index]['value'] = $themes;
 				}
+												
+				// if ($extras[$index]['key'] == 'theme') {
+				// 	$hasTheme = true;
+				// 	$extras[$index]['value'] = $theme;
+				// }
 				
-				if ($extras[$index]['key'] == 'label_theme') {
-					$hasThemeLabel = true;
-					$extras[$index]['value'] = $themeLabel;
-				}
+				// if ($extras[$index]['key'] == 'label_theme') {
+				// 	$hasThemeLabel = true;
+				// 	$extras[$index]['value'] = $themeLabel;
+				// }
 					
 				if ($extras[$index]['key'] == 'type_map') {
 					$hasTypeMap = true;
@@ -1534,15 +1539,20 @@ class ResourceManager {
 			$extras[(count($extras) - 1)]['value'] = $linkDatasets;
 		}
 
-		if ($hasTheme == false) {
-			$extras[count($extras)]['key'] = 'theme';
-			$extras[(count($extras) - 1)]['value'] = $theme;
+		if ($hasThemes == false) {
+			$extras[count($extras)]['key'] = 'themes';
+			$extras[(count($extras) - 1)]['value'] = $themes;
 		}
 
-		if ($hasThemeLabel == false) {
-			$extras[count($extras)]['key'] = 'label_theme';
-			$extras[(count($extras) - 1)]['value'] = $themeLabel;
-		}
+		// if ($hasTheme == false) {
+		// 	$extras[count($extras)]['key'] = 'theme';
+		// 	$extras[(count($extras) - 1)]['value'] = $theme;
+		// }
+
+		// if ($hasThemeLabel == false) {
+		// 	$extras[count($extras)]['key'] = 'label_theme';
+		// 	$extras[(count($extras) - 1)]['value'] = $themeLabel;
+		// }
 
 		if ($hasTypeMap == false && $selectedTypeMap != null && $selectedTypeMap != '') {
 			$extras[count($extras)]['key'] = 'type_map';

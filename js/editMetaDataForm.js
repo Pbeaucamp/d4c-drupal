@@ -203,7 +203,13 @@ function clear() {
     $('#edit-description').val("");
     $('#edit-tags input').val("");
     // $('#edit-dataset-lies').val("");
-    $('#edit-selected-theme').val("default%Default");
+
+    //Setting default theme
+    // var defaultValue = "default%Default";
+    $('#edit-selected-themes input').each(function (index, cb) {
+        cb.checked = false;
+    });
+
     $('#edit-selected-type-map').val("");
     //$("#edit-title").attr('style', 'display: none;');
     $("#edit-title input").val("");
@@ -481,11 +487,32 @@ function fillData(data) {
 		}
 
         if (data.extras[g].key == 'theme') {
-            for (let f = 0; f < data.extras.length; f++) {
-                if (data.extras[f].key == 'label_theme') {
-                    $('#edit-selected-theme').val(data.extras[g].value + '%' + data.extras[f].value);
+            //Setting default value
+            var selected = "default%Default";
+            $('#edit-selected-themes input').each(function (index, cb) {
+                if (selected.indexOf(cb.defaultValue) != -1) {
+                    cb.checked = true;
                 }
+            });
+
+        }
+
+        if (data.extras[g].key == 'themes') {
+            var selected = jQuery.parseJSON(data.extras[g].value);
+            var values = [];
+            for(var i = 0; i < selected.length; i++) {
+                var value = selected[i];
+                values[i] = value.title + "%" + value.label;
             }
+
+            $('#edit-selected-themes input').each(function (index, cb) {
+                for (var i=0; i < values.length; i++) {
+                    if (values[i].indexOf(cb.defaultValue) != -1) {
+                        cb.checked = true;
+                        break;
+                    }
+                }
+            });
         }
 
         // Analyse par défaut

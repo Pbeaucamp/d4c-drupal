@@ -29,19 +29,7 @@ custom_views.form:
   js:
     js/customViewsForm.js: {}
   dependencies:
-    - core/jquery
-    
-addThemeInDatasetForm.form:
-  version: VERSION
-  js:
-    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
-    js/libraries.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
-    /sites/default/files/api/portail_d4c/js/i18n.js: {}
-    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
-    js/addThemeInDatasetForm.js: {}
-  dependencies:
-    - core/jquery    
+    - core/jquery  
     
 iconpicker.form:
   version: VERSION

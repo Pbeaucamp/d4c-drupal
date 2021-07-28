@@ -259,8 +259,16 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 			for($i=0; $i< count($datasetsToUpdate) ; $i++){
 				
 				for($j=0; $j<count($datasetsToUpdate[$i]->extras) ; $j++ ){
-					if( $datasetsToUpdate[$i]->extras[$j]->key == "theme" ){
-						$datasetsToUpdate[$i]->extras[$j]->value = 'default';
+					if( $datasetsToUpdate[$i]->extras[$j]->key == "theme" ) {
+						
+						$selectedTheme = array();
+						$selectedTheme["title"] = "default";
+						$selectedTheme["label"] = "Default";
+						
+						$themes = array();
+						$themes[] = $selectedTheme;
+
+						$datasetsToUpdate[$i]->extras[$j]->value = json_encode($themes);
 					}
 					if( $datasetsToUpdate[$i]->extras[$j]->key == "label_theme" ){
 						$datasetsToUpdate[$i]->extras[$j]->value = 'Default';

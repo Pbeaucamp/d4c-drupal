@@ -2698,11 +2698,18 @@ class DataSet{
 			$extras[count($extras)]['key'] = 'LinkedDataSet';
 			$extras[(count($extras) - 1)]['value'] = '';
 
-			$extras[count($extras)]['key'] = 'theme';
-			$extras[(count($extras) - 1)]['value'] = 'default';
+			$selectedTheme = array();
+			$selectedTheme["title"] = "default";
+			$selectedTheme["label"] = "Default";
+			
+			$themes = array();
+			$themes[] = $selectedTheme;
 
-			$extras[count($extras)]['key'] = 'label_theme';
-			$extras[(count($extras) - 1)]['value'] = 'Default';
+			$extras[count($extras)]['key'] = 'themes';
+			$extras[(count($extras) - 1)]['value'] = json_encode($themes);
+
+			// $extras[count($extras)]['key'] = 'label_theme';
+			// $extras[(count($extras) - 1)]['value'] = 'Default';
 
 			//$extras[count($extras)]['key'] = 'type_map';
 			//$extras[(count($extras) - 1)]['value'] = 'osm';

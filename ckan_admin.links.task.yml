@@ -35,13 +35,7 @@ resume.tab_4:
 resume.tab_5:
   route_name: ckan_admin.themeForm
   title: 'Gestion des thèmes'
-  base_route: ckan_admin.addThemeInDatasetForm
-  weight: 20
-  
-resume.tab_6:
-  route_name: ckan_admin.addThemeInDatasetForm
-  title: 'Lier un thème à un jeu de données'
-  base_route: ckan_admin.addThemeInDatasetForm
+  base_route: ckan_admin.themeForm
   weight: 20
   
 vanilla.tab_7:

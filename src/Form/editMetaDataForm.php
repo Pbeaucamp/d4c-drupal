@@ -115,23 +115,12 @@ class editMetaDataForm extends HelpFormBase {
 
 		///// themes /////
 
-        $config = \Drupal::service('config.factory')->getEditable('ckan_admin.addThemeInDatasetForm');
+        // $config = \Drupal::service('config.factory')->getEditable('ckan_admin.addThemeInDatasetForm');
         //$form['#attached']['library'][] = 'ckan_admin/addThemeInDatasetForm';
 
-        $themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
+		$themes = $api->getThemes(true, true);
+		Logger::logMessage("TRM - Found Themes - " . json_encode($themes));
 
-        $t = $themConfig->get('themes');
-
-        $themes = json_decode($t);
-
-        
-        $valuesForSelect = array();
-        foreach ($themes as &$value) {
-            $valuesForSelect[$value->title.'%'.$value->label] = $value->label;
-        }
-        
-	
-        
 		$form['m0'] = array(
 			'#markup' => '<div id="filters">',
 		);  
@@ -323,14 +312,27 @@ class editMetaDataForm extends HelpFormBase {
         );
         
 
-        $form['selected_theme'] = array(
-            '#type' => 'select',
-            '#title' => t('Choisir un thème :'),
-            '#options' => $valuesForSelect,
-            '#default_value' => t('default'),
-            '#attributes' => array('style' => 'width: 50%;'),
 
-        );
+		
+		$values = array();
+		foreach($themes as &$value){
+			$values[$value["title"] . '%' . $value["label"]] = $value["label"];
+		}
+        $form['selected_themes'] = array(
+			'#title' => t('Thèmes disponibles'),
+			'#type' => 'checkboxes',
+			'#options' => $values,
+			'#attributes' => array('style' => 'max-height: 200px; overflow: auto; max-width: 50%; border: 1px solid lightgray; padding: 5px;'),
+		);
+
+
+        // $form['selected_theme'] = array(
+        //     '#type' => 'select',
+        //     '#title' => t('Choisir un thème :'),
+        //     '#options' => $valuesForSelect,
+        //     '#default_value' => t('default'),
+        //     '#attributes' => array('style' => 'width: 50%;'),
+        // );
         
         $form['analyse_default'] = array(
             '#prefix' => '<div id="analyse_def_div" >',
@@ -815,11 +817,22 @@ class editMetaDataForm extends HelpFormBase {
 		$analyseDefault = $form_state->getValue('analyse_default');
 		$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
 		
-		// Define theme
-        $theme = $form_state->getValue('selected_theme');
-        $theme = explode("%", $theme);
-        $themeLabel = $theme[1];
-		$theme = $theme[0];
+		// Define themes
+		$theme = "";
+		if ($form_state->getValue('selected_themes') != NULL) {
+			$selectedThemes = array_keys(array_filter($form_state->getValue('selected_themes')));
+
+			$themes = array();
+			foreach ($selectedThemes as $theme) {
+				$theme = explode("%", $theme);
+
+				$selectedTheme = array();
+				$selectedTheme["title"] = $theme[0];
+				$selectedTheme["label"] = $theme[1];
+				$themes[] = $selectedTheme;
+			}
+			$theme = json_encode($themes);
+		}
 		
 		// Define maps and overlays
         $selectedTypeMap = $form_state->getValue('selected_type_map');
@@ -857,7 +870,7 @@ class editMetaDataForm extends HelpFormBase {
 			else {
 				if ($datasetId == 'new') {
 					// We build extras
-					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning);
 					
@@ -890,7 +903,7 @@ class editMetaDataForm extends HelpFormBase {
 
 					//Update extras
 					$extras = $datasetToUpdate[extras];
-					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning);
 
@@ -1035,7 +1048,7 @@ class editMetaDataForm extends HelpFormBase {
 			$licence = $form_state->getValue('selected_lic');
 			$organization = $form_state->getValue('selected_org');
 			$private = $form_state->getValue('selected_private');
-			$them = $form_state->getValue('selected_theme');
+			$selectedThemes = array_keys(array_filter($form_state->getValue('selected_themes')));
 			$title = $form_state->getValue('title');
 			$title = str_replace(' ', '', $title);
         

@@ -5790,18 +5790,33 @@ class Api{
 	}
     
 	function getPackageTheme(){
-         
-
-        $config_theme = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
-        $t = $config_theme->get('themes');
-//        $themes = json_decode($t);
-         $response = new Response();
+		$t = $this->getThemes(false);
+        
+		$response = new Response();
         $response->setContent($t);
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-         
-        //return "test";
     }
+
+	function getThemes($returnJson = false, $sort = false) {
+		$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
+        $themes = $themConfig->get('themes');
+		if ($returnJson) {
+			$themes = json_decode($themes, true);
+
+			if ($sort) {
+				usort($themes , function($a, $b){
+					$key = "title";
+					$result = strcmp(strtolower($a[$key]), strtolower($b[$key]));
+					return $result;
+				});
+			}
+			return $themes;
+		}
+		else {
+			return $themes;
+		}
+	}
     
     function updateNbDownload( $params ){
         $this->updatePackage($params,"nb_download");
