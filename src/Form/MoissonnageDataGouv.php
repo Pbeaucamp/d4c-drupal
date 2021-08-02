@@ -826,12 +826,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[count($extras)]['key'] = 'LinkedDataSet';
 				$extras[(count($extras) - 1)]['value'] = '';
 				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
 				
 				$extras[count($extras)]['key'] = 'theme';
 				$extras[(count($extras) - 1)]['value'] = json_encode($themes);
@@ -1240,12 +1236,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[count($extras)]['key'] = 'LinkedDataSet';
 				$extras[(count($extras) - 1)]['value'] = '';
 				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
 				
 				$extras[count($extras)]['key'] = 'theme';
 				$extras[(count($extras) - 1)]['value'] = json_encode($themes);
@@ -1437,12 +1429,8 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $extras[count($extras)]['key'] = 'LinkedDataSet';
                 $extras[(count($extras) - 1)]['value'] = '';
 				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
                     
                 $extras[count($extras)]['key'] = 'theme';
                 $extras[(count($extras) - 1)]['value'] = json_encode($themes);
@@ -1624,13 +1612,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras = array();
 				$extras[count($extras)]['key'] = 'LinkedDataSet';
 				$extras[(count($extras) - 1)]['value'] = '';
-				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
+
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
 						
 				$extras[count($extras)]['key'] = 'theme';
 				$extras[(count($extras) - 1)]['value'] = json_encode($themes);
@@ -1840,13 +1824,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras = array();
 				$extras[count($extras)]['key'] = 'LinkedDataSet';
 				$extras[(count($extras) - 1)]['value'] = '';
-				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
+
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
 						
 				$extras[count($extras)]['key'] = 'theme';
 				$extras[(count($extras) - 1)]['value'] = json_encode($themes);
@@ -2166,13 +2146,9 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $extras = array();
                 $extras[count($extras)]['key'] = 'LinkedDataSet';
                 $extras[(count($extras) - 1)]['value'] = '';
-				
-				$selectedTheme = array();
-				$selectedTheme["title"] = "default";
-				$selectedTheme["label"] = "Default";
-				
+
 				$themes = array();
-				$themes[] = $selectedTheme;
+				$themes[] = "default";
                     
                 $extras[count($extras)]['key'] = 'theme';
                 $extras[(count($extras) - 1)]['value'] = json_encode($themes);

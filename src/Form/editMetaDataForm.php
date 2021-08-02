@@ -119,7 +119,6 @@ class editMetaDataForm extends HelpFormBase {
         //$form['#attached']['library'][] = 'ckan_admin/addThemeInDatasetForm';
 
 		$themes = $api->getThemes(true, true);
-		Logger::logMessage("TRM - Found Themes - " . json_encode($themes));
 
 		$form['m0'] = array(
 			'#markup' => '<div id="filters">',
@@ -316,7 +315,7 @@ class editMetaDataForm extends HelpFormBase {
 		
 		$values = array();
 		foreach($themes as &$value){
-			$values[$value["title"] . '%' . $value["label"]] = $value["label"];
+			$values[$value["title"]] = $value["label"];
 		}
         $form['selected_themes'] = array(
 			'#title' => t('Thèmes disponibles'),
@@ -822,17 +821,12 @@ class editMetaDataForm extends HelpFormBase {
 		$theme = "";
 		if ($form_state->getValue('selected_themes') != NULL) {
 			$selectedThemes = array_keys(array_filter($form_state->getValue('selected_themes')));
-
-			$themes = array();
-			foreach ($selectedThemes as $theme) {
-				$theme = explode("%", $theme);
-
-				$selectedTheme = array();
-				$selectedTheme["title"] = $theme[0];
-				$selectedTheme["label"] = $theme[1];
-				$themes[] = $selectedTheme;
-			}
-			$theme = json_encode($themes);
+			// $themes = array();
+			// foreach ($selectedThemes as $theme) {
+			// 	$theme = explode("%", $theme);
+			// 	$themes[] = $theme[0];
+			// }
+			$theme = json_encode($selectedThemes);
 		}
 		
 		// Define maps and overlays

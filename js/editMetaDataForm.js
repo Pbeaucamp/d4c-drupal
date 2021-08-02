@@ -488,7 +488,7 @@ function fillData(data) {
 
         if (data.extras[g].key == 'theme') {
             //Setting default value
-            var selected = "default%Default";
+            var selected = "default";
             $('#edit-selected-themes input').each(function (index, cb) {
                 if (selected.indexOf(cb.defaultValue) != -1) {
                     cb.checked = true;
@@ -498,12 +498,12 @@ function fillData(data) {
         }
 
         if (data.extras[g].key == 'themes') {
-            var selected = jQuery.parseJSON(data.extras[g].value);
-            var values = [];
-            for(var i = 0; i < selected.length; i++) {
-                var value = selected[i];
-                values[i] = value.title + "%" + value.label;
-            }
+            var values = jQuery.parseJSON(data.extras[g].value);
+            // var values = [];
+            // for(var i = 0; i < selected.length; i++) {
+            //     var value = selected[i];
+            //     values[i] = value;
+            // }
 
             $('#edit-selected-themes input').each(function (index, cb) {
                 for (var i=0; i < values.length; i++) {

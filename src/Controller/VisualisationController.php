@@ -73,7 +73,7 @@ class VisualisationController extends ControllerBase {
 		$resources = array();
 		$resourcesid = "";
 		//Last update date for the data (resources)
-		$lastDataUpdateDate = null;
+		// $lastDataUpdateDate = null;
 		foreach($dataset["metas"]["resources"] as $value) {
             if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
 		 		$resourcesid = $value['id'];
@@ -87,16 +87,16 @@ class VisualisationController extends ControllerBase {
 				$resources[] = $res;
 			}
 
-			//Defining the last data update date
-			$currentDataDate = $value['last_modified'];
-			if (!isset($currentDataDate)) {
-				$currentDataDate = $value['created'];
-			}
+			// //Defining the last data update date
+			// $currentDataDate = $value['last_modified'];
+			// if (!isset($currentDataDate)) {
+			// 	$currentDataDate = $value['created'];
+			// }
 
-			//We compare with the others resources
-			if (!isset($lastDataUpdateDate) || strtotime($currentDataDate) > strtotime($lastDataUpdateDate)) {
-				$lastDataUpdateDate = $currentDataDate;
-			}
+			// //We compare with the others resources
+			// if (!isset($lastDataUpdateDate) || strtotime($currentDataDate) > strtotime($lastDataUpdateDate)) {
+			// 	$lastDataUpdateDate = $currentDataDate;
+			// }
 		}
 
 		if($resourcesid != ""){
@@ -140,7 +140,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $lastDataUpdateDate, $metadataExtras);
+		$body = $this->buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $metadataExtras);
 		 
 		$element = array(
 			'example one' => [
@@ -153,7 +153,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $lastDataUpdateDate, $metadataExtras) {
+	function buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $metadataExtras) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -190,11 +190,12 @@ class VisualisationController extends ControllerBase {
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 
 		$themes = $this->buildTheme($api, $config, $metadataExtras);
-		$imgTheme = $themes[0];
-		$themes = $themes[1];
+		$datasetTitle = $this->buildDatasetTitle($themes);
+		// $imgTheme = $themes[0];
+		// $themes = $themes[1];
 
 		$filters = $this->buildFilters($config);
-		$tabs = $this->buildTabs($config, $tab, $dataset, $id, $name, $description, $lastDataUpdateDate, $themes, $metadataExtras);
+		$tabs = $this->buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras);
 		$disqus = $this->buildDisqus($config, $host, $dataset);
 		$imports = $this->buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources);
 
@@ -218,11 +219,7 @@ class VisualisationController extends ControllerBase {
 
 							<div class="d4c-dataset-visualization__header">
 								<h1 class="d4c-dataset-visualization__dataset-title">
-									<d4c-social-buttons></d4c-social-buttons>
-									<div class="box_3">
-										<div style=" background-image: url('. $imgTheme . '); display: inline-block; width: 40px; height: 40px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-right: 8px;"/>
-									</div>
-									<span>\{\{ ctx.dataset.metas.title \}\}</span>
+									' . $datasetTitle . '
 								</h1>
 							</div>
 				
@@ -290,10 +287,10 @@ class VisualisationController extends ControllerBase {
 			</div>';
 	}
 
-	function buildTabs($config, $tab, $dataset, $id, $name, $description, $lastDataUpdateDate, $themes, $metadataExtras) {
+	function buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
-		$tabInformation = $this->buildTabInformation($config, $loggedIn, $dataset, $name, $description, $lastDataUpdateDate, $themes, $metadataExtras);
+		$tabInformation = $this->buildTabInformation($config, $loggedIn, $dataset, $name, $description, $themes, $metadataExtras);
 		$tabTable = $this->buildTabTable();
 		$tabMap = $this->buildTabMap();
 		$tabAnalyze = $this->buildTabAnalyze();
@@ -325,7 +322,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($config, $loggedIn, $dataset, $name, $description, $lastDataUpdateDate, $themes, $metadataExtras) {
+	function buildTabInformation($config, $loggedIn, $dataset, $name, $description, $themes, $metadataExtras) {
 		
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
@@ -475,50 +472,100 @@ class VisualisationController extends ControllerBase {
 		$listOfThemes = $api->getPackageTheme();
     	$listOfThemes = json_decode($listOfThemes->getContent(), true);
 
-		$labelTheme = $this->exportExtras($metadataExtras, 'label_theme');
-		$theme = $this->exportExtras($metadataExtras, 'theme');
+		$themeName = $this->exportExtras($metadataExtras, 'theme');
+		$themesExtras = $this->exportExtras($metadataExtras, 'themes');
 
 		$themesPart = '';
-		if ($labelTheme != null) {
-			$themeName = $labelTheme;
-			$themesPart = '
-				<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-					<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
-					<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">' . $labelTheme . '</div>
-				</div>
-			'; 
+		if ($themesExtras != null) {
+			$themesExtras = json_decode($themesExtras, true);
+
+			$themes = array();
+			foreach ($themesExtras as $value) {
+				$selectedTheme = $this->findTheme($listOfThemes, $value);
+				
+				$theme = array();
+				$theme["label"] = $selectedTheme["label"];
+				$theme["title"] = $selectedTheme["title"];
+				$theme["url"] = $selectedTheme["url"];
+
+				Logger::logMessage("TRM - FOUND THEME - " . $value);
+
+				$themes[] = $theme;
+				// $themesPart .= '
+				// 	<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+				// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
+				// 		<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">' . $labelTheme . '</div>
+				// 	</div>
+				// '; 
+			}
 		}
-		else if ($theme != null) {
+		else if ($themeName != null) {
+			$selectedTheme = $this->findTheme($listOfThemes, $themeName);
+
+			$theme = array();
+			$theme["label"] = $selectedTheme["label"];
+			$theme["title"] = $selectedTheme["title"];
+			$theme["url"] = $selectedTheme["url"];
 			$themeName = $theme;
-			$themesPart = '
-				<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-					<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
-					<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">' . $theme . '</div>
-				</div>
-			'; 
+
+			$themes = array();
+			$themes[] = $theme;
+			// $themesPart = '
+			// 	<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
+			// 		<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">' . $theme . '</div>
+			// 	</div>
+			// '; 
 		}
 		else {
-			$themeName = 'Default';
-			$themesPart = '
-				<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-					<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
-					<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">Default</div>
-				</div>
-			'; 
+			$themeName = 'default';
+			$selectedTheme = $this->findTheme($listOfThemes, $themeName);
+
+			$theme = array();
+			$theme["label"] = $selectedTheme["label"];
+			$theme["title"] = $selectedTheme["title"];
+			$theme["url"] = $selectedTheme["url"];
+			$themeName = $theme;
+
+			$themes = array();
+			$themes[] = $theme;
+
+			// $themesPart = '
+			// 	<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
+			// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Thème</div>
+			// 		<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">Default</div>
+			// 	</div>
+			// '; 
 		}
 
-		$imgTheme = null;
+		Logger::logMessage("TRM - THEMES - " . json_encode($themes));
+
+		return $themes;
+	}
+
+	function buildDatasetTitle($themes) {
+		$themeImages = '<div class="box_3">';
+		$themeImages .= '	<d4c-social-buttons></d4c-social-buttons>';
+		foreach($themes as $theme) {
+			$themeImage = $theme["url"];
+			if ($themeImage != null) {
+				$themeImages .= '	<div style=" background-image: url('. $themeImage . '); display: inline-block; width: 40px; height: 40px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-right: 8px;"></div>';
+			}
+		}
+		$themeImages .= '	<span>\{\{ ctx.dataset.metas.title \}\}</span>';
+		$themeImages .= '</div>';
+
+		return $themeImages;
+	}
+
+	function findTheme($listOfThemes, $theme) {
 		foreach ($listOfThemes as $value) {
-			if ($value['label'] == $themeName) {
-				$imgTheme = $value['url'];
-				break;
+			if ($value['title'] == $theme) {
+				return $value;
 			}
 		}
 
-		return [
-			$imgTheme,
-			$themesPart
-		];
+		return null;
 	}
 
 	function buildVisu($metadataExtras) {
@@ -689,6 +736,9 @@ class VisualisationController extends ControllerBase {
 
 	function buildSynthese($metadataExtras, $themes) {
 		$frequence = $this->exportExtras($metadataExtras, 'frequence');
+		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
+
+		$synthese = '';
 	// 	return '
 	// 	<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
 	// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de mise à jour</div>
@@ -697,6 +747,26 @@ class VisualisationController extends ControllerBase {
 	// ';
 
 		// frequency-of-update	unknown
+
+
+		// '<div class="my-3">
+		// 	<button class="text-white btn btn-success btn-sm active" value="" style="">
+		// 		<i class="bi-unlock-fill"></i>
+		// 	</button>
+		// 	<span class="ms-2">Données ouvertes</span>
+		// </div>
+		// <div class="my-3">
+		// 	<button class="text-white btn btn-primary btn-sm active" value="" style="">
+		// 		<i class="bi-geo-alt"></i>
+		// 	</button>
+		// 	<span class="ms-2">Donnée géographique</span>
+		// </div>
+		// <div class="my-3">
+		// 	<button class="text-white btn btn-outline-secondary btn-sm active" value="" style="">
+		// 		<i class="bi-clock"></i>
+		// 	</button>
+		// 	<span class="ms-2">Mise à jour inconnue</span>
+		// </div>
 		
 		$nbDownloads = '
 			<div class="d4c-dataset-metadata-block" ng-show="(ctx.dataset.metas.extras | filter:{key:\'nb_download\'})[0].value > 0">
@@ -707,21 +777,38 @@ class VisualisationController extends ControllerBase {
 			</div>
 		';
 
-		$lastDataUpdateDate = '
-			<div class="d4c-dataset-metadata-block" ng-show="\'' . $lastDataUpdateDate . '\'">
-				<div class="d4c-dataset-metadata-block__metadata">
-					<div class="d4c-dataset-metadata-block__metadata-name" translate>Last data update</div>
-					<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{\'' . $lastDataUpdateDate . '\' | formatMeta:\'datetime\' \}\}</div>
-				</div>
+		//TODO: Date
+		// Logger::logMessage("TRM - Last update date " . $lastDataUpdateDate);
+		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
+		// $synthese .= '
+		// 	<div class="my-3" ng-show="\'' . $lastDataUpdateDate . '\'">
+		// 		<i class="fa fa-clock-o"></i>>
+		// 		<span class="ms-2" translate><strong>Last data update</strong></span>
+		// 		<span>\{\{\'' . $lastDataUpdateDate . '\' | formatMeta:\'datetime\' \}\}</span>
+		// 	</div>
+		// ';
+
+		$synthese .= '
+			<div class="my-3">
+				<i class="fa fa-clock-o"></i>
+				<span class="ms-2">' . ($frequence != null ? $frequence : 'Mise à jour inconnue') . '</span>
 			</div>
 		';
 
-		return '
-			<div ng-show="(ctx.dataset.metas.extras | filter:{key:\'date_dataset\'})[0].value">
-				<div translate>Dataset date</div>
-				<div ng-binding">\{\{ (ctx.dataset.metas.extras | filter:\{key:\'date_dataset\'\})[0].value | formatMeta:\'date\' \}\}</div>
-			</div>
-		';
+		$synthese .= '
+			<div class="my-3">
+				<i class="fa fa-tag"></i>
+				<span class="ms-2"><strong>Thèmes</strong></span>';
+		if ($themes != null) {
+			$synthese .= '	<ul>';
+			foreach ($themes as $theme) {	
+				$synthese .= '		<li>' . $theme["label"] . '</li>';
+			}
+			$synthese .= '	</ul>';
+		}
+		$synthese .= '</div>';
+
+		return $synthese;
 	}
 	
 	function buildMethodeProductionEtQualite($metadataExtras) {

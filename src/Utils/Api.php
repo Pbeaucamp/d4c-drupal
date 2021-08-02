@@ -374,15 +374,11 @@ class Api{
 
 
 	public function callDatastoreApiFacet($params) {
-		Logger::logMessage("TRM - callDatastoreApiFacet ");
-
 		$params = $this->retrieveParameters($params);
 	
 		//error_log('params = ' . $params);
 		$query_params = $this->proper_parse_str($params);
-		if(array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
-			Logger::logMessage("TRM - Found fields or facet ");
-
+		if (array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
 			$nhits;$nhitsTotal=0;
 			$facet_groups = array();
 
@@ -534,6 +530,7 @@ class Api{
 					$sql = "Select \"".$query_params['fields']."\", count(\"".$query_params['fields']."\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"".$query_params['fields'] . "\"";
 					
 					$req['sql'] = $sql;
+
 					//echo $sql;
 					$url2 = http_build_query($req);
 					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -949,6 +946,7 @@ class Api{
         $result = $this->getExtendedPackageSearch($params);
 		
 		$hasFacetFeature = array_key_exists("features",$result["result"]["facets"]);
+		$hasFacetThemes = array_key_exists("themes",$result["result"]["facets"]);
 		
 		unset($result["help"]);//echo count($result["result"]["results"]);
 		foreach($result["result"]["results"] as &$dataset) {
@@ -960,6 +958,9 @@ class Api{
 			$dataset["metas"]["features"] = explode(",", $dataset["metas"]["features"]);
 			if($hasFacetFeature){
 				$arr[] = $dataset["metas"]["features"];
+			}
+			if($hasFacetThemes){
+				$themes[] = $dataset["metas"]["themes"];
 			}
 			
 			$dataset["metas"]["custom_view"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "custom_view";}))["value"] ?: null;
@@ -979,6 +980,7 @@ class Api{
 			
 			$arr = array();
 			foreach($result["result"]["facets"]["features"] as $key => $count){
+				Logger::logMessage("TRM - Features - " . $key . " and count " . $count);
 				for($i=0; $i<$count; $i++){
 					$arr = array_merge($arr, explode(",", $key));
 				}
@@ -995,6 +997,28 @@ class Api{
 					"count" => $c,
 					"display_name" => $feat,
 					"name" => $feat
+				);
+			}
+		}
+		
+		if ($hasFacetThemes) {
+			
+			$themes = array();
+			foreach($result["result"]["facets"]["themes"] as $key => $count){
+				Logger::logMessage("TRM - Facet - " . $key . " and count " . $count);
+				for($i=0; $i<$count; $i++) {
+					$themes = array_merge($themes, json_decode($key, true));
+				}
+			}
+			
+			$result["result"]["facets"]["themes"] = array_count_values($themes);
+			
+			$result["result"]["search_facets"]["themes"]["items"] = array();
+			foreach($result["result"]["facets"]["themes"] as $theme => $c){
+				$result["result"]["search_facets"]["themes"]["items"][] = array(
+					"count" => $c,
+					"display_name" => $theme,
+					"name" => $theme
 				);
 			}
 		}
@@ -1070,14 +1094,10 @@ class Api{
 
 		//We encode url again
 		$params = http_build_query($query_params);
-
-		Logger::logMessage("TRM - PARAMS " . $params);
 		
         if (!is_null($params)) {
 			$callUrl .= "?" . $params;
 		}
-
-		Logger::logMessage("TRM - Call URL " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -2034,9 +2054,6 @@ class Api{
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
 
-
-			Logger::logMessage("TRM - Call datastore search " . json_encode($callUrl));
-
 			//echo mb_strlen($callUrl , '8bit');				  
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -2671,6 +2688,9 @@ class Api{
 		foreach($data_array['metas']['extras'] as $value){
 			if($value["key"] == "theme"){
 				$data_array['metas']["theme"] = str_replace(",", ", ", $value["value"]);
+			}
+			if($value["key"] == "themes"){
+				$data_array['metas']["themes"] = $value["value"];
 			}
 			//add producer to metas dataset
 			if($value["key"] == "producer"){
@@ -3869,13 +3889,9 @@ class Api{
 	  	}
 	  	$req['sql'] = $sql;
 
-		Logger::logMessage("TRM - QUERY " . $sql);
-
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-
-		Logger::logMessage("TRM - CALL URL " . $callUrl);
 
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
@@ -6287,52 +6303,38 @@ class Api{
     }
     
     function datasetByTheme($theme){
-        // $datasetList = $this->getPackageSearch("rows=1000");
-		$datasetList = $this->callPackageSearch_public_private('include_private=true&rows=1000');
-		
-        // $dataJson = $datasetList ;
-        // //echo $dataJson ;
-        // $data = json_decode($datasetList);
-        // $dataset_list = $data->result->results ;
+		$datasetList = $this->callPackageSearch_public_private('include_private=true&rows=10000');
 		$datasetList = $datasetList->getContent();
 		
 		$dataset_list = json_decode($datasetList)->result->results;
 		
         $selectedDataset = array();
-         //echo " theme à chercher trimé:".trim($theme)."\r" ;
-        
-        //echo " count : ".count($dataset_list) ."\r";
         for($i=0; $i< count($dataset_list) ; $i++){
 			
             $theme_found=false;
 			for($j=0; $j<count($dataset_list[$i]->extras) ; $j++ ){
 				
-				if( $dataset_list[$i]->extras[$j]->key == "theme" ){
-					$dataset_theme = $dataset_list[$i]->extras[$j]->value;
-					// error_log('dataset2 : ' . $dataset_theme);
-                   // echo " dataset a ajouter ". $dataset_list[$i]->title." theme :".trim($dataset_theme)." \r" ;
-                    //echo " resultat de stristrt : " .stristr( trim($dataset_theme) , trim($theme)  )." \r";          
-                    if ( stristr( trim($dataset_theme) , trim($theme)  ) !==False ) $selectedDataset[] = $dataset_list[$i] ;
-                        //echo "  dataset ajouté ". $dataset_list[$i]->title." theme :".$dataset_theme." ! \r" ;
+				if ($dataset_list[$i]->extras[$j]->key == "theme") {
+					$dataset_theme = $dataset_list[$i]->extras[$j]->value;      
+                    if ( stristr( trim($dataset_theme) , trim($theme)  ) !==False ) $selectedDataset[] = $dataset_list[$i];
                     $theme_found = true ;
-				}                
+				}
+				
+				if ($dataset_list[$i]->extras[$j]->key == "themes") {
+					$themes = $dataset_list[$i]->extras[$j]->value;
+					
+                    if ( stristr( trim($themes) , trim($theme)  ) !== False ) {
+						$selectedDataset[] = $dataset_list[$i];
+					}
+                    $theme_found = true ;
+				} 
             }
             
-            //echo " dataset a ajouter ". $dataset_list[$i]->title." theme :".$theme . " theme_found: ".$theme_found."\r";
-            if( $theme=="default"  && $theme_found==false ){
+            if ($theme=="default"  && $theme_found==false ) {
                 $selectedDataset[] = $dataset_list[$i] ;
-                 //echo " dataset a ajouter ". $dataset_list[$i]->title." \r" ;
             }
-            
-            
         }
-        
-        //echo json_encode($selectedDataset );
-        
-        
-        
-        //$result = $list;
-        //$result = $dataset;
+
         $response = new Response();
         $response->setContent(json_encode($selectedDataset));
 		$response->headers->set('Content-Type', 'application/json');
