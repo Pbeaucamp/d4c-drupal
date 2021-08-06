@@ -2348,7 +2348,7 @@ class Api{
 		return $this->callPackageShow2($datasetid, $params);
 	}
     
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false) {
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null) {
         $result = '';
         
 		if($callCkan) {
@@ -2384,9 +2384,17 @@ class Api{
 		 		$resourcesid = $value['id'];
 				$resourceCSV = $value;
 		 	}
+
 		 	if($value['format'] == 'GeoJSON'){
 		 		$isGeo = true;
 		 	}
+			
+			if ($selectedResourceId != null && $selectedResourceId == $resourcesid) {
+
+				Logger::logMessage("TRM - Found resource ");
+				//If the selected resource ID is defined, we select it
+				break;
+			}
 		}
 		foreach ($result['result']['resources'] as $value) {
 		 	if($resourceCSV == null || (($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'))

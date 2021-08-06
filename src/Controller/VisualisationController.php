@@ -37,7 +37,8 @@ class VisualisationController extends ControllerBase {
 
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
-		return $this->myPage2($id, $tab);
+		$resourceId = $request->query->get('resourceId');
+		return $this->myPage2($id, $resourceId, $tab);
 	}
 
 	/**
@@ -46,20 +47,18 @@ class VisualisationController extends ControllerBase {
 	 * @return array
 	 *   A simple renderable array.
 	 */
-	public function myPage2($id, $tab) {
+	public function myPage2($id, $resourceId, $tab) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
-		Logger::logMessage("TRM - BUILD INFORMATIONS ");
-
-		
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
 		
 		$api = new API();
 
-		$dataset = $api->getPackageShow2($id, "");
+		Logger::logMessage("TRM - Load resource ID " . $resourceId);
 
+		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId);
 
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
@@ -70,11 +69,13 @@ class VisualisationController extends ControllerBase {
 
 		$url = $protocol . $host . $this->config->client->routing_prefix . "/visualisation?id=" . $dataset["datasetid"];
 		
-		$resources = array();
+		$availableResources = $dataset["metas"]["resources"];
+
+		$exports = array();
 		$resourcesid = "";
 		//Last update date for the data (resources)
 		// $lastDataUpdateDate = null;
-		foreach($dataset["metas"]["resources"] as $value) {
+		foreach ($availableResources as $value) {
             if($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX'){
 		 		$resourcesid = $value['id'];
 		 	}
@@ -84,7 +85,7 @@ class VisualisationController extends ControllerBase {
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = $value['format'];
 				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/" . $dataset["datasetid"] . "/alternative_exports/" . $value['id'];
-				$resources[] = $res;
+				$exports[] = $res;
 			}
 
 			// //Defining the last data update date
@@ -104,43 +105,43 @@ class VisualisationController extends ControllerBase {
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "CSV";
 			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=csv&use_labels_for_header=true&resource_id=" . $resourcesid;
-			$resources[] = $res;
+			$exports[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "JSON";
 			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=json&resource_id=" . $resourcesid;
-			$resources[] = $res;
+			$exports[] = $res;
 			
 			$res = array();
 			$res["@type"] = "DataDownload";
 			$res["encodingFormat"] = "Excel";
 			$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=xls&use_labels_for_header=true&resource_id=" . $resourcesid;
-			$resources[] = $res;
+			$exports[] = $res;
 			
 			if($isGeo){
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "GeoJSON";
 				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=geojson&resource_id=" . $resourcesid;
-				$resources[] = $res;
+				$exports[] = $res;
 				
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "KML";
 				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=kml&resource_id=" . $resourcesid;
-				$resources[] = $res;
+				$exports[] = $res;
 				
 				$res = array();
 				$res["@type"] = "DataDownload";
 				$res["encodingFormat"] = "Shapefile";
 				$res["contentUrl"] = $protocol . $host . $this->config->client->routing_prefix . "/d4c/api/records/2.0/downloadfile/format=shp&resource_id=" . $resourcesid;
-				$resources[] = $res;
+				$exports[] = $res;
 			}
 		}
 		
 		//Build interface
-		$body = $this->buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $metadataExtras);
+		$body = $this->buildBody($config, $api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
 		 
 		$element = array(
 			'example one' => [
@@ -153,7 +154,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($config, $api, $host, $dataset, $tab, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources, $metadataExtras) {
+	function buildBody($config, $api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -195,9 +196,9 @@ class VisualisationController extends ControllerBase {
 		// $themes = $themes[1];
 
 		$filters = $this->buildFilters($config);
-		$tabs = $this->buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras);
+		$tabs = $this->buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $resourceId);
 		$disqus = $this->buildDisqus($config, $host, $dataset);
-		$imports = $this->buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources);
+		$imports = $this->buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
 		// <a href="javascript:history.back()"><i class="fa fa-fw fa-twitter"></i></a>
 		return '
@@ -213,7 +214,8 @@ class VisualisationController extends ControllerBase {
 							ng-init="toggleState={expandedFilters: false};"
 							context="ctx"
 							ctx-urlsync="true"
-							ctx-dataset-schema="' . $ctx . '">
+							ctx-dataset-schema="' . $ctx . '"
+							ctx-selected-resource-id="' . $resourceId . '">
 
 							<d4c-notification-handler></d4c-notification-handler>
 
@@ -287,10 +289,10 @@ class VisualisationController extends ControllerBase {
 			</div>';
 	}
 
-	function buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras) {
+	function buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $selectedResourceId) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
-		$tabInformation = $this->buildTabInformation($config, $loggedIn, $dataset, $name, $description, $themes, $metadataExtras);
+		$tabInformation = $this->buildTabInformation($config, $loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $selectedResourceId);
 		$tabTable = $this->buildTabTable();
 		$tabMap = $this->buildTabMap();
 		$tabAnalyze = $this->buildTabAnalyze();
@@ -322,7 +324,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($config, $loggedIn, $dataset, $name, $description, $themes, $metadataExtras) {
+	function buildTabInformation($config, $loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $selectedResourceId) {
 		
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
@@ -330,6 +332,9 @@ class VisualisationController extends ControllerBase {
 
 		//IMAGE
 		$image = $this->buildImage($metadataExtras);
+
+		//DONNEES
+		$donnees = $this->buildDonnees($resources);
 
 		//LIMITES ET CONDITIONS D'UTILISATION
 		$limitesEtConditionsUtilisation = $this->buildLimitesEtConditionsUtilisation($metadataExtras);
@@ -353,7 +358,7 @@ class VisualisationController extends ControllerBase {
 
 		$downloadsAndLinks = null;
 		if ($config->client->ressources_download_links) {
-			$downloadsAndLinks = $this->manageAdditionnalResources($dataset);
+			$downloadsAndLinks = $this->manageAdditionnalResources($config, $dataset, $datasetId, $selectedResourceId);
 		}
 
 		return '
@@ -361,10 +366,11 @@ class VisualisationController extends ControllerBase {
 				<div class="row">
 					<div class="col-sm-9">
 						' . $this->buildCard('Description', $description) . '
+						' . $this->buildCard('Données', $donnees) . '
 						' . $this->buildCard('Limites et conditions d\'utilisation', $limitesEtConditionsUtilisation) . '
 						' . $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) . '
 						' . $this->buildCard('Informations géographiques', $informationsGeo) . '
-						' . ($downloadsAndLinks != null ? $this->buildCard('Téléchargements et liens', $downloadsAndLinks) : '') . '
+						' . ($downloadsAndLinks != null ? $this->buildCard('Données et ressources', $downloadsAndLinks) : '') . '
 					</div>
 					<div class="col-sm-3">
 						' . $this->buildCardImage($image) . '
@@ -651,6 +657,13 @@ class VisualisationController extends ControllerBase {
 		return $image != null ? $image : '';
 	}
 
+	function buildDonnees($resources) {
+		foreach ($resources as $resource) {
+			Logger::logMessage("TRM - Found resource " . json_encode($resource));
+		}
+		return '';
+	}
+
 	function buildWidget($metadataExtras) {
 		$widgets = $this->exportExtras($metadataExtras, 'widgets');
 
@@ -887,48 +900,87 @@ class VisualisationController extends ControllerBase {
 		return $contacts;
 	}
 
-	function manageAdditionnalResources($dataset) {
-		if (sizeof($dataset["metas"]["resources"]) > 0 ) {
-			foreach($dataset["metas"]["resources"] as $key=>$value){
+	function manageAdditionnalResources($config, $dataset, $datasetId, $selectedResourceId) {
+		$resources = $dataset["metas"]["resources"];
+
+		$additionnalResources = '';
+		if (sizeof($resources) > 0 ) {
+			$lastResourceId = $this->getLastDataResource($resources);
+
+			foreach($resources as $key=>$value){
+				$resourceId = $value["id"];
 				$name = $value["name"];
 				$url = $value["url"];
 				$format = $value["format"];
+				$protocol = $value["resource_locator_protocol"];
+				$mimeType = $value["mimetype"];
+				$datastoreActive = $value["datastore_active"];
 
-				$classImg = strpos($value["resource_locator_protocol"], 'download') !== false or strpos($value["resource_locator_protocol"], 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
+				$classImg = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
 
 				$button = '';
+				if ($mimeType == "text/csv" && $datastoreActive == true) {
+					$classImg = 'fa-table';
+
+					$button .= '
+						<button class="btn btn-info" ng-click="visualizeResource(\'' . $datasetId . '\', \'' . $resourceId . '\')">
+							Visualiser
+						</button>
+					';
+				}
+
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
-					$button = '
+					$classImg = 'fa-globe';
+
+					$button .= '
 						<button class="btn btn-info" ng-click="openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')">
 							Ouvrir dans Mapfishapp
 						</button>
 					';
 				}
 				else {
-					$buttonText = strpos($value["resource_locator_protocol"], 'download') !== false || strpos($value["resource_locator_protocol"], 'DOWNLOAD') !== false ? 'Télécharger' : 'Consulter';
+					$buttonText = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'Télécharger' : 'Consulter';
 
-					$button .= '
-						<div class="col-sm-3">
-							<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>
-						</div>
-					';
+					$button .= '<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>';
 				}
 
-				return '
+				$isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId) ? '<div class="inline download-active"></div>' : '';
+
+				$additionnalResources .= '
 					<div class="row">
-						<div class="col-sm-9">
-							<i style="margin-right: 12px; font-size: 20px" class="fa ' . $classImage . '" fa-4x></i>' . $name . '<br>
-							<a target="_blank" href="' . $url . '">' . $url . '</a>
+						<div class="col-sm-9 download-item">
+							' . $isActif . '
+							<i class="fa ' . $classImg . ' inline download-img" fa-4x></i>
+							<div class="inline">
+								<div class="download-text">' . $name . '</div>
+								<a target="_blank" href="' . $url . '" class="download-link">' . $url . '</a>
+							</div>
 						</div>
 						<div class="col-sm-3">
 							' . $button . '
 						</div>
 					</div>
 				';
+
+				$index++;
 			}
 		}
 
-		return null;
+		return $additionnalResources;
+	}
+
+	function getLastDataResource($resources) {
+		$lastResource = null;
+		foreach($resources as $key=>$value) {
+			$resourceId = $value["id"];
+			$mimeType = $value["mimetype"];
+			$datastoreActive = $value["datastore_active"];
+			
+			if ($mimeType == "text/csv" && $datastoreActive == true) {
+				$lastResource = $resourceId;
+			}
+		}
+		return $lastResource;
 	}
 
 	/* END METADATA */
