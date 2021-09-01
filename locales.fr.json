@@ -1,0 +1,178 @@
+{
+    "lang": "fr",
+    "view": "view",
+    "locales": {
+        "title": "Consultation d'une fiche de métadonnées",
+        "mandatory": "Champs obligatoire",
+        "empty": "Champ non renseigné"
+    },
+    "codelists": {
+
+
+        "MD_MaintenanceFrequencyCode": [{
+            "value": "continual",
+            "text": "en continu"
+        }, {
+            "value": "daily",
+            "text": "quotidienne"
+        }, {
+            "value": "weekly",
+            "text": "hebdomadaire"
+        }, {
+            "value": "fortnightly",
+            "text": "tous les 15 jours"
+        }, {
+            "value": "monthly",
+            "text": "mensuelle"
+        }, {
+            "value": "quaterly",
+            "text": "trimestrielle"
+        }, {
+            "value": "biannually",
+            "text": "semestrielle"
+        }, {
+            "value": "annually",
+            "text": "annuelle"
+        }, {
+            "value": "asNeeded",
+            "text": "quand nécessaire"
+        }, {
+            "value": "irregular",
+            "text": "irrégulierère"
+        }, {
+            "value": "notPlanned",
+            "text": "non plannifiée"
+        }, {
+            "value": "unknown",
+            "text": "inconnue"
+        }],
+
+        "MD_TopicCategoryCode": [{
+            "value": "farming",
+            "text": "Agriculture"
+        }, {
+            "value": "biota",
+            "text": "Flore et faune"
+        }, {
+            "value": "boundaries",
+            "text": "Limites politiques et administratives"
+        }, {
+            "value": "climatologyMeteorologyAtmosphere",
+            "text": "Climatologie, météorologie"
+        }, {
+            "value": "economy",
+            "text": "Economie"
+        }, {
+            "value": "elevation",
+            "text": "Topographie"
+        }, {
+            "value": "environment",
+            "text": "Ressources et gestion de l'environnement"
+        }, {
+            "value": "geoscientificInformation",
+            "text": "Géosciences"
+        }, {
+            "value": "health",
+            "text": "Santé"
+        }, {
+            "value": "imageryBaseMapsEarthCover",
+            "text": "Carte de référence de la couverture terrestre"
+        }, {
+            "value": "intelligenceMilitary",
+            "text": "Infrastructures militaires"
+        }, {
+            "value": "inlandWaters",
+            "text": "Hydrographie"
+        }, {
+            "value": "location",
+            "text": "Localisant"
+        }, {
+            "value": "oceans",
+            "text": "Océans"
+        }, {
+            "value": "planningCadastre",
+            "text": "Planification et aménagement du territoire"
+        }, {
+            "value": "society",
+            "text": "Société"
+        }, {
+            "value": "structure",
+            "text": "Aménagements urbains"
+        }, {
+            "value": "transportation",
+            "text": "Infrastructures de transport"
+        }, {
+            "value": "utilitiesCommunication",
+            "text": "Réseaux de télécommunication, d'énergie"
+        }],
+
+        "MD_ReferenceSystemCode": [{
+            "value": "2154",
+            "text": "RGF93 – Lambert 93 (EPSG:2154)",
+            "search": "2154"
+        }, {
+            "value": "3947",
+            "text": "RGF93 – Lambert 93 CC47 (EPSG:3947)",
+            "search": "3947"
+        }, {
+            "value": "3948",
+            "text": "RGF93 – Lambert 93 CC48 (EPSG:3948)",
+            "search": "3948"
+        }, {
+            "value": "3949",
+            "text": "RGF93 – Lambert 93 CC49 (EPSG:3949)",
+            "search": "3949"
+        }, {
+            "value": "3950",
+            "text": "RGF93 – Lambert 93 CC50 (EPSG:3950)",
+            "search": "3950"
+        }, {
+            "value": "27572",
+            "text": "NTF Paris – Lambert zone II (EPSG:27572)",
+            "search": "27572"
+        }, {
+            "value": "27571",
+            "text": "NTF Paris – Lambert zone I (EPSG:27571)",
+            "search": "27571"
+        }, {
+            "value": "27561",
+            "text": "NTF Paris – Lambert Nord (EPSG:27561)",
+            "search": "27561"
+        }, {
+            "value": "32632",
+            "text": "WGS84 – UTM Zone 32N (EPSG:32632)",
+            "search": "32632"
+        }, {
+            "value": "4326",
+            "text": "WGS84 – 2D (EPSG:4326)",
+            "search": "4326"
+        }, {
+            "value": "4979",
+            "text": "WGS84 – 3D (EPSG:4979)",
+            "search": "4979"
+        }],
+
+        "MD_SpatialRepresentationTypeCode": [{
+            "value": "grid",
+            "text": "Rasteur"
+        }, {
+            "value": "vector",
+            "text": "Vecteur"
+        }, {
+            "value": "textTable",
+            "text": "Table texte"
+        }, {
+            "value": "tin",
+            "text": "Tin"
+        }, {
+            "value": "stereoModel",
+            "text": "Vue 3D"
+        }, {
+            "value": "video",
+            "text": "Vidéo"
+        }, {
+            "value": "undefined",
+            "text": "Non définie"
+        }]
+    }
+}

@@ -1323,25 +1323,35 @@ class ResourceManager {
 	}
 
 	function defineTags($tags) {
+		// Changing method to allow space and accent in tags
+
 		$tagsData = array();
 		if ($tags == null || $tags == '') {
 			$tagsData = [];
 		}
 		else if (is_array($tags)) {
 			foreach ($tags as $value) {
+				// OLD way
+				// $cleanValue = $this->cleanTag($value);
+				// if (mb_strlen($cleanValue) >= 2) {
+				// 	$tagsData[] = ["vocabulary_id" => null, "state" => "active", "display_name" => $cleanValue, "name" => $cleanValue];
+				// }
+				
 				$cleanValue = $this->cleanTag($value);
-				if (mb_strlen($cleanValue) >= 2) {
-					$tagsData[] = ["vocabulary_id" => null, "state" => "active", "display_name" => $cleanValue, "name" => $cleanValue];
-				}
+				$tagsData[] = ["name" => $cleanValue];
 			}
 		}
 		else {
 			$tags = explode(",", $tags);
 
 			for ($j = 0; $j < count($tags); $j++) {
-				$tagsData[$j] = ["vocabulary_id" => null, "state" => "active", "display_name" => $tags[$j], "name" => $tags[$j]];
+				// OLD way
+				// $tagsData[$j] = ["vocabulary_id" => null, "state" => "active", "display_name" => $tags[$j], "name" => $tags[$j]];
+
+				$tagsData[$j] = ["name" => $tags[$j]];
 			}
 		}
+
 		return $tagsData;
 	}
 
@@ -2038,19 +2048,10 @@ class ResourceManager {
 		
 		//We remove whitespaces at the beggining and end of the label
 		$str = trim($str);
-		
-		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
-                            'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
-                            'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
-                            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
-                            'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
-		$str = strtr( $str, $unwanted_array );
-		
+
 		$str = str_replace("?", "", $str);
-		$str = str_replace("`", "_", $str);
-		$str = str_replace("'", "_", $str);
-		$str = str_replace("-", "_", $str);
-		$str = str_replace(" ", "_", $str);
+		$str = str_replace("`", "", $str);
+		$str = str_replace("'", "", $str);
 		$str = str_replace(",", "", $str);
 		$str = str_replace("%", "", $str);
 		$str = str_replace("(", "", $str);
@@ -2066,18 +2067,61 @@ class ResourceManager {
 		$str = str_replace(":", "", $str);
 		$str = str_replace(">", "", $str);
 		$str = str_replace("<", "", $str);
-		$str = str_replace('\'', "_", $str);
-		$str = str_replace("/", "_", $str);
-		$str = str_replace("|", "_", $str);
-		$str = strtolower($str);
-		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
-		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
-		$str = preg_replace( '#&[^;]+;#', '', $str );
-		$str = str_replace("-", "_", $str);
-		$str = str_replace("=", "_", $str);
+		$str = str_replace("/", "", $str);
+		$str = str_replace("|", "", $str);
+		$str = str_replace("=", "", $str);
 		$str = str_replace("[", "", $str);
 		$str = str_replace("]", "", $str);
 		return $str;
+
+
+		// OLD WAY
+		// if (!mb_detect_encoding($str, 'UTF-8', true)) {
+		// 	$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
+		// }
+		
+		// //We remove whitespaces at the beggining and end of the label
+		// $str = trim($str);
+		
+		// $unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+        //                     'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+        //                     'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+        //                     'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+        //                     'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+		// $str = strtr( $str, $unwanted_array );
+		
+		// $str = str_replace("?", "", $str);
+		// $str = str_replace("`", "_", $str);
+		// $str = str_replace("'", "_", $str);
+		// $str = str_replace("-", "_", $str);
+		// $str = str_replace(" ", "_", $str);
+		// $str = str_replace(",", "", $str);
+		// $str = str_replace("%", "", $str);
+		// $str = str_replace("(", "", $str);
+		// $str = str_replace(")", "", $str);
+		// $str = str_replace("*", "", $str);
+		// $str = str_replace("!", "", $str);
+		// $str = str_replace("@", "", $str);
+		// $str = str_replace("#", "", $str);
+		// $str = str_replace("$", "", $str);
+		// $str = str_replace("^", "", $str);
+		// $str = str_replace("&", "", $str);
+		// $str = str_replace("+", "", $str);
+		// $str = str_replace(":", "", $str);
+		// $str = str_replace(">", "", $str);
+		// $str = str_replace("<", "", $str);
+		// $str = str_replace('\'', "_", $str);
+		// $str = str_replace("/", "_", $str);
+		// $str = str_replace("|", "_", $str);
+		// $str = strtolower($str);
+		// $str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
+		// $str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
+		// $str = preg_replace( '#&[^;]+;#', '', $str );
+		// $str = str_replace("-", "_", $str);
+		// $str = str_replace("=", "_", $str);
+		// $str = str_replace("[", "", $str);
+		// $str = str_replace("]", "", $str);
+		// return $str;
 	}
 	
 	function lettersToNumber($letters){

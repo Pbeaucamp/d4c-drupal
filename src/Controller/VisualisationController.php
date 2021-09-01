@@ -35,6 +35,14 @@ SOFTWARE.
  */
 class VisualisationController extends ControllerBase {
 
+	private $config;
+	private $locale;
+    
+	public function __construct(){
+        $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$this->locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
+    }
+
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
 		$resourceId = $request->query->get('resourceId');
@@ -50,13 +58,10 @@ class VisualisationController extends ControllerBase {
 	public function myPage2($id, $resourceId, $tab) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
 		
 		$api = new API();
-
-		Logger::logMessage("TRM - Load resource ID " . $resourceId);
 
 		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId);
 
@@ -65,7 +70,7 @@ class VisualisationController extends ControllerBase {
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$licence = $dataset["metas"]["license"];
-        $metadataExtras = $dataset[metas][extras];
+        $metadataExtras = $dataset["metas"]["extras"];
 
 		$url = $protocol . $host . $this->config->client->routing_prefix . "/visualisation?id=" . $dataset["datasetid"];
 		
@@ -141,7 +146,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($config, $api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
 		 
 		$element = array(
 			'example one' => [
@@ -154,7 +159,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($config, $api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
+	function buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -190,17 +195,16 @@ class VisualisationController extends ControllerBase {
 
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 
-		$themes = $this->buildTheme($api, $config, $metadataExtras);
+		$themes = $this->buildTheme($api, $metadataExtras);
 		$datasetTitle = $this->buildDatasetTitle($themes);
 		// $imgTheme = $themes[0];
 		// $themes = $themes[1];
 
-		$filters = $this->buildFilters($config);
-		$tabs = $this->buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $resourceId);
-		$disqus = $this->buildDisqus($config, $host, $dataset);
-		$imports = $this->buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
+		$filters = $this->buildFilters($id, $dataset, $resourceId);
+		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
+		$disqus = $this->buildDisqus($host, $dataset);
+		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
-		// <a href="javascript:history.back()"><i class="fa fa-fw fa-twitter"></i></a>
 		return '
 			<body>
 				<div class="d4c-content">
@@ -245,9 +249,12 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildFilters($config) {
+	function buildFilters($datasetId, $dataset, $selectedResourceId) {
+		$resourcesList = $this->buildResourcesList($datasetId, $dataset, $selectedResourceId);
+
 		return '
 			<div class="d4c-filters-summary" ng-class="{\'d4c-filters-summary--expanded\': toggleState.expandedFilters}">
+				' . $resourcesList . '
 				<div class="d4c-filters-summary__count">
 					<span class="d4c-filters-summary__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters-summary__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
@@ -258,6 +265,7 @@ class VisualisationController extends ControllerBase {
 				</button>
 			</div>
 			<div class="d4c-filters" ng-class="{\'d4c-filters--expanded\': toggleState.expandedFilters}" ng-show="canAccessData()">
+				' . $resourcesList . '
 				<h2 class="d4c-filters__count">
 					<span class="d4c-filters__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
@@ -279,7 +287,7 @@ class VisualisationController extends ControllerBase {
 				<h2 ng-if="ctx.dataset.getPredefinedFilters()" class="d4c-filters__filters"><span translate>Predefined Filters</span></h2>
 				<ul class="d4c-dataset-export__format-choices" ng-if="ctx.dataset.getPredefinedFilters()">
 					<li ng-repeat="(key, value) in ctx.dataset.getPredefinedFilters()" class="d4c-dataset-export__format-choice">
-						<a href = "' . $config->client->routing_prefix . '/visualisation/table/?id=\{\{ ctx.dataset.metas.id \}\}&\{\{ value }\}">
+						<a href = "' . $this->config->client->routing_prefix . '/visualisation/table/?id=\{\{ ctx.dataset.metas.id \}\}&\{\{ value }\}">
 							<span>\{\{ key }\}</span>
 						</a>
 					</li>
@@ -289,10 +297,46 @@ class VisualisationController extends ControllerBase {
 			</div>';
 	}
 
-	function buildTabs($config, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $selectedResourceId) {
+	function buildResourcesList($datasetId, $dataset, $selectedResourceId) {
+		$resources = $dataset["metas"]["resources"];
+		$hasResources = false;
+
+		$list .= '
+			<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
+				<option value="" ng-if="false"></option>
+		';
+
+		if (sizeof($resources) > 0 ) {
+			$lastResourceId = $this->getLastDataResource($resources);
+			
+			foreach($resources as $key=>$value){
+				$resourceId = $value["id"];
+				$name = $value["name"];
+				$mimeType = $value["mimetype"];
+				$datastoreActive = $value["datastore_active"];
+
+				$button = '';
+				if ($mimeType == "text/csv" && $datastoreActive == true) {
+					$hasResources = true;
+
+					$isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId);
+
+					$list .= '
+						<option value="' . $resourceId . '" ng-value="' . $resourceId . '" ' . ($isActif ? 'ng-selected="true"' : '') . '>' . $name . '</option>
+					';
+				}
+			}
+		}
+
+		$list .= '</select>';
+
+		return $hasResources ? $list : '';
+	}
+
+	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
-		$tabInformation = $this->buildTabInformation($config, $loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $selectedResourceId);
+		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
 		$tabTable = $this->buildTabTable();
 		$tabMap = $this->buildTabMap();
 		$tabAnalyze = $this->buildTabAnalyze();
@@ -324,8 +368,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($config, $loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $selectedResourceId) {
-		
+	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
 		// $source = $sources[1];
@@ -333,11 +376,11 @@ class VisualisationController extends ControllerBase {
 		//IMAGE
 		$image = $this->buildImage($metadataExtras);
 
-		//DONNEES
-		$donnees = $this->buildDonnees($resources);
+		//LIMITES ET CONDITIONS D'UTILISATION
+		$limitesUtilisation = $this->buildLimitesUtilisation($metadataExtras);
 
 		//LIMITES ET CONDITIONS D'UTILISATION
-		$limitesEtConditionsUtilisation = $this->buildLimitesEtConditionsUtilisation($metadataExtras);
+		$conditionsUtilisation = $this->buildConditionsUtilisation($metadataExtras);
 
 		//MÉTHODE DE PRODUCTION ET QUALITÉ
 		$methodeProductionEtQualite = $this->buildMethodeProductionEtQualite($metadataExtras);
@@ -352,25 +395,28 @@ class VisualisationController extends ControllerBase {
 		$contacts = $this->buildContacts($metadataExtras);
 
 		//Linked datasets
-		$linkedDataSets = $this->buildLinkedDatasets($config, $metadataExtras);
+		$linkedDataSets = $this->buildLinkedDatasets($metadataExtras);
 		
 		$visWidget = $this->buildWidget($metadataExtras);
 
 		$downloadsAndLinks = null;
-		if ($config->client->ressources_download_links) {
-			$downloadsAndLinks = $this->manageAdditionnalResources($config, $dataset, $datasetId, $selectedResourceId);
+		if ($this->config->client->ressources_download_links) {
+			$downloadsAndLinks = $this->manageAdditionnalResources($dataset, $datasetId, $selectedResourceId);
 		}
+
+		$keywordsPart = $this->buildKeywords($keywords);
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Information" icon="info-circle" translate="title" slug="information">
 				<div class="row">
 					<div class="col-sm-9">
-						' . $this->buildCard('Description', $description) . '
-						' . $this->buildCard('Données', $donnees) . '
-						' . $this->buildCard('Limites et conditions d\'utilisation', $limitesEtConditionsUtilisation) . '
+						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
+						' . $this->buildCard('Limites techniques d\'usage', ($limitesUtilisation != null ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
+						' . $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) . '
 						' . $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) . '
 						' . $this->buildCard('Informations géographiques', $informationsGeo) . '
 						' . ($downloadsAndLinks != null ? $this->buildCard('Données et ressources', $downloadsAndLinks) : '') . '
+						' . $this->buildCard('Mots clefs', $keywordsPart) . '
 					</div>
 					<div class="col-sm-3">
 						' . $this->buildCardImage($image) . '
@@ -440,13 +486,8 @@ class VisualisationController extends ControllerBase {
 	}
 
 	/* MANAGE METADATA */
-	function exportExtras($metadata, $metadataName) {
-		return current(array_filter($metadata, function($elem) use($metadataName){
-			return $elem['key'] == $metadataName;
-		}))["value"];
-	}
 
-	function buildLinkedDatasets($config, $metadataExtras) {
+	function buildLinkedDatasets($metadataExtras) {
 		$links = $this->exportExtras($metadataExtras, 'LinkedDataSet');
 		$links = explode(";", $links);
 
@@ -455,7 +496,7 @@ class VisualisationController extends ControllerBase {
 			$link = explode(":", $links[$j]);
 			
 			if ($link[0] != 'false') {
-				$url = $config->client->routing_prefix . '/visualisation?id='. $link[1];
+				$url = $this->config->client->routing_prefix . '/visualisation?id='. $link[1];
 				$linkedDatasets = $linkedDatasets . '&nbsp<p style="margin: -1.1em 0 -1em;" ><code style="cursor: pointer;" onclick="window.open(`'.$url.'`, `_blank`);">' . $link[0] . '</code></p><br>';
 			}
 		}
@@ -473,7 +514,7 @@ class VisualisationController extends ControllerBase {
 		}
 	}
 
-	function buildTheme($api, $config, $metadataExtras) {
+	function buildTheme($api, $metadataExtras) {
 		//Getting themes to get theme's information
 		$listOfThemes = $api->getPackageTheme();
     	$listOfThemes = json_decode($listOfThemes->getContent(), true);
@@ -493,8 +534,6 @@ class VisualisationController extends ControllerBase {
 				$theme["label"] = $selectedTheme["label"];
 				$theme["title"] = $selectedTheme["title"];
 				$theme["url"] = $selectedTheme["url"];
-
-				Logger::logMessage("TRM - FOUND THEME - " . $value);
 
 				$themes[] = $theme;
 				// $themesPart .= '
@@ -544,14 +583,18 @@ class VisualisationController extends ControllerBase {
 			// '; 
 		}
 
-		Logger::logMessage("TRM - THEMES - " . json_encode($themes));
-
 		return $themes;
 	}
 
 	function buildDatasetTitle($themes) {
 		$themeImages = '<div class="box_3">';
 		$themeImages .= '	<d4c-social-buttons></d4c-social-buttons>';
+		
+		$themeImages .= '	<button class="d4c-button" ng-click="onClose()">';
+		$themeImages .= '		<i class="fa fa-angle-left" aria-hidden="true"></i>';
+		$themeImages .= '		Retour';
+		$themeImages .= '	</button>';
+
 		foreach($themes as $theme) {
 			$themeImage = $theme["url"];
 			if ($themeImage != null) {
@@ -559,6 +602,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		$themeImages .= '	<span>\{\{ ctx.dataset.metas.title \}\}</span>';
+
 		$themeImages .= '</div>';
 
 		return $themeImages;
@@ -649,19 +693,14 @@ class VisualisationController extends ControllerBase {
 
 	function buildCustomView($metadataExtras) {
 		$customView = $this->exportExtras($metadataExtras, 'custom_view');
-		return $customView != null ? json_encode($customView) : '';
+		return $customView != null ? json_encode($customView) : null;
 	}
 
 	function buildImage($metadataExtras) {
+		// $: image = getImage($storeMdjs);
+		
 		$image = $this->exportExtras($metadataExtras, 'graphic-preview-file');
 		return $image != null ? $image : '';
-	}
-
-	function buildDonnees($resources) {
-		foreach ($resources as $resource) {
-			Logger::logMessage("TRM - Found resource " . json_encode($resource));
-		}
-		return '';
 	}
 
 	function buildWidget($metadataExtras) {
@@ -701,10 +740,35 @@ class VisualisationController extends ControllerBase {
 		}
 	}
 
-	function buildLimitesEtConditionsUtilisation($metadataExtras) {
+	function buildLimitesUtilisation($metadataExtras) {
+		$useConstraintsPart = '';
+
+		for ($i = 1; $i <= 5; $i++) {
+			$useConstraint = $this->exportExtras($metadataExtras, 'use-constraints-' . $i);
+
+			if ($useConstraint != null) {
+				$useConstraint = json_decode($useConstraint, true);
+				$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
+			}
+		}
+
+		// $useConstraints = $this->exportExtras($metadataExtras, 'use-constraints');
+
+		// if ($useConstraints != null) {
+		// 	$useConstraints = $this->cleanSimpleJson($useConstraints);
+		// 	$useConstraints = '<li>' . $useConstraints . '</li>';
+		// }
+
+		return '
+			<ul class="m-0">
+				' . $useConstraintsPart . '
+			</ul>
+		';
+	}
+
+	function buildConditionsUtilisation($metadataExtras) {
 		$licence = $this->exportExtras($metadataExtras, 'licence');
 		$accessConstraints = $this->exportExtras($metadataExtras, 'access_constraints');
-		$useConstraints = $this->exportExtras($metadataExtras, 'use-constraints');
 		$mentionLegales = $this->exportExtras($metadataExtras, 'mention_legales');
 
 		if ($licence != null) {
@@ -712,7 +776,7 @@ class VisualisationController extends ControllerBase {
 			if (json_last_error() === JSON_ERROR_NONE) {
 				$licence = $licenceJson;
 				foreach ($licence as $value) {	
-					$licence = '<li>' . html_entity_decode($value) . '</li>';
+					$licence = '<li>' .$value . '</li>';
 				}
 			}
 			else {
@@ -723,14 +787,14 @@ class VisualisationController extends ControllerBase {
 		if ($accessConstraints != null) {
 			$accessConstraints = json_decode($accessConstraints, true);
 
-			foreach ($accessConstraints as $value) {	
-				$accessConstraints = '<li>' . html_entity_decode($value) . '</li>';
+			if (!empty($accessConstraints)) {
+				foreach ($accessConstraints as $value) {	
+					$accessConstraints = '<li>' . $value . '</li>';
+				}
 			}
-		}
-
-		if ($useConstraints != null) {
-			$useConstraints = $this->cleanSimpleJson($useConstraints);
-			$useConstraints = '<li>' . $useConstraints . '</li>';
+			else {
+				$accessConstraints = '';
+			}
 		}
 
 		if ($mentionLegales != null) {
@@ -741,13 +805,18 @@ class VisualisationController extends ControllerBase {
 			<ul class="m-0">
 				' . $licence . '
 				' . $accessConstraints . '
-				' . $useConstraints . '
 				' . $mentionLegales . '
 			</ul>
 		';
 	}
 
 	function buildSynthese($metadataExtras, $themes) {
+		// TODO
+		// $: isOpenData = helpers.arrayInArray(["opendata", "open data", "donnée ouverte", "données ouvertes"], dataKeywords);
+		// $: dataTopicCategories = converter.getValue($storeMdjs, "dataTopicCategories") || [];
+		// $: dataMaintenanceFrequency = converter.getValue($storeMdjs, "dataMaintenanceFrequency")[0] || "";
+		// $: dataDate = getDataDate($storeMdjs);
+
 		$frequence = $this->exportExtras($metadataExtras, 'frequence');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 
@@ -790,7 +859,7 @@ class VisualisationController extends ControllerBase {
 			</div>
 		';
 
-		//TODO: Date
+		// TODO: Date
 		// Logger::logMessage("TRM - Last update date " . $lastDataUpdateDate);
 		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
 		// $synthese .= '
@@ -804,7 +873,7 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-clock-o"></i>
-				<span class="ms-2">' . ($frequence != null ? $frequence : 'Mise à jour inconnue') . '</span>
+				<span class="ms-2">' . ($frequence != null ? $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) : 'Mise à jour inconnue') . '</span>
 			</div>
 		';
 
@@ -830,6 +899,13 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildInformationsGeo($metadataExtras) {
+		// TODO
+		// $: dataReferenceSystem = getReferenceSystem($storeMdjs);
+		// $: dataSpatialRepresentationType = converter.getValue($storeMdjs, "dataSpatialRepresentationType")[0] || "";
+		// $: bbox = getBbox($storeMdjs);
+		// $: dataScaleDenominator = converter.getValue($storeMdjs, "dataScaleDenominator")[0] || "";
+		// $: dataScaleDistance = converter.getValue($storeMdjs, "dataScaleDistance")[0] || "";
+
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
@@ -839,7 +915,8 @@ class VisualisationController extends ControllerBase {
 		
 		$equivalentScale = $this->exportExtras($metadataExtras, 'equivalent-scale');
 		if ($equivalentScale != null) {
-			$equivalentScale = $this->cleanSimpleJson($equivalentScale);
+			$equivalentScale = json_decode($equivalentScale, true);
+			// $equivalentScale = $this->cleanSimpleJson($equivalentScale);
 		}
 		
 		$referenceSystem = $this->exportExtras($metadataExtras, 'spatial-reference-system');
@@ -849,32 +926,31 @@ class VisualisationController extends ControllerBase {
 		return '
 			<div class="row">
 				<div class="col-sm-7">
-					<p><strong>Type de représentation:</strong> ' . ($representationType != null ? $representationType : 'non renseignée') . '</p>
+					<p><strong>Type de représentation:</strong> ' . ($representationType != null ? $this->translateValue($this->locale["codelists"]["MD_SpatialRepresentationTypeCode"], $representationType) : 'non renseignée') . '</p>
 					<p><strong>Etendue géographique:</strong></p>
 					<ul>
-						<li>Ouest: ' . $bboxWestLong . '</li>
-						<li>Est: ' . $bboxEastLong . '</li>
-						<li>Sud: ' . $bboxSouthLat . '</li>
-						<li>Nord: ' . $bboxNorthLat . '</li>
+						<li>Ouest: ' . ($bboxWestLong != null ? number_format($bboxWestLong, 2) : "non renseignée") . '</li>
+						<li>Est: ' . ($bboxEastLong != null ? number_format($bboxEastLong, 2) : "non renseignée") . '</li>
+						<li>Sud: ' . ($bboxSouthLat != null ? number_format($bboxSouthLat, 2) : "non renseignée") . '</li>
+						<li>Nord: ' . ($bboxNorthLat != null ? number_format($bboxNorthLat, 2) : "non renseignée") . '</li>
 					</ul>
 				</div>
 				<div class="col-sm-3">
-					<p><strong>Système de projection:</strong> ' . ($referenceSystem != null ? $referenceSystem : 'non renseignée') . '</p>
+					<p><strong>Système de projection:</strong> ' . ($referenceSystem != null ? $this->translateValue($this->locale["codelists"]["MD_ReferenceSystemCode"], $referenceSystem) : 'non renseignée') . '</p>
 					<p><strong>Echelle:</strong> ' . ($equivalentScale != null ? '1/' . $equivalentScale : 'non renseignée') . '</p>
 					<p><strong>Résolution:</strong> ' . ($resolution != null ? $resolution : 'non renseignée') . '</p>
 				</div>
 			</div>
 		';
 	}
-
-	function cleanSimpleJson($value) {
-		$value = str_replace('{', '', $value);
-		$value = str_replace('}', '', $value);
-		$value = str_replace('"', '', $value);
-		return $value;
-	}
 	
 	function buildContacts($metadataExtras) {
+		// TODO
+		// $: {
+		// 	const contacts = converter.getValue($storeMdjs, "dataPointOfContacts") || [];
+		// 	dataPointOfContacts = getContacts(contacts);
+		// }
+
 		$contacts = '<div class="list-unstyled">';
 
 		//We tried to get the first 5 responsible-organisation
@@ -900,12 +976,13 @@ class VisualisationController extends ControllerBase {
 		return $contacts;
 	}
 
-	function manageAdditionnalResources($config, $dataset, $datasetId, $selectedResourceId) {
+	function manageAdditionnalResources($dataset, $datasetId, $selectedResourceId) {
+		$additionnalResources = '';
+
 		$resources = $dataset["metas"]["resources"];
 
-		$additionnalResources = '';
 		if (sizeof($resources) > 0 ) {
-			$lastResourceId = $this->getLastDataResource($resources);
+			// $lastResourceId = $this->getLastDataResource($resources);
 
 			foreach($resources as $key=>$value){
 				$resourceId = $value["id"];
@@ -944,7 +1021,7 @@ class VisualisationController extends ControllerBase {
 					$button .= '<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>';
 				}
 
-				$isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId) ? '<div class="inline download-active"></div>' : '';
+				// $isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId) ? '<div class="inline download-active"></div>' : '';
 
 				$additionnalResources .= '
 					<div class="row">
@@ -962,11 +1039,21 @@ class VisualisationController extends ControllerBase {
 					</div>
 				';
 
-				$index++;
+				// $index++;
 			}
 		}
 
 		return $additionnalResources;
+	}
+
+	function buildKeywords($keywords) {
+		$keywordsPart = '';
+
+		foreach($keywords as $keyword) {
+			$keywordsPart .= '<span class="text-uppercase badge bg-primary margin-right-1 padding-x-2 padding-y-1">' . $keyword . '</span>';
+		}
+
+		return $keywordsPart;
 	}
 
 	function getLastDataResource($resources) {
@@ -1110,8 +1197,8 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildDisqus($config, $host, $dataset) {
-		if ($config->client->disqus) {
+	function buildDisqus($host, $dataset) {
+		if ($this->config->client->disqus) {
 			return '
 				<d4c-disqus
 					shortname="data4citizen"
@@ -1124,16 +1211,16 @@ class VisualisationController extends ControllerBase {
 		}
 	}
 
-	function buildImports($config, $id, $name, $description, $url, $dateModified, $licence, $keywords, $resources) {
+	function buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $resources) {
 		return '
-			<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+			<script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
 			
 			<script type="text/javascript">
 				$(".d4c-content").html($(".d4c-content").html().replace(/\\\{\\\{/g,\'\{\{\').replace(/\\\}\\\}/g,\'}}\').replace(/\\\{/g,\'\{\').replace(/\\\}/g,\'}\'));
@@ -1143,24 +1230,24 @@ class VisualisationController extends ControllerBase {
 				mod.factory("config", [function() {
 					return {
 						ID_DATASET: "'.$id.'",
-						HOST: "'.$config->client->domain.'"
+						HOST: "'.$this->config->client->domain.'"
 					}
 				}]);
 			</script>
 		
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-			<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
-			<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+			<script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
 	
 			<script>
-				//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-				$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-				//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-				//$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-				$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
-				$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
-				$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
+				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
 				$("head").append("<base href=\"/\">");
 					
 			</script>
@@ -1187,192 +1274,38 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	// function manageXMLFile($dataset, $id) {
-	// 	/**
-	//  	* This is disabled for now
-	//  	* It is a developpement made for GE
-	//  	* 
-	//  	*/
-	// 	$MapDetail = ""; 
-	// 	$featureCatalog = ""; 
-	// 	$DateDetail="";
-	// 	$dateUpdated ="";
-	// 	$shareSocialMedia="";
-	// 	$associatedResources ="";
-		
-	// 	foreach($dataset["metas"]["resources"] as $key=>$value){
-	// 		// Logger::logMessage("TRM - Found resources " . $value["name"] . " and format = " . $value["format"] . " and test = " . (strpos($value["name"], "Vue XML des métadonnées") !== false));
-	// 		if($value["format"] == "csw" || strpos($value["name"], "Vue XML des métadonnées") !== false) {
-	// 			// Logger::logMessage("TRM - Found XML " . $value["name"]);
+	// UTILS
 
-	// 			$xml = file_get_contents($value['url']); 
+	function exportExtras($metadata, $metadataName) {
+		return current(array_filter($metadata, function($elem) use($metadataName){
+			return $elem['key'] == $metadataName;
+		}))["value"];
+	}
 
-	// 			if (!file_exists($_SERVER['DOCUMENT_ROOT']."/". $id)) {
-	// 				mkdir($_SERVER['DOCUMENT_ROOT']."/". $id, 0777, true);
-	// 			}
-	// 			file_put_contents($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml", $xml);
-				
-	// 			break;
-	// 		}
+	function translateValue($locales, $key) {
+		$translatedValue = current(array_filter($locales, function($elem) use($key){
+			return $elem['value'] == $key;
+		}))["text"];
+
+		return $translatedValue != null && $translatedValue != '' ? $translatedValue : $key;
+	}
+
+	// Not working
+	// function cleanSimpleJson($value, $decodeHtml = false) {
+	// 	$value = str_replace('{', '', $value);
+	// 	$value = str_replace('}', '', $value);
+	// 	$value = str_replace('"', '', $value);
+
+	// 	if ($decodeHtml) {
+	// 		$value = $this->decodeHtml($value);
 	// 	}
 
-	// 	if (file_exists($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml")) {
- 
-	// 		$str=implode("\n",file($_SERVER['DOCUMENT_ROOT']."/". $id."/metadata_xml_view.xml"));
+	// 	return $value;
+	// }
 
-	// 		$fp=fopen($_SERVER['DOCUMENT_ROOT']."/".$id."/metadata_xml_view.xml",'w');
-	// 		$str=str_replace('&','??',$str);
-	// 		$str=str_replace(':','',$str);
-	// 		fwrite($fp,$str,strlen($str));
-
-	// 		$xml = simplexml_load_file($id."/metadata_xml_view.xml");
-
-	// 		foreach ($xml as $key => $value) {
-	// 			$MapDetail='<section class="gn-md-side-extent ng-scope" > 
-	// 					<h2 style="font-size: 16px;"> <i class="fa fa-fw fa-map-marker"></i> 
-	// 					<span data-translate="" class="ng-scope" >Extension spatiale</span>
-	// 				</h2> ';
-						
-	// 			$detailDescription = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmddescription->gcoCharacterString->__toString();
-	// 			$detailWestLongitude = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement[1]->gmdEX_GeographicBoundingBox->gmdwestBoundLongitude->gcoDecimal->__toString();
-	// 			$detailSouthLatitude = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement[1]->gmdEX_GeographicBoundingBox->gmdsouthBoundLatitude->gcoDecimal->__toString();
-	// 			$detailEastLongitude = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement[1]->gmdEX_GeographicBoundingBox->gmdeastBoundLongitude->gcoDecimal->__toString();
-	// 			$detailNorthLatitude = $value->gmdidentificationInfo->gmdMD_DataIdentification->gmdextent->gmdEX_Extent->gmdgeographicElement[1]->gmdEX_GeographicBoundingBox->gmdnorthBoundLatitude->gcoDecimal->__toString();
-
-	// 			$MapDetail .= '<ul> <li >' . $detailDescription . '</li></ul> ';
-	// 			$MapDetail .= '<img class="gn-img-thumbnail img-thumbnail gn-img-extent" alt="Spatial extent" aria-label="Spatial extent" data-ng-src="https://www.geograndest.fr/geonetwork/srv/eng/region.getmap.png?mapsrs=EPSG:3857&width=250&background=settings&geomsrs=EPSG:4326&geom=Polygon((' . $detailWestLongitude . '%20' . $detailSouthLatitude . ',' . $detailEastLongitude . '%20' . $detailSouthLatitude . ',' . $detailEastLongitude . '%20' . $detailNorthLatitude . ',8.23029041290283203125%2050.16764068603515625,8.23029041290283203125%2047.42026519775390625))" src="https://www.geograndest.fr/geonetwork/srv/eng/region.getmap.png?mapsrs=EPSG:3857&width=250&background=settings&geomsrs=EPSG:4326&geom=Polygon((8.23029041290283203125%2047.42026519775390625,3.3840906620025634765625%2047.42026519775390625,3.3840906620025634765625%2050.16764068603515625,8.23029041290283203125%2050.16764068603515625,8.23029041290283203125%2047.42026519775390625))">';
-	// 			$MapDetail .= "</section>";
-
-	// 			$DateDetail = '<section class="gn-md-side-dates ng-scope" > <h2> <i class="fa fa-fw fa-clock-o" style="font-size: 16px;"></i> <span data-translate="" class="ng-scope" style="font-size: 16px;">Étendue temporelle</span> </h2> <p> </p>';	
-	// 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as  $valuedate) {
-					
-	// 				if($valuedate->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "publication") {
-	// 					$DateDetail .= '<dl > <dt data-translate="" class="ng-scope">La date de publication</dt>';
-	// 				}
-
-	// 				if($valuedate->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "revision") {
-	// 					$DateDetail .= '<dl > <dt data-translate="" class="ng-scope">La date de révision</dt>';
-	// 				}
-	// 				$DateDetail .= '<dd data-gn-humanize-time="'.$valuedate->gmdCI_Date->gmddate->gcoDate->__toString().'" data-format="YYYY-MM-DD" class="ng-scope ng-isolate-scope"><span title="3 months ago" class="ng-binding">'.$valuedate->gmdCI_Date->gmddate->gcoDate->__toString().'</span></dd> </dl>';
-	// 			}
-	// 			$DateDetail .= '</section>';
-				
-	// 			$datestamps = explode("T", $value->gmddateStamp->gcoDateTime->__toString());
-	// 			$now = time(); 
-	// 			$your_date = strtotime($datestamps[0]);
-	// 			$datediff = $now - $your_date - 1;
-	// 			$days = round($datediff / (60 * 60 * 24)) - 1;
-
-	// 			$dateUpdated = '<section class="gn-md-side-calendar"> <h2 style="font-size:16px"> <i class="fa fa-fw fa-calendar"></i><span data-translate="" class="ng-scope">Modifié: </span> </h2>';
-	// 			$dateUpdated .= '<p><span data-gn-humanize-time="'.$value->gmddateStamp->gcoDateTime->__toString().'" data-from-now="" class="ng-isolate-scope"><span title="'.$value->gmddateStamp->gcoDateTime->__toString().'" class="ng-binding"> Il y a '.$days.' jour(s)</span></span> </p>';
-	// 			$dateUpdated .= '</section>';
-
-	// 			$shareSocialMedia ='<section class="gn-md-side-social" style="margin-top: 20px" > <h2 style="font-size: 16px"> <i class="fa fa-fw fa-share-square-o"></i> <span data-translate="" class="ng-scope">Partager</span> </h2> 
-	// 				<a data-ng-href="#" title="Share on Twitter" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-twitter"></i></a>
-	// 				<a data-ng-href="#" title="Share on Facebook" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-facebook"></i></a> <a data-ng-href="#" title="Share on LinkedIn" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-linkedin"></i></a> <a data-ng-href="#" title="Share by email" target="_blank" class="btn btn-default" href="#"><i class="fa fa-fw fa-envelope-o"></i></a> <a data-ng-click="mdService.getPermalink(md)" title="Permalink" class="btn btn-default"><i class="fa fa-fw fa-link"></i></a> </section>';
-
-
-	// 			$featureCatalog ='<div><h2 style="font-size: 16px" class="ng-binding">À propos de cette ressource</h2></div>';
-	// 			$associatedResources =" <div>";
-	// 			$associatedResources .= '<table class="table table-striped"><tbody> ';
-	// 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
-	// 				if($value2->gmdMD_Keywords->gmdthesaurusName) {
-	// 					$associatedResources .= '<tr > <th data-translate="" class="ng-scope">INSPIRE themes</th><td> <button data-ng-click="search({\'inspirethemewithac\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})" class="btn btn-sm btn-default ps ps-en" title="Click to filter on  Sites protégés"> <i class="fa fa-download" style="color: #95c11f"></i> </button> </td></tr>';
-	// 				}
-	// 			}
-	// 			if($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdtopicCategory->__toString() ) {
-	// 				$associatedResources .= '<tr> <th data-translate="" class="ng-scope">Categories</th> <td><button data-ng-click="search({\'topicCat\': cat})" class="btn btn-sm btn-default ng-binding ng-scope" title="Click to filter on  Environment"> <span class="fa gn-icon-environment topic-color"></span>&nbsp; Environment </button> </td> </tr>';
-	// 			}
-
-	// 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
-	// 				if($value2->gmdMD_Keywords->gmdthesaurusName) {
-	// 					$associatedResources .= '<tr > <th data-translate="" class="ng-scope">'.$value2->gmdMD_Keywords->gmdthesaurusName->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString().'</th><td><ul> 
-	// 							<li > <span class="ng-binding">'.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'</span> <a  href="" title="Click to filter on  Sites protégés" aria-label="Click to filter on  Sites protégés" data-ng-click="search({\'keyword\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})"> <i class="fa fa-search"></i> </a> </li></ul></td>
-	// 						</tr>';
-	// 				}
-	// 			}
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Autres mots-clés</th><td>';
-	// 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmddescriptiveKeywords as $key2 => $value2) {
-	// 				if(!$value2->gmdMD_Keywords->gmdthesaurusName) {
-	// 					$associatedResources .= '<ul style="list-style-type: disc;"> 
-	// 						<li > <span class="ng-binding">'.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'</span> <a  href="" title="Click to filter on  Sites protégés" aria-label="Click to filter on  Sites protégés" data-ng-click="search({\'keyword\': '.$value2->gmdMD_Keywords->gmdkeyword->gcoCharacterString->__toString().'})"> <i class="fa fa-search"></i> </a> </li></ul>';
-	// 				}
-	// 			}
-	// 			$associatedResources .= '</td></tr>';
-	// 			$associatedResources .='<tr > <th data-translate="" class="ng-scope">Langue</th><td><ul> 
-	// 					<li > <span class="ng-binding">'.$value->gmdlanguage->gmdLanguageCode->__toString().'</span> </li></ul></td>
-	// 				</tr>';
-
-	// 			$associatedResources .='<tr > <th data-translate="" class="ng-scope">Identificateur de ressource</th><td><ul> 
-	// 					<li > <span class="ng-binding">'.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdidentifier->gmdRS_Identifier->gmdcode->gcoCharacterString->__toString().'</span> </li></ul></td>
-	// 				</tr>';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Contraintes légales</th><td>'; 
-	// 			foreach ($value->gmdidentificationInfo->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
-	// 				if($value2->gmdMD_LegalConstraints->gmdotherConstraints != null){
-	// 					$associatedResources .= '<p>'.$value2->gmdMD_LegalConstraints->gmdotherConstraints->gcoCharacterString->__toString().'<p>';
-	// 				}
-
-	// 				foreach ($value2->gmdMD_LegalConstraints->gmduseLimitation as $value3) {
-	// 					$associatedResources .= '<p>'.$value3->gcoCharacterString->__toString().'<p>';
-	// 				}
-	// 			}
-	// 			$associatedResources .= '</td></tr>';
-				
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Contact pour la ressource</th><td><adresse> 
-	// 					<strong><i class="fa fa-envelope" style="margin-right: 10px"></i> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString().'</strong> </adresse>
-	// 					<p>'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcountry->gcoCharacterString->__toString().'</p> <ul style="list-style-type: disc;"><li> <strong>Point de contact: </strong><a href="mailto:'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'"> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-				
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Statut</th><td>
-	// 					<ul style="list-style-type: disc;"><li>  '.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdstatus->gmdMD_ProgressCode->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-
-	// 			$associatedResources .= '</tbody> </table>';
-	// 			$associatedResources .= '<h4>Informations techniques</h4>';
-	// 			$associatedResources .= '<table class="table table-striped"><tbody> ';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Score</th><td>
-	// 					<ul style="list-style-type: disc;"><li>  '.$value->gmdidentificationInfo->gmdMD_DataIdentification->gmdspatialResolution->gmdMD_Resolution->gmdequivalentScale->gmdMD_RepresentativeFraction->gmddenominator->gcoInteger->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Format</th><td>
-	// 					<ul style="list-style-type: disc;"><li>  '.$value->gmddistributionInfo->gmdMD_Distribution->gmddistributionFormat->gmdMD_Format->gmdname->gcoCharacterString->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope">Lignée</th><td>
-	// 					<ul style="list-style-type: disc;"><li>  '.$value->gmddataQualityInfo->gmdDQ_DataQuality->gmdlineage->gmdLI_Lineage->gmdstatement->gcoCharacterString->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-
-	// 			$associatedResources .= '</tbody> </table>';
-	// 			$associatedResources .= '<h4>Metadata information</h4>';
-	// 			$associatedResources .= '<table class="table table-striped"><tbody> ';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope"><a class="btn btn-default gn-margin-bottom" href="../api/records/fr-120066022-jdd-d90ac948-9e07-47a6-9c1b-471888dbefd4/formatters/xml"> <i class="fa fa-fw fa-file-code-o"></i> <span data-translate="" class="ng-scope">Download metadata</span> </a></th>
-	// 				</tr>';
-
-	// 			$associatedResources .= '<tr > <th data-translate="" class="ng-scope"><strong> Contact </strong> </th><td><adresse> 
-	// 					<strong><i class="fa fa-envelope" style="margin-right: 10px"></i> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString().'</strong> </adresse>
-	// 					<p>'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmddeliveryPoint->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcity->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdpostalCode->gcoCharacterString->__toString().', '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdcountry->gcoCharacterString->__toString().'</p> <ul style="list-style-type: disc;"><li> <strong>Point de contact: </strong><a href="mailto:'.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'"> '.$value->gmdcontact->gmdCI_ResponsibleParty->gmdcontactInfo->gmdCI_Contact->gmdaddress->gmdCI_Address->gmdelectronicMailAddress->gcoCharacterString->__toString().'</a></li></ul>
-	// 					</td>
-	// 				</tr>';
-	// 			$associatedResources .= '</tbody> </table>';
-	// 			$associatedResources .= " </div>";
-	// 		}
-	// 	}
-
-	// 	//For now we only return this but the methode needs to be refactor to use every infos that we need from CSW or XML
-
-	// 	$xmlInformations = '';
-	// 	$xmlInformations .= $featureCatalog;
-	// 	$xmlInformations .= $associatedResources;
-	// 	return $xmlInformations;
+	// function decodeHtml($value) {
+	// 	$value = html_entity_decode($value);
+	// 	return $value;
 	// }
 }
 
