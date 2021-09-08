@@ -32,14 +32,11 @@ class portailController extends ControllerBase {
 						    padding: 0 !important; 
 						    margin-bottom: 0 !important; 
 						}
-						.d4cwidget-map__map {
-						    height: 238px !important;
-						    min-height: 100px !important;
-						}
 
-						.d4cwidget-map {
-						    height: 238px !important;
-    						min-height: 100px !important;
+						.d4c-portail-map {
+						    height: 238px;
+    						min-height: 100px;
+							overflow: hidden;
 						}
 
 						.leaflet-bottom  {
@@ -50,7 +47,7 @@ class portailController extends ControllerBase {
 						<div id ="main" class="widget-opendata">
 
 					        <div id="filter" class="col-md-2 content-body" >
-					        	<div class="ng-scope" ng-app="d4c-widgets">
+					        	<div class="ng-scope d4c-portail-map" ng-app="d4c-widgets">
 						
 									<d4c-dataset-context style="height:100px" context="mapemprise" mapemprise-dataset="nodataset" class="ng-scope">
 												<div class="row" >
