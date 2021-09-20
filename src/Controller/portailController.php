@@ -71,7 +71,7 @@ class portailController extends ControllerBase {
 								<div class="form-group">
 									<label for="sel1">Trier par:</label>
 									<select class="form-control" id="sel1">
-										<option value="null" selected></option>
+										<option value="null" selected>Trier par</option>
 										<!-- <option value="date">Date modification</option> -->
 										<option value="alpha">Ordre alphabétique</option>
 										<option value="alpha_reverse">Ordre anti alphabétique</option>

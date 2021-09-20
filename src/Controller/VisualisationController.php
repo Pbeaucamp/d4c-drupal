@@ -199,6 +199,8 @@ class VisualisationController extends ControllerBase {
 		$datasetTitle = $this->buildDatasetTitle($themes);
 		// $imgTheme = $themes[0];
 		// $themes = $themes[1];
+		
+		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
 		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
@@ -221,16 +223,32 @@ class VisualisationController extends ControllerBase {
 							ctx-dataset-schema="' . $ctx . '"
 							ctx-selected-resource-id="' . $resourceId . '">
 
-							<d4c-notification-handler></d4c-notification-handler>
+								<d4c-notification-handler></d4c-notification-handler>
 
-							<div class="d4c-dataset-visualization__header">
-								<h1 class="d4c-dataset-visualization__dataset-title">
-									' . $datasetTitle . '
-								</h1>
-							</div>
+								<div class="d4c-dataset-visualization__header">
+									<h1 class="d4c-dataset-visualization__dataset-title">
+										' . $datasetTitle . '
+									</h1>
+								</div>
 				
-							' . $filters . '<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
+								<div class="d4c-actif-filters" ng-show="canDisplayFilters() && canAccessData()">
+									<h2 class="d4c-filters__filters-summary" ng-show="ctx.getActiveFilters().length">
+										<span translate>Active filters</span>
+										<d4c-clear-all-filters context="ctx"></d4c-clear-all-filters>
+									</h2>
+									<d4c-filter-summary context="ctx" clear-all-button="false"></d4c-filter-summary>
+									<div ng-hide="ctx.getActiveFilters().length"
+											class="d4c-filters__no-filters">
+										Aucun filtre actif.
+									</div>
+								</div>
 
+								<div class="d4c-search-filters" ng-show="canDisplayFilters() && canAccessData()">
+									<d4c-text-search context="ctx" placeholder="Rechercher..." autofocus></d4c-text-search>
+								</div>
+
+								' . $resourcesList . '
+								' . $filters . '<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
 								' . $tabs . '
 								' . $disqus . '
 							</div>
@@ -250,38 +268,25 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildFilters($datasetId, $dataset, $selectedResourceId) {
-		$resourcesList = $this->buildResourcesList($datasetId, $dataset, $selectedResourceId);
-
 		return '
-			<div class="d4c-filters-summary" ng-class="{\'d4c-filters-summary--expanded\': toggleState.expandedFilters}">
-				' . $resourcesList . '
+			<div class="d4c-filters-summary" ng-show="canDisplayFilters()">
 				<div class="d4c-filters-summary__count">
 					<span class="d4c-filters-summary__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters-summary__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
 				</div>
-				<button class="d4c-button d4c-filters-summary__toggle" ng-click="toggleMobileFilters()">
+				<a class="d4c-button d4c-filters-summary__toggle" ng-click="toggleMobileFilters()" href="#d4c-filters">
 					<i class="fa" aria-hidden="true" ng-class="{\'fa-expand\': !toggleState.expandedFilters, \'fa-compress\': toggleState.expandedFilters}"></i>
 					Filtres
-				</button>
+				</a>
 			</div>
-			<div class="d4c-filters" ng-class="{\'d4c-filters--expanded\': toggleState.expandedFilters}" ng-show="canAccessData()">
-				' . $resourcesList . '
+			<div id="d4c-filters" class="d4c-filters" ng-show="canDisplayFilters() && canAccessData()">
+				<a class="closed" href="#">x</a>
 				<h2 class="d4c-filters__count">
 					<span class="d4c-filters__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
 				</h2>
-				<h2 class="d4c-filters__filters-summary" ng-show="ctx.getActiveFilters().length">
-					<span translate>Active filters</span>
-					<d4c-clear-all-filters context="ctx"></d4c-clear-all-filters>
-				</h2>
-				<d4c-filter-summary context="ctx" clear-all-button="false"></d4c-filter-summary>
-				<div ng-hide="ctx.getActiveFilters().length"
-						class="d4c-filters__no-filters">
-					Aucun filtre actif.
-				</div>
 
 				<h2 class="d4c-filters__filters"><span translate>Filters</span></h2>
-				<d4c-text-search context="ctx" placeholder="Rechercher..." autofocus></d4c-text-search>
 
 				<!-- Predefined filters -->
 				<h2 ng-if="ctx.dataset.getPredefinedFilters()" class="d4c-filters__filters"><span translate>Predefined Filters</span></h2>
@@ -301,9 +306,10 @@ class VisualisationController extends ControllerBase {
 		$resources = $dataset["metas"]["resources"];
 		$hasResources = false;
 
+		$list = '<div class="d4c-resources-choices">';
 		$list .= '
-			<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
-				<option value="" ng-if="false"></option>
+				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
+					<option value="" ng-if="false"></option>
 		';
 
 		if (sizeof($resources) > 0 ) {
@@ -322,13 +328,14 @@ class VisualisationController extends ControllerBase {
 					$isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId);
 
 					$list .= '
-						<option value="' . $resourceId . '" ng-value="' . $resourceId . '" ' . ($isActif ? 'ng-selected="true"' : '') . '>' . $name . '</option>
+							<option value="' . $resourceId . '" ng-value="' . $resourceId . '" ' . ($isActif ? 'ng-selected="true"' : '') . '>' . $name . '</option>
 					';
 				}
 			}
 		}
 
-		$list .= '</select>';
+		$list .= '	</select>';
+		$list .= '</div>';
 
 		return $hasResources ? $list : '';
 	}
@@ -345,7 +352,7 @@ class VisualisationController extends ControllerBase {
 		$tabCustomView = $this->buildTabCustomView();
 		$tabWordCloud = $this->buildTabWordCloud();
 		$tabTimeline = $this->buildTabTimeline();
-		$tabExport = $this->buildTabExport();
+		$tabExport = $this->buildTabExport($dataset);
 		$tabAPI = $this->buildTabAPI();
 
 		return '
@@ -592,7 +599,7 @@ class VisualisationController extends ControllerBase {
 		
 		$themeImages .= '	<button class="d4c-button" ng-click="onClose()">';
 		$themeImages .= '		<i class="fa fa-angle-left" aria-hidden="true"></i>';
-		$themeImages .= '		Retour';
+		$themeImages .= '		RETOUR AUX RESULTATS DE RECHERCHE';
 		$themeImages .= '	</button>';
 
 		foreach($themes as $theme) {
@@ -1181,10 +1188,117 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabExport() {
+	function buildServiceUrl($serviceUrl, $type, $layerName, $maxFeatures) {
+		if ($type == "WMS") {
+			$url = $serviceUrl . '?service=' . $type . '&version=1.1.0&request=GetMap&layers=' . $layerName . '&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=';
+		}
+		else if ($type == "WFS") {
+			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&maxFeatures=' . $maxFeatures . '&outputFormat=';
+		}
+
+		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
+
+		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
+
+		return $url;
+	}
+
+	function buildTabExport($dataset) {
+		$resources = $dataset["metas"]["resources"];
+
+		$maxFeatures = 50;
+
+		if (sizeof($resources) > 0 ) {
+			foreach($resources as $key=>$value) {
+				$name = $value["name"];
+				$url = $value["url"];
+				$format = $value["format"];
+
+				if ($format == "WMS" || strpos($url, "wms") !== false) {
+					$wmsURL = $this->buildServiceUrl($url, "WMS", $name, $maxFeatures);
+				}
+				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
+					$wfsURL = $this->buildServiceUrl($url, "WFS", $name, $maxFeatures);
+				}
+
+				// $wmsURL = 'https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=';
+				// $wfsURL = 'https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=';
+			}
+		}
+
+
+		// https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
+
+		// https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
+
+		if (isset($wmsURL) || isset($wfsURL)) {
+			if (isset($wmsURL)) {
+				$optionsWMS = '
+					<optgroup label="WMS">
+						<option value="application%2Fatom%20xml">AtomPub</option>
+						<option value="application%2Fbil">BIL</option>
+						<option value="image%2Fdds">DDS</option>
+						<option value="image%2Fgif">GIF</option>
+						<option value="rss">GeoRSS</option>
+						<option value="image%2Fgeotiff">GeoTiff</option>
+						<option value="image%2Fgeotiff8">GeoTiff 8-bits</option>
+						<option value="image%2Fjpeg">JPEG</option>
+						<option value="image%2Fvnd.jpeg-png">JPEG-PNG</option>
+						<option value="image%2Fvnd.jpeg-png8">JPEG-PNG8</option>
+						<option value="application%2Fvnd.google-earth.kmz%20xml">KML (compressé)</option>
+						<option value="application%2Fvnd.google-earth.kml%2Bxml%3Bmode%3Dnetworklink">KML (lien réseau)</option>
+						<option value="application%2Fvnd.google-earth.kml">KML (plain)</option>
+						<option value="application%2Fx-sqlite3">MBTiles</option>
+						<option value="text%2Fhtml%3B%20subtype%3Dopenlayers">OpenLayers</option>
+						<option value="application%2Fopenlayers2">OpenLayers 2</option>
+						<option value="application%2Fopenlayers3">OpenLayers 3</option>
+						<option value="application%2Fpdf">PDF</option>
+						<option value="image%2Fpng">PNG</option>
+						<option value="image%2Fpng%3B%20mode%3D8bit">PNG 8bit</option>
+						<option value="image%2Fsvg%20xml">SVG</option>
+						<option value="image%2Ftiff">Tiff</option>
+						<option value="image%2Ftiff8">Tiff 8-bits</option>
+						<option value="application%2Fjson%3Btype%3Dutfgrid">UTFGrid</option>
+					</optgroup>
+				';
+			}
+
+			if (isset($wfsURL)) {
+				$optionsWFS = '
+					<optgroup label="WFS">
+						<option value="csv">CSV</option>
+						<option value="DXF-ZIP">DXF (Compressed)</option>
+						<option value="DXF">DXF (plain)</option>
+						<option value="excel">Excel (.xls)</option>
+						<option value="excel2007">Excel 2007 (.xslx)</option>
+						<option value="text%2Fxml%3B%20subtype%3Dgml%2F2.1.2">GML2</option>
+						<option value="gml3">GML3.1</option>
+						<option value="application%2Fgml%2Bxml%3B%20version%3D3.2">GML3.2</option>
+						<option value="application%2Fjson">GeoJSON</option>
+						<option value="application%2Fvnd.google-earth.kml%2Bxml">KML</option>
+						<option value="SHAPE-ZIP">Shapefile</option>
+					</optgroup>
+				';
+			}
+
+
+			$exportGeo .= '
+				<div class="d4c-export">
+					<p>Exports géographique</p>
+					<select id="d4c-select-download-resource" ng-model="selectedItem" ng-change="downloadResource(\'' . $wmsURL . '\', \'' . $wfsURL . '\', selectedItem)">
+						<option ng-selected="true">Choisir une couche</option>
+						' . $optionsWMS . '
+						' . $optionsWFS . '
+					</select>
+				</div>
+			';
+		}
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Export" icon="download" translate="title" slug="export">
 				<d4c-dataset-export context="ctx" shapefile-export-limit="50000" snapshots="false"></d4c-dataset-export>
+
+				' . $exportGeo . '
 			</d4c-pane>
 		';
 	}
