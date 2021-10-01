@@ -306,7 +306,7 @@ class VisualisationController extends ControllerBase {
 		$resources = $dataset["metas"]["resources"];
 		$hasResources = false;
 
-		$list = '<div class="d4c-resources-choices">';
+		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
 				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
 					<option value="" ng-if="false"></option>
@@ -352,8 +352,9 @@ class VisualisationController extends ControllerBase {
 		$tabCustomView = $this->buildTabCustomView();
 		$tabWordCloud = $this->buildTabWordCloud();
 		$tabTimeline = $this->buildTabTimeline();
-		$tabExport = $this->buildTabExport($dataset);
+		$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 		$tabAPI = $this->buildTabAPI();
+		$tabReuses = $this->buildTabReuses($loggedIn, $name);
 
 		return '
 			<d4c-tabs sync-to-url="true" sync-to-url-mode="path" name="main" default-tab="' . $tab . '">
@@ -368,6 +369,7 @@ class VisualisationController extends ControllerBase {
 				' . $tabTimeline . '
 				' . $tabExport . '
 				' . $tabAPI . '
+				' . $tabReuses . '
 
 				<!-- Enable this to enable dataset subscription -->
 				<!-- <d4c-dataset-subscription context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $id . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-subscription> -->
@@ -463,12 +465,6 @@ class VisualisationController extends ControllerBase {
 
 					</d4c-collapsible-fold>
 				</d4c-collapsible>
-
-				<d4c-dataset-reuses readonly="false"
-					max="3"
-					anonymous-reuse="true"
-					logged-in="'.$loggedIn.'" recaptcha-pub-key="6LcT58UaAAAAAD_bIB7iAAeSJ6WggtNaFS74GbGk" dataset-title="'.$name.'"
-					config="{&#39;is_unique&#39;: True, &#39;max_width&#39;: 4096, &#39;max_height&#39;: 4096, &#39;resize_width&#39;: 200, &#39;resize_height&#39;: 200, &#39;asset_type&#39;: &#39;image&#39;, &#39;max_size&#39;: 2097152}"></d4c-dataset-reuses>
 			</d4c-pane>
 		';
 	}
@@ -597,7 +593,7 @@ class VisualisationController extends ControllerBase {
 		$themeImages = '<div class="box_3">';
 		$themeImages .= '	<d4c-social-buttons></d4c-social-buttons>';
 		
-		$themeImages .= '	<button class="d4c-button" ng-click="onClose()">';
+		$themeImages .= '	<button class="d4c-button" ng-click="goBackToSearch()">';
 		$themeImages .= '		<i class="fa fa-angle-left" aria-hidden="true"></i>';
 		$themeImages .= '		RETOUR AUX RESULTATS DE RECHERCHE';
 		$themeImages .= '	</button>';
@@ -1188,22 +1184,37 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildServiceUrl($serviceUrl, $type, $layerName, $maxFeatures) {
+	function buildServiceUrl($metadataExtras, $serviceUrl, $type, $layerName, $maxFeatures) {
+		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
+		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
+		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
+		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
+
+		$bbox = $bboxWestLong . "," . $bboxSouthLat . "," . $bboxEastLong . "," . $bboxNorthLat;
+
+		$width = "1024";
+		$height = "1024";
+
+		//Not used for now
+		// $maxFeatures = '&maxFeatures=' . $maxFeatures;
+
+		// Default projection
+		$srs = "EPSG%3A4326";
+
 		if ($type == "WMS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.1.0&request=GetMap&layers=' . $layerName . '&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=';
+			$url = $serviceUrl . '?service=' . $type . '&version=1.1.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
 		}
 		else if ($type == "WFS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&maxFeatures=' . $maxFeatures . '&outputFormat=';
+			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
 		}
 
+		Logger::logMessage("TRM - SERVICE URL " . $url);
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
-
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
-
 		return $url;
 	}
 
-	function buildTabExport($dataset) {
+	function buildTabExport($dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
 
 		$maxFeatures = 50;
@@ -1214,21 +1225,19 @@ class VisualisationController extends ControllerBase {
 				$url = $value["url"];
 				$format = $value["format"];
 
+				//Removing parameters
+				$url = strtok($url, '?');
+
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
-					$wmsURL = $this->buildServiceUrl($url, "WMS", $name, $maxFeatures);
+					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
 				}
 				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
-					$wfsURL = $this->buildServiceUrl($url, "WFS", $name, $maxFeatures);
+					$wfsURL = $this->buildServiceUrl($metadataExtras, $url, "WFS", $name, $maxFeatures);
 				}
-
-				// $wmsURL = 'https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=';
-				// $wfsURL = 'https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=';
 			}
 		}
 
-
 		// https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
-
 		// https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
 
 		if (isset($wmsURL) || isset($wfsURL)) {
@@ -1283,8 +1292,8 @@ class VisualisationController extends ControllerBase {
 
 
 			$exportGeo .= '
-				<div class="d4c-export">
-					<p>Exports géographique</p>
+				<div class="d4c-dataset-export ng-scope ng-isolate-scope">
+					<h3>Exports géographique</h3>
 					<select id="d4c-select-download-resource" ng-model="selectedItem" ng-change="downloadResource(\'' . $wmsURL . '\', \'' . $wfsURL . '\', selectedItem)">
 						<option ng-selected="true">Choisir une couche</option>
 						' . $optionsWMS . '
@@ -1307,6 +1316,18 @@ class VisualisationController extends ControllerBase {
 		return '
 			<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
 				<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
+			</d4c-pane>
+		';
+	}
+	
+	function buildTabReuses($loggedIn, $name) {
+		return '
+			<d4c-pane pane-auto-unload="true" title="Reuses" icon="cogs"  translate="title" slug="reuses">
+				<d4c-dataset-reuses readonly="false"
+					max="3"
+					anonymous-reuse="true"
+					logged-in="'.$loggedIn.'" recaptcha-pub-key="6LcT58UaAAAAAD_bIB7iAAeSJ6WggtNaFS74GbGk" dataset-title="'.$name.'"
+					config="{&#39;is_unique&#39;: True, &#39;max_width&#39;: 4096, &#39;max_height&#39;: 4096, &#39;resize_width&#39;: 200, &#39;resize_height&#39;: 200, &#39;asset_type&#39;: &#39;image&#39;, &#39;max_size&#39;: 2097152}"></d4c-dataset-reuses>
 			</d4c-pane>
 		';
 	}

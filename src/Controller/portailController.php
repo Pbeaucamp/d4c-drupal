@@ -91,9 +91,10 @@ class portailController extends ControllerBase {
 									</select>
 								</div>
 
-								<h2>Filtres actifs <span id="reset-filters">Tout effacer</span></h2>
-			
-								<ul class="jetons"></ul>
+								<div id="actif-filters">
+									<h2>Filtres actifs <span id="reset-filters">Tout effacer</span></h2>
+									<ul class="jetons"></ul>
+								</div>
 			
 								<h2> Filtres </h2>
 								
