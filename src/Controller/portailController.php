@@ -135,7 +135,7 @@ class portailController extends ControllerBase {
 									<input id="input-theme" type="hidden" class="hidden-filter">
 								</ul>
 			
-								<h2>Télécharger le catalogue</h2>
+								<h2>Télécharger la liste de jeux de données</h2>
 								<ul id="list-cat" class="list-group">
 									<li class="list-item" data-cat="csv"><i class="fa fa-file" aria-hidden="true"></i>CSV <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="xls"><i class="fa fa-file" aria-hidden="true"></i>XLS <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>

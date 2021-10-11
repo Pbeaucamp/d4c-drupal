@@ -421,23 +421,17 @@ class VisualisationController extends ControllerBase {
 					<div class="col-sm-9">
 						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
 						' . $this->buildCard('Limites techniques d\'usage', ($limitesUtilisation != null ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
-						' . $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) . '
-						' . $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) . '
-						' . $this->buildCard('Informations géographiques', $informationsGeo) . '
+						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
+						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
+						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
 						' . ($downloadsAndLinks != null ? $this->buildCard('Données et ressources', $downloadsAndLinks) : '') . '
-						' . $this->buildCard('Mots clefs', $keywordsPart) . '
+						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
+						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
-						' . $this->buildCardImage($image) . '
+						' . ($image != null ? $this->buildCardImage($image) : '') . '
 						' . $this->buildCard('Synthèse', $synthese) . '
 						' . $this->buildCard('Contacts', $contacts) . '
-					</div>
-				</div>
-
-				<div class="row">
-					<div class="col-sm-12" ng-if="basicTemplate && interopTemplates">
-						' . $linkedDataSets . '
-						<d4c-dataset-metadata-block-selector metadata-templates="interopTemplates" values="ctx.dataset.interop_metas"></d4c-dataset-metadata-block-selector>
 					</div>
 				</div>
 				
@@ -492,29 +486,26 @@ class VisualisationController extends ControllerBase {
 
 	function buildLinkedDatasets($metadataExtras) {
 		$links = $this->exportExtras($metadataExtras, 'LinkedDataSet');
-		$links = explode(";", $links);
 
-		$linkedDatasets = null;
-		for ($j=0; $j<count($links); $j++) {
-			$link = explode(":", $links[$j]);
-			
-			if ($link[0] != 'false') {
-				$url = $this->config->client->routing_prefix . '/visualisation?id='. $link[1];
-				$linkedDatasets = $linkedDatasets . '&nbsp<p style="margin: -1.1em 0 -1em;" ><code style="cursor: pointer;" onclick="window.open(`'.$url.'`, `_blank`);">' . $link[0] . '</code></p><br>';
+		if ($links != null) {
+			$links = explode(";", $links);
+
+			$linkedDatasets = null;
+			for ($j=0; $j<count($links); $j++) {
+				$link = explode(":", $links[$j]);
+				
+				if ($link[0] != 'false') {
+					$url = $this->config->client->routing_prefix . '/visualisation?id='. $link[1];
+					$linkedDatasets = $linkedDatasets . '&nbsp<p style="margin: -1.1em 0 -1em;" ><code style="cursor: pointer;" onclick="window.open(`'.$url.'`, `_blank`);">' . $link[0] . '</code></p><br>';
+				}
+			}
+	
+			if ($linkedDatasets != null) {
+				return $linkedDatasets;
 			}
 		}
-
-		if ($linkedDatasets != null) {
-			return '
-				<div class="d4c-dataset-metadata-block__metadata" style="font-size: 1rem; ">
-					<div class="d4c-dataset-metadata-block__metadata-name" translate=""><span class="ng-scope">Dataset liés</span></div>
-					<div class="d4c-dataset-metadata-block__metadata-value">' . $linkedDatasets . '</div>
-				</div>
-			';
-		}
-		else {
-			return '';
-		}
+			
+		return null;
 	}
 
 	function buildTheme($api, $metadataExtras) {
@@ -774,7 +765,10 @@ class VisualisationController extends ControllerBase {
 		$accessConstraints = $this->exportExtras($metadataExtras, 'access_constraints');
 		$mentionLegales = $this->exportExtras($metadataExtras, 'mention_legales');
 
+		$hasValue = false;
 		if ($licence != null) {
+			$hasValue = true;
+
 			$licenceJson = json_decode($licence, true);
 			if (json_last_error() === JSON_ERROR_NONE) {
 				$licence = $licenceJson;
@@ -791,6 +785,8 @@ class VisualisationController extends ControllerBase {
 			$accessConstraints = json_decode($accessConstraints, true);
 
 			if (!empty($accessConstraints)) {
+				$hasValue = true;
+	
 				foreach ($accessConstraints as $value) {	
 					$accessConstraints = '<li>' . $value . '</li>';
 				}
@@ -801,7 +797,13 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if ($mentionLegales != null) {
+			$hasValue = true;
+
 			$mentionLegales = '<li>' . $mentionLegales . '</li>';
+		}
+
+		if (!$hasValue) {
+			return null;
 		}
 
 		return '
@@ -924,6 +926,11 @@ class VisualisationController extends ControllerBase {
 		
 		$referenceSystem = $this->exportExtras($metadataExtras, 'spatial-reference-system');
 		$resolution = $this->exportExtras($metadataExtras, 'spatial-resolution-units');
+
+		if ($representationType == null && $bboxEastLong == null && $bboxNorthLat == null && $bboxSouthLat == null && $bboxWestLong
+				&& $equivalentScale == null && $referenceSystem == null && $resolution == null) {
+			return null;
+		}
 
 		// spatial-reference-system	2154
 		return '
@@ -1050,6 +1057,10 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildKeywords($keywords) {
+		if ($keyword == null) {
+			return null;
+		}
+
 		$keywordsPart = '';
 
 		foreach($keywords as $keyword) {
