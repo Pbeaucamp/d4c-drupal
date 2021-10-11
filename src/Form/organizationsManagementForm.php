@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\CSWManager;
 
 /**
  * Implements an example form.
@@ -216,6 +217,10 @@ class organizationsManagementForm extends HelpFormBase
             $return = json_decode($return, true);
             
             if ($return[success] == true) {
+                //We manage CSW Node
+                $cswManager = new CSWManager;
+                $cswManager->buildCSWNode($id, $title);
+
 				\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			}
             else {

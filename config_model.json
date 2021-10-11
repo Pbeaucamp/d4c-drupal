@@ -31,5 +31,10 @@
     "sitesSearch": [
         "https:\/\/yyy.data4citizen.com\/",
         "https:\/\/zzz.data4citizen.com\/"
-    ]
+    ],
+    "csw": {
+		"enabled": true,
+		"csw_server_path": "/home/user-client/csw-server",
+		"csw_model": "csw_server_model"
+	}
 }

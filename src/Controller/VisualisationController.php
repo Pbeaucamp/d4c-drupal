@@ -755,13 +755,6 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		// $useConstraints = $this->exportExtras($metadataExtras, 'use-constraints');
-
-		// if ($useConstraints != null) {
-		// 	$useConstraints = $this->cleanSimpleJson($useConstraints);
-		// 	$useConstraints = '<li>' . $useConstraints . '</li>';
-		// }
-
 		return '
 			<ul class="m-0">
 				' . $useConstraintsPart . '
@@ -918,8 +911,9 @@ class VisualisationController extends ControllerBase {
 		
 		$equivalentScale = $this->exportExtras($metadataExtras, 'equivalent-scale');
 		if ($equivalentScale != null) {
-			$equivalentScale = json_decode($equivalentScale, true);
-			// $equivalentScale = $this->cleanSimpleJson($equivalentScale);
+			// Not working because scale is for exemple {5000}
+			// $equivalentScale = json_decode($equivalentScale);
+			$equivalentScale = $this->cleanSimpleJson($equivalentScale);
 		}
 		
 		$referenceSystem = $this->exportExtras($metadataExtras, 'spatial-reference-system');
@@ -1425,11 +1419,12 @@ class VisualisationController extends ControllerBase {
 		return $translatedValue != null && $translatedValue != '' ? $translatedValue : $key;
 	}
 
-	// Not working
-	// function cleanSimpleJson($value, $decodeHtml = false) {
-	// 	$value = str_replace('{', '', $value);
-	// 	$value = str_replace('}', '', $value);
-	// 	$value = str_replace('"', '', $value);
+	function cleanSimpleJson($value, $decodeHtml = false) {
+		$value = str_replace('{', '', $value);
+		$value = str_replace('}', '', $value);
+		$value = str_replace('"', '', $value);
+		return $value;
+	}
 
 	// 	if ($decodeHtml) {
 	// 		$value = $this->decodeHtml($value);
