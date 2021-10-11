@@ -124,7 +124,7 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, $customName = null) {
 		$results = array();
 
 		//Managing file (filepath and filename)
@@ -230,7 +230,7 @@ class ResourceManager {
 
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName);
 			$results[] = $result;
 		}
 		else if ($type == 'xls' || $type == 'xlsx') {
@@ -268,12 +268,12 @@ class ResourceManager {
 				}
 
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage, true, $customName);
 				$results = array_merge($results, $result);
 			}
 			else {
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true);
+				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName);
 				$results[] = $result;
 			}
 		}
@@ -327,7 +327,7 @@ class ResourceManager {
 				}  
 			}
 
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
 			$results[] = $result;
 
 			if ($unzipZip) {
@@ -337,7 +337,7 @@ class ResourceManager {
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
 			// We upload the geojson file as resource
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
 			$results[] = $result;
 
 			$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
@@ -349,12 +349,13 @@ class ResourceManager {
 					Logger::logMessage("Looking for the previous CSV resource to update");
 					$dataset = $api->getPackageShow("id=" . $datasetId);
 					foreach($dataset['result']['resources'] as $resource){
-						if (strpos($resource['name'], 'csv_gen') !== false) {
+						if (strpos($resource['url'], 'csv_gen') !== false) {
 							$resourceId = $resource['id'];
 
 							//We change the name in order to change the resource URL
 							//If we don't do that, the file is not uploaded to the datapusher
 							$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
+							$customName = $resource['name'];
 							Logger::logMessage("Found the previous CSV resource '" . $resourceId . "' with name '" . $name . "'");
 							break;
 						}
@@ -363,7 +364,10 @@ class ResourceManager {
 				
 				if (!$name) {
 					$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
-					Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "'");
+					$customName = $fileName . '.csv';
+					$customName = str_replace(array('.json', '.geojson', '.kml', '.shp'), '', $customName);
+
+					Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "' and custom name '" . $customName . "'");
 
 					$isUpdate = false;
 				}
@@ -373,7 +377,7 @@ class ResourceManager {
 
 				file_put_contents($rootCsv, $csv);
 
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
 				
@@ -390,7 +394,7 @@ class ResourceManager {
 		}
 		else {
 			// We upload the file as resource
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
 			$results[] = $result;
 			// $this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', 'Une erreur est survenue avec le fichier ' . $fileName . '.');
 			// Logger::logMessage("We do not process the file '" . $filePath . "'");
@@ -981,16 +985,18 @@ class ResourceManager {
 		return $results;
 	}
 
-	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null) {
+	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null, $customName = null) {
 		
 		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher");
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
+
+		$resourceName = $customName != null ? $customName : $fileName;
 	
 		if ($isUpdate) {
 			$resource = [
 				"id" => $resourceId,
 				"url" => $resourceUrl,
-				"name" => $fileName,
+				"name" => $resourceName,
 				"description" => $description,
 				//TODO: Add format
 				// "format" => "csv",
@@ -1058,7 +1064,7 @@ class ResourceManager {
 					"package_id" => $datasetId,
 					"url" => $resourceUrl,
 					"description" => '',
-					"name" => $fileName,
+					"name" => $resourceName,
 					"format" => $format
 				];
 			}
@@ -1067,7 +1073,7 @@ class ResourceManager {
 					"package_id" => $datasetId,
 					"url" => $resourceUrl,
 					"description" => '',
-					"name" => $fileName
+					"name" => $resourceName
 				];
 			}
 			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
