@@ -304,12 +304,13 @@ class VisualisationController extends ControllerBase {
 
 	function buildResourcesList($datasetId, $dataset, $selectedResourceId) {
 		$resources = $dataset["metas"]["resources"];
-		$hasResources = false;
+		$numberOfResources = 0;
 
 		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
+				<p>Jeu de données affiché : </p>
 				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
-					<option value="" ng-if="false"></option>
+					<option value="" ng-if="false">Choix du jeu de données</option>
 		';
 
 		if (sizeof($resources) > 0 ) {
@@ -323,7 +324,7 @@ class VisualisationController extends ControllerBase {
 
 				$button = '';
 				if ($mimeType == "text/csv" && $datastoreActive == true) {
-					$hasResources = true;
+					$numberOfResources = $numberOfResources + 1;
 
 					$isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId);
 
@@ -337,7 +338,7 @@ class VisualisationController extends ControllerBase {
 		$list .= '	</select>';
 		$list .= '</div>';
 
-		return $hasResources ? $list : '';
+		return $numberOfResources > 1 ? $list : '';
 	}
 
 	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
@@ -424,7 +425,7 @@ class VisualisationController extends ControllerBase {
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
-						' . ($downloadsAndLinks != null ? $this->buildCard('Données et ressources', $downloadsAndLinks) : '') . '
+						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
 					</div>
@@ -759,7 +760,7 @@ class VisualisationController extends ControllerBase {
 		$mentionLegales = $this->exportExtras($metadataExtras, 'mention_legales');
 
 		$hasValue = false;
-		if ($licence != null) {
+		if (!$this->isNullOrEmptyString($licence)) {
 			$hasValue = true;
 
 			$licenceJson = json_decode($licence, true);
@@ -774,7 +775,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		if ($accessConstraints != null) {
+		if (!$this->isNullOrEmptyString($accessConstraints)) {
 			$accessConstraints = json_decode($accessConstraints, true);
 
 			if (!empty($accessConstraints)) {
@@ -789,7 +790,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		if ($mentionLegales != null) {
+		if (!$this->isNullOrEmptyString($mentionLegales)) {
 			$hasValue = true;
 
 			$mentionLegales = '<li>' . $mentionLegales . '</li>';
@@ -921,8 +922,8 @@ class VisualisationController extends ControllerBase {
 		$referenceSystem = $this->exportExtras($metadataExtras, 'spatial-reference-system');
 		$resolution = $this->exportExtras($metadataExtras, 'spatial-resolution-units');
 
-		if ($representationType == null && $bboxEastLong == null && $bboxNorthLat == null && $bboxSouthLat == null && $bboxWestLong
-				&& $equivalentScale == null && $referenceSystem == null && $resolution == null) {
+		if ($this->isNullOrEmptyString($representationType) && $this->isNullOrEmptyString($bboxEastLong) && $this->isNullOrEmptyString($bboxNorthLat) && $this->isNullOrEmptyString($bboxSouthLat) && $this->isNullOrEmptyString($bboxWestLong)
+				&& $this->isNullOrEmptyString($equivalentScale) && $this->isNullOrEmptyString($referenceSystem) && $this->isNullOrEmptyString($resolution)) {
 			return null;
 		}
 
@@ -1051,7 +1052,7 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildKeywords($keywords) {
-		if ($keyword == null) {
+		if ($keywords == null) {
 			return null;
 		}
 
@@ -1434,9 +1435,12 @@ class VisualisationController extends ControllerBase {
 		$value = str_replace('{', '', $value);
 		$value = str_replace('}', '', $value);
 		$value = str_replace('"', '', $value);
-		return $value;
+		return $value != '' ? $value : null;
 	}
 
+	function isNullOrEmptyString($str){
+		return (!isset($str) || trim($str) === '');
+	}
 	// 	if ($decodeHtml) {
 	// 		$value = $this->decodeHtml($value);
 	// 	}
