@@ -274,13 +274,13 @@ class VisualisationController extends ControllerBase {
 					<span class="d4c-filters-summary__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters-summary__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
 				</div>
-				<a class="d4c-button d4c-filters-summary__toggle" ng-click="toggleMobileFilters()" href="#d4c-filters">
+				<a class="d4c-button d4c-filters-summary__toggle" ng-click="extendFilters(false)">
 					<i class="fa" aria-hidden="true" ng-class="{\'fa-expand\': !toggleState.expandedFilters, \'fa-compress\': toggleState.expandedFilters}"></i>
 					Filtres
 				</a>
 			</div>
 			<div id="d4c-filters" class="d4c-filters" ng-show="canDisplayFilters() && canAccessData()">
-				<a class="closed" href="#">x</a>
+				<a class="closed" ng-click="extendFilters(true)">x</a>
 				<h2 class="d4c-filters__count">
 					<span class="d4c-filters__count-number">\{\{ ctx.nhits | number \}\}</span>
 					<span class="d4c-filters__count-units" translate translate-n="ctx.nhits" translate-plural="records">record</span>
@@ -421,7 +421,7 @@ class VisualisationController extends ControllerBase {
 				<div class="row">
 					<div class="col-sm-9">
 						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
-						' . $this->buildCard('Limites techniques d\'usage', ($limitesUtilisation != null ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
+						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
@@ -747,6 +747,10 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
+		if ($this->isNullOrEmptyString($useConstraintsPart)) {
+			return null;
+		}
+
 		return '
 			<ul class="m-0">
 				' . $useConstraintsPart . '
@@ -859,7 +863,6 @@ class VisualisationController extends ControllerBase {
 		';
 
 		// TODO: Date
-		// Logger::logMessage("TRM - Last update date " . $lastDataUpdateDate);
 		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
 		// $synthese .= '
 		// 	<div class="my-3" ng-show="\'' . $lastDataUpdateDate . '\'">
@@ -984,6 +987,7 @@ class VisualisationController extends ControllerBase {
 	function manageAdditionnalResources($dataset, $datasetId, $selectedResourceId) {
 		$additionnalResources = '';
 
+		$excludeDataResources = true;
 		$resources = $dataset["metas"]["resources"];
 
 		if (sizeof($resources) > 0 ) {
@@ -998,7 +1002,13 @@ class VisualisationController extends ControllerBase {
 				$mimeType = $value["mimetype"];
 				$datastoreActive = $value["datastore_active"];
 
-				$classImg = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
+				// $classImg = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
+				$classImg = 'fa-link';
+				if ($excludeDataResources && (strcasecmp($format , 'zip') == 0 || strcasecmp($format , 'xls') == 0 || strcasecmp($format , 'xlsx') == 0 
+						|| strcasecmp($format , 'csv') == 0 || strcasecmp($format , 'json') == 0 || strcasecmp($format , 'geojson') == 0)) {
+					continue;
+				}
+
 
 				$button = '';
 				if ($mimeType == "text/csv" && $datastoreActive == true) {
@@ -1021,17 +1031,14 @@ class VisualisationController extends ControllerBase {
 					';
 				}
 				else {
-					$buttonText = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'Télécharger' : 'Consulter';
-
+					// $buttonText = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'Télécharger' : 'Consulter';
+					$buttonText = 'Consulter';
 					$button .= '<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>';
 				}
-
-				// $isActif = ($selectedResourceId == null && $lastResourceId != null && $lastResourceId == $resourceId) || ($selectedResourceId == $resourceId) ? '<div class="inline download-active"></div>' : '';
 
 				$additionnalResources .= '
 					<div class="row">
 						<div class="col-sm-9 download-item">
-							' . $isActif . '
 							<i class="fa ' . $classImg . ' inline download-img" fa-4x></i>
 							<div class="inline">
 								<div class="download-text">' . $name . '</div>
@@ -1214,7 +1221,6 @@ class VisualisationController extends ControllerBase {
 			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
 		}
 
-		Logger::logMessage("TRM - SERVICE URL " . $url);
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
 		return $url;

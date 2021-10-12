@@ -126,9 +126,9 @@ class portailController extends ControllerBase {
 
 								</ul>
 								<input id="input-format" type="hidden" class="hidden-filter">
-								-->
+								
 								<h3>Mots Clés</h3>
-								<ul id="list-tag" class="list-group"></ul>
+								<ul id="list-tag" class="list-group"></ul>-->
 								
 								<h3>Thèmes</h3>
 								<ul id="list-theme" class="list-group">

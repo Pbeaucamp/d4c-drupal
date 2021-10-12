@@ -2143,28 +2143,34 @@ class Api{
 			
 		}
 		else {
+			$resource = $this->getResource($query_params['resource_id']);
+			$resource = json_decode($resource, true);
+			$resourceName = $resource['result']['name'];
+			//We remove the format if present
+			$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			$filename = isset($resourceName) ? $resourceName : $query_params['resource_id'];
+
 			if ($format == "csv") {
 				header('Content-Type:text/csv');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.csv');
+				header('Content-Disposition:attachment; filename=' . $filename . '.csv');
 			} else if ($format == "xls") {
 				header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-				//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xlsx');
+				header('Content-Disposition:attachment; filename=' . $filename . '.xlsx');
 			} else if ($format == "json") {
 				header('Content-Type:application/json');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+				header('Content-Disposition:attachment; filename=' . $filename . '.json');
 			} else if ($format == "geojson") {
 				header('Content-Type:application/vnd.geo+json');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.geojson');
+				header('Content-Disposition:attachment; filename=' . $filename . '.geojson');
 			} else if ($format == "shp") {
 				header('Content-Type:application/zip');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.zip');
+				header('Content-Disposition:attachment; filename=' . $filename . '.zip');
 			} else if ($format == "kml") {
 				header('Content-Type:application/vnd.google-earth.kml+xml');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.kml');
+				header('Content-Disposition:attachment; filename=' . $filename . '.kml');
 			} else {
 				header('Content-Type:application/json');
-				header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.json');
+				header('Content-Disposition:attachment; filename=' . $filename . '.json');
 			}
 			
 			$result = $this->getRecordsDownload($params."&fields=".$reqFields);
@@ -2397,8 +2403,9 @@ class Api{
 			}
 		}
 		foreach ($result['result']['resources'] as $value) {
-		 	if($resourceCSV == null || (($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP'))
-				|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)){
+		 	if ($resourceCSV == null 
+			 		|| (($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP' && $value['format'] != 'PDF' && $value['format'] != 'WFS' && $value['format'] != 'WMS'))
+					|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)){
 				$a = array();
 				$a["title"] = $value['name'];
 				$a["format"] = $value['format'];
@@ -5606,12 +5613,8 @@ class Api{
                     ),
                 );
         
-        $callUrl = $this->urlCkan . "/api/action/resource_show?id=".$params;   
-                $curl = curl_init($callUrl);
-                curl_setopt_array($curl, $optionst);
-                $res  = curl_exec($curl);
-                curl_close($curl);
-                $res=json_decode($res);
+		$res = $this->getResource($params);
+		$res=json_decode($res);
         
         $response = new Response();
 		$response->setContent(json_encode($res->result->url));
@@ -5619,6 +5622,16 @@ class Api{
          return $response;
         
     }
+
+	function getResource($resourceId) {
+		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceId;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getSimpleOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+		return $result;
+	}
+
     
     function getDataSetById($id){
     
