@@ -4413,8 +4413,8 @@ class Api{
 	public function renderFrame(Request $request, $tab) {
 		$id = $request->query->get('id');
 		
-		$api = new API();
-		$dataset = $api->getPackageShow2($id,"");
+		$dataset = $this->getPackageShow2($id, "");
+
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 		$element =  '<body>
         <div class="d4c-content">
@@ -4426,42 +4426,47 @@ class Api{
 				ctx-urlsync="true"
 				ctx-dataset-schema="'.$ctx.'">';
 			
-			if($tab == "information"){
+			if ($tab == "information") {
 				$element .= '';
 			}
-            if($tab == "table"){
+			else if($tab == "table") {
 				$element .= '<d4c-table context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--table d4cwidget-table--embedded" ></d4c-table>';
 			}
-            if($tab == "map"){
+			else if($tab == "map") {
 				$element .= '<d4c-map context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--map" sync-to-url="true" static-map=""></d4c-map>';
 			}
-            if($tab == "analyze"){
+			else if($tab == "analyze") {
 				$element .= '<d4c-analyze context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--analyze" sync-to-url="true" auto-resize="true" no-controls="true"></d4c-analyze>';
 			}
-            if($tab == "images"){
+			else if($tab == "images") {
 				$element .= '<d4c-media-gallery context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--images" d4c-auto-resize d4c-widget-tooltip display-mode="compact"></d4c-media-gallery>';
 			}
-            if($tab == "calendar"){
+			else if($tab == "calendar") {
 				$element .= '<d4c-calendar context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--calendar"></d4c-calendar>';
 			}
-            if($tab == "custom_view"){
+			else if($tab == "custom_view") {
 				$element .= '<div d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_html" do-not-decode-content></div>
-                        <style type="text/css" d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_css"></style>';
+						<style type="text/css" d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_css"></style>';
 				$tab = "custom";
 			}
-			if($tab == "wordcloud"){
+			else if($tab == "wordcloud") {
 				$element .= '<d4c-wordcloud context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--wordcloud"  sync-to-url="true"></d4c-wordcloud>';
 			}
-			if($tab == "timeline"){
+			else if($tab == "timeline") {
 				$element .= '<d4c-timeline context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--timeline" sync-to-url="true"></d4c-timeline>';
 			}
-            if($tab == "export"){
+			else if($tab == "export") {
 				$element .= '';
 			}
-			if($tab == "api"){
+			else if($tab == "api") {
 				$element .= '';
 			}
-            
+			else {
+				//Probably a custom view with a custom name
+				$element .= '<div d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_html" do-not-decode-content></div>
+					<style type="text/css" d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_css"></style>';
+				$tab = "custom";
+			}
 			
             $element .= '
 			<a class="d4c-embed-watermark d4c-embed-watermark--'.$tab.'"
