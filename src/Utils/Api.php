@@ -2403,9 +2403,9 @@ class Api{
 			}
 		}
 		foreach ($result['result']['resources'] as $value) {
-		 	if ($resourceCSV == null 
-			 		|| (($value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP' && $value['format'] != 'PDF' && $value['format'] != 'WFS' && $value['format'] != 'WMS'))
+		 	if ((($value['format'] != '' && $value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP' && $value['format'] != 'PDF' && $value['format'] != 'WFS' && $value['format'] != 'WMS'))
 					|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)){
+
 				$a = array();
 				$a["title"] = $value['name'];
 				$a["format"] = $value['format'];
