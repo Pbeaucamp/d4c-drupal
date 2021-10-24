@@ -60,7 +60,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	function getFacetsFromOds($url, $idDataset, $request){
 
 		//on récupère la liste des champs
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/search/?rows=1&dataset=".$idDataset;
+		$requestUrl = $url . "/api/records/1.0/search/?rows=1&dataset=".$idDataset;
 		
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -82,7 +82,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		
 		$facetReq = implode("&", $fields);
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/search/?".$facetReq."&dataset=".$idDataset.$request;
+		$requestUrl = $url . "/api/records/1.0/search/?".$facetReq."&dataset=".$idDataset.$request;
 		//echo $requestUrl;
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -162,7 +162,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getRecordsFromOds($url, $idDataset, $request){
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/search/?dataset=".$idDataset. $request;
+		$requestUrl = $url . "/api/records/1.0/search/?dataset=".$idDataset. $request;
 		//echo $requestUrl;
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -243,7 +243,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getDatasetFromOds($url, $idDataset){
 		
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/".$idDataset."/?extrametas=true&interopmetas=true";
+		$requestUrl = $url . "/api/datasets/1.0/" . $idDataset . "/?extrametas=true&interopmetas=true";
 		
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -315,7 +315,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getBoundingBoxFromOds($url, $idDataset, $request){
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/boundingbox/?dataset=".$idDataset. $request;
+		$requestUrl = $url . "/api/records/1.0/boundingbox/?dataset=".$idDataset. $request;
 		//echo $requestUrl;
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -392,7 +392,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getGeoPreviewFromOds($url, $idDataset, $request){
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/geopreview/?dataset=".$idDataset. $request;
+		$requestUrl = $url . "/api/records/1.0/geopreview/?dataset=".$idDataset. $request;
 		//echo $requestUrl;
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -471,7 +471,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getGeoClusterFromOds($url, $idDataset, $request){
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/geocluster/?dataset=".$idDataset. $request;
+		$requestUrl = $url . "/api/records/1.0/geocluster/?dataset=".$idDataset. $request;
 		//echo $requestUrl;
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -561,7 +561,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	
 	function getDownloadFromOds($url, $idDataset, $request){
 		if($request != "") $request = "&".$request;
-		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/records/1.0/download/?dataset=".$idDataset. $request;
+		$requestUrl = $url . "/api/records/1.0/download/?dataset=".$idDataset. $request;
 		//error_log( $requestUrl);
 		$curl = curl_init($requestUrl);
 		$opt = $this->getSimpleGetOptions();

@@ -85,7 +85,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 			array(
 			  '#tag' => 'base',
 			  '#attributes' => array(
-				'href' => '/admin/config/data4citizen/datagouvForm/'
+				'href' => '/data4citizen/admin/config/data4citizen/datagouvForm/'
 			  ),
 			),
 		"dd"];
