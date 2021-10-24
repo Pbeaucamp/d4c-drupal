@@ -399,7 +399,7 @@ class VisualisationController extends ControllerBase {
 		$informationsGeo = $this->buildInformationsGeo($metadataExtras);
 
 		//SYNTHÈSE
-		$synthese = $this->buildSynthese($metadataExtras, $themes);
+		$synthese = $this->buildSynthese($metadataExtras, $themes, $keywords);
 
 		//CONTACTS
 		$contacts = $this->buildContacts($metadataExtras);
@@ -800,6 +800,17 @@ class VisualisationController extends ControllerBase {
 			$mentionLegales = '<li>' . $mentionLegales . '</li>';
 		}
 
+		$resourceConstraintsPart = '';
+		for ($i = 1; $i <= 5; $i++) {
+			$resourceConstraints = $this->exportExtras($metadataExtras, 'resource-constraints-' . $i);
+			if ($resourceConstraints != null) {
+				$hasValue = true;
+
+				$resourceConstraints = json_decode($resourceConstraints, true);
+				$resourceConstraintsPart .= '<li>' . $resourceConstraints . '</li>';
+			}
+		}
+
 		if (!$hasValue) {
 			return null;
 		}
@@ -809,75 +820,74 @@ class VisualisationController extends ControllerBase {
 				' . $licence . '
 				' . $accessConstraints . '
 				' . $mentionLegales . '
+				' . $resourceConstraintsPart . '
 			</ul>
 		';
 	}
 
-	function buildSynthese($metadataExtras, $themes) {
-		// TODO
-		// $: isOpenData = helpers.arrayInArray(["opendata", "open data", "donnée ouverte", "données ouvertes"], dataKeywords);
-		// $: dataTopicCategories = converter.getValue($storeMdjs, "dataTopicCategories") || [];
-		// $: dataMaintenanceFrequency = converter.getValue($storeMdjs, "dataMaintenanceFrequency")[0] || "";
-		// $: dataDate = getDataDate($storeMdjs);
-
-		$frequence = $this->exportExtras($metadataExtras, 'frequence');
+	function buildSynthese($metadataExtras, $themes, $keywords) {
+		$isOpenData = $this->isOpenData($keywords);
+		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
+		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
+		$isGeo = $representationType == 'grid' || $representationType == 'vector';
 
 		$synthese = '';
-	// 	return '
-	// 	<div class="d4c-dataset-metadata-block__metadata ng-scope" style="font-size: 1rem; margin: -0.8em  0 -1em 0;">
-	// 		<div class="d4c-dataset-metadata-block__metadata-name ng-binding" >Fréquence de mise à jour</div>
-	// 		<div class="d4c-dataset-metadata-block__metadata-value d4c-dataset-metadata-block__metadata-value--default ng-binding ng-scope">  ' . $frequence . '</div>
-	// 	</div>
-	// ';
-
-		// frequency-of-update	unknown
-
-
-		// '<div class="my-3">
-		// 	<button class="text-white btn btn-success btn-sm active" value="" style="">
-		// 		<i class="bi-unlock-fill"></i>
-		// 	</button>
-		// 	<span class="ms-2">Données ouvertes</span>
-		// </div>
-		// <div class="my-3">
-		// 	<button class="text-white btn btn-primary btn-sm active" value="" style="">
-		// 		<i class="bi-geo-alt"></i>
-		// 	</button>
-		// 	<span class="ms-2">Donnée géographique</span>
-		// </div>
-		// <div class="my-3">
-		// 	<button class="text-white btn btn-outline-secondary btn-sm active" value="" style="">
-		// 		<i class="bi-clock"></i>
-		// 	</button>
-		// 	<span class="ms-2">Mise à jour inconnue</span>
-		// </div>
-		
-		$nbDownloads = '
-			<div class="d4c-dataset-metadata-block" ng-show="(ctx.dataset.metas.extras | filter:{key:\'nb_download\'})[0].value > 0">
-				<div class="d4c-dataset-metadata-block__metadata">
-					<div class="d4c-dataset-metadata-block__metadata-name" translate=""><span class="ng-scope">Téléchargements</span></div>
-					<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{ +((ctx.dataset.metas.extras | filter:\{key:\'nb_download\'\})[0].value) \}\}</div>
+		if ($isOpenData) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-unlock"></i>
+					<span class="ms-2">Données ouvertes</span>
 				</div>
-			</div>
-		';
-
-		// TODO: Date
-		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
-		// $synthese .= '
-		// 	<div class="my-3" ng-show="\'' . $lastDataUpdateDate . '\'">
-		// 		<i class="fa fa-clock-o"></i>>
-		// 		<span class="ms-2" translate><strong>Last data update</strong></span>
-		// 		<span>\{\{\'' . $lastDataUpdateDate . '\' | formatMeta:\'datetime\' \}\}</span>
+			';
+		}
+		
+		// $nbDownloads = '
+		// 	<div class="d4c-dataset-metadata-block" ng-show="(ctx.dataset.metas.extras | filter:{key:\'nb_download\'})[0].value > 0">
+		// 		<div class="d4c-dataset-metadata-block__metadata">
+		// 			<div class="d4c-dataset-metadata-block__metadata-name" translate=""><span class="ng-scope">Téléchargements</span></div>
+		// 			<div class="d4c-dataset-metadata-block__metadata-value ng-binding">\{\{ +((ctx.dataset.metas.extras | filter:\{key:\'nb_download\'\})[0].value) \}\}</div>
+		// 		</div>
 		// 	</div>
 		// ';
 
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-clock-o"></i>
-				<span class="ms-2">' . ($frequence != null ? $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) : 'Mise à jour inconnue') . '</span>
+				<span class="ms-2">' . ($frequence != null ? 'Mise à jour ' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) : 'Mise à jour inconnue') . '</span>
 			</div>
 		';
+
+		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
+		$displayDate = null;
+		$datasetDates = json_decode($datasetDates, true);
+		foreach ($datasetDates as $date) {
+			if ($date['type'] == "creation") {
+				$displayDate = $date['value'];
+				break;
+			}
+			else if ($date['type'] == "publication") {
+				$displayDate = $date['value'];
+			}
+		}
+		if ($displayDate != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-pencil"></i>
+					<span class="ms-2" translate>Publié le </span>
+					<span>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</span>
+				</div>
+			';
+		}
+
+		if ($isGeo) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-globe"></i>
+					<span class="ms-2">Donnée géographique</span>
+				</div>
+			';
+		}
 
 		$synthese .= '
 			<div class="my-3">
@@ -893,6 +903,11 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '</div>';
 
 		return $synthese;
+	}
+
+	function isOpenData($keywords) {
+		$arrayOpenData = ["opendata", "open data", "donnée ouverte", "données ouvertes"];
+		return !empty(array_intersect($keywords, $arrayOpenData));
 	}
 	
 	function buildMethodeProductionEtQualite($metadataExtras) {
