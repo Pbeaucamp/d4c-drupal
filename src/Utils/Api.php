@@ -5704,18 +5704,17 @@ class Api{
     }
     
     function callSearchOpendatasoftAllSite($params){
-        
-         $params = explode(";", $params);
-         $result = Query::callSolrServer("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
-        
-        
-         error_log("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
-        
+		$params = explode(";", $params);
+
+		$url = "https://".$params[0]."/api/datasets/1.0/search/?q=".$params[1];
+		$result = Query::callSolrServer($url);
+        Logger::logMessage("Calling ODS with url '" . $url . "'");
+
         $response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
         
-    return $response;    
+    	return $response;    
     }
     
 	function callSearchSocrata($params){
