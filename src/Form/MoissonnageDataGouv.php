@@ -291,7 +291,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 
                 $results = json_decode($query);
                 $results = $results->result;
-                $private = true;
+                $private = false;
                 $label = $results->title;
                 $extras = $results->extras;
 				
@@ -507,7 +507,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $query = Query::callSolrServer($jsonValue["url"]."/d4c/api/datasets/2.0/searchdatasetres/id=".$jsonValue["id"]);
                 $results = json_decode($query);
                 $results = $results->result;
-                $private = true;
+                $private = false;
                 $label = $results->title;
                 $extras = $results->extras;
                 $ex_Ftp=false;
@@ -793,7 +793,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$query = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/".$value."/");
 				$results = json_decode($query);
-				$private = true;
+				$private = false;
 				
 				$label = $results->slug;
 				
@@ -1230,7 +1230,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 
 				$results = $query->metas;
 
-				$private = true;
+				$private = false;
 
 				$extras = array();
 				$extras[count($extras)]['key'] = 'LinkedDataSet';
@@ -1423,7 +1423,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $query = Query::callSolrServer($site_search_url."/api/datasets/1.0/".$jsonValue["id"].'/');
                 $query = json_decode($query);    
                 $results = $query->metas;
-                $private = true;
+                $private = false;
            
                 $extras = array();
                 $extras[count($extras)]['key'] = 'LinkedDataSet';
@@ -1605,7 +1605,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				//$query = Query::callSolrServer($value[1]."/api/views/".$value[0].".json");
 				$query = Query::callSolrServer($value[1]."/api/views/metadata/v1/".$value[0].".json");
 				$results = json_decode($query);
-				$private = true;
+				$private = false;
 			   
 					//$label = $results->title;
 					
@@ -1817,7 +1817,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					
 				$results = json_decode($query);
 				$results = $results->result;
-				$private = true;
+				$private = false;
 			   
 				$label = $results->title;
 					
@@ -2141,7 +2141,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $site_search_url = $value[1]."/".$value[0];
                 $query = Query::callSolrServer($site_search_url.'?f=pjson');
                 $results = json_decode($query);
-                $private = true;
+                $private = false;
            
                 $extras = array();
                 $extras[count($extras)]['key'] = 'LinkedDataSet';
