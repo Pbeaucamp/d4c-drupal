@@ -5706,7 +5706,7 @@ class Api{
     function callSearchOpendatasoftAllSite($params){
 		$params = explode(";", $params);
 
-		$url = "https://".$params[0]."/api/datasets/1.0/search/?rows=100&q=".$params[1];
+		$url = "https://".$params[0]."/api/datasets/1.0/search/?rows=10000&q=".$params[1];
 		$result = Query::callSolrServer($url);
         Logger::logMessage("Calling ODS with url '" . $url . "'");
 
