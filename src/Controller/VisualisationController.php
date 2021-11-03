@@ -190,7 +190,7 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if (!isset($tab)) {
-			$tab = 'table';
+			$tab = 'information';
 		}
 
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
@@ -346,7 +346,7 @@ class VisualisationController extends ControllerBase {
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
 		$tabTable = $this->buildTabTable();
-		$tabMap = $this->buildTabMap();
+		$tabMap = $this->buildTabMap($dataset);
 		$tabAnalyze = $this->buildTabAnalyze();
 		$tabImage = $this->buildTabImage();
 		$tabCalendar = $this->buildTabCalendar();
@@ -354,7 +354,7 @@ class VisualisationController extends ControllerBase {
 		$tabWordCloud = $this->buildTabWordCloud();
 		$tabTimeline = $this->buildTabTimeline();
 		$tabExport = $this->buildTabExport($dataset, $metadataExtras);
-		$tabAPI = $this->buildTabAPI();
+		$tabAPI = $this->buildTabAPI($dataset);
 		$tabReuses = $this->buildTabReuses($loggedIn, $name);
 
 		return '
@@ -615,7 +615,7 @@ class VisualisationController extends ControllerBase {
 
 	function buildVisu($metadataExtras) {
 		$visu = $this->exportExtras($metadataExtras, 'default_visu');
-		return $visu != null ? $visu : 1;
+		return $visu != null ? $visu : 0;
 	}
 
 	// function buildSources($metadataExtras) {
@@ -1024,6 +1024,11 @@ class VisualisationController extends ControllerBase {
 					continue;
 				}
 
+				//Deactivate WMS and WFS
+				if (strcasecmp($format , 'wms') == 0 || strcasecmp($format , 'wfs') == 0) {
+					continue;
+				}
+
 
 				$button = '';
 				if ($mimeType == "text/csv" && $datastoreActive == true) {
@@ -1116,10 +1121,29 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabMap() {
+	function buildTabMap($dataset) {
+		$resources = $dataset["metas"]["resources"];
+		
+		if (sizeof($resources) > 0 ) {
+			foreach($resources as $key=>$value) {
+				$name = $value["name"];
+				$url = $value["url"];
+				$format = $value["format"];
+
+				//Removing parameters
+				$url = strtok($url, '?');
+
+				if ($format == "WMS" || strpos($url, "wms") !== false) {
+					$btnMapFishapp = '<a class="d4c-map-flux-wms" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Editer en mode avancé</span></span></a>';
+				}
+			}
+		}
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\')" class="d4c-dataset-visualization__tab-map">
 				<d4c-map context="ctx" sync-to-url="true" auto-resize="true"></d4c-map>
+
+				' . $btnMapFishapp . '
 			
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
@@ -1244,6 +1268,7 @@ class VisualisationController extends ControllerBase {
 	function buildTabExport($dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
 
+		$additionnalResources = '<ul class="d4c-dataset-export__format-choices">';
 		$maxFeatures = 50;
 
 		if (sizeof($resources) > 0 ) {
@@ -1257,12 +1282,36 @@ class VisualisationController extends ControllerBase {
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
+
+					$additionnalResources .= '
+						<li class="d4c-dataset-export__format-choice ng-scope">
+							<div class="d4c-dataset-export-link">
+								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
+								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Ouvrir dans Mapfishapp</span></span></a>
+								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
+							</div>
+						</li>
+					';
 				}
 				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
 					$wfsURL = $this->buildServiceUrl($metadataExtras, $url, "WFS", $name, $maxFeatures);
+
+					$additionnalResources .= '
+						<li class="d4c-dataset-export__format-choice ng-scope">
+							<div class="d4c-dataset-export-link">
+								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WFS</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
+								<a class="d4c-dataset-export-link__link" target="_blank" href="' . $url . '" ><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
+								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
+							</div>
+						</li>
+					';
 				}
 			}
 		}
+
+		$additionnalResources .= '</ul>';
 
 		// https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
@@ -1320,7 +1369,8 @@ class VisualisationController extends ControllerBase {
 
 			$exportGeo .= '
 				<div class="d4c-dataset-export ng-scope ng-isolate-scope">
-					<h3>Exports géographique</h3>
+					<h3>Exports géographiques</h3>
+					' . $additionnalResources . '
 					<select id="d4c-select-download-resource" ng-model="selectedItem" ng-change="downloadResource(\'' . $wmsURL . '\', \'' . $wfsURL . '\', selectedItem)">
 						<option ng-selected="true">Choisir une couche</option>
 						' . $optionsWMS . '
@@ -1339,9 +1389,60 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAPI() {
+	function buildTabAPI($dataset) {
+		$resources = $dataset["metas"]["resources"];
+
+		$flux = '';
+
+		if (sizeof($resources) > 0 ) {
+			foreach($resources as $key=>$value) {
+				$name = $value["name"];
+				$url = $value["url"];
+				$format = $value["format"];
+
+				//Removing parameters
+				$url = strtok($url, '?');
+
+				if ($format == "WMS" || strpos($url, "wms") !== false) {
+					$flux .= '
+						<div class="d4c-api-carto">
+							<span class="d4c-api-carto-format">WMS</span>
+							<div class="d4c-api-carto-flux">
+								<span class="d4c-api-carto-flux-title" style="width: 30rem;display: inline-block;vertical-align: top;">Flux cartographique WMS</span>
+								<span class="d4c-api-carto-flux-url" style="width: 30rem;display: inline-block;vertical-align: top;">' . $url . '</span>
+							</div>
+							<span class="d4c-api-carto-format">Couche: ' . $name . '</span>
+						</div>
+					';
+				}
+				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
+					$flux .= '
+						<div class="d4c-api-carto">
+							<span class="d4c-api-carto-format">WFS</span>
+							<div class="d4c-api-carto-flux">
+								<span class="d4c-api-carto-flux-title" style="width: 30rem;display: inline-block;vertical-align: top;">Flux cartographique WFS</span>
+								<span class="d4c-api-carto-flux-url" style="width: 30rem;display: inline-block;vertical-align: top;">' . $url . '</span>
+							</div>
+							<span class="d4c-api-carto-format">Couche: ' . $name . '</span>
+						</div>
+					';
+				}
+			}
+		}
+
+		$apiGeo = '';
+		if (!$this->isNullOrEmptyString($flux)) {
+			$apiGeo .= '
+				<h3>API Cartographiques</h3>
+				' . $flux . '
+			';
+		}
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
+				' . $apiGeo . '
+			
+				<h3>API Data4Citizen</h3>
 				<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
 			</d4c-pane>
 		';

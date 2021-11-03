@@ -590,7 +590,6 @@ class Api{
 
 					if ($filterSort && $facets[$i] == $filterKey) {
 						//For now we only filter by Alphanum. Need to support other filters
-						// Logger::logMessage("TRM - For facet " . $facets[$i] . " Filter SORT " . $filterKey . " " . $filterSort);
 						array_multisort( array_column($values, "name"), SORT_ASC, $values );
 					}
 					else {
@@ -911,8 +910,11 @@ class Api{
 					}
 				}
 			}
+
+			$nbRemove = 0;
 			foreach($orgsPrivateIndex as $index){
-				array_splice($orgs["result"], $index, 1);
+				array_splice($orgs["result"], ($index - $nbRemove), 1);
+				$nbRemove = $nbRemove + 1;
 			}
 
 			if(count($orgs_private) > 0){
@@ -980,7 +982,6 @@ class Api{
 			
 			$arr = array();
 			foreach($result["result"]["facets"]["features"] as $key => $count){
-				Logger::logMessage("TRM - Features - " . $key . " and count " . $count);
 				for($i=0; $i<$count; $i++){
 					$arr = array_merge($arr, explode(",", $key));
 				}
@@ -1005,7 +1006,6 @@ class Api{
 			
 			$themes = array();
 			foreach($result["result"]["facets"]["themes"] as $key => $count){
-				Logger::logMessage("TRM - Facet - " . $key . " and count " . $count);
 				for($i=0; $i<$count; $i++) {
 					$themes = array_merge($themes, json_decode($key, true));
 				}
@@ -2396,8 +2396,6 @@ class Api{
 		 	}
 			
 			if ($selectedResourceId != null && $selectedResourceId == $resourcesid) {
-
-				Logger::logMessage("TRM - Found resource ");
 				//If the selected resource ID is defined, we select it
 				break;
 			}
@@ -7671,8 +7669,6 @@ function deleteStory($story_id){
 
 	private function searchDataset($params) {
 		$callUrl =  $this->urlCkan . "api/action/package_search?" . $params;
-
-		Logger::logMessage("TRM - CALL CKAN " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
