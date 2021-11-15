@@ -6842,7 +6842,8 @@ class Api{
 				$data["author_url"] = null;
 				$data["url"] = $_POST["url"];
 				//$data["image"] = $_POST["image"];
-				$data["date"] = date("d/m/Y H:i:s");
+				// $data["date"] = date("d/m/Y H:i:s");
+				$data["date"] = date("Y-m-d H:i:s");
 				$data["status"] = 0;
 				$data["type"] = $_POST["type"];
 				
