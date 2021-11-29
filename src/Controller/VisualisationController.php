@@ -62,7 +62,7 @@ class VisualisationController extends ControllerBase {
 		$listOfThemes = $api->getPackageTheme();
     	$listOfThemes = json_decode($listOfThemes->getContent(), true);
 
-		$dataset = $api->getPackageShow2($id,"");
+		$dataset = $api->getPackageShow2($id, "", true, false);
 		$name = $dataset["metas"]["title"];
 		$description = $dataset["metas"]["description"];
 		
