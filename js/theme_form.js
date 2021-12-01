@@ -58,16 +58,18 @@ function getDataForUpt(){
     if($("#edit-selected option:selected").val()=='new_theme'){
         $("input[name='theme']").val('');
         $("#img").remove();
+        $("#imgLight").remove();
         
     }
    else{
        
        let url = $("#edit-selected option:selected").val();
-       url=url.split('%')[1];
-       
-       
-       
+       let values = url.split('%');
+       url = values[1];
+       let urlLight = values[3];
+
        $("#img").remove();
+       $("#imgLight").remove();
        
        if($("#edit-selected option:selected").text()=='Default'){
            $("#edit-theme").val($("#edit-selected option:selected").text());
@@ -81,8 +83,10 @@ function getDataForUpt(){
        
        
        $("#edit-theme").after('<span id="img" style=" background-image: url('+url+'); margin-top: 0px;  display: inline-block; width: 30px; height: 30px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 8px; "></span>');
-   }
-   setTimeout(function() { 
+       $("#edit-theme").after('<span id="imgLight" style=" background-image: url('+urlLight+'); background-color: lightgrey; margin-top: 0px;  display: inline-block; width: 30px; height: 30px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 8px; "></span>');
+    }
+
+    setTimeout(function() { 
 		var scope = angular.element("#app button").scope();
 		scope.validate = function () {
 			if (!scope.isOldIcon) {
@@ -153,6 +157,7 @@ function fillImgBakc(name) {
 function addSelectedImg(url) {
 
     $('#img').attr('style', '');
+    $('#imgLight').attr('style', '');
     $('#img_selected').remove();
 
     $("#btnImgHide").append('<span  id="img_selected"  style=" background-image: url(/' + url + '); display: inline-block; width: 30px; height: 30px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 1em;"></span>');

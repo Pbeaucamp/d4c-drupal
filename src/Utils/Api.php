@@ -69,12 +69,14 @@ class Api{
 		$this->isPostgis = $this->config->client->name == 'cda2';
     }
     
-	public function getStoreOptions(){
+	public function getStoreOptions($useApiKey = true){
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
 		//$headr[] = 'Authorization: 995efb3c-9349-43d7-965c-d7ce567b323a';
-		$headr[] = 'Authorization: '.$this->config->ckan->api_key;
+		if ($applySecurity) {
+			$headr[] = 'Authorization: '.$this->config->ckan->api_key;
+		}
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTPHEADER     => $headr,
@@ -2354,7 +2356,7 @@ class Api{
 		return $this->callPackageShow2($datasetid, $params);
 	}
     
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null) {
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $useApiKey = true) {
         $result = '';
         
 		if($callCkan) {
@@ -2363,7 +2365,7 @@ class Api{
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
 
 			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions());
+			curl_setopt_array($curl, $this->getStoreOptions($useApiKey));
 			$result = curl_exec($curl);
 			curl_close($curl);
 			//echo $callUrl. "\r\n";
@@ -7878,11 +7880,11 @@ function deleteStory($story_id){
 			$results = array();
 			try {
 				if (!$resourceId) {
-					if ($manageFile) {
-						$manageFileResult = $this->manageFileByUrl($resourceUrl);
+					if ($manageFile || strcasecmp($format, "CSV") == 0) {
+						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
 						$resourceUrl = $manageFileResult["url"];
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
 				
 						//We update the visualisation's icons
 						$this->calculateVisualisations($datasetId);
@@ -7896,11 +7898,11 @@ function deleteStory($story_id){
 					$result["status"] = "success";
 				}
 				else {
-					if ($manageFile) {
-						$manageFileResult = $this->manageFileByUrl($resourceUrl);
+					if ($manageFile || strcasecmp($format, "CSV") == 0) {
+						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
 						$resourceUrl = $manageFileResult["url"];
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
 				
 						//We update the visualisation's icons
 						$this->calculateVisualisations($datasetId);
@@ -7964,11 +7966,20 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	function manageFileByUrl($resourceUrl) {
+	function manageFileByUrl($resourceManager, $resourceName, $resourceFormat, $resourceUrl) {
 		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
 		$data_array = array();
 
 		$fileName = basename($resourceUrl);
+		//We remove parameters from the name if it exist (filename.csv?someparameters)
+		$fileName = strtok($fileName, "?");
+
+		//If the filename only contains the format, we need to change the name
+		if (strcasecmp($fileName, $resourceFormat) == 0) {
+			$fileName = $resourceManager->nettoyage2($resourceName) . "." . $resourceFormat;
+		}
+
+		Logger::logMessage("TRM - FILENAME " . $fileName);
 
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;

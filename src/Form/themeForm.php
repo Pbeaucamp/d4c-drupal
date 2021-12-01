@@ -41,12 +41,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  
- */
+ */ 
 
-
-
-		//drupal_get_messages('error');
-     
 class themeForm extends HelpFormBase {
 
 	/**
@@ -62,43 +58,32 @@ class themeForm extends HelpFormBase {
     
 	public function buildForm(array $form, FormStateInterface $form_state) {
         $form = parent::buildForm($form, $form_state);
-$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
          
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         $form['#attached']['library'][] = 'ckan_admin/theme.form';
         
-        
-        if($config->get('themes')==null ){
+        if ($config->get('themes') == null) {
            
             $themes_defolt = array(
 				array("title"=>"administration-gouvernement-finances-publiques-citoyennete", "label"=>"Administration gouvernement finances publiques citoyennete", "url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-administration-gouvernement-finances-publiques-citoyennete.svg"),
-                     
 				array( "title"=>"amenagement-du-territoire-urbanisme-batiments-equipements-logement", "label"=>"Amenagement du territoire urbanisme batiments equipements logement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-amenagement-du-territoire-urbanisme-batiments-equipements-logement.svg"),
-                     
 				array("title"=>"culture-patrimoine","label"=>"Culture patrimoine","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-culture-patrimoine.svg"),
-                     
 				array("title"=>"economie-business-pme-developpement-economique-emploi","label"=>"Economie business pme developpement economique emploi","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-economie-business-pme-developpement-economique-emploi.svg"),
-                     
 				array("title"=>"education-formation-recherche-enseignement","label"=>"Education formation recherche enseignement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-education-formation-recherche-enseignement.svg"),
-                     
 				array("title"=>"environnement","label"=>"Environnement","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-environnement.svg"),
-                     
 				array("title"=>"services-sociaux","label"=>"Services sociaux","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-services-social.svg"),
-                     
 				array("title"=>"transports-deplacements","label"=>"Transports deplacements","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-transports-deplacements.svg"),
-                     
 				array("title"=>"default","label"=>"Default","url"=> $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png"),
-       
 			);
             
 			$config->set('themes',json_encode($themes_defolt))->save();
         }
         
-		//$config->set('themes',null)->save();
 		$t = $config->get('themes'); 
 		$themes = json_decode($t);
         
-        if(!$themes[0]->label || !$themes[1]->label || !$themes[2]->label || !$themes[3]->label || !$themes[4]->label || !$themes[5]->label || !$themes[6]->label || !$themes[7]->label || !$themes[8]->label){
+        if (!$themes[0]->label || !$themes[1]->label || !$themes[2]->label || !$themes[3]->label || !$themes[4]->label || !$themes[5]->label || !$themes[6]->label || !$themes[7]->label || !$themes[8]->label) {
             
             $themes_defolt = array();
             
@@ -146,16 +131,20 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 			} 
             
 			$themes = $themes_defolt;
-            
             $config->set('themes',json_encode($themes))->save();
         }
         
 		$valuesForSelect=array();   
 		for($i=0; $i<count($themes); $i++){
-			$valuesForSelect[$i."%".$themes[$i]->url."%".$themes[$i]->title]=$themes[$i]->label;  
+			$themeValue = $i . "%" . $themes[$i]->url . "%" . $themes[$i]->title;
+			if (isset($themes[$i]->url_light)) {
+				$themeValue = $themeValue . "%" . $themes[$i]->url_light;
+			}
+
+			$valuesForSelect[$themeValue]=$themes[$i]->label;  
 		}
         
-		$valuesForSelect["new_theme"]='Nouveau thème'; 
+		$valuesForSelect["new_theme"] = 'Nouveau thème'; 
         
 		
 		$form['selected'] = array(
@@ -208,26 +197,6 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
             '#value' => $this->t('Supprimer'),
 			'#submit' => array('::deleteTheme'),
         );
-        
-        //$directory = "sites/default/files/api/portail_d4c/img/set-v2/";
-        //$images = glob($directory . "*.svg");
-        //$imgs = '';
-        
-    
-        //foreach ($images as $image) {
-        //    $imgs = $imgs . ';' . $image;
-        //}
-    
-     
-		/*$form['imgimg'] = array(
-
-            '#type' => 'textarea',
-            '#attributes' => [
-                'value' => $imgs,
-                'style' => 'display: none',
-            ],
-            '#default_value' => $imgs,
-        );*/
         
         $form['imgBack'] = array(
             '#type' => 'textfield',
@@ -287,7 +256,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
-$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         
@@ -296,7 +265,7 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
         $themes = json_decode($t);
         $selectThem = $form_state->getValue('selected');
         
-        if($selectThem=="new_theme"){
+        if ($selectThem=="new_theme") {
             
 			$themeValid = $form_state->getValue('theme');
 			$theme_label = $themeValid;
@@ -316,13 +285,11 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 			$form_file = $form_state->getValue('img_theme');
             
 			if (isset($form_file[0]) && !empty($form_file[0])) {
-
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
 				$file->save();
 				$url_t=parse_url($file->createFileUrl(FALSE));
-				$themes[count($themes)-1]->url =$url_t["path"];
-			
+				$themes[count($themes)-1]->url = $url_t["path"];
 			}
 			else if($form_state->getValue('imgBack')!=''|| $form_state->getValue('imgBack')!=null){
 				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
@@ -330,7 +297,6 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
             else{
 				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png";
             }
-            
             
             $config->set('themes',null)->save();
             $config->set('themes',json_encode($themes))->save();
@@ -440,15 +406,8 @@ $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
     
     public function validateForm(array &$form, FormStateInterface $form_state) {
         $theme = $form_state->getValue('theme');
-     
-        if( $theme == '') $form_state->setErrorByName('theme', $this->t('Aucune donnée sélectionnée'));   
-        
-    }   
-    
-    
-   
-    
-
+        if( $theme == '') $form_state->setErrorByName('theme', $this->t('Aucune donnée sélectionnée'));
+    }
 }
 
 

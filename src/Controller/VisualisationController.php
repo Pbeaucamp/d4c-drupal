@@ -63,9 +63,12 @@ class VisualisationController extends ControllerBase {
 		
 		$api = new API();
 
-		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId);
+		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
+		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
+		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
 
 		$name = $dataset["metas"]["title"];
+		//Removing HTML tags
 		$description = $dataset["metas"]["description"];
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
@@ -529,6 +532,7 @@ class VisualisationController extends ControllerBase {
 				$theme["label"] = $selectedTheme["label"];
 				$theme["title"] = $selectedTheme["title"];
 				$theme["url"] = $selectedTheme["url"];
+				$theme["url_light"] = $selectedTheme["url_light"];
 
 				$themes[] = $theme;
 				// $themesPart .= '
@@ -546,6 +550,7 @@ class VisualisationController extends ControllerBase {
 			$theme["label"] = $selectedTheme["label"];
 			$theme["title"] = $selectedTheme["title"];
 			$theme["url"] = $selectedTheme["url"];
+			$theme["url_light"] = $selectedTheme["url_light"];
 			$themeName = $theme;
 
 			$themes = array();
@@ -565,6 +570,7 @@ class VisualisationController extends ControllerBase {
 			$theme["label"] = $selectedTheme["label"];
 			$theme["title"] = $selectedTheme["title"];
 			$theme["url"] = $selectedTheme["url"];
+			$theme["url_light"] = $selectedTheme["url_light"];
 			$themeName = $theme;
 
 			$themes = array();
@@ -591,7 +597,7 @@ class VisualisationController extends ControllerBase {
 		$themeImages .= '	</button>';
 
 		foreach($themes as $theme) {
-			$themeImage = $theme["url"];
+			$themeImage = isset($theme["url_light"]) ? $theme["url_light"] : $theme["url"];
 			if ($themeImage != null) {
 				$themeImages .= '	<div style=" background-image: url('. $themeImage . '); display: inline-block; width: 40px; height: 40px; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-right: 8px;"></div>';
 			}
@@ -980,14 +986,26 @@ class VisualisationController extends ControllerBase {
 		for ($i = 1; $i <= 5; $i++) {
 			$organisation = $this->exportExtras($metadataExtras, 'responsible-organisation-' . $i);
 			if ($organisation != null) {
+				Logger::logMessage("TRM - Organisation " . $organisation);
+
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
+
+				
+				$address = $organisation['contact-info']['address'];
+				$postalCode = $organisation['contact-info']['postal-code'];
+				$city = $organisation['contact-info']['city'];
 				$contactEmail = $organisation['contact-info']['email'];
+				$phone = $organisation['contact-info']['phone'];
+
 
 				$contacts .= '
 					<div class="d-flex align-items-center mt-3">
 						<div class="flex-grow-1 ms-3"><strong id="displayContact1">' . $organisationName . '</strong>
-							<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '">contact</a></p>
+							<p class="mb-0">' . $address . '</p>
+							<p class="mb-0">' . $postalCode . ' ' . $city . '</p>
+							<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>
+							<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>
 						</div>
 					</div>
 					<hr>
@@ -1110,7 +1128,7 @@ class VisualisationController extends ControllerBase {
 
 	function buildTabTable() {
 		return '
-			<d4c-pane pane-auto-unload="true" title="Table" icon="table" translate="title" slug="table">
+			<d4c-pane title="Table" icon="table" translate="title" slug="table">
 				<d4c-table context="ctx" auto-resize="true" dataset-feedback="true"></d4c-table>
 			
 				<d4c-embed-control context="ctx"
@@ -1140,7 +1158,7 @@ class VisualisationController extends ControllerBase {
 		}
 
 		return '
-			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\')" class="d4c-dataset-visualization__tab-map">
+			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
 				<d4c-map context="ctx" sync-to-url="true" auto-resize="true"></d4c-map>
 
 				' . $btnMapFishapp . '
@@ -1268,6 +1286,7 @@ class VisualisationController extends ControllerBase {
 	function buildTabExport($dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
 
+		$exportGeo = '';
 		$additionnalResources = '<ul class="d4c-dataset-export__format-choices">';
 		$maxFeatures = 50;
 
@@ -1288,6 +1307,7 @@ class VisualisationController extends ControllerBase {
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
 								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Ouvrir dans Mapfishapp</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
@@ -1302,6 +1322,7 @@ class VisualisationController extends ControllerBase {
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WFS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
 								<a class="d4c-dataset-export-link__link" target="_blank" href="' . $url . '" ><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>

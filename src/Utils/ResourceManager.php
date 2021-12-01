@@ -1437,7 +1437,12 @@ class ResourceManager {
 												
 				if ($extras[$index]['key'] == 'themes') {
 					$hasThemes = true;
-					$extras[$index]['value'] = $themes;
+
+					Logger::logMessage("TRM - THEME VALUE " . $extras[$index]['value'] . " OR THEME = " . $themes);
+
+					if (isset($themes)) {
+						$extras[$index]['value'] = $themes;
+					}
 				}
 												
 				// if ($extras[$index]['key'] == 'theme') {
