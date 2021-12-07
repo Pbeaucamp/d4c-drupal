@@ -69,7 +69,7 @@ class Api{
 		$this->isPostgis = $this->config->client->name == 'cda2';
     }
     
-	public function getStoreOptions($useApiKey = true){
+	public function getStoreOptions($applySecurity = true){
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
