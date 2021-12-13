@@ -69,12 +69,14 @@ class Api{
 		$this->isPostgis = $this->config->client->name == 'cda2';
     }
     
-	public function getStoreOptions(){
+	public function getStoreOptions($useApiKey = true) {
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
 		//$headr[] = 'Authorization: 995efb3c-9349-43d7-965c-d7ce567b323a';
-		$headr[] = 'Authorization: '.$this->config->ckan->api_key;
+		if ($useApiKey) {
+			$headr[] = 'Authorization: '.$this->config->ckan->api_key;
+		}
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTPHEADER     => $headr,
@@ -1857,7 +1859,7 @@ class Api{
 						//$maxlat = $bbox[2];
 						//$maxlong = $bbox[3];
 						//$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-						//$where .= "circle(point(" . $lat . "," . $long . "), " . $dist/100000 . ") @> point(".$fieldCoordinates.") and ";
+						//$where .= "circle(point(" . $lat . "," . $long . "), " . $dist//100000 . ") @> point(".$fieldCoordinates.") and ";
 						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.") and ";
 						//$where .= "circle(polygon(path '(" . $this->getLosangePath($lat,$long,$dist) . ")')) @> point(".$fieldCoordinates.") and ";
 					} else {
@@ -2339,7 +2341,7 @@ class Api{
    
 
 
-	public function getPackageShow2($datasetid,$params, $callCkan = true) {
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $useApiKey = true) {
 
 
         
@@ -2353,7 +2355,7 @@ class Api{
 			
 
 			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions());
+			curl_setopt_array($curl, $this->getStoreOptions($useApiKey));
 			$result = curl_exec($curl);
 			curl_close($curl);
 			//echo $callUrl. "\r\n";
@@ -7060,25 +7062,23 @@ class Api{
 
 		$query->execute();
 	}
-	
+
 	function callOrangeApiGetData($params){
 		//ex : /webservice/?service=getData&key=nXG9o1MSJxHbs1qH&db=stationnement&table=disponibilite_parking&format=json
-		
-		
 		$query_params = $this->proper_parse_str($params);
-        $response = new Response();
-        $contentType = ($query_params['format'] == 'xml') ? 'application/xml' : 'application/json; charset=utf-8';
+	        $response = new Response();
+        	$contentType = ($query_params['format'] == 'xml') ? 'application/xml' : 'application/json; charset=utf-8';
+	        $limit = (isset($query_params['limit'])) ? $query_params['limit'] : 1000;
 		$response->headers->set('Content-Type', $contentType);
 		if($query_params["service"] != "getData"){
 			echo "Ce service n'est pas supporté";
 			$response->setStatusCode(404);
-			
 		} else {
 			$cle = $query_params["key"];
 			$db = $query_params["db"];
 			$dataset = $query_params["table"];
 			$format = $query_params["format"];
-			$limit = $query_params["limit"];
+			//$limit = $query_params["limit"];
 			$offset = $query_params["offset"];
 			$start = "";$rows = "";
 			if($limit != null && $limit != ""){
@@ -7091,7 +7091,6 @@ class Api{
 			if($offset != null && $offset != ""){
 				$start = "&start=" . $offset;
 			}
-			
 			$res = $this->getDatastoreRecord_v2("dataset=".$dataset.$rows.$start);
 			//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 			//echo json_encode($res);
