@@ -19,6 +19,7 @@ use SplFileObject;
 use finfo;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
+use Drupal\ckan_admin\Utils\NutchApi;
 
 
 
@@ -105,6 +106,10 @@ class Api{
 			CURLOPT_SSL_VERIFYHOST =>  0
 		);
 		return $options;
+	}
+
+	function getConfig() {
+		return $this->config;
 	}
 
 	/**
@@ -1003,7 +1008,13 @@ class Api{
 				);
 			}
 		}
-		
+
+		if ($this->config->client->nutch) {
+			Logger::logMessage("Nutch is enable. Calling nutch to search for page");
+			$nutchApi = new NutchApi;
+			$result = $nutchApi->callNutch($this, $params, $result);
+		}
+
 		if ($hasFacetThemes) {
 			
 			$themes = array();
