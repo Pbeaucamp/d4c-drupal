@@ -1064,7 +1064,7 @@ class VisualisationController extends ControllerBase {
 
 					$button .= '
 						<button class="btn btn-info" ng-click="openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')">
-							Ouvrir dans Mapfishapp
+							Consulter
 						</button>
 					';
 				}
@@ -1159,7 +1159,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
-				<d4c-map context="ctx" sync-to-url="true" auto-resize="true"></d4c-map>
+				<d4c-map context="ctx" location="' . $this->config->client->default_bounding_box . '" sync-to-url="true" auto-resize="true"></d4c-map>
 
 				' . $btnMapFishapp . '
 			
@@ -1308,7 +1308,7 @@ class VisualisationController extends ControllerBase {
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
-								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Ouvrir dans Mapfishapp</span></span></a>
+								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
 						</li>

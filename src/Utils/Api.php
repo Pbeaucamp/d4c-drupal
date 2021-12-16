@@ -7148,12 +7148,21 @@ class Api
 	function updateReuse($reuse)
 	{
 		$reu_id = $reuse["id"];
-		$query = \Drupal::database()->update('d4c_reuses');
-		$query->fields([
-			'reu_status' => $reuse["status"]
-		]);
-		$query->condition('reu_id', $reu_id);
-		$query->execute();
+		
+		// Statut delete
+		if ($reuse["status"] == 3) {
+			$query = \Drupal::database()->delete('d4c_reuses');
+			$query->condition('reu_id', $reu_id);
+			$query->execute();
+		}
+		else {
+			$query = \Drupal::database()->update('d4c_reuses');
+			$query->fields([
+				'reu_status' => $reuse["status"]
+			]);
+			$query->condition('reu_id', $reu_id);
+			$query->execute();
+		}
 	}
 
 	public function addReuse($params)
@@ -7940,24 +7949,24 @@ class Api
 				//Update extras
 				//TODO: We have to compare extras or we just replace ?
 				// $extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras(
-					$extras,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					null,
-					$security
-				);
+				// $extras = $resourceManager->defineExtras(
+				// 	$extras,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	null,
+				// 	$security
+				// );
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 			}
@@ -8009,12 +8018,19 @@ class Api
 				if (!$resourceId) {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						$resourceUrl = $manageFileResult["url"];
-						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+						
+						if ($manageFileResult["status"] == "error") {
+							throw new \Exception($manageFileResult["message"]);
+						}
+						else if ($manageFileResult["status"] == "success") {
 
-						//We update the visualisation's icons
-						$this->calculateVisualisations($datasetId);
+							$resourceUrl = $manageFileResult["url"];
+							//Managing resources
+							$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+
+							//We update the visualisation's icons
+							$this->calculateVisualisations($datasetId);
+						}
 					} else {
 						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
@@ -8025,12 +8041,18 @@ class Api
 				} else {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						$resourceUrl = $manageFileResult["url"];
-						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+						
+						if ($manageFileResult["status"] == "error") {
+							throw new \Exception($manageFileResult["message"]);
+						}
+						else if ($manageFileResult["status"] == "success") {
+							$resourceUrl = $manageFileResult["url"];
+							//Managing resources
+							$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
 
-						//We update the visualisation's icons
-						$this->calculateVisualisations($datasetId);
+							//We update the visualisation's icons
+							$this->calculateVisualisations($datasetId);
+						}
 					} else {
 						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
@@ -8105,6 +8127,19 @@ class Api
 
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
+
+		// Checking file size. If over 1GB, we return an error
+		$file_size = $this->getFileSize( $resourceUrl );
+		Logger::logMessage("TRM - FILESIZE " . $file_size);
+		if ($file_size > 1000000000) {
+
+			Logger::logMessage("Exceeded filesize limit.");
+
+			$data_array["message"] = "The file is too big. Please upload a file smaller than 1GB.";
+			$data_array["status"] = "error";
+			return $data_array;
+		}
+
 
 		if (file_put_contents($uploadfile, file_get_contents($resourceUrl))) {
 			Logger::logMessage("File downloaded successfully");
@@ -8200,6 +8235,52 @@ class Api
 		$data_array["status"] = "success";
 		$data_array["url"] = $url;
 		return $data_array;
+	}
+	
+	/**
+	 * Returns the size of a file without downloading it, or -1 if the file
+	 * size could not be determined.
+	 *
+	 * @param $url - The location of the remote file to download. Cannot
+	 * be null or empty.
+	 *
+	 * @return The size of the file referenced by $url, or -1 if the size
+	 * could not be determined.
+	 */
+	function getFileSize( $url ) {
+		// Assume failure.
+		$result = -1;
+	
+		$curl = curl_init( $url );
+	
+		// Issue a HEAD request and follow any redirects.
+		curl_setopt( $curl, CURLOPT_NOBODY, true );
+		curl_setopt( $curl, CURLOPT_HEADER, true );
+		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
+	
+		$data = curl_exec( $curl );
+		curl_close( $curl );
+	
+		if( $data ) {
+			$content_length = "unknown";
+			$status = "unknown";
+		
+			if( preg_match( "/^HTTP\/1\.[01] (\d\d\d)/", $data, $matches ) ) {
+				$status = (int)$matches[1];
+			}
+		
+			if( preg_match( "/Content-Length: (\d+)/", $data, $matches ) ) {
+				$content_length = (int)$matches[1];
+			}
+		
+			// http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+			if( $status == 200 || ($status > 300 && $status <= 308) ) {
+				$result = $content_length;
+			}
+		}
+	
+		return $result;
 	}
 
 	public function callRemoveResource()
