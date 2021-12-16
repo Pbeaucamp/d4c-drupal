@@ -358,6 +358,11 @@ class editMetaDataForm extends HelpFormBase {
 			'#type' => 'checkbox',
 			'#title' => $this->t('Afficher les versions'),
 		);
+        
+        $form['data_rgpd'] = array(
+			'#type' => 'checkbox',
+			'#title' => $this->t('RGPD'),
+		);
 
         $form['resours'] = array(
 			'#title' => t('Nouvelles ressources : '),
@@ -805,6 +810,7 @@ class editMetaDataForm extends HelpFormBase {
         $analize_false = $form_state->getValue('analize_false');
         $api_false = $form_state->getValue('api_false');
         $displayVersionning = $form_state->getValue('display_versionning');
+        $dataRgpd = $form_state->getValue('data_rgpd');
 
         $dont_visualize_tab = '';
         if ($api_false == 1) {
@@ -867,7 +873,8 @@ class editMetaDataForm extends HelpFormBase {
 					// We build extras
 					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning);
+						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
+						$dataRgpd);
 
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 
@@ -900,7 +907,8 @@ class editMetaDataForm extends HelpFormBase {
 					$extras = $datasetToUpdate[extras];
 					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning);
+						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
+						$dataRgpd);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");

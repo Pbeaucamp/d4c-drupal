@@ -894,7 +894,7 @@ class Api{
 			}
 		}
 		
-		if($exclude_private_orgas){
+		if ($exclude_private_orgas) {
 			$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=true&include_extras=true";
 			$curlOrg = curl_init($callUrlOrg);
 			curl_setopt_array($curlOrg, $this->getSimpleOptions());
@@ -936,6 +936,16 @@ class Api{
 			}
 		}
 
+		//If the dataset has been flagged rgpd, we only show if the user is connected
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		if ($this->config->client->check_rgpd && !$isConnected) {
+			if ($query_params["fq"] == null) {
+				$query_params["fq"] = "-data_rgpd:(1)";
+			}
+			else {
+				$query_params["fq"] .= " AND -data_rgpd:(1)";
+			}
+		}
 
 		$url2 = http_build_query($query_params);
 

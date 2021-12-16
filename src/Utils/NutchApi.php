@@ -6,22 +6,20 @@ use Drupal\ckan_admin\Utils\Logger;
 class NutchApi {
 
 	function callNutch($api, $params, $result) {
-		Logger::logMessage("TRM - TEST TEST ");
-		
 		//Manage params
 		$query_params = $api->proper_parse_str($params);
-		Logger::logMessage('Cyprien : ' . json_encode($query_params) );
 
 		$organization = explode(":", $query_params["fq"])[1]; // TODO: Improve GET organization
 		$query = explode(":", $query_params["q"])[1]; // TODO: Improve GET query
+		$rows = $query_params["rows"]; // TODO: Improve GET query
+		$start = $query_params["start"]; // TODO: Improve GET query
 		
 		$solrItems = array();
 
-		$resultCustomSolr = $this->searchCustomSolr($api, $query);
+		$resultCustomSolr = $this->searchCustomSolr($api, $query, $rows, $start);
 		
 		$items = $resultCustomSolr['response']['docs'];
 		foreach ($items as $item) {
-			// Logger::logMessage('Cyprien : ' . json_encode($item));
 			$name = $item['title'];
 			$url = $item['url'];
 			$content = $item['content'];
@@ -71,7 +69,7 @@ class NutchApi {
 		//Retrieve the number of results
 		// $count = $result["result"]["count"];
 		// $result["result"]["count"] = $count + count($solrItems);
-		$result["result"]["count"] = count($solrItems);
+		$result["result"]["count"] = $resultCustomSolr['response']['numFound'];
 
 		$result["result"]["results"] = $solrItems;
 
@@ -93,13 +91,12 @@ class NutchApi {
 		return null;
 	}
 
-	function searchCustomSolr($api, $query) {
+	function searchCustomSolr($api, $query, $rows, $start) {
 		//TODO: Put in config
 		try {
-			Logger::logMessage("TRM - Nutch URL from config " . $api->getConfig()->client->nutch_url);
+			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=title:" . $query . "*&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true";
 
-			// Logger::logMessage('Cyprien: '."https://spot-nutch-solr.data4citizen.com/solr/nutch/select?q=title:*" . $query . "*&wt=json&rows=100000&indent=true");
-			$solrUrl = "https://spot-nutch-solr.data4citizen.com/solr/nutch/select?q=title:" . $query . "*&wt=json&rows=100000&indent=true";
+			Logger::logMessage("TRM - SOLR Query " . $solrUrl);
 
 			$curl = curl_init($solrUrl);
 			curl_setopt_array($curl, $api->getStoreOptions());

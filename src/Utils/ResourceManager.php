@@ -1384,7 +1384,7 @@ class ResourceManager {
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning=false) {
+			$mention_legales=null, $frequence=null, $displayVersionning=false, $dataRgpd = false) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1409,6 +1409,7 @@ class ResourceManager {
 		$hasDonneesSource = false;
 		$hasMentionLegales = false;
 		$hasDisplayVersionning = false;
+		$hasDataRgpd = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1542,6 +1543,11 @@ class ResourceManager {
 					$hasDisplayVersionning  = true;
 					$extras[$index]['value'] = $displayVersionning;
 				}
+	
+				if ($extras[$index]['key'] == 'data_rgpd') {
+					$hasDataRgpd  = true;
+					$extras[$index]['value'] = $dataRgpd;
+				}
 			}
 		}
 
@@ -1653,6 +1659,11 @@ class ResourceManager {
 		if ($hasDisplayVersionning == false) {
 			$extras[count($extras)]['key'] = 'display_versionning';
 			$extras[(count($extras) - 1)]['value'] = $displayVersionning;
+		}
+
+		if ($hasDataRgpd == false) {
+			$extras[count($extras)]['key'] = 'data_rgpd';
+			$extras[(count($extras) - 1)]['value'] = $dataRgpd;
 		}
 
 		return $extras;
