@@ -349,7 +349,7 @@ class VisualisationController extends ControllerBase {
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
 		$tabTable = $this->buildTabTable();
-		$tabMap = $this->buildTabMap($dataset);
+		$tabMap = $this->buildTabMap($dataset, $metadataExtras);
 		$tabAnalyze = $this->buildTabAnalyze();
 		$tabImage = $this->buildTabImage();
 		$tabCalendar = $this->buildTabCalendar();
@@ -1139,9 +1139,19 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabMap($dataset) {
+	function buildTabMap($dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
+
+		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
+		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
+		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
+		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
 		
+		$bounds = '';
+		if (!$this->isNullOrEmptyString($bboxEastLong) && !$this->isNullOrEmptyString($bboxNorthLat) && !$this->isNullOrEmptyString($bboxSouthLat) && !$this->isNullOrEmptyString($bboxWestLong)) {
+			$bounds = $bboxEastLong . ',' . $bboxNorthLat . ',' . $bboxSouthLat . ',' . $bboxWestLong;
+		}
+
 		if (sizeof($resources) > 0 ) {
 			foreach($resources as $key=>$value) {
 				$name = $value["name"];
@@ -1159,7 +1169,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
-				<d4c-map context="ctx" location="' . $this->config->client->default_bounding_box . '" sync-to-url="true" auto-resize="true"></d4c-map>
+				<d4c-map context="ctx" location="' . $this->config->client->default_bounding_box . '" custom-bounds="' . $bounds . '" sync-to-url="true" auto-resize="true"></d4c-map>
 
 				' . $btnMapFishapp . '
 			
