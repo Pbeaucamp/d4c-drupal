@@ -8011,6 +8011,17 @@ class Api
 		//Options for update
 		$resourceId = $_POST['selected_resource_id'];
 
+		Logger::logMessage("Upload informations");
+		Logger::logMessage("Dataset ID: " . $datasetId);
+		Logger::logMessage("Resource name: " . $resourceName);
+		Logger::logMessage("Resource URL: " . $resourceUrl);
+		Logger::logMessage("Description: " . $description);
+		Logger::logMessage("Format: " . $format);
+		Logger::logMessage("Encoding: " . $encoding);
+		Logger::logMessage("Unzip ZIP: " . $unzipZip);
+		Logger::logMessage("Manage file: " . $manageFile);
+		Logger::logMessage("Resource ID: " . $resourceId);
+
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
 			$results = array();
@@ -8194,7 +8205,7 @@ class Api
 		}
 
 		// You should also check filesize here.
-		if ($_FILES['upload_file']['size'] > 100000000) {
+		if ($_FILES['upload_file']['size'] > 1000000000) {
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Exceeded filesize limit.';
 			Logger::logMessage("Exceeded filesize limit.");

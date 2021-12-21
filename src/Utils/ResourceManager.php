@@ -9,7 +9,7 @@ use ZipArchive;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
-
+use \JsonMachine\JsonMachine;
 
 class ResourceManager {
 
@@ -57,8 +57,6 @@ class ResourceManager {
 			"groups" => [],
 			"owner_org" => $organization,
 		];
-
-		Logger::logMessage("TRM - DATASET '" . json_encode($newData) . "'");
 		
 		$coll = array('0'=>'0', '1'=>'');
 			
@@ -288,11 +286,8 @@ class ResourceManager {
 				//We check if the zip was previously unzip by counting the resources
 				$unzipZip = count($resources) > 1;
 
-				Logger::logMessage("TRM - FOUND '" . count($resources) . "' RESOURCES " . json_encode($resources));
 				foreach($resources as $resource){
 					if (strpos($resource['name'], 'zip') !== false) {
-
-						Logger::logMessage("TRM - FOUND RESOURCE " . json_encode($resource));
 
 						$resourceId = $resource['id'];
 						$name = $resource['name'];
@@ -342,43 +337,42 @@ class ResourceManager {
 				$results[] = $result;
 			}
 
-			$csv = $this->manageGeoFiles($type, $resourceUrl, $filePath);
+			//If we update the geojson, we need to get the previous CSV resource to update it
+			if ($isUpdate) {
+				Logger::logMessage("Looking for the previous CSV resource to update");
+				$dataset = $api->getPackageShow("id=" . $datasetId);
+				foreach($dataset['result']['resources'] as $resource){
+					if (strpos($resource['url'], 'csv_gen') !== false) {
+						$resourceId = $resource['id'];
+
+						//We change the name in order to change the resource URL
+						//If we don't do that, the file is not uploaded to the datapusher
+						$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
+						$customName = $resource['name'];
+						Logger::logMessage("Found the previous CSV resource '" . $resourceId . "' with name '" . $name . "'");
+						break;
+					}
+				}  
+			}
+			
+			if (!$name) {
+				$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
+				$customName = $fileName . '.csv';
+				$customName = str_replace(array('.json', '.geojson', '.kml', '.shp'), '', $customName);
+
+				Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "' and custom name '" . $customName . "'");
+
+				$isUpdate = false;
+			}
+			
+			$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $name;
+
+			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv);
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 
-			if ($csv != null) {
-				//If we update the geojson, we need to get the previous CSV resource to update it
-				if ($isUpdate) {
-					Logger::logMessage("Looking for the previous CSV resource to update");
-					$dataset = $api->getPackageShow("id=" . $datasetId);
-					foreach($dataset['result']['resources'] as $resource){
-						if (strpos($resource['url'], 'csv_gen') !== false) {
-							$resourceId = $resource['id'];
-
-							//We change the name in order to change the resource URL
-							//If we don't do that, the file is not uploaded to the datapusher
-							$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
-							$customName = $resource['name'];
-							Logger::logMessage("Found the previous CSV resource '" . $resourceId . "' with name '" . $name . "'");
-							break;
-						}
-					}  
-				}
-				
-				if (!$name) {
-					$name = "csv_gen_" . $datasetId . "_" . uniqid() . '.csv';
-					$customName = $fileName . '.csv';
-					$customName = str_replace(array('.json', '.geojson', '.kml', '.shp'), '', $customName);
-
-					Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "' and custom name '" . $customName . "'");
-
-					$isUpdate = false;
-				}
-				
-				$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $name;
+			if ($csvGenerated) {
 				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $name;
-
-				file_put_contents($rootCsv, $csv);
-
+				
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
@@ -493,27 +487,49 @@ class ResourceManager {
 	 * $url of the file
 	 * 
 	 */
-	function manageGeoFiles($type, $resourceUrl, $filePath) {
-		Logger::logMessage("Manage " . $type . " file");
+	function manageGeoFiles($type, $resourceUrl, $filePath, $newCSVPath) {
+		Logger::logMessage("Manage " . $type . " file with url '" . $resourceUrl . "' and file path '" . $filePath . "'");
 
-		Logger::logMessage("Retrieving file '" . $resourceUrl . "'");
-		$fileContent = Query::callSolrServer($resourceUrl);
+		$isFromPath = false;
+		$file = '';
+
+		//Now we try to use the file path if it exists
+		if (isset($filePath) && $filePath != '') {
+			$filePath = self::ROOT . $filePath;
+			
+			$file = $filePath;
+			$isFromPath = true;
+		}
+		else {
+			Logger::logMessage("Retrieving file '" . $resourceUrl . "'");
+			
+			$file = Query::callSolrServer($resourceUrl);
+			$isFromPath = false;
+		}
 
 		if ($type == 'geojson' || $type == 'json'){
-			$csv = $this->buildCSVFromGeojson($fileContent);
+			$csv = $this->buildCSVFromGeojson($file, $newCSVPath, $isFromPath);
 		}
 		else if ($type == 'json') {
 			$json_match = false;
 			if ($type == 'json') {
-				$json = file_get_contents($resourceUrl);
-				$json = json_decode($json, true);
-				if (isset($json["type"]) && $json["type"] == "FeatureCollection") {
-					$json_match = true;
+				if ($isFromPath) {
+					$json = file_get_contents($file);
+					$json = json_decode($json, true);
+					if (isset($json["type"]) && $json["type"] == "FeatureCollection") {
+						$json_match = true;
+					}
+				}
+				else {
+					$json = json_decode($file, true);
+					if (isset($json["type"]) && $json["type"] == "FeatureCollection") {
+						$json_match = true;
+					}
 				}
 			}
 
 			if ($json_match) {
-				$csv = $this->buildCSVFromGeojson($fileContent);
+				$csv = $this->buildCSVFromGeojson($file, $newCSVPath, $isFromPath);
 			}
 			else {
 				Logger::logMessage("No CSV file generated from Geo File");
@@ -521,14 +537,7 @@ class ResourceManager {
 			}
 		}
 		else if ($type == 'kml' || $type == 'shp') {
-			//We create a tmp file in which we write the result and an output file to convert
-			// $pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			// $fileInput = fopen($pathInput, 'w');
-			// fwrite($fileInput, $fileContent);
-			// fclose($fileInput);
-
 			$scriptPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
-			$filePath = self::ROOT . $filePath;
 
 			$typeConvert = 'GEOJSON';
 			
@@ -547,9 +556,9 @@ class ResourceManager {
 				throw new \Exception('The file is too big to integrate the data. Please upload a file smaller than 1GB.');
 			}
 			else {
-				$json = file_get_contents ($rootJson);
+				// $json = file_get_contents ($rootJson);
 	
-				$csv = $this->buildCSVFromGeojson($json);
+				$csv = $this->buildCSVFromGeojson($rootJson, $newCSVPath, true);
 				unlink ($rootJson);
 			}
 		}
@@ -725,11 +734,7 @@ class ResourceManager {
 					$data["fields"] = $fields;
 					$data["uuid"] = uniqid();
 
-					// Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
-
 					$result = $api->updateRequest($callUrl, $data, "POST");
-
-					Logger::logMessage("TRM - RESULT DICTIONNARY " . $result);
 				}
 				else {
 					Logger::logMessage("Resource CSV not found. We do not reupload dictionnary.");
@@ -1120,8 +1125,6 @@ class ResourceManager {
 			$data["fields"] = $fieldsWithoutId;
 			$data["uuid"] = uniqid();
 			$api->updateRequest($callUrl, $data, "POST");
-
-			Logger::logMessage("TRM - Reuploading dictionnary with data " . json_encode($data));
 
 			return $datapusherResult;
 		}
@@ -1796,34 +1799,65 @@ class ResourceManager {
 		return $format;
 	}
 	
-	function buildCSVFromGeojson($json) {
-		if($json == null || count($json) == 0){
+	function buildCSVFromGeojson($json, $newCSVPath, $isFromPath = false) {
+		if ($json == null) {
 			return "";
 		}
-		
-		Logger::logMessage("Creating CSV from GeoJson");
-		
-		// If passed a string, turn it into an array
-		if (is_array($json) === false) {
-			//$json = utf8_encode($json);
-			//$json = Export::convert_bad_characters($json);
-			$json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
-			//$json = json_decode($json, true);
+
+		// Use a library for a better memory management
+		// - https://github.com/halaxa/json-machine - composer require halaxa/json-machine
+		if ($isFromPath) {
+			Logger::logMessage("Creating CSV from GeoJson with path : " . $json);
+
+			$types = JsonMachine::fromFile($json, '/type');
+			$type = iterator_to_array($types)['type'];
+
+			if ($type != "FeatureCollection") {
+				return "";
+			}
+
+			$jsonItems = JsonMachine::fromFile($json, '/features');
 		}
+		else {
+			Logger::logMessage("Creating CSV from GeoJson from String");
 		
-		if($json["type"] != "FeatureCollection"){
-			return "";
+			// If passed a string, turn it into an array
+			if (is_array($json) === false) {
+				
+				$types = JsonMachine::fromFile($json, '/type');
+				$type = iterator_to_array($types)['type'];
+
+				if ($type != "FeatureCollection") {
+					return "";
+				}
+
+				$jsonItems = JsonMachine::fromString($json, '/features');
+				// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
+			}
+			else {
+				if ($json['type'] != "FeatureCollection") {
+					return "";
+				}
+
+				$jsonItems = $json['features'];
+			}
 		}
+
 		//construction du csv
 		$cols = array();
 		$colNames = array();
-		$data_csv = array();
 
 		//Previously we were getting only the columns for the first feature but we could miss a lot of informations
-		//We now go through all features but we have to check if it not too much time consuming
+		//We now go through 4000 features but we have to check if it not too much time consuming
 		$hasShapes = false;
 		$index = 0;
-		foreach($json["features"] as $feat) {
+		$line = 0;
+		foreach($jsonItems as $feat) {
+			if ($line > 4000) {
+				break;
+			}
+			$line++;
+
 			foreach($feat["properties"] as $key => $val){
 
 				if ($index == 1) {
@@ -1853,34 +1887,41 @@ class ResourceManager {
 			$cols[] = "geo_shape";
 			$colNames[] = "geo_shape";
 		}
+
+		Logger::logMessage("Writing CSV file '" . $newCSVPath . "'");
+
+		$fp = fopen($newCSVPath, 'wb');
 		
-		$rows = array();
+		// Writing the header
+		fputcsv($fp, $colNames, ',');
+
+		// $rows = array();
 		$colsTypes = array();
-		foreach($json["features"] as $feat){
+		foreach($jsonItems as $feat) {
 			$row = array();
 			foreach($cols as $col){
 				if($col == "geo_point_2d"){
 					if ($hasShapes) {
 						$str = json_encode($feat["geometry"]);
 						preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
-						$coord = '"' . $match[2] . "," . $match[1] . '"';
+						$coord = '' . $match[2] . "," . $match[1] . '';
 						$row[] = $coord;
 					}
 					else {
 						$str = json_encode($feat["geometry"]["coordinates"]);
 						preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
-						$val = '"'.$match[2] .",". $match[1].'"';
+						$val = '' . $match[2] . "," . $match[1] . '';
 						$row[] = $val;
 					}
 				}
 				else if($col == "geo_shape") {
 					$str = json_encode($feat["geometry"]);
 					preg_match('/\[([-]?[\d|.]+),([-]?[\d|.]+)/i', $str, $match);
-					$coord = '"' . $match[2] . "," . $match[1] . '"';
+					$coord = '' . $match[2] . "," . $match[1] . '';
 
 					//We replace " by "" to escape them
-					$str = str_replace('"', "\"\"", $str);
-					$row[] = '"' . $str . '"';
+					// $str = str_replace('"', "\"\"", $str);
+					$row[] = '' . $str . '';
 				}
 				else if($col == "coordinates"){
 					continue;
@@ -1891,7 +1932,7 @@ class ResourceManager {
 						//We replace " by "" to escape them
 						$value = str_replace('"', "\"\"", $value);
 
-						$row[] = '"' . $value . '"';
+						$row[] = '' . $value . '';
 						if(!isset($colsTypes[$col])){
 							$colsTypes[$col] = "text";
 						}
@@ -1904,21 +1945,18 @@ class ResourceManager {
 				}
 			}
 			
-			$rows[] = $row;
-		}
-		
-		foreach($rows as &$row){
-			if(count($row) < count($cols)){
+			if (count($row) < count($cols)){
 				$row = array_pad($row, count($cols), "");
 			}
-			$row = implode($row, ",");
+
+			// though CSV stands for "comma separated value"
+			// in many countries (including France) separator is ";"
+			fputcsv($fp, $row, ',');
 		}
-		
-		$data_csv = strtolower(implode($colNames, ","));
-		array_unshift($rows, $data_csv);
-		error_log("count ". (count($rows)));
-		$res = implode($rows, "\n");
-		return $res;
+
+		fclose($fp);
+
+		return true;
 	}
 	
 	function isNumericColumn($json, $colName) {

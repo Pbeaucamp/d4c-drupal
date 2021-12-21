@@ -46,7 +46,7 @@ class VisualisationController extends ControllerBase {
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
 		$resourceId = $request->query->get('resourceId');
-		return $this->myPage2($id, $resourceId, $tab);
+		return $this->myPage2($id, $tab, $resourceId);
 	}
 
 	/**
@@ -55,7 +55,7 @@ class VisualisationController extends ControllerBase {
 	 * @return array
 	 *   A simple renderable array.
 	 */
-	public function myPage2($id, $resourceId, $tab) {
+	public function myPage2($id, $tab, $resourceId) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
 		$host = \Drupal::request()->getHost();
@@ -64,6 +64,9 @@ class VisualisationController extends ControllerBase {
 		$api = new API();
 
 		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
+		// We redefine the $id variable to be the dataset id because we can use the name id of the dataset in the url
+		$id = $dataset["id"];
+
 		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
 		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
 
