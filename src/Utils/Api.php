@@ -2252,7 +2252,9 @@ class Api
 					$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 				}
 
-				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . "";
+				$projection = $this->config->client->shapefile_projection;
+
+				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . " " . $filename . " " . $projection;
 				$message = shell_exec($command);
 
 				if ($format == "kml") {

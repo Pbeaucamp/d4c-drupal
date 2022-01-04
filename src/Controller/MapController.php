@@ -38,6 +38,7 @@ class MapController extends ControllerBase {
 
 
 	public function myPage(Request $request) {
+		\Drupal::service('page_cache_kill_switch')->trigger();
 
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		
@@ -61,6 +62,7 @@ class MapController extends ControllerBase {
 								 ng-if="mapbuilderController.mapObject"
 								 no-refit="true"
 								 auto-resize="true"
+								 location="' . $config->client->map_bounding_box . '"
 								 display-control="interfaceMode === \'preview\' && mapbuilderController.mapObject.value.groups.length && mapbuilderController.mapObject.value.layerSelection"
 								 display-control-single-layer="mapbuilderController.mapObject.value.singleLayer"
 								 search-box="interfaceMode === \'preview\' && mapbuilderController.mapObject.value.searchBox"
