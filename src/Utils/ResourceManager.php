@@ -122,41 +122,33 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, $customName = null) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, $customName = null, $moveFileToDatasetFolder = true) {
 		$results = array();
 
 		//Managing file (filepath and filename)
 		$fileName = parse_url($resourceUrl);
+		$datasetFolder = $this->generateDatasetFolder($datasetId);
 
 		$host = $fileName[host];
 		$fileName = $fileName[path];
 		$filePath = $fileName;
 
-		$fileName = strtolower($fileName);
-		$fileName = urldecode($fileName);
-		$fileName = $this->nettoyage2($fileName);
-		$fileName = explode("/", $fileName);
-		$fileName = $fileName[(count($fileName)-1)];
-		Logger::logMessage("TRM fileName " . $fileName);
+		$fileName = $this->cleanFileName($fileName);
+		Logger::logMessage("Manage file with name '" . $fileName . "' and path '" . $filePath . "'");
 
-		Logger::logMessage("TRM filePath " . $filePath);
-		$filePathN = urldecode($filePath);
-		$filePathN = $this->nettoyage2($filePathN);
-		Logger::logMessage("TRM filePathN " . $filePathN);
-
-		//Used (it was used for updating resource but not for new ones) ?
-		// $filePathN = explode(".", $filePathN)[0] . uniqid() .".". explode(".", $filePathN)[1];
-		Logger::logMessage("TRM filePathN " . $filePathN);
-
-		rename(self::ROOT . urldecode($filePath), self::ROOT . $filePathN); 
-		$filePath = $filePathN;
-		Logger::logMessage("TRM filePath " . $filePath);
+		if ($moveFileToDatasetFolder) {
+			$newPath = "/" . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/' . $fileName;
+		}
+		else {
+			$newPath = urldecode($this->nettoyage2($filePath));
+		}
+		rename(self::ROOT . urldecode($filePath), self::ROOT . $newPath); 
+		$filePath = $newPath;
+		Logger::logMessage("File has been renamed to " . $filePath);
 
 		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
 		$resourceUrl = 'https://' . $host . '' . $filePath;
-		Logger::logMessage("TRM resourceUrl " . $resourceUrl);
-		
-		Logger::logMessage("Managing file '" . $filePath . "'");
+		Logger::logMessage("File resource " . $resourceUrl);
 
 		$api = new Api;
 		try {
@@ -365,13 +357,13 @@ class ResourceManager {
 				$isUpdate = false;
 			}
 			
-			$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $name;
+			$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 
-			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv);
+			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv, $datasetFolder);
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 
 			if ($csvGenerated) {
-				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $name;
+				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 				
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName);
 				$resourceId = $this->array_key_first($result[0]);
@@ -397,6 +389,41 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	function cleanFileName($fileName) {
+		$fileName = strtolower($fileName);
+		$fileName = urldecode($fileName);
+		$fileName = $this->nettoyage2($fileName);
+		$fileName = explode("/", $fileName);
+		$fileName = $fileName[(count($fileName)-1)];
+
+		return $fileName;
+	}
+
+	/**
+	 * Generate a folder for the year, the month, the day and datasetId
+	 * 
+	 * @param $datasetId
+	 * @return folder path
+	 */
+	function generateDatasetFolder($datasetId) {
+		// Get the current year, month and day
+		$date = new \DateTime();
+		$year = $date->format('Y');
+		$month = $date->format('m');
+		$day = $date->format('d');
+
+		$datasetFolder = $year . "/" . $month . "/" . $day . "/" . $datasetId;
+
+		$folder = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder;
+		$folder = str_replace('//', '/', $folder);
+
+		if (!file_exists($folder)) {
+			mkdir($folder, 0777, true);
+		}
+
+		return $datasetFolder;
 	}
 
 	function manageCSWXmlFile($organization, $datasetId, $datasetName) {
@@ -487,7 +514,7 @@ class ResourceManager {
 	 * $url of the file
 	 * 
 	 */
-	function manageGeoFiles($type, $resourceUrl, $filePath, $newCSVPath) {
+	function manageGeoFiles($type, $resourceUrl, $filePath, $newCSVPath, $datasetFolder) {
 		Logger::logMessage("Manage " . $type . " file with url '" . $resourceUrl . "' and file path '" . $filePath . "'");
 
 		$isFromPath = false;
@@ -495,7 +522,7 @@ class ResourceManager {
 
 		//Now we try to use the file path if it exists
 		if (isset($filePath) && $filePath != '') {
-			$filePath = self::ROOT . $filePath;
+			$filePath = self::ROOT . substr($filePath, 1);
 			
 			$file = $filePath;
 			$isFromPath = true;
@@ -543,7 +570,7 @@ class ResourceManager {
 			
 			Logger::logMessage("Building Geojson from shape file '" . $resourceUrl . "' with file path '" . $filePath . "'");
 
-			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/gen_'.uniqid().'.geojson';
+			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/gen_' . uniqid() . '.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
 			
 			Logger::logMessage("OGR2OGR command '" . $command . "'");
@@ -581,15 +608,17 @@ class ResourceManager {
             $contenturlsheet[] = str_getcsv($row);
 		}
 
+		$datasetFolder = $this->generateDatasetFolder($datasetId);
+
         // save the content of GSheeturl in csv file and get url of resource
 		$data = $contenturlsheet;
-		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/")) {
-			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/", 0777, true);
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/", 0777, true);
 		}
 
 		$fileName = $datasetId . ".csv";
 
-		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/urlsheet/" . $fileName, "wb");
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
 			fputcsv($fp, $line);
@@ -598,7 +627,7 @@ class ResourceManager {
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
 
-		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/urlsheet/' . $fileName;
+		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $datasetFolder . '/urlsheet/' . $fileName;
 	}
 
 	function manageXmlfile($url) {
@@ -644,11 +673,7 @@ class ResourceManager {
 		$fileName = $fileName[path];
 		$filePath = $fileName;
 
-		$fileName = strtolower($fileName);
-		$fileName = urldecode($fileName);
-		$fileName = $this->nettoyage2($fileName);
-		$fileName = explode("/", $fileName);
-		$fileName = $fileName[(count($fileName)-1)];
+		$fileName = $this->cleanFileName($fileName);
 
 		$filePathN = urldecode($filePath);
 		$filePathN = $this->nettoyage2($filePathN);
@@ -749,14 +774,23 @@ class ResourceManager {
 	}
 	
 	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
-		Logger::logMessage("Manage zip file with path '" . self::ROOT . $filePath . "'");
+		$zipPath = self::ROOT . substr($filePath, 1);
+
+		Logger::logMessage("Manage zip file with path '" . $zipPath . "'");
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$directoryName = 'zip_' . str_replace('-', '_', $datasetId) . '_' . uniqid();
 		$directoryPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/zipresources/' . $directoryName;
 
+		Logger::logMessage("Unzipping in path '" . $directoryPath . "'");
+		//Create the directory
+		if (!file_exists($directoryPath)) {
+			Logger::logMessage("Creating directory '" . $directoryPath . "'");
+			mkdir($directoryPath, 0777, true);
+		}
+
 		$zip = new ZipArchive;
-		$res = $zip->open(self::ROOT . $filePath);
+		$res = $zip->open($zipPath);
 		if ($res === TRUE) {
 			// extract it to the path we determined above
 			$zip->extractTo($directoryPath);
@@ -859,7 +893,8 @@ class ResourceManager {
 					Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
 				}
 
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage);
+				//We don't move the file if it is a shape
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
 				$results = array_merge($results, $result);
 			}
 
