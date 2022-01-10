@@ -567,11 +567,12 @@ class ResourceManager {
 			$scriptPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
 
 			$typeConvert = 'GEOJSON';
+			$projection = $this->config->client->shapefile_projection;
 			
 			Logger::logMessage("Building Geojson from shape file '" . $resourceUrl . "' with file path '" . $filePath . "'");
 
 			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/gen_' . uniqid() . '.geojson';
-			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . "";
+			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . " " . $projection;
 			
 			Logger::logMessage("OGR2OGR command '" . $command . "'");
 			$message = shell_exec($command);

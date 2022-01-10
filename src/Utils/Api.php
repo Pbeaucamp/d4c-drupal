@@ -2254,7 +2254,7 @@ class Api
 
 				$projection = $this->config->client->shapefile_projection;
 
-				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . " " . $filename . " " . $projection;
+				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . " " . $projection . " " . $filename;
 				$message = shell_exec($command);
 
 				if ($format == "kml") {
