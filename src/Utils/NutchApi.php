@@ -10,14 +10,46 @@ class NutchApi {
 		$query_params = $api->proper_parse_str($params);
 
 		$organization = explode(":", $query_params["fq"])[1]; // TODO: Improve GET organization
-		$query = explode(":", $query_params["q"])[1]; // TODO: Improve GET query
-		$rows = $query_params["rows"]; // TODO: Improve GET query
-		$start = $query_params["start"]; // TODO: Improve GET query
+		$organization = str_replace('(', '', $organization);
+		$organization = str_replace(')', '', $organization);
+		
+		$query = '*' . explode(":", $query_params["q"])[1] . '*'; // TODO: Improve GET query
+		$query = str_replace('+-+', ' ', $query);
+		$query = str_replace('+:+', ' ', $query);
+		$query = str_replace('%3A', '', $query);
+		$query = str_replace('/', '', $query);
+		$query = str_replace('%2F', '', $query);
+		$query = str_replace('+(', ' ', $query);
+		$query = str_replace(')+', ' ', $query);
+		$query = preg_replace('{3,}', '', $query);
+		$query = urlencode($query);
+		$query = str_replace('+', '*&q=title:*', $query);
+		$query = str_replace(' ', '*&q=title:*', $query);
+		// $query = str_replace('', '', $query);
+		// $query = str_replace('%20', '*&q=title:*', $query);
+		
+		$start = $query_params["start"];
+		$rows = $query_params["rows"];
 		
 		$solrItems = array();
-
-		$resultCustomSolr = $this->searchCustomSolr($api, $query, $rows, $start);
 		
+		Logger::logMessage("Cyprien : " . $query);
+		// id:(*vivea.fr* *chlorofil.fr* *gouv* )
+		if ($organization != null) {
+			$datasets_orga = $api->getOrganization("id=" . $organization . "&include_datasets=true&include_dataset_count=true");
+			if ($datasets_orga['result']['package_count'] > 0) {
+				$query = $query . "&fq=id:(";
+			}
+			foreach ($datasets_orga['result']['packages'] as $dataset_orga) {
+				$query = $query .  '*' .parse_url($dataset_orga["url"])['host'] . '*%20';
+			}
+			if ($datasets_orga['result']['package_count'] > 0) {
+				$query = $query . ")";
+			}
+		}
+		
+		$resultCustomSolr = $this->searchCustomSolr($api, $query, $rows, $start);
+			
 		$items = $resultCustomSolr['response']['docs'];
 		foreach ($items as $item) {
 			$name = $item['title'];
@@ -64,49 +96,49 @@ class NutchApi {
 	
 				$solrItems[] = $solrDataset;
 			}
+			else {
+				Logger::logMessage("TRM - Dataset not found for url: " . $url);
+			}
 		}
-		
-		//Retrieve the number of results
-		// $count = $result["result"]["count"];
-		// $result["result"]["count"] = $count + count($solrItems);
 		$result["result"]["count"] = $resultCustomSolr['response']['numFound'];
-
 		$result["result"]["results"] = $solrItems;
 
 		return $result;
 	}
 
-	function foundDatasetFromSolrItem($api, $organization, $solrItemUrl) {
-		$solrItemUrl = parse_url($solrItemUrl);
-  		$solrItemUrl = $solrItemUrl['host'];
-
-		// TODO: Check if host correspond to organization
-		$datasets = $api->getPackageSearch("fq=url:*" . $solrItemUrl . "*");
-		
-		foreach ($datasets['result']['results'] as $dataset) {
-			if ($organization == null  || $organization == '(' . $dataset['organization']['name'] . ')' ) {
-				return $dataset;
-			}
-		}
-		return null;
-	}
-
 	function searchCustomSolr($api, $query, $rows, $start) {
 		//TODO: Put in config
 		try {
-			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=title:" . $query . "*&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true";
-
+			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=title:" . $query . "&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true";
+			
 			Logger::logMessage("TRM - SOLR Query " . $solrUrl);
+			Logger::logMessage("Cyprien : " . $solrUrl);
 
 			$curl = curl_init($solrUrl);
 			curl_setopt_array($curl, $api->getStoreOptions());
 			$result = curl_exec($curl);
 			curl_close($curl);
-
+			
+			// Logger::logMessage("Cyprien : " . json_encode($result, true));
+			
 			return json_decode($result, true);
 		} catch (\Exception $e) {
 			Logger::logMessage($e->getMessage());
 			return null;
 		}
+	}
+	
+	function foundDatasetFromSolrItem($api, $organization, $solrItemUrl) {
+		$solrItemUrl = parse_url($solrItemUrl);
+  		$solrItemUrl = $solrItemUrl['host'];
+
+		$datasets = $api->getPackageSearch("fq=url:*" . $solrItemUrl . "*");
+		
+		foreach ($datasets['result']['results'] as $dataset) {
+			if ($organization == null  || $organization == $dataset['organization']['name']) {
+				return $dataset;
+			}
+		}
+		return null;
 	}
 }

@@ -65,7 +65,7 @@ class portailController extends ControllerBase {
 									</d4c-dataset-context>
 								</div>
 
-            					<h1> <span id="nb_jeux">0</span> Jeux de données</h1>
+            					<h1> <span id="nb_jeux">0</span> pages de sites</h1>
 								<input id="input-tag" type="text" class="hidden-filter">
                                 						
 								<div class="form-group">
@@ -109,10 +109,10 @@ class portailController extends ControllerBase {
 									</div>
 									
 								</form> 
-								<h3> Visualisations</h3>
-								<ul id="list-visu" class="list-group"></ul>
+								<!--<h3> Visualisations</h3>
+								<ul id="list-visu" class="list-group"></ul>-->
 								
-								<h3> Producteurs</h3>
+								<h3> Origine des sites</h3>
 								<ul id="list-producteur" class="list-group"></ul>
 								<input id="input-producteur" type="hidden" class="hidden-filter">
 								<input id="input-map-coordinate" type="hidden" class="hidden-filter">
@@ -130,10 +130,10 @@ class portailController extends ControllerBase {
 								<h3>Mots Clés</h3>
 								<ul id="list-tag" class="list-group"></ul>-->
 								
-								<h3>Thèmes</h3>
+								<!--<h3>Thèmes</h3>
 								<ul id="list-theme" class="list-group">
 									<input id="input-theme" type="hidden" class="hidden-filter">
-								</ul>
+								</ul>-->
 			
 								<h2>Télécharger la liste de jeux de données</h2>
 								<ul id="list-cat" class="list-group">

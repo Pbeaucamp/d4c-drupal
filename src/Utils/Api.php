@@ -83,7 +83,8 @@ class Api{
 			CURLOPT_HTTPHEADER     => $headr,
 			CURLOPT_POST=>true,
 			CURLOPT_SSL_VERIFYPEER => false,
-			CURLOPT_SSL_VERIFYHOST =>  0
+			CURLOPT_SSL_VERIFYHOST =>  0,
+			CURLOPT_ENCODING => 'UTF-8'
 		);
 		return $options;
 	}
