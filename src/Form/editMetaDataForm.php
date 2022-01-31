@@ -218,7 +218,9 @@ class editMetaDataForm extends HelpFormBase {
         $form['producteur'] = array(
             '#markup' => '',
             '#type' => 'textfield',
-            '#title' => $this->t('Producteur :'),
+			// Modification SPOT
+            '#title' => $this->t('Origine :'),
+			// '#title' => $this->t('Producteur :'),
             '#attributes' => array('style' => 'width: 50%;'),
             '#required' => FALSE,
             '#maxlength' => 300

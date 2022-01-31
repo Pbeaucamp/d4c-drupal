@@ -960,14 +960,12 @@ class Api{
 	}
 
 	public function callPackageSearch($params) {
-		$arrFac;
-		$arrFacSearch;
 		$arr = array();
-        //$hasFacetFeature = false;
-        $result = $this->getExtendedPackageSearch($params);
+
+		$result = $this->getExtendedPackageSearch($params);
 		
-		$hasFacetFeature = array_key_exists("features",$result["result"]["facets"]);
-		$hasFacetThemes = array_key_exists("themes",$result["result"]["facets"]);
+		$hasFacetFeature = array_key_exists("features", $result["result"]["facets"]);
+		$hasFacetThemes = array_key_exists("themes", $result["result"]["facets"]);
 		
 		unset($result["help"]);//echo count($result["result"]["results"]);
 		foreach($result["result"]["results"] as &$dataset) {
@@ -997,7 +995,7 @@ class Api{
                
 		}
 		
-		if($hasFacetFeature){
+		if ($hasFacetFeature) {
 			
 			$arr = array();
 			foreach($result["result"]["facets"]["features"] as $key => $count){
@@ -1020,7 +1018,7 @@ class Api{
 				);
 			}
 		}
-
+		
 		if ($this->config->client->nutch) {
 			Logger::logMessage("Nutch is enable. Calling nutch to search for page");
 			$nutchApi = new NutchApi;

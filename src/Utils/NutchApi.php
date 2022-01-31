@@ -8,56 +8,104 @@ class NutchApi {
 	function callNutch($api, $params, $result) {
 		//Manage params
 		$query_params = $api->proper_parse_str($params);
-
-		$organization = explode(":", $query_params["fq"])[1]; // TODO: Improve GET organization
-		$organization = str_replace('(', '', $organization);
-		$organization = str_replace(')', '', $organization);
+		$organizations = explode(":", $query_params["fq"])[1]; // TODO: Improve GET organization
+		$organizations = str_replace('(', '', $organizations);
+		$organizations = str_replace(')', '', $organizations);
 		
+		// Manage filter by coordinate on organization
+		$coordinateParam = null;
+		if (array_key_exists('coordReq', $query_params)){
+			$coordinateParam = $query_params['coordReq'];
+		}
+		Logger::logMessage("Cyprien : query : " . $query);
 		$query = '*' . explode(":", $query_params["q"])[1] . '*'; // TODO: Improve GET query
 		$query = str_replace('+-+', ' ', $query);
 		$query = str_replace('+:+', ' ', $query);
-		$query = str_replace('%3A', '', $query);
-		$query = str_replace('/', '', $query);
+		$query = str_replace('%3A', ' ', $query);
+		$query = str_replace('/', ' ', $query);
+		$query = str_replace(' des ', ' ', $query);
+		$query = str_replace(' de ', ' ', $query);
+		$query = str_replace(' à ', ' ', $query);
+		$query = str_replace(' et ', ' ', $query);
+		$query = str_replace(' en ', ' ', $query);
+		$query = str_replace(' la ', ' ', $query);
+		$query = str_replace(' le ', ' ', $query);
+		$query = str_replace(' les ', ' ', $query);
+		$query = str_replace(' dans ', ' ', $query);
+		$query = str_replace(' est ', ' ', $query);
+		$query = str_replace(' sont ', ' ', $query);
+		$query = str_replace(' un ', ' ', $query);
+		$query = str_replace(' une ', ' ', $query);
+		$query = str_replace(' aux ', ' ', $query);
+		$query = str_replace(' est ', ' ', $query);
+		$query = str_replace(' par ', ' ', $query);
+		$query = str_replace(' du ', ' ', $query);
+		$query = str_replace(' au ', ' ', $query);
 		$query = str_replace('%2F', '', $query);
-		$query = str_replace('+(', ' ', $query);
-		$query = str_replace(')+', ' ', $query);
+		$query = str_replace('(', '+', $query);
+		$query = str_replace(')', '+', $query);
+		$query = str_replace('  ', ' ', $query);
 		$query = preg_replace('{3,}', '', $query);
+		$query = str_replace(' ', '* OR *', $query);
+		$query = str_replace('+', '* OR *', $query);
 		$query = urlencode($query);
-		$query = str_replace('+', '*&q=title:*', $query);
-		$query = str_replace(' ', '*&q=title:*', $query);
-		// $query = str_replace('', '', $query);
-		// $query = str_replace('%20', '*&q=title:*', $query);
+		$query = '(' . $query . ')';
+		Logger::logMessage("Cyprien : query : " . $query);
 		
 		$start = $query_params["start"];
 		$rows = $query_params["rows"];
 		
 		$solrItems = array();
 		
-		Logger::logMessage("Cyprien : " . $query);
-		// id:(*vivea.fr* *chlorofil.fr* *gouv* )
-		if ($organization != null) {
-			$datasets_orga = $api->getOrganization("id=" . $organization . "&include_datasets=true&include_dataset_count=true");
-			if ($datasets_orga['result']['package_count'] > 0) {
-				$query = $query . "&fq=id:(";
+		if ($coordinateParam != null || $organizations != null) {
+			if ($organizations != null) {
+				$organizations = explode(",", $organizations);
+			} else {
+				$organizations = $api->getAllOrganisations(FALSE, TRUE);
 			}
-			foreach ($datasets_orga['result']['packages'] as $dataset_orga) {
-				$query = $query .  '*' .parse_url($dataset_orga["url"])['host'] . '*%20';
+		}
+
+		if ($organizations != null) {
+			$count = 0;
+			$count_done = false;
+			foreach ($organizations as $organizationId) {
+
+				if ($organizationId != "test" && $organizationId != "bpm") {
+					$inside = 1;
+					if ($coordinateParam != null) {
+						$inside = $this->checkOrganisationCoordinate($api, $coordinateParam, $organizationId);
+					}
+
+					if ($inside == 1) {
+						$count += 1;
+						$datasets_orga = $api->getOrganization("id=" . $organizationId . "&include_datasets=true&include_dataset_count=true");
+						Logger::logMessage("Cyprien : count : " . $count);
+						if ($datasets_orga['result']['package_count'] > 0 && $count == 1) {
+							$query = $query . "&fq=id:(";
+							$count_done = true;
+						}
+						foreach ($datasets_orga['result']['packages'] as $dataset_orga) {
+							$query = $query .  '*' .parse_url($dataset_orga["url"])['host'] . '*%20';
+						}
+					}
+				}
 			}
-			if ($datasets_orga['result']['package_count'] > 0) {
+			if ($count_done) {
 				$query = $query . ")";
 			}
 		}
-		
 		$resultCustomSolr = $this->searchCustomSolr($api, $query, $rows, $start);
-			
 		$items = $resultCustomSolr['response']['docs'];
+		$organizationInsideCoordinateArray = array();
+		Logger::logMessage("Cyprien : query : " . $query);
+
 		foreach ($items as $item) {
 			$name = $item['title'];
 			$url = $item['url'];
 			$content = $item['content'];
 
 			//We retrive the dataset from CKAN linked to the page
-			$linkDataset = $this->foundDatasetFromSolrItem($api, $organization, $url);
+			$linkDataset = $this->foundDatasetFromSolrItem($api, $organizations, $url);
 			
 			//If we find the dataset, we had it to the result
 			if ($linkDataset != null) {
@@ -109,7 +157,7 @@ class NutchApi {
 	function searchCustomSolr($api, $query, $rows, $start) {
 		//TODO: Put in config
 		try {
-			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=title:" . $query . "&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true";
+			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=content:" . $query . "&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true&fl=*,score";
 			
 			Logger::logMessage("TRM - SOLR Query " . $solrUrl);
 			Logger::logMessage("Cyprien : " . $solrUrl);
@@ -128,17 +176,103 @@ class NutchApi {
 		}
 	}
 	
-	function foundDatasetFromSolrItem($api, $organization, $solrItemUrl) {
+	function foundDatasetFromSolrItem($api, $organizations, $solrItemUrl) {
 		$solrItemUrl = parse_url($solrItemUrl);
   		$solrItemUrl = $solrItemUrl['host'];
 
 		$datasets = $api->getPackageSearch("fq=url:*" . $solrItemUrl . "*");
 		
 		foreach ($datasets['result']['results'] as $dataset) {
-			if ($organization == null  || $organization == $dataset['organization']['name']) {
-				return $dataset;
+			if ($organizations == null || in_array($dataset['organization']['name'], $organizations)) {
+				// if ($coordinate == null || $this->checkOrganisationCoordinate($api, $organizationInsideCoordinateArray, $coordinate, $dataset['organization'])) {
+					return $dataset;
+				// }
 			}
 		}
 		return null;
 	}
+
+	
+// $inside = $this->checkOrganisationCoordinate($api, $coordinateParam, $organizationId);
+	function checkOrganisationCoordinate($api, $coordinate, $organizationId) {
+		Logger::logMessage("ok");
+		$organization = $api->getOrganization("id=" . $organizationId . "&include_datasets=false&include_dataset_count=false");
+		$organizationCoordinate = current(array_filter($organization['result']["extras"], function($f){ return $f["key"] == "coord";}))["value"] ?: null;
+
+		Logger::logMessage("TRM - Searching " . $organizationCoordinate . " in box " . $coordinate);
+		$polygon = array();
+		$coordinate = explode("),", $coordinate);
+		for ($i = 0; $i < count($coordinate); $i++) {
+			// Replace ( and )
+			$coordinate[$i] = str_replace(array("(", ")"), "", $coordinate[$i]);
+			$coordinate[$i] = str_replace(",", " ", $coordinate[$i]);
+			$polygon[] = $coordinate[$i];
+		}
+
+		$point = str_replace(",", " ", $organizationCoordinate);
+
+		$result = $this->pointInPolygon($point, $polygon);
+
+		Logger::logMessage("Point " . ($point) . " " . $result);
+
+		return $result == 'inside' || $result == 'border' || $result == 'vertex';
+	}
+
+	// Partie gestion coordonnees
+    function pointInPolygon($point, $polygon, $pointOnVertex = true) {
+        $this->pointOnVertex = $pointOnVertex;
+ 
+        // Transform string coordinates into arrays with x and y values
+        $point = $this->pointStringToCoordinates($point);
+        $vertices = array(); 
+        foreach ($polygon as $vertex) {
+            $vertices[] = $this->pointStringToCoordinates($vertex); 
+        }
+ 
+        // Check if the point sits exactly on a vertex
+        if ($this->pointOnVertex == true and $this->pointOnVertex($point, $vertices) == true) {
+            return "vertex";
+        }
+ 
+        // Check if the point is inside the polygon or on the boundary
+        $intersections = 0; 
+        $vertices_count = count($vertices);
+ 
+        for ($i=1; $i < $vertices_count; $i++) {
+            $vertex1 = $vertices[$i-1]; 
+            $vertex2 = $vertices[$i];
+            if ($vertex1['y'] == $vertex2['y'] and $vertex1['y'] == $point['y'] and $point['x'] > min($vertex1['x'], $vertex2['x']) and $point['x'] < max($vertex1['x'], $vertex2['x'])) { // Check if point is on an horizontal polygon boundary
+                return "boundary";
+            }
+            if ($point['y'] > min($vertex1['y'], $vertex2['y']) and $point['y'] <= max($vertex1['y'], $vertex2['y']) and $point['x'] <= max($vertex1['x'], $vertex2['x']) and $vertex1['y'] != $vertex2['y']) { 
+                $xinters = ($point['y'] - $vertex1['y']) * ($vertex2['x'] - $vertex1['x']) / ($vertex2['y'] - $vertex1['y']) + $vertex1['x']; 
+                if ($xinters == $point['x']) { // Check if point is on the polygon boundary (other than horizontal)
+                    return "boundary";
+                }
+                if ($vertex1['x'] == $vertex2['x'] || $point['x'] <= $xinters) {
+                    $intersections++; 
+                }
+            } 
+        } 
+        // If the number of edges we passed through is odd, then it's in the polygon. 
+        if ($intersections % 2 != 0) {
+            return "inside";
+        } else {
+            return "outside";
+        }
+    }
+ 
+    function pointOnVertex($point, $vertices) {
+        foreach($vertices as $vertex) {
+            if ($point == $vertex) {
+                return true;
+            }
+        }
+ 
+    }
+ 
+    function pointStringToCoordinates($pointString) {
+        $coordinates = explode(" ", $pointString);
+        return array("x" => $coordinates[0], "y" => $coordinates[1]);
+    }
 }
