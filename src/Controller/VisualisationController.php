@@ -205,8 +205,12 @@ class VisualisationController extends ControllerBase {
 		
 		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
 
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
+		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
+
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
+		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $isRgpd, $rgpdNonConnected);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -251,7 +255,8 @@ class VisualisationController extends ControllerBase {
 								</div>
 
 								' . $resourcesList . '
-								' . $filters . '<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
+								' . ($rgpdNonConnected ? '' : $filters) . 
+							'<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
 								' . $tabs . '
 								' . $disqus . '
 							</div>
@@ -344,21 +349,23 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
+	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
-		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
-		$tabTable = $this->buildTabTable();
-		$tabMap = $this->buildTabMap($dataset);
-		$tabAnalyze = $this->buildTabAnalyze();
-		$tabImage = $this->buildTabImage();
-		$tabCalendar = $this->buildTabCalendar();
-		$tabCustomView = $this->buildTabCustomView();
-		$tabWordCloud = $this->buildTabWordCloud();
-		$tabTimeline = $this->buildTabTimeline();
-		$tabExport = $this->buildTabExport($dataset, $metadataExtras);
-		$tabAPI = $this->buildTabAPI($dataset);
-		$tabReuses = $this->buildTabReuses($loggedIn, $name);
+		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
+		if (!$rgpdNonConnected) {
+			$tabTable = $this->buildTabTable();
+			$tabMap = $this->buildTabMap($dataset);
+			$tabAnalyze = $this->buildTabAnalyze();
+			$tabImage = $this->buildTabImage();
+			$tabCalendar = $this->buildTabCalendar();
+			$tabCustomView = $this->buildTabCustomView();
+			$tabWordCloud = $this->buildTabWordCloud();
+			$tabTimeline = $this->buildTabTimeline();
+			$tabExport = $this->buildTabExport($dataset, $metadataExtras);
+			$tabAPI = $this->buildTabAPI($dataset);
+			$tabReuses = $this->buildTabReuses($loggedIn, $name);
+		}
 
 		return '
 			<d4c-tabs sync-to-url="true" sync-to-url-mode="path" name="main" default-tab="' . $tab . '">
@@ -381,7 +388,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
+	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
 		// $source = $sources[1];
@@ -419,6 +426,8 @@ class VisualisationController extends ControllerBase {
 
 		$keywordsPart = $this->buildKeywords($keywords);
 
+		$rgpdPart = $this->buildRgpd($isRgpd, $rgpdNonConnected);
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Information" icon="info-circle" translate="title" slug="information">
 				<div class="row">
@@ -431,6 +440,7 @@ class VisualisationController extends ControllerBase {
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
+						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
 					</div>
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
@@ -1122,6 +1132,27 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		return $lastResource;
+	}
+
+	function buildRgpd($isRgpd, $rgpdNonConnected) {
+		if (!$isRgpd) {
+			return null;
+		}
+
+		if ($rgpdNonConnected) {
+			$messageRgpd = "Ce jeu de données nécessite d'être connectée pour être consulté car il contient des données RGPD.";
+		}
+		else {
+			$messageRgpd = "Les données de ce jeu de données ont des données RGPD. Les actions sur le jeu de données sont enregistrées.";
+		}
+
+		return '
+			<div class="row">
+				<div class="col-sm-12">
+					<p>' . $messageRgpd . '</p>
+				</div>
+			</div>
+		';
 	}
 
 	/* END METADATA */

@@ -1,3 +1,3 @@
 function fetchPrefix() {
-    return '';
+    return '/data4citizen';
 }
