@@ -17,7 +17,7 @@ class NutchApi {
 		if (array_key_exists('coordReq', $query_params)){
 			$coordinateParam = $query_params['coordReq'];
 		}
-		Logger::logMessage("Cyprien : query : " . $query);
+
 		$query = '*' . explode(":", $query_params["q"])[1] . '*'; // TODO: Improve GET query
 		$query = str_replace('+-+', ' ', $query);
 		$query = str_replace('+:+', ' ', $query);
@@ -50,7 +50,6 @@ class NutchApi {
 		$query = str_replace('+', '* OR *', $query);
 		$query = urlencode($query);
 		$query = '(' . $query . ')';
-		Logger::logMessage("Cyprien : query : " . $query);
 		
 		$start = $query_params["start"];
 		$rows = $query_params["rows"];
@@ -79,7 +78,6 @@ class NutchApi {
 					if ($inside == 1) {
 						$count += 1;
 						$datasets_orga = $api->getOrganization("id=" . $organizationId . "&include_datasets=true&include_dataset_count=true");
-						Logger::logMessage("Cyprien : count : " . $count);
 						if ($datasets_orga['result']['package_count'] > 0 && $count == 1) {
 							$query = $query . "&fq=id:(";
 							$count_done = true;
@@ -97,7 +95,11 @@ class NutchApi {
 		$resultCustomSolr = $this->searchCustomSolr($api, $query, $rows, $start);
 		$items = $resultCustomSolr['response']['docs'];
 		$organizationInsideCoordinateArray = array();
-		Logger::logMessage("Cyprien : query : " . $query);
+
+		//We retrive the dataset from CKAN linked to the page
+		$defaultDataset = $this->foundDatasetFromSolrItem($api, $organizations, "default");
+
+		Logger::logMessage("Found default dataset: " . json_encode($defaultDataset));
 
 		foreach ($items as $item) {
 			$name = $item['title'];
@@ -106,47 +108,44 @@ class NutchApi {
 
 			//We retrive the dataset from CKAN linked to the page
 			$linkDataset = $this->foundDatasetFromSolrItem($api, $organizations, $url);
+			if ($linkDataset == null) {
+				$linkDataset = $defaultDataset;
+			}
 			
-			//If we find the dataset, we had it to the result
-			if ($linkDataset != null) {
-				//We build a dataset from a solr page found
-				$solrDataset = array();
-				$solrDataset['name'] = $name;
-				$solrDataset['title'] = $name;
-				$solrDataset['url'] = $url;
-				$solrDataset['type'] = 'dataset';
-				$solrDataset['notes'] = $content;
-				$solrDataset['organization'] = $linkDataset['organization'];
-				$solrDataset['num_resources'] = $linkDataset['num_resources'];
-				$solrDataset['resources'] = $linkDataset['resources'];
-				$solrDataset['tags'] = $linkDataset['resources'];
-				$solrDataset['extras'] = $linkDataset['extras'];
-	
-				$solrDataset['author'] = '';
-				$solrDataset['author_email'] = '';
-				$solrDataset['creator_user_id'] = '';
-				$solrDataset['id'] = '';
-				$solrDataset['isopen'] = false;
-				$solrDataset['license_id'] = '';
-				$solrDataset['license_title'] = '';
-				$solrDataset['maintainer'] = '';
-				$solrDataset['maintainer_email'] = '';
-				$solrDataset['metadata_created'] = '';
-				$solrDataset['metadata_modified'] = '';
-				$solrDataset['num_tags'] = 0;
-				$solrDataset['owner_org'] = '';
-				$solrDataset['private'] = false;
-				$solrDataset['state'] = 'active';
-				$solrDataset['version'] = '';
-				$solrDataset['groups'] = null;
-				$solrDataset['relationships_as_subject'] = null;
-				$solrDataset['relationships_as_object'] = null;
-	
-				$solrItems[] = $solrDataset;
-			}
-			else {
-				Logger::logMessage("TRM - Dataset not found for url: " . $url);
-			}
+			//We build a dataset from a solr page found
+			$solrDataset = array();
+			$solrDataset['name'] = $name;
+			$solrDataset['title'] = $name;
+			$solrDataset['url'] = $url;
+			$solrDataset['type'] = 'dataset';
+			$solrDataset['notes'] = $content;
+			$solrDataset['organization'] = $linkDataset['organization'];
+			$solrDataset['num_resources'] = $linkDataset['num_resources'];
+			$solrDataset['resources'] = $linkDataset['resources'];
+			$solrDataset['tags'] = $linkDataset['resources'];
+			$solrDataset['extras'] = $linkDataset['extras'];
+
+			$solrDataset['author'] = '';
+			$solrDataset['author_email'] = '';
+			$solrDataset['creator_user_id'] = '';
+			$solrDataset['id'] = '';
+			$solrDataset['isopen'] = false;
+			$solrDataset['license_id'] = '';
+			$solrDataset['license_title'] = '';
+			$solrDataset['maintainer'] = '';
+			$solrDataset['maintainer_email'] = '';
+			$solrDataset['metadata_created'] = '';
+			$solrDataset['metadata_modified'] = '';
+			$solrDataset['num_tags'] = 0;
+			$solrDataset['owner_org'] = '';
+			$solrDataset['private'] = false;
+			$solrDataset['state'] = 'active';
+			$solrDataset['version'] = '';
+			$solrDataset['groups'] = null;
+			$solrDataset['relationships_as_subject'] = null;
+			$solrDataset['relationships_as_object'] = null;
+
+			$solrItems[] = $solrDataset;
 		}
 		$result["result"]["count"] = $resultCustomSolr['response']['numFound'];
 		$result["result"]["results"] = $solrItems;
@@ -160,14 +159,11 @@ class NutchApi {
 			$solrUrl = $api->getConfig()->client->nutch_url . "/solr/nutch/select?q=content:" . $query . "&wt=json&start=" . $start . "&rows=" . $rows . "&indent=true&fl=*,score";
 			
 			Logger::logMessage("TRM - SOLR Query " . $solrUrl);
-			Logger::logMessage("Cyprien : " . $solrUrl);
 
 			$curl = curl_init($solrUrl);
 			curl_setopt_array($curl, $api->getStoreOptions());
 			$result = curl_exec($curl);
 			curl_close($curl);
-			
-			// Logger::logMessage("Cyprien : " . json_encode($result, true));
 			
 			return json_decode($result, true);
 		} catch (\Exception $e) {
@@ -177,8 +173,10 @@ class NutchApi {
 	}
 	
 	function foundDatasetFromSolrItem($api, $organizations, $solrItemUrl) {
-		$solrItemUrl = parse_url($solrItemUrl);
-  		$solrItemUrl = $solrItemUrl['host'];
+		if ($solrItemUrl != "default") {
+			$solrItemUrl = parse_url($solrItemUrl);
+			$solrItemUrl = $solrItemUrl['host'];
+		}
 
 		$datasets = $api->getPackageSearch("fq=url:*" . $solrItemUrl . "*");
 		
@@ -195,11 +193,12 @@ class NutchApi {
 	
 // $inside = $this->checkOrganisationCoordinate($api, $coordinateParam, $organizationId);
 	function checkOrganisationCoordinate($api, $coordinate, $organizationId) {
-		Logger::logMessage("ok");
 		$organization = $api->getOrganization("id=" . $organizationId . "&include_datasets=false&include_dataset_count=false");
 		$organizationCoordinate = current(array_filter($organization['result']["extras"], function($f){ return $f["key"] == "coord";}))["value"] ?: null;
+		$point = str_replace(",", " ", $organizationCoordinate);
 
-		Logger::logMessage("TRM - Searching " . $organizationCoordinate . " in box " . $coordinate);
+		// Logger::logMessage("TRM - Searching " . $organizationCoordinate . " in box " . $coordinate);
+
 		$polygon = array();
 		$coordinate = explode("),", $coordinate);
 		for ($i = 0; $i < count($coordinate); $i++) {
@@ -209,13 +208,59 @@ class NutchApi {
 			$polygon[] = $coordinate[$i];
 		}
 
-		$point = str_replace(",", " ", $organizationCoordinate);
+		if (sizeof($polygon) <= 3) {
+			$polygon = explode(" ", $polygon[0]);
+			$lat = $polygon[0];
+			$long = $polygon[1];
+			$dist = $polygon[2];
+				
+			return $this->isInsideCircle($point, $lat, $long, $dist);
+		}
+		else {
+			$result = $this->pointInPolygon($point, $polygon);
+			return $result == 'inside' || $result == 'border' || $result == 'vertex';
+		}
+	}
 
-		$result = $this->pointInPolygon($point, $polygon);
+	function isInsideCircle($point, $latCenterCircle, $lonCenterCircle, $distance) {
+		$point = $this->pointStringToCoordinates($point);
+		$latPoint = $point['x'];
+		$longPoint = $point['y'];
 
-		Logger::logMessage("Point " . ($point) . " " . $result);
-
-		return $result == 'inside' || $result == 'border' || $result == 'vertex';
+		if (($latPoint == $latCenterCircle) && ($longPoint == $lonCenterCircle)) {
+			return true;
+		}
+		else {
+			// Logger::logMessage("Checking if point " . $latPoint . " " . $longPoint . " is inside circle lat : " . $latCenterCircle . " long : " . $lonCenterCircle . " distance : " . $distance);
+			$value = $this->haversineGreatCircleDistance($latCenterCircle, $lonCenterCircle, $latPoint, $longPoint);
+			// Logger::logMessage("Value " . $value . " distance " . $distance . " result " . ($value <= $distance));
+			return $value <= $distance;
+		}
+	}
+	
+	/**
+	 * Calculates the great-circle distance between two points, with
+	 * the Haversine formula.
+	 * @param float $latitudeFrom Latitude of start point in [deg decimal]
+	 * @param float $longitudeFrom Longitude of start point in [deg decimal]
+	 * @param float $latitudeTo Latitude of target point in [deg decimal]
+	 * @param float $longitudeTo Longitude of target point in [deg decimal]
+	 * @param float $earthRadius Mean earth radius in [m]
+	 * @return float Distance between points in [m] (same as earthRadius)
+	 */
+	function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000) {
+		// convert from degrees to radians
+		$latFrom = deg2rad($latitudeFrom);
+		$lonFrom = deg2rad($longitudeFrom);
+		$latTo = deg2rad($latitudeTo);
+		$lonTo = deg2rad($longitudeTo);
+	
+		$latDelta = $latTo - $latFrom;
+		$lonDelta = $lonTo - $lonFrom;
+	
+		$angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
+		cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+		return $angle * $earthRadius;
 	}
 
 	// Partie gestion coordonnees
