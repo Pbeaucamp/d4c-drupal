@@ -1384,7 +1384,7 @@ class ResourceManager {
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning=false, $dataRgpd = false) {
+			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1438,9 +1438,6 @@ class ResourceManager {
 												
 				if ($extras[$index]['key'] == 'themes') {
 					$hasThemes = true;
-
-					Logger::logMessage("TRM - THEME VALUE " . $extras[$index]['value'] . " OR THEME = " . $themes);
-
 					if (isset($themes)) {
 						$extras[$index]['value'] = $themes;
 					}

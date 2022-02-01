@@ -546,9 +546,9 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 					
 				
 				}
-				$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
-							$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-							$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
+				// $extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
+				// 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
+				// 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
 				
 							drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
 				       

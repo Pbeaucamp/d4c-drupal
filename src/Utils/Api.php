@@ -940,12 +940,13 @@ class Api{
 		//If the dataset has been flagged rgpd, we only show if the user is connected
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 		if ($this->config->client->check_rgpd && !$isConnected) {
-			if ($query_params["fq"] == null) {
-				$query_params["fq"] = "-data_rgpd:(1)";
-			}
-			else {
-				$query_params["fq"] .= " AND -data_rgpd:(1)";
-			}
+			//Disable for now
+			// if ($query_params["fq"] == null) {
+			// 	$query_params["fq"] = "-data_rgpd:(1)";
+			// }
+			// else {
+			// 	$query_params["fq"] .= " AND -data_rgpd:(1)";
+			// }
 		}
 
 		$url2 = http_build_query($query_params);
@@ -7830,11 +7831,30 @@ function deleteStory($story_id){
 			}
 		}
 
+		Logger::logMessage("Extras: " . print_r($extras, true));
+
 		$tags = $resourceManager->defineTags(json_decode($tagsAsJson, true));
 
-		$extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
-			null, null, null, null, null, 
-			null, null, null, $security);
+		//We disable defining extras for now and use the one in the dataset
+		if ($extras == null) {
+			$extras = array();
+		}
+		if ($extras != null && count($extras) > 0) {
+			for ($index = 0; $index < count($extras); $index++) {
+				if ($extras[$index]['key'] == 'edition_security') {
+					$hasSecurity = true;
+				}
+			}
+		}
+
+		if ($hasSecurity == false) {
+			$extras[count($extras)]['key'] = 'edition_security';
+			$extras[(count($extras) - 1)]['value'] = json_encode($security);
+		}
+
+		// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
+		// 	null, null, null, null, null, 
+		// 	null, null, null, $security);
 					
 		$generatedTaskId = uniqid();
 		try {
@@ -7849,9 +7869,9 @@ function deleteStory($story_id){
 				//Update extras
 				//TODO: We have to compare extras or we just replace ?
 				// $extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
-					null, null, null, null, null, 
-					null, null, null, $security);
+				// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
+				// 	null, null, null, null, null, 
+				// 	null, null, null, $security);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 			}
