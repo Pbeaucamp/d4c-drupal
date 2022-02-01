@@ -432,6 +432,7 @@ class VisualisationController extends ControllerBase {
 			<d4c-pane pane-auto-unload="true" title="Information" icon="info-circle" translate="title" slug="information">
 				<div class="row">
 					<div class="col-sm-9">
+						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
 						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
 						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
@@ -440,7 +441,6 @@ class VisualisationController extends ControllerBase {
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
-						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
 					</div>
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
@@ -1148,7 +1148,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<div class="row">
-				<div class="col-sm-12">
+				<div class="col-sm-12" style="color: red;">
 					<p>' . $messageRgpd . '</p>
 				</div>
 			</div>
