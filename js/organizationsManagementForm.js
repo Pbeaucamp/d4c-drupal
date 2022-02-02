@@ -31,20 +31,26 @@ function addData(data) {
                 $('#org_img').append('<div id="count_package"><label>Jeux de données:' + data[i].package_count + '</label></div>');
                 
 				var isPublic = true;
+                var coordinates = '';
+
                 $.each(data[i].extras, function(i,e){
-					if(e.key == "private"){
+					if (e.key == "private") {
 						if(e.value == "true"){
 							isPublic = false;
 						} else {
 							isPublic = true;
 						}
-					} 
+					}
+                    else if (e.key == "coord") {
+                        coordinates = e.value;
+					}
 				});
 				if(isPublic){
 					$('#edit-selected-private').val('1');
 				} else {
 					$('#edit-selected-private').val('0');
 				}
+                $('#edit-coord ').val(coordinates);
 
                 buildWidgetCode(data[i].name);
 
@@ -60,6 +66,7 @@ function clear() {
     $('#edit-description').val('');
     $('#org_img').empty();
     $('#count_package').remove();
+    $('#edit-coord').val('');
 
     buildWidgetCode(null);
 }

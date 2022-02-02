@@ -397,34 +397,39 @@ function fillData(data) {
 		$('#up-' + num).append($('[id^=edit-table-'+num+'-file]').first().parent().parent());
     }
 
+    // get source value
+    if (data.url) {
+        $("#edit-source input").val(data.url);
+    }
+
     let hasHideFieldsProp = false;
     let hasDisplayVersionning = false;
     let hasDataRgpd = false;
     for (let g = 0; g < data.extras.length; g++) {
-        // get donnees source and source value from extra data and assign it to new source and donnees_source
-        if (data.extras[g].key == 'FTP_API') {
-            var value = data.extras[g].value;
-            if(value != "FTP") {
-                $("#edit-donnes-source input").val(value);
 
-                if (value) {
-                    if (!value.includes("http")) {
-                        value = "https://" + value;
-                    }
-    
-                    try {
-                        const url = new URL(value);
-                        $("#edit-source input").val(url.hostname);
-                    } catch (e) {
-                        $("#edit-source input").val(value);
-                    }
-                }
-            }
-            else {
-                $("#edit-source input").val("FTP/SFTP");
-            }
-            
-        }
+        // Disable for now as we set the data url in the source field
+        // get donnees source and source value from extra data and assign it to new source and donnees_source
+        // if (data.extras[g].key == 'FTP_API') {
+        //     var value = data.extras[g].value;
+        //     if(value != "FTP") {
+        //         $("#edit-donnes-source input").val(value);
+        //         if (value) {
+        //             if (!value.includes("http")) {
+        //                 value = "https://" + value;
+        //             }
+        //             try {
+        //                 const url = new URL(value);
+        //                 $("#edit-source input").val(url.hostname);
+        //             } catch (e) {
+        //                 $("#edit-source input").val(value);
+        //             }
+        //         }
+        //     }
+        //     else {
+        //         $("#edit-source input").val("FTP/SFTP");
+        //     }
+        // }
+
         // get producer value
         if (data.extras[g].key == 'producer') {
             var producer = data.extras[g].value;
@@ -439,14 +444,13 @@ function fillData(data) {
             
         }
 
-        // get source value
-        if (data.extras[g].key == 'source') {
-            var source = data.extras[g].value;
-            if (source) {
-                $("#edit-source input").val(source);
-            }
-            
-        }
+        // Disable for now as we set the data url in the source field
+        // if (data.extras[g].key == 'source') {
+        //     var source = data.extras[g].value;
+        //     if (source) {
+        //         $("#edit-source input").val(source);
+        //     }
+        // }
 
         // get donnees source value
         if (data.extras[g].key == 'donnees_source') {

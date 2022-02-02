@@ -115,6 +115,13 @@ class organizationsManagementForm extends HelpFormBase
 			'#size' => 22,
 		);
 
+		$form['coord'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('*Coordonnées'),
+            '#attributes' => array('style' => 'width: 50%;'),
+        );
+
 		$form['selected_private'] = array(
             '#type' => 'select',
             '#title' => t('*Visibilité :'),
@@ -175,6 +182,7 @@ class organizationsManagementForm extends HelpFormBase
         $description = $form_state->getValue('description');
         $form_file = $form_state->getValue('img_org');
         $private=$form_state->getValue('selected_private');
+        $coordinates = $form_state->getValue('coord');
         
         if ($private == '0') {
             $private = true;
@@ -191,6 +199,7 @@ class organizationsManagementForm extends HelpFormBase
         $extras=array();
         
         array_push($extras,['key'=>'private', 'value'=>$private]);
+        array_push($extras,['key'=>'coord', 'value'=>$coordinates]);
         
         $context =[
 			'name'=>$id,
@@ -270,9 +279,6 @@ class organizationsManagementForm extends HelpFormBase
 	    $name = preg_replace('#\&([A-za-z]{2})(?:lig)\;#', '\1', $name); // pour les ligatures e.g. '&oelig;'
 	    $name = preg_replace('#\&[^;]+\;#', '', $name); // supprime les autres caractères
 	    $name = preg_replace('@[^a-zA-Z0-9_-]@','',$name);
-
-        Logger::logMessage("TRM - Orga ID " . $name);
-
         return $name;
     }
     

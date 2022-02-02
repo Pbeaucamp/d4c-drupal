@@ -31,7 +31,7 @@ class ResourceManager {
 		$api->updateDatabaseStatus($isNew, $uniqId, $datasetId, 'DATASET', 'MANAGE_DATASET', $action, $status, $message);
 	}
 
-	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
+	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
 		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
 	
@@ -45,7 +45,7 @@ class ResourceManager {
 			"maintainer_email" => "",
 			"license_id" => $licence,
 			"notes" => $description,
-			"url" => $urlRes,
+			"url" => ($source != null ? $source : $urlRes),
 			"version" => "",
 			"state" => "active",
 			"type" => "dataset",
@@ -57,8 +57,6 @@ class ResourceManager {
 			"groups" => [],
 			"owner_org" => $organization,
 		];
-
-		Logger::logMessage("TRM - DATASET '" . json_encode($newData) . "'");
 		
 		$coll = array('0'=>'0', '1'=>'');
 			
@@ -70,7 +68,7 @@ class ResourceManager {
 		return $datasetId;
 	}
 
-	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
+	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
 		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId);
 		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
 		
@@ -80,6 +78,9 @@ class ResourceManager {
 		$datasetToUpdate['private'] = $isPrivate;
 		$datasetToUpdate[extras] = $extras;
 		$datasetToUpdate["tags"] = $tags;
+		if ($source != null) {
+			$datasetToUpdate[url] = $source;
+		}
 
 		$api = new Api;
         $callUrl = $this->urlCkan . "/api/action/package_update";

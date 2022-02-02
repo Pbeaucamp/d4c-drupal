@@ -875,10 +875,10 @@ class editMetaDataForm extends HelpFormBase {
 					// We build extras
 					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
+						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, null, $donnees_source, $mention_legales, $frequence, $displayVersionning,
 						$dataRgpd);
 
-					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
 
@@ -912,7 +912,7 @@ class editMetaDataForm extends HelpFormBase {
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
 						$dataRgpd);
 
-					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
