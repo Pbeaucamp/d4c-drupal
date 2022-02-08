@@ -5,6 +5,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
+use \Parsedown;
 
 /**
  * Provides route responses for the Example module.
@@ -72,7 +73,9 @@ class VisualisationController extends ControllerBase {
 
 		$name = $dataset["metas"]["title"];
 		//Removing HTML tags
-		$description = $dataset["metas"]["description"];
+		$Parsedown = new Parsedown();
+		$description = $Parsedown->text($dataset["metas"]["description"]);
+
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$licence = $dataset["metas"]["license"];

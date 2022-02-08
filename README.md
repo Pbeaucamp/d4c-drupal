@@ -56,6 +56,10 @@ Il est impératif d'indiquer, l'url ckan, la clé api ckan, l'url cluster et le 
 	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
 	- composer require halaxa/json-machine
 	
+-  ParseDown (https://github.com/erusev/parsedown)
+	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
+	- composer require erusev/parsedown
+
 ---
 
 ## Configuration Recaptcha
