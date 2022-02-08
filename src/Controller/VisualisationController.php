@@ -989,8 +989,6 @@ class VisualisationController extends ControllerBase {
 		for ($i = 1; $i <= 5; $i++) {
 			$organisation = $this->exportExtras($metadataExtras, 'responsible-organisation-' . $i);
 			if ($organisation != null) {
-				Logger::logMessage("TRM - Organisation " . $organisation);
-
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
 
@@ -1001,14 +999,18 @@ class VisualisationController extends ControllerBase {
 				$contactEmail = $organisation['contact-info']['email'];
 				$phone = $organisation['contact-info']['phone'];
 
+				$address = isset($address) ? '<p class="mb-0">' . $address . '</p>' : "";
+				$postalCodeCity = isset($postalCode) || isset($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
+				$contactEmail = isset($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
+				$phone = isset($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
 				$contacts .= '
 					<div class="d-flex align-items-center mt-3">
 						<div class="flex-grow-1 ms-3"><strong id="displayContact1">' . $organisationName . '</strong>
-							<p class="mb-0">' . $address . '</p>
-							<p class="mb-0">' . $postalCode . ' ' . $city . '</p>
-							<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>
-							<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>
+							' . $address . '
+							' . $postalCodeCity . '
+							' . $contactEmail . '
+							' . $phone . '
 						</div>
 					</div>
 					<hr>
