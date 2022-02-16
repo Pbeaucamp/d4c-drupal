@@ -5,6 +5,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
 use \Parsedown;
 
 /**
@@ -212,7 +213,7 @@ class VisualisationController extends ControllerBase {
 		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
+		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -350,7 +351,7 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
+	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
@@ -362,7 +363,7 @@ class VisualisationController extends ControllerBase {
 		$tabCustomView = $this->buildTabCustomView();
 		$tabWordCloud = $this->buildTabWordCloud();
 		$tabTimeline = $this->buildTabTimeline();
-		$tabExport = $this->buildTabExport($dataset, $metadataExtras);
+		$tabExport = $this->buildTabExport($api, $dataset, $metadataExtras);
 		$tabAPI = $this->buildTabAPI($dataset);
 		$tabReuses = $this->buildTabReuses($loggedIn, $name);
 
@@ -1034,6 +1035,8 @@ class VisualisationController extends ControllerBase {
 		if (sizeof($resources) > 0 ) {
 			// $lastResourceId = $this->getLastDataResource($resources);
 
+			$resourcesUrl = array();
+
 			foreach($resources as $key=>$value){
 				$resourceId = $value["id"];
 				$name = $value["name"];
@@ -1043,6 +1046,11 @@ class VisualisationController extends ControllerBase {
 				$mimeType = $value["mimetype"];
 				$datastoreActive = $value["datastore_active"];
 
+				// Checking if resource already exist
+				if (in_array($url, $resourcesUrl)) {
+					continue;
+				}
+
 				// $classImg = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
 				$classImg = 'fa-link';
 				if ($excludeDataResources && (strcasecmp($format , 'zip') == 0 || strcasecmp($format , 'xls') == 0 || strcasecmp($format , 'xlsx') == 0 
@@ -1051,7 +1059,7 @@ class VisualisationController extends ControllerBase {
 				}
 
 				//Deactivate WMS and WFS
-				if (strcasecmp($format , 'wms') == 0 || strcasecmp($format , 'wfs') == 0) {
+				if (strcasecmp($format , 'wms') == 0 || strcasecmp($format , 'wfs') == 0 || strpos($url, "wms") !== false || strpos($url, "wfs") !== false || strpos($name, "wms") !== false || strpos($name, "wfs") !== false) {
 					continue;
 				}
 
@@ -1081,6 +1089,8 @@ class VisualisationController extends ControllerBase {
 					$buttonText = 'Consulter';
 					$button .= '<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>';
 				}
+
+				$resourcesUrl[] = $url;
 
 				$additionnalResources .= '
 					<div class="row">
@@ -1167,7 +1177,7 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				// $url = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$btnMapFishapp = '<a class="d4c-map-flux-wms" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Editer en mode avancé</span></span></a>';
@@ -1289,19 +1299,90 @@ class VisualisationController extends ControllerBase {
 		// Default projection
 		$srs = "EPSG%3A4326";
 
+		$serviceUrlWithoutParams = explode("?", $serviceUrl)[0];
+		$queryString = explode("?", $serviceUrl)[1];
+		
 		if ($type == "WMS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.1.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
+			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetMap');
+			$queryString = Tools::updateQueryStringParameter($queryString, "layers", $layerName);
+			$queryString = Tools::updateQueryStringParameter($queryString, "bbox", $bbox);
+			$queryString = Tools::updateQueryStringParameter($queryString, "width", $width);
+			$queryString = Tools::updateQueryStringParameter($queryString, "height", $height);
+			$queryString = Tools::updateQueryStringParameter($queryString, "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, "format", '');
+			
+			// $url = $serviceUrl . '?service=' . $type . '&version=1.3.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
 		}
 		else if ($type == "WFS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
+			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.0.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetFeature');
+			$queryString = Tools::updateQueryStringParameter($queryString, "typeName", $layerName);
+			$queryString = Tools::updateQueryStringParameter($queryString, "outputFormat", '');
+
+			// $url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
 		}
+
+		$url = $serviceUrlWithoutParams . '?' . $queryString;
+		Logger::logMessage("TRM - Service URL: " . $url);
 
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
 		return $url;
 	}
 
-	function buildTabExport($dataset, $metadataExtras) {
+	function getAvailableFormats($serviceUrl, $type) {
+		$formats = array();
+
+		$serviceUrlWithoutParams = explode("?", $serviceUrl)[0];
+		$queryString = explode("?", $serviceUrl)[1];
+
+		$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+		$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetCapabilities');
+		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.3.0');
+		$url = $serviceUrlWithoutParams . '?' . $queryString;
+
+		$xml = simplexml_load_file($url);
+
+		$formats = array();
+		if ($type == "WMS") {
+			foreach($xml->Capability->Request->GetMap->Format as $format) {
+				$format = urlencode($format);
+				$displayValue = $this->translateValue($this->locale["codelists"]["MD_FormatGeoExportWMS"], $format);
+
+				$formatValue = array(
+					"format" => $format,
+					"displayValue" => $displayValue
+				);
+				$formats[] = $formatValue;
+			}
+		}
+		else if ($type == "WFS") {
+			$extractedFormats = $xml->xpath('//ows:OperationsMetadata/ows:Operation[@name="GetFeature"]/ows:Parameter[@name="outputFormat"]/ows:Value');
+			foreach ($extractedFormats as $format) {
+				$format = urlencode($format);
+				$displayValue = $this->translateValue($this->locale["codelists"]["MD_FormatGeoExportWFS"], $format);
+				
+				$formatValue = array(
+					"format" => $format,
+					"displayValue" => $displayValue
+				);
+				$formats[] = $formatValue;
+			}
+		}
+
+		usort($formats, function($a, $b) {
+			return $a['displayValue'] <=> $b['displayValue'];
+		});
+
+		Logger::logMessage("TRM - Available formats: " . json_encode($formats));
+
+		return $formats;
+	}
+
+	function buildTabExport($api, $dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
 
 		$exportGeo = '';
@@ -1315,17 +1396,18 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				$displayName = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
+					$availableFormatsWMS = $this->getAvailableFormats($url, "WMS");
 
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
-								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
 								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
@@ -1334,13 +1416,14 @@ class VisualisationController extends ControllerBase {
 				}
 				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
 					$wfsURL = $this->buildServiceUrl($metadataExtras, $url, "WFS", $name, $maxFeatures);
+					$availableFormatsWFS = $this->getAvailableFormats($url, "WFS");
 
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WFS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
-								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
 								<a class="d4c-dataset-export-link__link" target="_blank" href="' . $url . '" ><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
@@ -1352,57 +1435,25 @@ class VisualisationController extends ControllerBase {
 
 		$additionnalResources .= '</ul>';
 
-		// https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
-		// https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
-
 		if (isset($wmsURL) || isset($wfsURL)) {
-			if (isset($wmsURL)) {
-				$optionsWMS = '
-					<optgroup label="WMS">
-						<option value="application%2Fatom%20xml">AtomPub</option>
-						<option value="application%2Fbil">BIL</option>
-						<option value="image%2Fdds">DDS</option>
-						<option value="image%2Fgif">GIF</option>
-						<option value="rss">GeoRSS</option>
-						<option value="image%2Fgeotiff">GeoTiff</option>
-						<option value="image%2Fgeotiff8">GeoTiff 8-bits</option>
-						<option value="image%2Fjpeg">JPEG</option>
-						<option value="image%2Fvnd.jpeg-png">JPEG-PNG</option>
-						<option value="image%2Fvnd.jpeg-png8">JPEG-PNG8</option>
-						<option value="application%2Fvnd.google-earth.kmz%20xml">KML (compressé)</option>
-						<option value="application%2Fvnd.google-earth.kml%2Bxml%3Bmode%3Dnetworklink">KML (lien réseau)</option>
-						<option value="application%2Fvnd.google-earth.kml">KML (plain)</option>
-						<option value="application%2Fx-sqlite3">MBTiles</option>
-						<option value="text%2Fhtml%3B%20subtype%3Dopenlayers">OpenLayers</option>
-						<option value="application%2Fopenlayers2">OpenLayers 2</option>
-						<option value="application%2Fopenlayers3">OpenLayers 3</option>
-						<option value="application%2Fpdf">PDF</option>
-						<option value="image%2Fpng">PNG</option>
-						<option value="image%2Fpng%3B%20mode%3D8bit">PNG 8bit</option>
-						<option value="image%2Fsvg%20xml">SVG</option>
-						<option value="image%2Ftiff">Tiff</option>
-						<option value="image%2Ftiff8">Tiff 8-bits</option>
-						<option value="application%2Fjson%3Btype%3Dutfgrid">UTFGrid</option>
-					</optgroup>
-				';
+			if (isset($availableFormatsWMS) && count($availableFormatsWMS) > 0) {
+				$optionsWMS = '<optgroup label="WMS">';
+
+				foreach ($availableFormatsWMS as $format) {
+					$optionsWMS .= '<option value="' . $format["format"] . '">' . $format["displayValue"] . '</option>';
+				}
+
+				$optionsWMS .= '</optgroup>';
 			}
 
-			if (isset($wfsURL)) {
-				$optionsWFS = '
-					<optgroup label="WFS">
-						<option value="csv">CSV</option>
-						<option value="DXF-ZIP">DXF (Compressed)</option>
-						<option value="DXF">DXF (plain)</option>
-						<option value="excel">Excel (.xls)</option>
-						<option value="excel2007">Excel 2007 (.xslx)</option>
-						<option value="text%2Fxml%3B%20subtype%3Dgml%2F2.1.2">GML2</option>
-						<option value="gml3">GML3.1</option>
-						<option value="application%2Fgml%2Bxml%3B%20version%3D3.2">GML3.2</option>
-						<option value="application%2Fjson">GeoJSON</option>
-						<option value="application%2Fvnd.google-earth.kml%2Bxml">KML</option>
-						<option value="SHAPE-ZIP">Shapefile</option>
-					</optgroup>
-				';
+			if (isset($availableFormatsWFS) && count($availableFormatsWFS) > 0) {
+				$optionsWFS = '<optgroup label="WFS">';
+
+				foreach ($availableFormatsWFS as $format) {
+					$optionsWFS .= '<option value="' . $format["format"] . '">' . $format["displayValue"] . '</option>';
+				}
+
+				$optionsWFS .= '</optgroup>';
 			}
 
 
@@ -1440,7 +1491,7 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				// $url = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$flux .= '
