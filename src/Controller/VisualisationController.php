@@ -213,7 +213,7 @@ class VisualisationController extends ControllerBase {
 		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
+		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -351,7 +351,7 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
+	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
@@ -363,7 +363,7 @@ class VisualisationController extends ControllerBase {
 		$tabCustomView = $this->buildTabCustomView();
 		$tabWordCloud = $this->buildTabWordCloud();
 		$tabTimeline = $this->buildTabTimeline();
-		$tabExport = $this->buildTabExport($api, $dataset, $metadataExtras);
+		$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 		$tabAPI = $this->buildTabAPI($dataset);
 		$tabReuses = $this->buildTabReuses($loggedIn, $name);
 

@@ -8141,8 +8141,10 @@ class Api
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
 
+		$encodingUrl = str_replace (' ', '%20', $resourceUrl);
+
 		// Checking file size. If over 1GB, we return an error
-		$file_size = $this->getFileSize( $resourceUrl );
+		$file_size = $this->getFileSize( $encodingUrl );
 		Logger::logMessage("TRM - FILESIZE " . $file_size);
 		if ($file_size > 1000000000) {
 
@@ -8154,17 +8156,19 @@ class Api
 		}
 
 
-		if (file_put_contents($uploadfile, file_get_contents($resourceUrl))) {
+		if (($data = @file_put_contents($uploadfile, file_get_contents($encodingUrl))) === false) {
+			$error = error_get_last();
+
+			$data_array["status"] = "error";
+			$data_array["message"] = $error['message'];
+			Logger::logMessage("File downloading failed: " . $error['message']);
+		} else {
 			Logger::logMessage("File downloaded successfully");
 			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $fileName;
 
 			$data_array["status"] = "success";
 			$data_array["url"] = $url;
 			return $data_array;
-		} else {
-			$data_array["status"] = "error";
-			$data_array["message"] = 'File downloading failed.';
-			Logger::logMessage("File downloading failed.");
 		}
 		return $data_array;
 	}
