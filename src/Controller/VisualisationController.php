@@ -1382,7 +1382,7 @@ class VisualisationController extends ControllerBase {
 		return $formats;
 	}
 
-	function buildTabExport($api, $dataset, $metadataExtras) {
+	function buildTabExport($dataset, $metadataExtras) {
 		$resources = $dataset["metas"]["resources"];
 
 		$exportGeo = '';
