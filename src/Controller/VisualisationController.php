@@ -1003,10 +1003,10 @@ class VisualisationController extends ControllerBase {
 				$contactEmail = $organisation['contact-info']['email'];
 				$phone = $organisation['contact-info']['phone'];
 
-				$address = isset($address) ? '<p class="mb-0">' . $address . '</p>' : "";
-				$postalCodeCity = isset($postalCode) || isset($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
-				$contactEmail = isset($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
-				$phone = isset($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
+				$address = !$this->isNullOrEmptyString($address) ? '<p class="mb-0">' . $address . '</p>' : "";
+				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
+				$contactEmail = !$this->isNullOrEmptyString($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
+				$phone = !$this->isNullOrEmptyString($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
 				$contacts .= '
 					<div class="d-flex align-items-center mt-3">
