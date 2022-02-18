@@ -64,6 +64,8 @@ class VisualisationController extends ControllerBase {
 		$protocol = \Drupal::request()->getScheme()."://";
 		
 		$api = new API();
+		
+		$pageId = $id;
 
 		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
 		// We redefine the $id variable to be the dataset id because we can use the name id of the dataset in the url
@@ -156,7 +158,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
 		 
 		$element = array(
 			'example one' => [
@@ -169,7 +171,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -210,7 +212,7 @@ class VisualisationController extends ControllerBase {
 		// $imgTheme = $themes[0];
 		// $themes = $themes[1];
 		
-		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
+		$resourcesList = $this->buildResourcesList($pageId, $dataset, $resourceId);
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
 		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
@@ -312,14 +314,14 @@ class VisualisationController extends ControllerBase {
 			</div>';
 	}
 
-	function buildResourcesList($datasetId, $dataset, $selectedResourceId) {
+	function buildResourcesList($pageId, $dataset, $selectedResourceId) {
 		$resources = $dataset["metas"]["resources"];
 		$numberOfResources = 0;
 
 		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
 				<p>Jeu de données affiché : </p>
-				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
+				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $pageId . '\', selectedItem)">
 					<option value="" ng-if="false">Choix du jeu de données</option>
 		';
 
