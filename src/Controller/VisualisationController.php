@@ -68,8 +68,56 @@ class VisualisationController extends ControllerBase {
 		$pageId = $id;
 
 		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
+		if (!isset($dataset["metas"]["id"])) {
+			//Dataset is not found we set a 404 page
+			$imports = $this->buildImports($id, null, null, null, null, null, null, null);
+			$ctx = "";
+
+			$errorPage = '<body>
+				<div class="d4c-content">			
+					<header class="ng-scope"></header>
+					<main class="main--dataset">
+						<div class="container-fluid d4c-app-explore-dataset ng-cloak"
+								ng-app="d4c.frontend"
+								ng-controller="ExploreDatasetController"
+								d4c-dataset-context
+								ng-init="toggleState={expandedFilters: false};"
+								context="ctx"
+								ctx-urlsync="true"
+								ctx-dataset-schema="' . $ctx . '"
+								ctx-selected-resource-id="' . $resourceId . '">
+							<div class="d4c-dataset-visualization__header">
+								<h1 class="d4c-dataset-visualization__dataset-title">
+									<div class="box_3">
+										<button class="d4c-button" ng-click="goBackToSearch()">
+											<i class="fa fa-angle-left" aria-hidden="true"></i>
+											RETOUR AUX RESULTATS DE RECHERCHE
+										</button>
+									</div>
+								</h1>
+								<div class="d4c-error-404">
+									<span>La resource avec l\'ID \'' . $id . '\' n\'existe pas ou n\'est pas disponible.</span>
+								</div>
+							</div>
+						</div>
+					</main>
+				</div>
+				' . $imports . '
+			</body>';
+
+			$element = array(
+				'example one' => [
+					'#type' => 'inline_template',
+					'#template' => $errorPage,
+							
+				],
+			);
+			$element['#attached']['library'][] = 'ckan_admin/visu.angular';
+			return $element;
+		}
+
 		// We redefine the $id variable to be the dataset id because we can use the name id of the dataset in the url
-		$id = $dataset["id"];
+		$id = $dataset["metas"]["id"];
 
 		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
 		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
