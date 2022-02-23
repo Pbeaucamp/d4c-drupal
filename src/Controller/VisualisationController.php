@@ -48,7 +48,8 @@ class VisualisationController extends ControllerBase {
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
 		$resourceId = $request->query->get('resourceId');
-		return $this->myPage2($id, $tab, $resourceId);
+		$location = $request->query->get('location');
+		return $this->myPage2($id, $tab, $resourceId, $location);
 	}
 
 	/**
@@ -57,7 +58,7 @@ class VisualisationController extends ControllerBase {
 	 * @return array
 	 *   A simple renderable array.
 	 */
-	public function myPage2($id, $tab, $resourceId) {
+	public function myPage2($id, $tab, $resourceId, $location = null) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
 		$host = \Drupal::request()->getHost();
@@ -206,7 +207,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location);
 		 
 		$element = array(
 			'example one' => [
@@ -219,7 +220,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -263,7 +264,7 @@ class VisualisationController extends ControllerBase {
 		$resourcesList = $this->buildResourcesList($pageId, $dataset, $resourceId);
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId);
+		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -401,12 +402,12 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId) {
+	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId);
 		$tabTable = $this->buildTabTable();
-		$tabMap = $this->buildTabMap($dataset, $metadataExtras);
+		$tabMap = $this->buildTabMap($dataset, $metadataExtras, $location);
 		$tabAnalyze = $this->buildTabAnalyze();
 		$tabImage = $this->buildTabImage();
 		$tabCalendar = $this->buildTabCalendar();
@@ -1207,17 +1208,28 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabMap($dataset, $metadataExtras) {
+	function buildTabMap($dataset, $metadataExtras, $location) {
 		$resources = $dataset["metas"]["resources"];
 
-		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
-		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
-		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
-		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
-		
-		$bounds = '';
-		if (!$this->isNullOrEmptyString($bboxEastLong) && !$this->isNullOrEmptyString($bboxNorthLat) && !$this->isNullOrEmptyString($bboxSouthLat) && !$this->isNullOrEmptyString($bboxWestLong)) {
-			$bounds = $bboxEastLong . ',' . $bboxNorthLat . ',' . $bboxSouthLat . ',' . $bboxWestLong;
+		$customBounds = '';
+
+		if ($location != null) {
+			$location = $location;
+		}
+		else {
+			$location = $this->config->client->default_bounding_box;
+
+			$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
+			$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
+			$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
+			$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
+			
+			$bounds = '';
+			if (!$this->isNullOrEmptyString($bboxEastLong) && !$this->isNullOrEmptyString($bboxNorthLat) && !$this->isNullOrEmptyString($bboxSouthLat) && !$this->isNullOrEmptyString($bboxWestLong)) {
+				$bounds = $bboxEastLong . ',' . $bboxNorthLat . ',' . $bboxSouthLat . ',' . $bboxWestLong;
+			}
+
+			$customBounds = 'custom-bounds="' . $bounds . '"';
 		}
 
 		if (sizeof($resources) > 0 ) {
@@ -1237,7 +1249,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
-				<d4c-map context="ctx" location="' . $this->config->client->default_bounding_box . '" custom-bounds="' . $bounds . '" sync-to-url="true" auto-resize="true"></d4c-map>
+				<d4c-map context="ctx" location="' . $location . '" ' . $customBounds . ' sync-to-url="true" auto-resize="true"></d4c-map>
 
 				' . $btnMapFishapp . '
 			

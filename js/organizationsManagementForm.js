@@ -120,10 +120,10 @@ function buildWidgetCode(selectedOrganisation) {
         content += '    			</select>\n';
         content += '    		</div>\n';
         content += '            \n';
-        content += '    		<h2>Filtres actifs <span id="reset-filters">Tout effacer</span></h2>\n';
-        content += '    		\n';
-        content += '    		<ul class="jetons">\n';
-        content += '    		</ul>\n';
+        content += '            <div id="actif-filters">\n';
+        content += '                <h2>Filtres actifs <span id="reset-filters">Tout effacer</span></h2>\n';
+        content += '                <ul class="jetons"></ul>\n';
+        content += '             </div>\n';
         content += '    		\n';
         content += '    		<h2> Filtres </h2>\n';
         content += '    		\n';
