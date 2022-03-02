@@ -62,6 +62,7 @@ class Api
 	protected $config;
 	protected $isSpecial;
 	protected $isPostgis;
+	protected $themes;
 	//-------------- 
 
 	public function __construct()
@@ -3502,12 +3503,22 @@ class Api
 				}
 				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineFeatures) . "*)";
 				unset($query_params[$key]);
-			} else
-			if (preg_match($patternRefine, $key)) {
+			}
+			else if ($key == "refine.themes") {
+				if (is_array($query_params["refine.themes"])) {
+					$refineThemes = $query_params["refine.themes"];
+				} else {
+					$refineThemes = array();
+					$refineThemes[] = $query_params["refine.themes"];
+				}
+				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineThemes) . "*)";
+				unset($query_params[$key]);
+			}
+			else if (preg_match($patternRefine, $key)) {
 				$filters[preg_replace($patternRefine, "", $key)] =  $value;
 				unset($query_params[$key]);
-			} else 
-			if (preg_match($patternExclude, $key)) {
+			}
+			else  if (preg_match($patternExclude, $key)) {
 				$filters["-" . preg_replace($patternExclude, "", $key)] =  $value;
 				unset($query_params[$key]);
 			}
@@ -3515,7 +3526,7 @@ class Api
 		if (!empty($filters)) {
 			$reqQ = "";
 			foreach ($filters as $key => $value) {
-				if ($key != "features") {
+				if ($key != "features" && $key != "themes") {
 					$reqQ .= $key . ':"' . $value . '" AND ';
 				} else {
 					$reqQ .= $key . ':' . $value . ' AND ';
@@ -3554,7 +3565,7 @@ class Api
 
 			$fac = array();
 			foreach ($data_array["parameters"] as $key => $value) {
-				if (preg_match($patternRefine, $key) && $key != "refine.features") {
+				if (preg_match($patternRefine, $key) && $key != "refine.features" && $key != "refine.themes") {
 					$fac[] = preg_replace($patternRefine, "", $key);
 				}
 			}
@@ -3580,7 +3591,6 @@ class Api
 		/*if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} */
-
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -3666,14 +3676,44 @@ class Api
 		}
 		$data_array["datasets"] = $datasets;
 
+		$hasFacetThemes = array_key_exists("themes", $result["result"]["facets"]);
+		if ($hasFacetThemes) {
+			$themes = array();
+			foreach ($result["result"]["facets"]["themes"] as $key => $count) {
+				for ($i = 0; $i < $count; $i++) {
+					$themes = array_merge($themes, json_decode($key, true));
+				}
+			}
+
+			$result["result"]["facets"]["themes"] = array_count_values($themes);
+
+			$result["result"]["search_facets"]["themes"]["items"] = array();
+			foreach ($result["result"]["facets"]["themes"] as $theme => $c) {
+				$result["result"]["search_facets"]["themes"]["items"][] = array(
+					"count" => $c,
+					"display_name" => $theme,
+					"name" => $theme
+				);
+			}
+		}
+
 		foreach ($result["result"]["facets"] as $key => $value) {
 			if (!empty((array) $value)) {
 				$facet = array();
 				$facet["name"] = $key;
 				$facet["facets"] = array();
 				foreach ($value as $val => $count) {
+					$facetName = $val;
+					if ($key == "themes") {
+						$facetName = $this->getThemeLabel($val);
+
+						if (isset($refineThemes) && is_array($refineThemes) && !in_array($val, $refineThemes)) {
+							continue;
+						}
+					}
+
 					$item = array();
-					$item["name"] = $val;
+					$item["name"] = $facetName;
 					$item["path"] = $val;
 					$item["count"] = $count;
 					if (array_key_exists("refine." . $key, $data_array["parameters"])) {
@@ -3689,9 +3729,16 @@ class Api
 
 					$facet["facets"][] = $item;
 				}
+				
+				usort($facet["facets"], function ($a, $b) {
+					$key = "count";
+					return  $b[$key] - $a[$key];
+				});
+
 				$facet_groups[] = $facet;
 			}
 		}
+
 		$data_array["facet_groups"] = $facet_groups;
 		$data_array["nhits"] = $result["result"]["count"]; //count($datasets);
 		echo json_encode($data_array);
@@ -5875,12 +5922,13 @@ class Api
 		return $response;
 	}
 
-	function getThemes($returnJson = false, $sort = false)
-	{
-		$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
-		$themes = $themConfig->get('themes');
+	function getThemes($returnJson = false, $sort = false) {
+		if ($this->themes == null) {
+			$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
+			$this->themes = $themConfig->get('themes');
+		}
 		if ($returnJson) {
-			$themes = json_decode($themes, true);
+			$themes = json_decode($this->themes, true);
 
 			if ($sort) {
 				usort($themes, function ($a, $b) {
@@ -5890,9 +5938,20 @@ class Api
 				});
 			}
 			return $themes;
-		} else {
-			return $themes;
 		}
+		else {
+			return $this->themes;
+		}
+	}
+
+	function getThemeLabel($themeValue) {
+		$themes = $this->getThemes(true);
+		foreach ($themes as $theme) {
+			if ($theme['title'] == $themeValue) {
+				return isset($theme['label']) ? $theme['label'] : $themeValue;
+			}
+		}
+		return $themeValue;
 	}
 
 	function updateNbDownload($params)
@@ -8136,8 +8195,6 @@ class Api
 			$fileName = $resourceManager->nettoyage2($resourceName) . "." . $resourceFormat;
 		}
 
-		Logger::logMessage("TRM - FILENAME " . $fileName);
-
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
 
@@ -8145,7 +8202,6 @@ class Api
 
 		// Checking file size. If over 1GB, we return an error
 		$file_size = $this->getFileSize( $encodingUrl );
-		Logger::logMessage("TRM - FILESIZE " . $file_size);
 		if ($file_size > 1000000000) {
 
 			Logger::logMessage("Exceeded filesize limit.");
