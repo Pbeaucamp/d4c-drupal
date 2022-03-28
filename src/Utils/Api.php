@@ -6844,6 +6844,10 @@ class Api
 	{
 		$method = $_SERVER['REQUEST_METHOD'];
 
+		$dataset = $this->getPackageShow2($datasetid, "");
+		//We define the dataset ID with the name
+		$datasetid = $dataset["datasetid"];
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 
@@ -7066,7 +7070,7 @@ class Api
 			$ids = array();
 
 			foreach ($datasets as $row) {
-				$ids[] = $row["id"];
+				$ids[] = $row["name"];
 			}
 			//$ids = implode(",", $ids);
 			$query->condition('reu_dataset_id', $ids, "IN");
@@ -8283,6 +8287,7 @@ class Api
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
 				'text' => 'text/plain',
+				'xml' => 'text/xml',
 			),
 			true
 		)) {

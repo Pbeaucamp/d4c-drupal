@@ -364,7 +364,7 @@ class editMetaDataForm extends HelpFormBase {
 			'#type' => 'managed_file',
 			'#upload_location' => 'public://dataset/',
 			'#upload_validators' => array(
-				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip'),
+				'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip gml'),
 			),
 			'#size' => 10,
             '#suffix' => '</div>',

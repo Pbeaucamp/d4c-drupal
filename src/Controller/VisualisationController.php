@@ -120,13 +120,13 @@ class VisualisationController extends ControllerBase {
 		// We redefine the $id variable to be the dataset id because we can use the name id of the dataset in the url
 		$id = $dataset["metas"]["id"];
 
-		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
-		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
+		// $dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
+		// $dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
 
 		$name = $dataset["metas"]["title"];
 		//Removing HTML tags
 		$Parsedown = new Parsedown();
-		$description = $Parsedown->text($dataset["metas"]["description"]);
+		$description = $Parsedown->text($dataset["metas"]["notes"]);
 
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
@@ -976,6 +976,10 @@ class VisualisationController extends ControllerBase {
 	
 	function buildMethodeProductionEtQualite($metadataExtras) {
 		$lineage = $this->exportExtras($metadataExtras, 'lineage');
+		if (isset($lineage)) {
+			$Parsedown = new Parsedown();
+			$lineage = $Parsedown->text($lineage);
+		}
 		return $lineage;
 	}
 
@@ -1403,7 +1407,7 @@ class VisualisationController extends ControllerBase {
 
 		$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
 		$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetCapabilities');
-		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.3.0');
+		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
 		$url = $serviceUrlWithoutParams . '?' . $queryString;
 
 		$xml = simplexml_load_file($url);

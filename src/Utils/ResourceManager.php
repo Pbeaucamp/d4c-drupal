@@ -34,6 +34,11 @@ class ResourceManager {
 	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
 		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
+
+		//We update the description if empty or equals to default.description
+		if (isset($description) && strpos($description, 'default.description') !== false) {
+			$description = "";
+		}
 	
 		$urlRes = $this->urlCkan . "/dataset/" . $datasetName;
 		$newData = ["name" => $datasetName,
@@ -322,9 +327,9 @@ class ResourceManager {
 				$results = array_merge($results, $result);
 			}
 		}
-		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp') {
+		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp' || $type == 'gml') {
 			// We upload the geojson file as resource except if it is a shp or kml file
-			if ($type != 'kml' && $type != 'shp') {
+			if ($type != 'kml' && $type != 'shp' && $type != 'gml') {
 				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
 				$results[] = $result;
 			}
@@ -563,13 +568,13 @@ class ResourceManager {
 				$csv = null;
 			}
 		}
-		else if ($type == 'kml' || $type == 'shp') {
+		else if ($type == 'kml' || $type == 'shp' || $type == 'gml') {
 			$scriptPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
 
 			$typeConvert = 'GEOJSON';
 			$projection = $this->config->client->shapefile_projection;
 			
-			Logger::logMessage("Building Geojson from shape file '" . $resourceUrl . "' with file path '" . $filePath . "'");
+			Logger::logMessage("Building Geojson from geo file '" . $resourceUrl . "' with file path '" . $filePath . "'");
 
 			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/gen_' . uniqid() . '.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . " " . $projection;
@@ -1099,6 +1104,11 @@ class ResourceManager {
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
 
 		$resourceName = $customName != null ? $customName : $fileName;
+
+		//We update the description if empty or equals to default.description
+		if (isset($description) && strpos($description, 'default.description') !== false) {
+			$description = "";
+		}
 	
 		if ($isUpdate) {
 			$resource = [
