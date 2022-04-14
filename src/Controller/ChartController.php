@@ -148,6 +148,7 @@ class ChartController extends ControllerBase {
 			</div>
 		</main>
 		
+		<script src="' . $config->client->routing_prefix . '/modules/ckan_admin/js/routing.js"></script>
 		<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
         <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>

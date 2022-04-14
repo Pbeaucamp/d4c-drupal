@@ -1,6 +1,7 @@
 <?php
 
 namespace Drupal\ckan_admin\Utils;
+
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Export;
@@ -53,35 +54,39 @@ SOFTWARE.
  *
  */
 
-class Api{
-	
+class Api
+{
+
 	//protected $config = \Drupal::config('ckan_admin.settings');
-	protected $urlCkan;// = "http://192.168.2.223/";
+	protected $urlCkan; // = "http://192.168.2.223/";
 	//protected $urlCkan = file_get_contents(__DIR__ ."/../../config.json");
 	protected $config;
 	protected $isSpecial;
 	protected $isPostgis;
-    //-------------- 
-    
-	public function __construct(){
-        $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+	protected $themes;
+	//-------------- 
+
+	public function __construct()
+	{
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
 		$this->isSpecial = $this->config->client->name == 'cda2';
 		$this->isPostgis = $this->config->client->name == 'cda2';
-    }
-    
-	public function getStoreOptions($applySecurity = true){
+	}
+
+	public function getStoreOptions($applySecurity = true)
+	{
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
 		//$headr[] = 'Authorization: 995efb3c-9349-43d7-965c-d7ce567b323a';
 		if ($applySecurity) {
-			$headr[] = 'Authorization: '.$this->config->ckan->api_key;
+			$headr[] = 'Authorization: ' . $this->config->ckan->api_key;
 		}
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_HTTPHEADER     => $headr,
-			CURLOPT_POST=>true,
+			CURLOPT_POST => true,
 			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_SSL_VERIFYHOST =>  0,
 			CURLOPT_ENCODING => 'UTF-8'
@@ -89,9 +94,10 @@ class Api{
 		return $options;
 	}
 
-	public function getSimpleOptions(){
+	public function getSimpleOptions()
+	{
 		$options = array(
-			CURLOPT_POST=>true,
+			CURLOPT_POST => true,
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_SSL_VERIFYHOST =>  0,
@@ -100,7 +106,8 @@ class Api{
 		return $options;
 	}
 
-	public function getSimpleGetOptions(){
+	public function getSimpleGetOptions()
+	{
 		$options = array(
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_SSL_VERIFYPEER => false,
@@ -121,7 +128,8 @@ class Api{
 	 * We need to call that for the majority of the methods
 	 * 
 	 */
-	function retrieveParameters($params) {
+	function retrieveParameters($params)
+	{
 		if ($this->isSpecial) {
 			if ($params == '') {
 				$params = $_SERVER['QUERY_STRING'];
@@ -131,8 +139,7 @@ class Api{
 				$params = str_replace('%C3%A2', 'â', $params);
 				$params = str_replace('+', ' ', $params);
 				$params = str_replace('%22', '"', $params);
-			}
-			else {
+			} else {
 				$params;
 			}
 		}
@@ -140,54 +147,55 @@ class Api{
 		return $params;
 	}
 
-	function proper_parse_str($str) {
-		if($str == ''){
+	function proper_parse_str($str)
+	{
+		if ($str == '') {
 			$str = $_SERVER['QUERY_STRING'];
 		} else {
-			if(substr($str, 0, 1 ) == '?'){
+			if (substr($str, 0, 1) == '?') {
 				$str = substr($str, 1);
 			}
-		}	  
-		$str = preg_replace('/_slash_/i',"/",$str);
+		}
+		$str = preg_replace('/_slash_/i', "/", $str);
 		# result array
-	  $arr = array();
+		$arr = array();
 
-	  # split on outer delimiter
-	  $pairs = explode('&', $str);
+		# split on outer delimiter
+		$pairs = explode('&', $str);
 
-	  # loop through each pair
-	  foreach ($pairs as $i) {
-		#Adding a trick for subdirectory - if q=d4c/ is present we remove the parameter
-		$query = 'q=d4c/';
-		if (substr( $i, 0, strlen($query) ) === $query) {
-			continue;
+		# loop through each pair
+		foreach ($pairs as $i) {
+			#Adding a trick for subdirectory - if q=d4c/ is present we remove the parameter
+			$query = 'q=d4c/';
+			if (substr($i, 0, strlen($query)) === $query) {
+				continue;
+			}
+
+			# split into name and value
+			list($name, $value) = explode('=', $i, 2);
+
+			# if name already exists
+			if (isset($arr[$name])) {
+				# stick multiple values into an array
+				if (is_array($arr[$name])) {
+					$arr[$name][] = $value;
+				} else {
+					$arr[$name] = array($arr[$name], $value);
+				}
+			}
+			# otherwise, simply stick it in a scalar
+			else {
+				$arr[$name] = $value;
+			}
 		}
 
-	    # split into name and value
-	    list($name,$value) = explode('=', $i, 2);
-	    
-	    # if name already exists
-	    if( isset($arr[$name]) ) {
-	      # stick multiple values into an array
-	      if( is_array($arr[$name]) ) {
-	        $arr[$name][] = $value;
-	      }
-	      else {
-	        $arr[$name] = array($arr[$name], $value);
-	      }
-	    }
-	    # otherwise, simply stick it in a scalar
-	    else {
-	      $arr[$name] = $value;
-	    }
-	  }
-
-	  # return result array
-	  return $arr;
+		# return result array
+		return $arr;
 	}
 
 
-	public function callDatastoreApi($params) {
+	public function callDatastoreApi($params)
+	{
 		$result = $this->getDatastoreApi($params);
 
 		echo json_encode($result);
@@ -195,68 +203,69 @@ class Api{
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
-	public function getDatastoreApi($params) {
+
+	public function getDatastoreApi($params)
+	{
 
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
 		$filters_init = array();
 		//echo $params . "\r\n";
 		$query_params = $this->proper_parse_str($params);
-		if(array_key_exists('rows', $query_params)){
+		if (array_key_exists('rows', $query_params)) {
 			$query_params['limit'] = $query_params['rows'];
 			unset($query_params['rows']);
 		}
-		if(array_key_exists('q', $query_params)){
+		if (array_key_exists('q', $query_params)) {
 			if (strpos($query_params['q'], '{') == false) {
-				if (strpos($query_params['q'], ':') != false && substr($query_params['q'], 0, 1 ) != '"') {
+				if (strpos($query_params['q'], ':') != false && substr($query_params['q'], 0, 1) != '"') {
 					$ex = explode(':', $query_params['q']);
-					$query_params['q'] = '"'. $ex[0] .'":' .  $ex[1];
+					$query_params['q'] = '"' . $ex[0] . '":' .  $ex[1];
 				}
-			    $query_params['q'] = '{'.$query_params['q'].'}';
-			    //echo $query_params['q'];
+				$query_params['q'] = '{' . $query_params['q'] . '}';
+				//echo $query_params['q'];
 			}
 		}
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-		        unset($query_params[$key]);
-		        //echo preg_replace($pattern,"",$key);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-			if($key == "id" || $key == "calendarview"){
-		    	unset($query_params[$key]); 
-		    }
+				unset($query_params[$key]);
+				//echo preg_replace($pattern,"",$key);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if ($key == "id" || $key == "calendarview") {
+				unset($query_params[$key]);
+			}
 		}
-		if(!empty($filters_init)){
+		if (!empty($filters_init)) {
 			$query_params['filters'] = json_encode($filters_init);
 		}
-		
+
 
 		$url2 = http_build_query($query_params);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
-				
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		//echo $result . "\r\n";
 		curl_close($curl);
 
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
-			 if(preg_match("/<!--.*description.*-->/i",$description)) {
-			 	preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $description, $matches);
+			if (preg_match("/<!--.*description.*-->/i", $description)) {
+				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $description, $matches);
 
-				if($matches) {
+				if ($matches) {
 					$description = $matches[1][0];
 					$description = preg_replace('/_/i', ' ', $description);
 				}
-				}
+			}
 		}
 		unset($result["help"]);
 		unset($result["result"]["_links"]);
@@ -265,115 +274,115 @@ class Api{
 		return $result;
 	}
 
-	private function constructReqQToSQL($value, $append=""){
+	private function constructReqQToSQL($value, $append = "")
+	{
 		//"q=emr_dt_service:[2018-04-21T22:00:00Z TO 2018-07-20T22:00:00Z]"
 		//"q=emr_dt_service>=\"2018-04-02T22:00:00Z\""
 		//q=nom_com:"lyon"
 		//q=lyon
 		//TODO améliorer boucle avec parenthèses
 		$res = "";
-		if(count(explode(" AND ", $value)) > 1){
+		if (count(explode(" AND ", $value)) > 1) {
 			//$res = " and (";
-			foreach(explode(" AND ", $value) as $item){
-				$res .= $this->constructReqQToSQL($item," and ");
+			foreach (explode(" AND ", $value) as $item) {
+				$res .= $this->constructReqQToSQL($item, " and ");
 			}
 			$res = substr($res, 5);
-		} else if(count(explode(" OR ", $value)) > 1){
+		} else if (count(explode(" OR ", $value)) > 1) {
 			//$res = " and (";
-			foreach(explode(" OR ", $value) as $item){
-				$res .= $this->constructReqQToSQL($item," or ");
+			foreach (explode(" OR ", $value) as $item) {
+				$res .= $this->constructReqQToSQL($item, " or ");
 			}
 			$res = substr($res, 4);
 		} else {
-			if(count(explode(" TO ", $value)) > 1){
+			if (count(explode(" TO ", $value)) > 1) {
 				$field = explode(":", $value)[0];
-				$datas = substr(explode(":", $value,2)[1], 1, -1);
+				$datas = substr(explode(":", $value, 2)[1], 1, -1);
 				$d1 = explode(" TO ", $datas)[0];
 				$d2 = explode(" TO ", $datas)[1];
-				if(is_numeric($d1)){
-					$res.=  $field. " >= " . $d1 . " and ". $field. " <= " . $d2; 
+				if (is_numeric($d1)) {
+					$res .=  $field . " >= " . $d1 . " and " . $field . " <= " . $d2;
 				} else {
-					$res.=  $field. " >= '" . $d1 . "' and ". $field. " <= '" . $d2 . "'"; 
+					$res .=  $field . " >= '" . $d1 . "' and " . $field . " <= '" . $d2 . "'";
 				}
-			} else if(count(explode(":", $value)) == 2){
+			} else if (count(explode(":", $value)) == 2) {
 				$field = explode(":", $value)[0];
 				$data = explode(":", $value)[1];
 				if (strpos($field, "_id") !== false || is_numeric($data)) {
-					
-					if(strpos($data, "%27") !== false) {
+
+					if (strpos($data, "%27") !== false) {
 						$data = str_replace("%27", "", $data);
 					}
-					
+
 					Logger::logMessage("Search by " . $field . " '" . $data . "'");
-					$res.=  $field. " = " . $data ; 
-				}
-				else {
-					if(substr($data, 0, 1 ) == '"') {
+					$res .=  $field . " = " . $data;
+				} else {
+					if (substr($data, 0, 1) == '"') {
 						$data = substr($data, 1, -1);
 					}
-					if(strpos($data, "%27") !== false) {
+					if (strpos($data, "%27") !== false) {
 						$data = str_replace("%27", "", $data);
 					}
-					$res.= "CAST(" . $field . " AS TEXT)" . " ilike '%" . $data . "%'";
+					$res .= "CAST(" . $field . " AS TEXT)" . " ilike '%" . $data . "%'";
 				}
-			} else if(count(explode(">=", $value)) > 1 || count(explode("<=", $value)) > 1 || count(explode("=", $value)) > 1 || count(explode(">", $value)) > 1 || count(explode("<", $value)) > 1){
-				
-				if(count(explode(">=", $value)) > 1){
+			} else if (count(explode(">=", $value)) > 1 || count(explode("<=", $value)) > 1 || count(explode("=", $value)) > 1 || count(explode(">", $value)) > 1 || count(explode("<", $value)) > 1) {
+
+				if (count(explode(">=", $value)) > 1) {
 					$field = explode(">=", $value)[0];
 					$data = explode(">=", $value)[1];
-					if(is_numeric($data)){
-						$res.=  $field. " >= " . $data ; 
+					if (is_numeric($data)) {
+						$res .=  $field . " >= " . $data;
 					} else {
-						if(substr($data, 0, 1 ) == '"') $data = substr($data, 1, -1);
-						$res.=  $field. " >= '" . $data . "'"; 
+						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
+						$res .=  $field . " >= '" . $data . "'";
 					}
-				} else if(count(explode("<=", $value)) > 1){
+				} else if (count(explode("<=", $value)) > 1) {
 					$field = explode("<=", $value)[0];
 					$data = explode("<=", $value)[1];
-					if(is_numeric($data)){
-						$res.=  $field. " <= " . $data ; 
+					if (is_numeric($data)) {
+						$res .=  $field . " <= " . $data;
 					} else {
-						if(substr($data, 0, 1 ) == '"') $data = substr($data, 1, -1);
-						$res.=  $field. " <= '" . $data . "'"; 
+						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
+						$res .=  $field . " <= '" . $data . "'";
 					}
-				} else if(count(explode(">", $value)) > 1){
+				} else if (count(explode(">", $value)) > 1) {
 					$field = explode(">", $value)[0];
 					$data = explode(">", $value)[1];
-					if(is_numeric($data)){
-						$res.=  $field. " > " . $data ; 
+					if (is_numeric($data)) {
+						$res .=  $field . " > " . $data;
 					} else {
-						if(substr($data, 0, 1 ) == '"') $data = substr($data, 1, -1);
-						$res.=  $field. " > '" . $data . "'"; 
+						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
+						$res .=  $field . " > '" . $data . "'";
 					}
-				} else if(count(explode("<", $value)) > 1){
+				} else if (count(explode("<", $value)) > 1) {
 					$field = explode("<", $value)[0];
 					$data = explode("<", $value)[1];
-					if(is_numeric($data)){
-						$res.=  $field. " < " . $data ; 
+					if (is_numeric($data)) {
+						$res .=  $field . " < " . $data;
 					} else {
-						if(substr($data, 0, 1 ) == '"') $data = substr($data, 1, -1);
-						$res.=  $field. " < '" . $data . "'"; 
+						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
+						$res .=  $field . " < '" . $data . "'";
 					}
 				} else {
 					$field = explode("=", $value)[0];
 					$data = explode("=", $value)[1];
-					if(is_numeric($data)){
-						$res.=  $field. " = " . $data ; 
+					if (is_numeric($data)) {
+						$res .=  $field . " = " . $data;
 					} else {
-						if(substr($data, 0, 1 ) == '"') $data = substr($data, 1, -1);
-						$res.=  $field. " = '" . $data . "'"; 
+						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
+						$res .=  $field . " = '" . $data . "'";
 					}
 				}
-			} else if(count(explode("NOT #null(", $value)) > 1){
+			} else if (count(explode("NOT #null(", $value)) > 1) {
 				$field = substr(explode("NOT #null(", $value)[1], 0, -1);
-				$res.=  $field. " not in ('', ',')"; 
+				$res .=  $field . " not in ('', ',')";
 			} else {
-				$res.=  "_full_text @@ to_tsquery('" . $value . "')";
+				$res .=  "_full_text @@ to_tsquery('" . $value . "')";
 			}
 		}
-		
-		if($append == ""){
-			$res = " and (".$res.")";
+
+		if ($append == "") {
+			$res = " and (" . $res . ")";
 		} else {
 			$res = $append . $res;
 		}
@@ -381,28 +390,30 @@ class Api{
 	}
 
 
-	public function callDatastoreApiFacet($params) {
+	public function callDatastoreApiFacet($params)
+	{
 		$params = $this->retrieveParameters($params);
-	
+
 		//error_log('params = ' . $params);
 		$query_params = $this->proper_parse_str($params);
-		if (array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)){
-			$nhits;$nhitsTotal=0;
+		if (array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)) {
+			$nhits;
+			$nhitsTotal = 0;
 			$facet_groups = array();
 
 			$fields = $this->getAllFields($query_params['resource_id']);
-			$fieldCoordinates="";
-			$fieldGeometries="";
+			$fieldCoordinates = "";
+			$fieldGeometries = "";
 			$fieldId = "id";
 			foreach ($fields as $value) {
-				if(preg_match("/id|num|code|siren/i",$value['name'])){
+				if (preg_match("/id|num|code|siren/i", $value['name'])) {
 					$fieldId = $value['name'];
 					break;
-				} 
+				}
 			}
 			foreach ($fields as $value) {
-				if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
-				if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
+				if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+				if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
 			}
 
 			$filters_init = array();
@@ -410,53 +421,53 @@ class Api{
 			$patternRefine = '/refine./i';
 			$patternDisj = '/disjunctive./i';
 			$patternSort = '/facetsort./i';
-			$reqQfilter="";
-			$qField="";
+			$reqQfilter = "";
+			$qField = "";
 			$filterKey = "";
 			$filterSort = "";
 
-			foreach($query_params as $key => $value) {
-			    if (preg_match($patternRefine,$key)){
-			    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+			foreach ($query_params as $key => $value) {
+				if (preg_match($patternRefine, $key)) {
+					$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-			        unset($query_params[$key]);
-			        //echo preg_replace($pattern,"",$key);
-			    }
-			    if (preg_match($patternDisj,$key)){
-			    	unset($query_params[$key]);
-			    	$disj[] = preg_replace($patternDisj,"",$key);
-			    }
-				if (preg_match($patternSort,$key)){
-			    	unset($query_params[$key]);
-					$filterKey =  preg_replace($patternSort,"",$key);
+					unset($query_params[$key]);
+					//echo preg_replace($pattern,"",$key);
+				}
+				if (preg_match($patternDisj, $key)) {
+					unset($query_params[$key]);
+					$disj[] = preg_replace($patternDisj, "", $key);
+				}
+				if (preg_match($patternSort, $key)) {
+					unset($query_params[$key]);
+					$filterKey =  preg_replace($patternSort, "", $key);
 					$filterSort =  $value;
-			    }
-			    if($key == "q"){
-			    	$reqQfilter = $this->constructReqQToSQL($value);
-			    	$pattern = '/and (\w+) /i';
-			    	preg_match($pattern,$reqQfilter,$qField); 
-			    }
-			    if($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom"){
-			    	unset($query_params[$key]); 
-			    }
-				if ($key == "geofilter.distance"){
+				}
+				if ($key == "q") {
+					$reqQfilter = $this->constructReqQToSQL($value);
+					$pattern = '/and (\w+) /i';
+					preg_match($pattern, $reqQfilter, $qField);
+				}
+				if ($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom") {
+					unset($query_params[$key]);
+				}
+				if ($key == "geofilter.distance") {
 					unset($query_params[$key]);
 					$filters_init[$key] =  $value;
 				}
-				if ($key == "geofilter.polygon"){
+				if ($key == "geofilter.polygon") {
 					unset($query_params[$key]);
 					$filters_init[$key] =  $value;
 				}
 			}
 
 
-			
+
 			//echo json_encode($filters_init);
 			//$filters_init = json_decode($query_params['filters']);
-			if(array_key_exists('fields', $query_params)){
+			if (array_key_exists('fields', $query_params)) {
 				$facets = preg_split('/,/', $query_params['fields']);
-			} else if(array_key_exists('facet', $query_params)){
-				if(is_array($query_params['facet'])){
+			} else if (array_key_exists('facet', $query_params)) {
+				if (is_array($query_params['facet'])) {
 					$facets = $query_params['facet'];
 				} else {
 					$facets = array();
@@ -464,35 +475,35 @@ class Api{
 				}
 				//unset($query_params['facet']);
 			}
-			
+
 			$nhits = 0;
-			if(!array_key_exists('rows', $query_params) || $query_params["rows"] == 0){
-				
-				for($i = 0; $i < count($facets); ++$i) {
+			if (!array_key_exists('rows', $query_params) || $query_params["rows"] == 0) {
+
+				for ($i = 0; $i < count($facets); ++$i) {
 					$group = array();
 					$query_params['fields'] = $facets[$i];
 					$query_params['distinct'] = "true";
-					if(count($filters_init) > 0){
+					if (count($filters_init) > 0) {
 						$filters = array_merge(array(), $filters_init);
 						if (in_array($facets[$i], $disj)) {
 							unset($filters[$facets[$i]]);
 						}
 						$query_params['filters'] = json_encode($filters);
 					}
-					
+
 					//echo $query_params['filters'];
 					unset($query_params['limit']);
-					
-					
+
+
 					$where = "";
-					if(!empty($filters)){
+					if (!empty($filters)) {
 						$where = " where ";
 						foreach ($filters as $key => $value) {
-							if($key == "geofilter.distance"){
+							if ($key == "geofilter.distance") {
 								$coord = explode(',', $value);
 								$lat = $coord[0];
 								$long = $coord[1];
-								if(count($coord)> 2){
+								if (count($coord) > 2) {
 									$dist = $coord[2];
 									//$bbox = $this->getBbox($lat,$long,$dist);
 									//$bbox = explode(',', $bbox);
@@ -502,41 +513,40 @@ class Api{
 									//$maxlong = $bbox[3];
 									//$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
 									//$where .= "circle(point(" . $lat . "," . $long . "), " . $dist/100000 . ") @> point(".$fieldCoordinates.") and ";
-									$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.") and ";
+									$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
 									//$where .= "circle(polygon(path '(" . $this->getLosangePath($lat,$long,$dist) . ")')) @> point(".$fieldCoordinates.") and ";
 								} else {
 									//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 									//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
-									$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
+									$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
 								}
-								
-								$where .= $fieldCoordinates." not in ('', ',') and ";
-							} else if($key == "geofilter.polygon"){
+
+								$where .= $fieldCoordinates . " not in ('', ',') and ";
+							} else if ($key == "geofilter.polygon") {
 								//polygon(path '((0,0),(1,1),(2,0))')
-								$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
-								$where .= $fieldCoordinates." not in ('', ',') and ";
+								$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
+								$where .= $fieldCoordinates . " not in ('', ',') and ";
 							} else {
-								if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 									$where .= $key . "=" . $value . " and ";
-								} else if(is_array($value)){ 
+								} else if (is_array($value)) {
 									$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 								} else {
 									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 								}
 							}
 						}
-						$where = substr($where, 0, strlen($where)-4 );
-						if($reqQfilter != NULL){
+						$where = substr($where, 0, strlen($where) - 4);
+						if ($reqQfilter != NULL) {
 							$where .= $reqQfilter;
 						}
-					}
-					else if($reqQfilter != NULL){
+					} else if ($reqQfilter != NULL) {
 						$where = " where " . substr($reqQfilter, 5);
 					}
 
 					$req = array();
-					$sql = "Select \"".$query_params['fields']."\", count(\"".$query_params['fields']."\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"".$query_params['fields'] . "\"";
-					
+					$sql = "Select \"" . $query_params['fields'] . "\", count(\"" . $query_params['fields'] . "\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"" . $query_params['fields'] . "\"";
+
 					$req['sql'] = $sql;
 
 					//echo $sql;
@@ -548,7 +558,7 @@ class Api{
 					$result = curl_exec($curl);
 					//echo $callUrl;
 					curl_close($curl);
-					$result = json_decode($result,true);
+					$result = json_decode($result, true);
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);
@@ -557,119 +567,121 @@ class Api{
 					$nhitsRefined = 0;
 					$values = array();
 
-					for($j = 0; $j < count($result['result']['records']); ++$j) {
+					for ($j = 0; $j < count($result['result']['records']); ++$j) {
 
-							$value = array();
-							$value['name'] = $result['result']['records'][$j][$facets[$i]];
-							$value['path'] = $value['name'];
-							//$value['count'] = $result2['result']['total'];
-							$value['count'] = $result['result']['records'][$j]['total'];
-							$bool = false;
-							foreach ($filters_init as $k => $v) {
-								if(is_array($v)){
-									if(in_array($value['name'], $v)){
-										$bool = true;
-										break;
-									}
-								} else {
-									if($value['name'] == $v){
-										$bool = true;
-										break;
-									}
+						$value = array();
+						$value['name'] = $result['result']['records'][$j][$facets[$i]];
+						$value['path'] = $value['name'];
+						//$value['count'] = $result2['result']['total'];
+						$value['count'] = $result['result']['records'][$j]['total'];
+						$bool = false;
+						foreach ($filters_init as $k => $v) {
+							if (is_array($v)) {
+								if (in_array($value['name'], $v)) {
+									$bool = true;
+									break;
+								}
+							} else {
+								if ($value['name'] == $v) {
+									$bool = true;
+									break;
 								}
 							}
-							if($qField != "" && $value['name'] == $qField){
-								$bool = true;
-							}
-							if($bool){
-								$value['state'] = "refined";
-								$nhitsRefined += $value['count'];
-							} else {
-								$value['state'] = "displayed";
-							}
-							if($value['count'] > 0){
-								$values[] = $value;
+						}
+						if ($qField != "" && $value['name'] == $qField) {
+							$bool = true;
+						}
+						if ($bool) {
+							$value['state'] = "refined";
+							$nhitsRefined += $value['count'];
+						} else {
+							$value['state'] = "displayed";
+						}
+						if ($value['count'] > 0) {
+							$values[] = $value;
 
-								$nhitsTotal += $value['count'];
-							}
-										 
-		 
+							$nhitsTotal += $value['count'];
+						}
 					}
 
 					if ($filterSort && $facets[$i] == $filterKey) {
 						//For now we only filter by Alphanum. Need to support other filters
-						array_multisort( array_column($values, "name"), SORT_ASC, $values );
-					}
-					else {
-						array_multisort( array_column($values, "count"), SORT_DESC, $values );
+						array_multisort(array_column($values, "name"), SORT_ASC, $values);
+					} else {
+						array_multisort(array_column($values, "count"), SORT_DESC, $values);
 					}
 
 					//echo count($values)." ". $nhitsTotal; 
-					if(count($values) > ($nhitsTotal - 5*$nhitsTotal/100)){ //protection interface
-						$values = array_slice($values, 0, 500); 
+					if (count($values) > ($nhitsTotal - 5 * $nhitsTotal / 100)) { //protection interface
+						$values = array_slice($values, 0, 500);
 					}
 					$group['name'] = $facets[$i];
 					$group['facets'] = $values;
-					
+
 					$facet_groups[] = $group;
-					if($nhitsRefined == 0){
+					if ($nhitsRefined == 0) {
 						$nhitsRefined = $nhitsTotal;
 					}
-					if($nhits == 0){
+					if ($nhits == 0) {
 						$nhits = $nhitsRefined;
 					} else {
-						$nhits = min($nhits,$nhitsRefined);
+						$nhits = min($nhits, $nhitsRefined);
 					}
 				}
 			}
 			$data_array = array();
 			$data_array['nhits'] = $nhits;
 			$data_array['facet_groups'] = $facet_groups;
-			foreach($query_params as $key => $value) {
-				if(!empty($key)){
-				  	$data_array["parameters"][$key] =  $value;
-				}	
+			foreach ($query_params as $key => $value) {
+				if (!empty($key)) {
+					$data_array["parameters"][$key] =  $value;
+				}
 			}
 
-			if(array_key_exists("rows", $query_params) && $query_params["rows"] > 0){
+			if (array_key_exists("rows", $query_params) && $query_params["rows"] > 0) {
 				$data = $this->getDatastoreRecord_v2($params);
 				$data_array['records'] = $data['records'];
 				$data_array['nhits'] = $data['nhits'];
 			}
-			echo json_encode( $data_array );
+			echo json_encode($data_array);
 			$response = new Response();
 			$response->headers->set('Content-Type', 'application/json');
 			//$response->body(json_encode( $data_array ));
 			return $response;
-		}
-		else {
+		} else {
 			return $this->callDatastoreApi($params);
 		}
 	}
 
-	private function getFacetValuebyName($name, $array){
-		foreach($array as $row) {
-			if($row['name'] == $name){
+	private function getFacetValuebyName($name, $array)
+	{
+		foreach ($array as $row) {
+			if ($row['name'] == $name) {
 				return $row;
 			}
 		}
 		return NULL;
 	}
 
-	
 
-	public function callPackageShow($params) {
+
+	public function callPackageShow($params)
+	{
 		$result = $this->getPackageShow($params);
 		unset($result["help"]);
-		foreach($result["result"]["resources"] as $j => $value) {
-			unset($result["result"]["resources"][$j]["url"]);	
+		foreach ($result["result"]["resources"] as $j => $value) {
+			unset($result["result"]["resources"][$j]["url"]);
 		}
 
-		
+
 		$result["result"]["metadata_imported"] = $result["result"]["metadata_modified"];
-		$result["result"]["metadata_modified"] = current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $result["result"]["metadata_modified"];
-		$result["result"]["metadata_created"] = current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"] ?: $result["result"]["metadata_created"];
-		
+		$result["result"]["metadata_modified"] = current(array_filter($result["result"]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_last_modification";
+		}))["value"] ?: $result["result"]["metadata_modified"];
+		$result["result"]["metadata_created"] = current(array_filter($result["result"]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_creation";
+		}))["value"] ?: $result["result"]["metadata_created"];
+
 		echo json_encode($result);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
@@ -677,33 +689,36 @@ class Api{
 		return $response;
 	}
 
-	public function callPackageShowForSearch($params) {
+	public function callPackageShowForSearch($params)
+	{
 		$result = $this->getPackageShow($params);
 		unset($result["help"]);
-		
+
 		echo json_encode($result);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
-	public function getPackageShow($params){
-		$callUrl =  $this->urlCkan . "api/action/package_show?" . $params;		
+
+	public function getPackageShow($params)
+	{
+		$callUrl =  $this->urlCkan . "api/action/package_show?" . $params;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		return $result;
 	}
-	
-	public function getPackageSearch($params, $additionnalParameters = null, $rows = null, $start = null){
+
+	public function getPackageSearch($params, $additionnalParameters = null, $rows = null, $start = null)
+	{
 		//$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 
 
-		if(!is_null($params)){
+		if (!is_null($params)) {
 			$params = str_replace('&defType=edismax', '', $params);
 			$callUrl .= "?" . $params;
 			$callUrl = str_replace('%3D', '=', $callUrl);
@@ -721,7 +736,7 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
 		Logger::logMessage("Found " . count($result["result"]["results"]) . " datasets");
 
@@ -729,8 +744,8 @@ class Api{
 		//We need to filter those result according to the selected map area (if there is a selection)
 
 		//First we get the coordinate from the map
-		$coordmap ="";
-		if($additionnalParameters) {
+		$coordmap = "";
+		if ($additionnalParameters) {
 
 			$coordmap = $additionnalParameters;
 
@@ -740,7 +755,7 @@ class Api{
 			$coordmap = str_replace('%2C', ',', $coordmap);
 			$coordinates = explode("),", $coordmap);
 
-			for($i = 0; $i < count($coordinates); ++$i) {
+			for ($i = 0; $i < count($coordinates); ++$i) {
 				$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
 				$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
 			}
@@ -748,10 +763,10 @@ class Api{
 			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
 			$dataSetscontent = [];
 
-			
+
 
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
-			foreach($result["result"]["results"] as $keydataset=>$dataset) {
+			foreach ($result["result"]["results"] as $keydataset => $dataset) {
 
 				$resourceId = null;
 				$fieldCoordinates = null;
@@ -761,7 +776,7 @@ class Api{
 					// Logger::logMessage("Dataset      " . $dataset['id'] . "    with resource     " . $value['id']);
 
 					foreach ($fields as $field) {
-						if($field['type'] == "geo_point_2d") {
+						if ($field['type'] == "geo_point_2d") {
 							$fieldCoordinates = $field['name'];
 							break;
 						}
@@ -773,47 +788,45 @@ class Api{
 						break;
 					}
 				}
-			
+
 				//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
 				if ($fieldCoordinates) {
 					Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $dataset['id'] . "'");
 
 					$polygon = '';
 					$first = true;
-					
+
 					$coord = explode(',', $coordinates);
-					if(sizeof($coordinates) <= 3) {
-						if($coord == null ) {
+					if (sizeof($coordinates) <= 3) {
+						if ($coord == null) {
 							$coord = explode(',', $coordinates[0]);
 						}
 						$lat = $coord[0];
 						$long = $coord[1];
-						
-						
-						if(count($coord)> 2){
-									$dist = $coord[2];
-									
-							
-									$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
-									$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.")  ";
-									
-								}
 
+
+						if (count($coord) > 2) {
+							$dist = $coord[2];
+
+
+							$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+							$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ")  ";
+						}
 					} else {
 						foreach ($coordinates as $coordinate) {
-						if (!$first) {
-							$polygon .= ",";
-						}
-						$first = false;
-						$polygon .= "(" . $coordinate . ")";
+							if (!$first) {
+								$polygon .= ",";
+							}
+							$first = false;
+							$polygon .= "(" . $coordinate . ")";
 						}
 
 						$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
 						$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
 					}
-					
 
-					
+
+
 
 					$req['sql'] = $sql;
 
@@ -828,13 +841,12 @@ class Api{
 					curl_close($curl);
 					$resultSql = json_decode($resultSql, true);
 
-					if((int)$resultSql["result"]["records"][0]["count"] > 0 ) {
-						if(!in_array($dataset, $dataSetscontent)) {
+					if ((int)$resultSql["result"]["records"][0]["count"] > 0) {
+						if (!in_array($dataset, $dataSetscontent)) {
 							array_push($dataSetscontent, $dataset);
 						}
-						
-					}else {
-						
+					} else {
+
 						unset($result["result"]["results"][$keydataset]);
 						$result["result"]["count"] -= 1;
 					}
@@ -843,38 +855,36 @@ class Api{
 				}
 				//If not we remove the dataset from the result
 				else {
-					
+
 					$result["result"]["count"] -= 1;
-					
+
 					unset($result["result"]["results"][$keydataset]);
-					
+
 
 					//TODO : REMOVE THE DATASET
 				}
-			
 			}
 			if ($fieldCoordinates) {
-			$result["result"]["results"] = $dataSetscontent;
-			$result["result"]["count"] = sizeof( $dataSetscontent);
+				$result["result"]["results"] = $dataSetscontent;
+				$result["result"]["count"] = sizeof($dataSetscontent);
 			}
-		
-			
 		}
-			
+
 		return $result;
 	}
-	
-	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/){
+
+	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/)
+	{
 		$query_params = $this->proper_parse_str($params);
 
 		$orgs;
 		//error_log($params);
-		if($query_params["sort"] != null){
+		if ($query_params["sort"] != null) {
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
 		}
 
 		$coordinateParam = null;
-		if(array_key_exists('coordReq', $query_params)){
+		if (array_key_exists('coordReq', $query_params)) {
 			$coordinateParam = $query_params['coordReq'];
 			unset($query_params['coordReq']);
 
@@ -886,11 +896,10 @@ class Api{
 			unset($query_params['rows']);
 
 			$query_params["rows"] = 1000;
-			
+
 			if ($query_params["fq"] == null) {
 				$query_params["fq"] = "features:(*geo*)";
-			}
-			else {
+			} else {
 				$query_params["fq"] .= " AND features:(*geo*)";
 			}
 		}
@@ -903,13 +912,13 @@ class Api{
 			curl_close($curlOrg);
 			$orgs = json_decode($orgs, true);
 
-			$orgs_private=[];
+			$orgs_private = [];
 			$orgsPrivateIndex = [];
-			for ( $i= 0 ; $i <= count($orgs["result"]) ; $i++ ) {
+			for ($i = 0; $i <= count($orgs["result"]); $i++) {
 				$org = $orgs["result"][$i];
-				foreach($org["extras"] as $extra){
-					if($extra["key"] == "private"){
-						if($extra["value"] == "true"){
+				foreach ($org["extras"] as $extra) {
+					if ($extra["key"] == "private") {
+						if ($extra["value"] == "true") {
 							$orgs_private[] = $org["name"];
 							$orgsPrivateIndex[] = $i;
 							// unset($orgs["result"][$key]);
@@ -920,16 +929,16 @@ class Api{
 			}
 
 			$nbRemove = 0;
-			foreach($orgsPrivateIndex as $index){
+			foreach ($orgsPrivateIndex as $index) {
 				array_splice($orgs["result"], ($index - $nbRemove), 1);
 				$nbRemove = $nbRemove + 1;
 			}
 
-			if(count($orgs_private) > 0){
+			if (count($orgs_private) > 0) {
 				$queryOrgs = implode($orgs_private, " OR ");
-				$req = "-organization:(".$queryOrgs.")";
-				
-				if($query_params["fq"] == null){
+				$req = "-organization:(" . $queryOrgs . ")";
+
+				if ($query_params["fq"] == null) {
 					$query_params["fq"] = $req;
 				} else {
 					$query_params["fq"] .= " AND " . $req;
@@ -956,61 +965,71 @@ class Api{
 		$result["all_organizations"] = $orgs["result"];
 		error_log($result["result"]["count"]);
 		return $result;
-		
 	}
 
 	public function callPackageSearch($params) {
+		$arrFac;
+		$arrFacSearch;
 		$arr = array();
-
+		//$hasFacetFeature = false;
 		$result = $this->getExtendedPackageSearch($params);
-		
+
 		$hasFacetFeature = array_key_exists("features", $result["result"]["facets"]);
 		$hasFacetThemes = array_key_exists("themes", $result["result"]["facets"]);
-		
-		unset($result["help"]);//echo count($result["result"]["results"]);
-		foreach($result["result"]["results"] as &$dataset) {
+
+		unset($result["help"]); //echo count($result["result"]["results"]);
+		foreach ($result["result"]["results"] as &$dataset) {
 			$dataset["metas"] = array();
-			$dataset["metas"]["records_count"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "records_count";}))["value"] ?: 0;
+			$dataset["metas"]["records_count"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "records_count";
+			}))["value"] ?: 0;
 			$dataset["metas"]["records_count"] = floatval($dataset["metas"]["records_count"]);
-			
-			$dataset["metas"]["features"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "features";}))["value"] ?: null;
+
+			$dataset["metas"]["features"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "features";
+			}))["value"] ?: null;
 			$dataset["metas"]["features"] = explode(",", $dataset["metas"]["features"]);
-			if($hasFacetFeature){
+			if ($hasFacetFeature) {
 				$arr[] = $dataset["metas"]["features"];
 			}
-			if($hasFacetThemes){
+			if ($hasFacetThemes) {
 				$themes[] = $dataset["metas"]["themes"];
 			}
-			
-			$dataset["metas"]["custom_view"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "custom_view";}))["value"] ?: null;
+
+			$dataset["metas"]["custom_view"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "custom_view";
+			}))["value"] ?: null;
 			$dataset["metas"]["custom_view"] = json_decode($dataset["metas"]["custom_view"], true);
-			
+
 			$dataset["metadata_imported"] = $dataset["metadata_modified"];
-			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $dataset["metadata_modified"];
-			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"] ?: $dataset["metadata_created"];
-			
-			foreach($dataset["resources"] as $j => $value) {
+			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "date_moissonnage_last_modification";
+			}))["value"] ?: $dataset["metadata_modified"];
+			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "date_moissonnage_creation";
+			}))["value"] ?: $dataset["metadata_created"];
+
+			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
-               
 		}
 		
 		if ($hasFacetFeature) {
 			
 			$arr = array();
-			foreach($result["result"]["facets"]["features"] as $key => $count){
-				for($i=0; $i<$count; $i++){
+			foreach ($result["result"]["facets"]["features"] as $key => $count) {
+				for ($i = 0; $i < $count; $i++) {
 					$arr = array_merge($arr, explode(",", $key));
 				}
 			}
-			
+
 			$result["result"]["facets"]["features"] = array_count_values($arr);
 			unset($result["result"]["facets"]["features"]["api"]);
 			unset($result["result"]["facets"]["features"]["table"]);
 			unset($result["result"]["facets"]["features"]["timeserie"]);
-			
+
 			$result["result"]["search_facets"]["features"]["items"] = array();
-			foreach($result["result"]["facets"]["features"] as $feat => $c){
+			foreach ($result["result"]["facets"]["features"] as $feat => $c) {
 				$result["result"]["search_facets"]["features"]["items"][] = array(
 					"count" => $c,
 					"display_name" => $feat,
@@ -1026,18 +1045,18 @@ class Api{
 		}
 
 		if ($hasFacetThemes) {
-			
+
 			$themes = array();
-			foreach($result["result"]["facets"]["themes"] as $key => $count){
-				for($i=0; $i<$count; $i++) {
+			foreach ($result["result"]["facets"]["themes"] as $key => $count) {
+				for ($i = 0; $i < $count; $i++) {
 					$themes = array_merge($themes, json_decode($key, true));
 				}
 			}
-			
+
 			$result["result"]["facets"]["themes"] = array_count_values($themes);
-			
+
 			$result["result"]["search_facets"]["themes"]["items"] = array();
-			foreach($result["result"]["facets"]["themes"] as $theme => $c){
+			foreach ($result["result"]["facets"]["themes"] as $theme => $c) {
 				$result["result"]["search_facets"]["themes"]["items"][] = array(
 					"count" => $c,
 					"display_name" => $theme,
@@ -1051,9 +1070,10 @@ class Api{
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-    
-    
- 	public function callPackageSearch_public_private($params, $iduser = NULL, $selectedOrg = null, $applyOrganizationSecurity = false) {
+
+
+	public function callPackageSearch_public_private($params, $iduser = NULL, $selectedOrg = null, $applyOrganizationSecurity = false)
+	{
 		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);
 		$params = str_replace("+asc", " asc", str_replace("+desc", " desc", $params));
 
@@ -1068,18 +1088,15 @@ class Api{
 
 			if ($query_params["q"] == null) {
 				$query_params["q"] = $organizationParameter;
-			}
-			else {
+			} else {
 				$query_params["q"] .= " AND " . $organizationParameter;
 			}
-		}
-		else if ($applyOrganizationSecurity) {
+		} else if ($applyOrganizationSecurity) {
 			$organizationParameter = $this->getUserOrganizationsParameter($allowedOrganizations);
 			if (isset($organizationParameter)) {
 				if ($query_params["q"] == null) {
 					$query_params["q"] = $organizationParameter;
-				}
-				else {
+				} else {
 					$query_params["q"] .= " AND " . $organizationParameter;
 				}
 			}
@@ -1090,14 +1107,13 @@ class Api{
 			$isAdmin = true;
 		}
 
-        if ($iduser != NULL) {
+		if ($iduser != NULL) {
 			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
 			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
-				}
-				else {
-					$req = "-(-edition_security:**".$iduser."** OR edition_security:*)";
+				} else {
+					$req = "-(-edition_security:**" . $iduser . "** OR edition_security:*)";
 				}
 
 				if ($query_params["fq"] == null) {
@@ -1105,8 +1121,7 @@ class Api{
 				} else {
 					$query_params["fq"] .= " AND " . $req;
 				}
-			}
-			else {
+			} else {
 				Logger::logMessage("User has the role for organization " . $selectedOrg . ". We do not filter.");
 			}
 		}
@@ -1117,8 +1132,8 @@ class Api{
 
 		//We encode url again
 		$params = http_build_query($query_params);
-		
-        if (!is_null($params)) {
+
+		if (!is_null($params)) {
 			$callUrl .= "?" . $params;
 		}
 
@@ -1126,30 +1141,31 @@ class Api{
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
-        
-		unset($result["help"]);//echo count($result["result"]["results"]);
-		foreach($result["result"]["results"] as $i => $dataset) {
+		$result = json_decode($result, true);
+
+		unset($result["help"]); //echo count($result["result"]["results"]);
+		foreach ($result["result"]["results"] as $i => $dataset) {
 			$result["result"]["results"][$i]["metas"] = array();
 			$result["result"]["results"][$i]["metas"]["records_count"] = 0;
 		}
-		
-		// foreach($arr_dell as &$value) {
-        //     unset($result["result"]["results"][$value]);
-        // }
 
-		$result["result"]["results"]= array_merge($result["result"]["results"]);
+		// foreach($arr_dell as &$value) {
+		//     unset($result["result"]["results"][$value]);
+		// }
+
+		$result["result"]["results"] = array_merge($result["result"]["results"]);
 
 		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	}   
-    
-    
-    
+	}
 
-	public function callDatastoreApiBoundingBox($params) {
+
+
+
+	public function callDatastoreApiBoundingBox($params)
+	{
 		$params = $this->retrieveParameters($params);
 
 
@@ -1158,15 +1174,16 @@ class Api{
 		$patternBbox = '/geofilter.bbox/i';
 		$patternDistance = '/geofilter.distance/i';
 		$patternPolygon = '/geofilter.polygon/i';
-		$reqQfilter="";$qField="";
+		$reqQfilter = "";
+		$qField = "";
 		$filters_init = array();
 		//echo $params . "\r\n";
 		$query_params = $this->proper_parse_str($params);
 
 		$fields = $this->getAllFields($query_params['resource_id']);
 
-		$fieldCoordinates="";
-		$fieldGeometries="";
+		$fieldCoordinates = "";
+		$fieldGeometries = "";
 		$fieldId = "_id";
 		/*foreach ($fields as $value) {
 			if(preg_match("/id|num|code|siren/i",$value['name'])){
@@ -1174,7 +1191,7 @@ class Api{
 				break;
 			} 
 		}*/
-		
+
 		//This is not working we decided to move the geoloc column during csv creation
 		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
 		// $coordinatesAlreadyDefined = false;
@@ -1196,25 +1213,25 @@ class Api{
 			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
-			if(!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
+			if (!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
 				$fieldCoordinates = $value['name'];
 				$coordinatesAlreadyDefined = true;
 			}
 			//if($value['type'] == "geo_shape") $fieldGeometries = "cast(".$value['name']."::json->'type' as text)";
-			if(!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
+			if (!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
 				$fieldGeometries = $value['name'];
 				$geometriesAlreadyDefined = true;
 			}
 		}
-        Logger::logMessage("Found coordinate " . $fieldCoordinates ."\r\n");
-        Logger::logMessage("Found geometries " . $fieldGeometries ."\r\n");
+		Logger::logMessage("Found coordinate " . $fieldCoordinates . "\r\n");
+		Logger::logMessage("Found geometries " . $fieldGeometries . "\r\n");
 
 
-		if(array_key_exists('rows', $query_params)){
+		if (array_key_exists('rows', $query_params)) {
 			$query_params['limit'] = $query_params['rows'];
 			unset($query_params['rows']);
 		}
-		if(array_key_exists('q', $query_params)){
+		if (array_key_exists('q', $query_params)) {
 			/*if (strpos($query_params['q'], '{') == false) {
 				if (strpos($query_params['q'], ':') != false && substr($query_params['q'], 0, 1 ) != '"') {
 					$ex = explode(':', $query_params['q']);
@@ -1225,39 +1242,39 @@ class Api{
 			}*/
 			$reqQfilter = $this->constructReqQToSQL($query_params['q']);
 		}
-		foreach($query_params as $key => $value) {
-			Logger::logMessage("Found parameter " . $key ." with value " . $value . "\r\n");
+		foreach ($query_params as $key => $value) {
+			Logger::logMessage("Found parameter " . $key . " with value " . $value . "\r\n");
 
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-		        unset($query_params[$key]);
-		        //echo preg_replace($pattern,"",$key);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-		    if (preg_match($patternBbox,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-			if (preg_match($patternDistance,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-			if (preg_match($patternPolygon,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
+				unset($query_params[$key]);
+				//echo preg_replace($pattern,"",$key);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternBbox, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if (preg_match($patternDistance, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if (preg_match($patternPolygon, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
 		}
 		$where = "";
-		if(!empty($filters_init)){
+		if (!empty($filters_init)) {
 			Logger::logMessage("Filters exists");
 
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
-				if($key == "geofilter.bbox"){
+				if ($key == "geofilter.bbox") {
 					Logger::logMessage("Build query for geofilter.bbox \r\n");
 
 					$bbox = explode(',', $value);
@@ -1267,16 +1284,15 @@ class Api{
 					$maxlong = $bbox[3];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-					
-				} else if($key == "geofilter.distance"){
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geofilter.distance") {
 					Logger::logMessage("Build query for geofilter.distance \r\n");
 
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
-					if(count($coord)> 2){
+					if (count($coord) > 2) {
 						$dist = $coord[2];
 						//$bbox = $this->getBbox($lat,$long,$dist);
 						//$bbox = explode(',', $bbox);
@@ -1286,41 +1302,38 @@ class Api{
 						//$maxlong = $bbox[3];
 						//$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
 						//$where .= "circle(box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . "))) @> point(".$fieldCoordinates.") and ";
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.") and ";
+						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
 						//$where .= "circle(polygon(path '(" . $this->getLosangePath($lat,$long,$dist) . ")')) @> point(".$fieldCoordinates.") and ";
 						//echo $where;
 					} else {
 						//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 						//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
-						$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
+						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
 					}
-					
+
 					//$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geofilter.polygon"){
+				} else if ($key == "geofilter.polygon") {
 					Logger::logMessage("Build query for geofilter.polygon \r\n");
 
 					//polygon(path '((0,0),(1,1),(2,0))')
-					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
+					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
 				} else {
 					Logger::logMessage("Build query without parameter \r\n");
 
-					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
-					} else if(is_array($value)){ 
+					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
-				
-				
 			}
-			$where = substr($where, 0, strlen($where)-4 );
-			if($reqQfilter != ""){
+			$where = substr($where, 0, strlen($where) - 4);
+			if ($reqQfilter != "") {
 				$where .= $reqQfilter;
 			}
-		}
-		else if($reqQfilter != ""){
+		} else if ($reqQfilter != "") {
 			Logger::logMessage("Req filter is not empty '" . $reqQfilter . "' and we put '" . substr($reqQfilter, 5) . "'");
 
 			$where = " where " . substr($reqQfilter, 5);
@@ -1328,29 +1341,26 @@ class Api{
 
 
 		$req = array();
-		if($fieldGeometries != ""/* && !empty($filters_init)*/){
-			$sql = "with latlong as ( Select cast(unnest(regexp_matches(".$fieldGeometries.", '\[([-]?[\d|.]*),', 'g')) as float) as longs, cast(unnest(regexp_matches(".$fieldGeometries.", ',[ ]?([-]?[\d|.]*)(?:,[\d|\w]+,[\d|\w]+)*\]', 'g')) as float) as lats, ".$fieldId." as ids from \"" . $query_params['resource_id'] . "\"" . $where .	   
-					" limit 1000) select count(distinct ids), min(lats) as minlat, max(lats) as maxlat, min(longs) as minlong, max(longs) as maxlong from latlong";
-			
+		if ($fieldGeometries != ""/* && !empty($filters_init)*/) {
+			$sql = "with latlong as ( Select cast(unnest(regexp_matches(" . $fieldGeometries . ", '\[([-]?[\d|.]*),', 'g')) as float) as longs, cast(unnest(regexp_matches(" . $fieldGeometries . ", ',[ ]?([-]?[\d|.]*)(?:,[\d|\w]+,[\d|\w]+)*\]', 'g')) as float) as lats, " . $fieldId . " as ids from \"" . $query_params['resource_id'] . "\"" . $where .
+				" limit 1000) select count(distinct ids), min(lats) as minlat, max(lats) as maxlat, min(longs) as minlong, max(longs) as maxlong from latlong";
+
 			$req['sql'] = $sql;
-		}
-		else {
+		} else {
 			//$sql = "Select count(*) as count,min(CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT)) as minLat,max(CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT)) as maxLat,min(CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT)) as minLong,max(CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT)) as maxLong from \"" . $query_params['resource_id'] . "\"";
-			$sql = "Select count(*), min((point(".$fieldCoordinates."))[0]) as minLat, max((point(".$fieldCoordinates."))[0]) as maxLat, min((point(".$fieldCoordinates."))[1]) as minLong, max((point(".$fieldCoordinates."))[1]) as maxLong from \"" . $query_params['resource_id'] . "\"";
-			if(!empty($filters_init)){
-				$sql = $sql . $where. " and ".$fieldCoordinates." not in ('', ',')";
-			} 
-			else if($reqQfilter != ""){
-				$sql = $sql . $where. " and ".$fieldCoordinates." not in ('', ',')";
-			}
-			else {
-				$sql = $sql . " where ".$fieldCoordinates." not in ('', ',')";
+			$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $query_params['resource_id'] . "\"";
+			if (!empty($filters_init)) {
+				$sql = $sql . $where . " and " . $fieldCoordinates . " not in ('', ',')";
+			} else if ($reqQfilter != "") {
+				$sql = $sql . $where . " and " . $fieldCoordinates . " not in ('', ',')";
+			} else {
+				$sql = $sql . " where " . $fieldCoordinates . " not in ('', ',')";
 			}
 			$req['sql'] = $sql;
 		}
-  
+
 		Logger::logMessage("Query : " . $req['sql']);
-		
+
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		$curl = curl_init($callUrl);
@@ -1358,22 +1368,22 @@ class Api{
 		$result = curl_exec($curl);
 
 		Logger::logMessage("Result query coordinate : " . $result);
-		
-		curl_close($curl);
-		$result = json_decode($result,true);
 
-		if($fieldGeometries != ""){
-			if(!empty($filters_init)){
-				$where = $where. " and ".$fieldGeometries." not in ('', ',')";
+		curl_close($curl);
+		$result = json_decode($result, true);
+
+		if ($fieldGeometries != "") {
+			if (!empty($filters_init)) {
+				$where = $where . " and " . $fieldGeometries . " not in ('', ',')";
 			} else {
-				$where = " where ".$fieldGeometries." not in ('', ',')";
+				$where = " where " . $fieldGeometries . " not in ('', ',')";
 			}
-			$sql = "Select cast(".$fieldGeometries."::json->'type' as text) as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where ." group by type_geom";
+			$sql = "Select cast(" . $fieldGeometries . "::json->'type' as text) as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where . " group by type_geom";
 			// $sql = "Select " . $fieldGeometries . " as type_geom, count(*) from \"" . $query_params['resource_id'] . "\"" . $where ." group by type_geom";
 			$req['sql'] = $sql;
 
 			Logger::logMessage("Geometry query : " . $req['sql']);
-		
+
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 			$curl = curl_init($callUrl);
@@ -1381,9 +1391,9 @@ class Api{
 			$result2 = curl_exec($curl);
 
 			// Logger::logMessage("Result query geometry : " . $result2);
-			
+
 			curl_close($curl);
-			$result2 = json_decode($result2,true);
+			$result2 = json_decode($result2, true);
 		} else {
 			//echo "point";
 			$result2 = array();
@@ -1393,59 +1403,61 @@ class Api{
 			//$result2 = json_decode('{"result": {"records" : [{"type": v, "count" :'.$result["result"]["records"][0]["count"].'}]}}');
 			//echo json_decode($result2) . "\r\n";
 		}
-		
+
 
 		$data_array = array();
 		$data_array['geometries'] = array();
 		$c = 0;
 		foreach ($result2["result"]["records"] as $value) {
-			$key = substr($value['type_geom'], 1, strlen($value['type_geom'])-2);
-			 
-			if(substr($key, 0, 5) == "Multi"){
-				if(array_key_exists('GeometryCollection', $data_array['geometries'])){
-					$data_array['geometries']['GeometryCollection'] .= intval ($value['count']);
+			$key = substr($value['type_geom'], 1, strlen($value['type_geom']) - 2);
+
+			if (substr($key, 0, 5) == "Multi") {
+				if (array_key_exists('GeometryCollection', $data_array['geometries'])) {
+					$data_array['geometries']['GeometryCollection'] .= intval($value['count']);
 				} else {
-					$data_array['geometries']['GeometryCollection'] = intval ($value['count']);
+					$data_array['geometries']['GeometryCollection'] = intval($value['count']);
 				}
 			} else {
-				$data_array['geometries'][$key] = intval ($value['count']);
+				$data_array['geometries'][$key] = intval($value['count']);
 			}
-			$c += intval ($value['count']);
+			$c += intval($value['count']);
 		}
 		//$data_array['count'] = intval ($result["result"]["records"][0]["count"]);
 		$data_array['count'] = $c;
-		if($data_array['count'] == 0){
+		if ($data_array['count'] == 0) {
 			$data_array['bbox'] = array();
 		} else {
 
 			$data_array['bbox'] = array(
-								$result["result"]["records"][0]["minlong"],
-								$result["result"]["records"][0]["maxlat"],
-								$result["result"]["records"][0]["maxlong"],
-								$result["result"]["records"][0]["minlat"]
+				$result["result"]["records"][0]["minlong"],
+				$result["result"]["records"][0]["maxlat"],
+				$result["result"]["records"][0]["maxlong"],
+				$result["result"]["records"][0]["minlat"]
 			);
 		}
-		
 
-		echo json_encode( $data_array );
+
+		echo json_encode($data_array);
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
 
-	private function quotesArrayValue($item){
-		if(!is_numeric($item)) {
-	        return "'" . $item . "'";
-	    } else {
-	        return $item;
-	    }
+	private function quotesArrayValue($item)
+	{
+		if (!is_numeric($item)) {
+			return "'" . $item . "'";
+		} else {
+			return $item;
+		}
 	}
 
-	public function getAllFields($id, $full = FALSE, $includeIdCkan = TRUE) {
+	public function getAllFields($id, $full = FALSE, $includeIdCkan = TRUE)
+	{
 
-		$callUrl ="";
-		if($full){
+		$callUrl = "";
+		if ($full) {
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
 		} else {
 			$req = array();
@@ -1455,21 +1467,21 @@ class Api{
 			$url2 = http_build_query($req);
 			$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		}
-		
+
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
-		
+
 		$geoPointnb = 0;
 
 		$data_array = array();
 		$hasFacet = false;
 		foreach ($result['result']['fields'] as $value) {
-			if(!$includeIdCkan && $value['id'] == "_id"){
+			if (!$includeIdCkan && $value['id'] == "_id") {
 				continue;
 			}
 			$field = array();
@@ -1477,115 +1489,115 @@ class Api{
 			$field['name'] = $value['id'];
 
 			$isFile = false;
-			if($full){
+			if ($full) {
 				$annotations = array();
 				$description = $value['info']['notes'];
-				if(preg_match("/<!--.*facet.*-->/i",$description)) {
+				if (preg_match("/<!--.*facet.*-->/i", $description)) {
 					$annotations[] = array("name" => "facet");
 					$hasFacet = true; //echo "1";
-				} 
+				}
 
 
-				if(preg_match("/<!--.*exportApi.*-->/i",$description)) {
+				if (preg_match("/<!--.*exportApi.*-->/i", $description)) {
 					$annotations[] = array("name" => "exportApi");
 				}
-				if(preg_match("/<!--.*hideColumnsApi.*-->/i",$description)) {
+				if (preg_match("/<!--.*hideColumnsApi.*-->/i", $description)) {
 					$annotations[] = array("name" => "hideColumnsApi");
 				}
-				if(preg_match("/<!--.*disjunctive.*-->/i",$description)) {
+				if (preg_match("/<!--.*disjunctive.*-->/i", $description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
-				if(preg_match("/<!--.*sortable.*-->/i",$description)){
+				if (preg_match("/<!--.*sortable.*-->/i", $description)) {
 					$annotations[] = array("name" => "sortable");
 				}
-				if(preg_match("/<!--.*startDate.*-->/i",$description)){
+				if (preg_match("/<!--.*startDate.*-->/i", $description)) {
 					$annotations[] = array("name" => "startDate");
 				}
-				if(preg_match("/<!--.*endDate.*-->/i",$description)){
+				if (preg_match("/<!--.*endDate.*-->/i", $description)) {
 					$annotations[] = array("name" => "endDate");
 				}
-				if(preg_match("/<!--.*date.*-->/i",$description)){
+				if (preg_match("/<!--.*date.*-->/i", $description)) {
 					$annotations[] = array("name" => "date");
 				}
-				if(preg_match("/<!--.*images.*-->/i",$description)){
+				if (preg_match("/<!--.*images.*-->/i", $description)) {
 					$annotations[] = array("name" => "has_thumbnails");
 					$isFile = true;
 				}
-                if(preg_match("/<!--.*wordcount-->/i",$description)) {
+				if (preg_match("/<!--.*wordcount-->/i", $description)) {
 					$annotations[] = array("name" => "wordcount");
 					$hasFacet = true; //echo "1";
 				}
-                if(preg_match("/<!--.*wordcountNumber.*-->/i",$description)) {
+				if (preg_match("/<!--.*wordcountNumber.*-->/i", $description)) {
 					$annotations[] = array("name" => "wordcountNumber");
 					$hasFacet = true; //echo "1";
 				}
-                if(preg_match("/<!--.*timeserie_precision.*-->/i",$description)) {
+				if (preg_match("/<!--.*timeserie_precision.*-->/i", $description)) {
 					$annotations[] = array("name" => "timeserie_precision");
 					$hasFacet = true; //echo "1";
-				} 
-				if(preg_match("/<!--.*descr_for_timeLine.*-->/i",$description)) {
+				}
+				if (preg_match("/<!--.*descr_for_timeLine.*-->/i", $description)) {
 					$annotations[] = array("name" => "descr_for_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
-                if(preg_match("/<!--.*image_url.*-->/i",$description)) {
+				if (preg_match("/<!--.*image_url.*-->/i", $description)) {
 					$annotations[] = array("name" => "image_url");
 					//$hasFacet = true; //echo "1";
-				}if(preg_match("/<!--.*title_for_timeLine.*-->/i",$description)) {
+				}
+				if (preg_match("/<!--.*title_for_timeLine.*-->/i", $description)) {
 					$annotations[] = array("name" => "title_for_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
-                if(preg_match("/<!--.*date_timeLine.*-->/i",$description)) {
+				if (preg_match("/<!--.*date_timeLine.*-->/i", $description)) {
 					$annotations[] = array("name" => "date_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
-				
+
 				$descriptionLabel = $description;
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
-				if($matches) {
+				if ($matches) {
 					$descriptionLabel = $matches[1][0];
 					$descriptionLabel = preg_replace('/_/i', ' ', $descriptionLabel);
-				}
-				else {
+				} else {
 					$descriptionLabel = '';
 				}
 				$field['descriptionlabel'] = $descriptionLabel;
-				
+
 				$field['description'] = $description;
-				
-				if(count($annotations) > 0){
+
+				if (count($annotations) > 0) {
 					$field['annotations'] = $annotations;
 				}
-				if($value['info']['label'] != ""){
+				if ($value['info']['label'] != "") {
 					$field['label'] = $value['info']['label'];
 				} else {
 					$field['label'] = $field['name'];
 				}
-				
-			}
-			else {
+			} else {
 				$field['label'] = $field['name'];
 			}
-			
-										
-			if(preg_match("/geoloc/i",$value['id']) || preg_match("/geo_point/i",$value['id']) || 
-				preg_match("/coordin/i",$value['id']) || preg_match("/coordon/i",$value['id']) || 
-				preg_match("/geopoint/i",$value['id']) || preg_match("/geoPoint/i",$value['id']) || 
-				preg_match("/pav_positiont2d/i",$value['id']) || preg_match("/wgs84/i",$value['id']) || 
-				preg_match("/equgpsy_x/i",$value['id']) || preg_match("/geoban/i",$value['id']) || 
-				preg_match("/codegeo/i",$value['id']) || preg_match("/localisation/i",$value['id']) || 
-				preg_match("/latlon/i",$value['id']) || preg_match("/lat_lon/i",$value['id'])) {
-					// if($geoPointnb == 0) {
-						$field['type'] = "geo_point_2d";
-						$geoPointnb = 1;
-					// }
+
+
+			if (
+				preg_match("/geoloc/i", $value['id']) || preg_match("/geo_point/i", $value['id']) ||
+				preg_match("/coordin/i", $value['id']) || preg_match("/coordon/i", $value['id']) ||
+				preg_match("/geopoint/i", $value['id']) || preg_match("/geoPoint/i", $value['id']) ||
+				preg_match("/pav_positiont2d/i", $value['id']) || preg_match("/wgs84/i", $value['id']) ||
+				preg_match("/equgpsy_x/i", $value['id']) || preg_match("/geoban/i", $value['id']) ||
+				preg_match("/codegeo/i", $value['id']) || preg_match("/localisation/i", $value['id']) ||
+				preg_match("/latlon/i", $value['id']) || preg_match("/lat_lon/i", $value['id'])
+			) {
+				// if($geoPointnb == 0) {
+				$field['type'] = "geo_point_2d";
+				$geoPointnb = 1;
+				// }
 				//$field['type'] = "geo_point_2d";
-			} else if(preg_match("/geo_shape/i",$value['id']) || preg_match("/geome/i",$value['id']) || preg_match("/geojson/i",$value['id'])) {
+			} else if (preg_match("/geo_shape/i", $value['id']) || preg_match("/geome/i", $value['id']) || preg_match("/geojson/i", $value['id'])) {
 				$field['type'] = "geo_shape";
-			} else if($value['type'] == "timestamp"){
+			} else if ($value['type'] == "timestamp") {
 				$field['type'] = "datetime";
-			} else if($value['type'] == "numeric"){
+			} else if ($value['type'] == "numeric") {
 				$field['type'] = "double";
-			} else if($isFile){
+			} else if ($isFile) {
 				$field['type'] = "file";
 			} else {
 				$field['type'] = $value['type'];
@@ -1594,40 +1606,42 @@ class Api{
 			$field['poids'] = $value['info']['poids'];
 			$data_array[] = $field;
 		}
-		
-		if(!$hasFacet){
+
+		if (!$hasFacet) {
 			$hasTextCol = false;
 			foreach ($data_array as $id => $field) {
-				if($field['type'] == "text"){
+				if ($field['type'] == "text") {
 					$data_array[$id]['annotations'][] = array("name" => "facet");
 					$hasTextCol = true;
 					break;
 				}
 			}
-			if(!$hasTextCol){
+			if (!$hasTextCol) {
 				$data_array[0]['annotations'][] = array("name" => "facet");
 			}
 		}
 
 		return $data_array;
 	}
-    
 
-    public function getAllFieldsForTableParam($resourceId) {
-        $callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
+
+	public function getAllFieldsForTableParam($resourceId)
+	{
+		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		return $result;
 	}
-    
-    public function callAllFieldsForTableParam($params) {
+
+	public function callAllFieldsForTableParam($params)
+	{
 
 		$res = $this->getAllFieldsForTableParam($params);
-        
-        
+
+
 		echo json_encode($res);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
@@ -1636,77 +1650,79 @@ class Api{
 
 		return $result;
 	}
-    
 
 
 
-	public function getTableFields($id) {
+
+	public function getTableFields($id)
+	{
 
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
-		
+
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
-		$res = array();$allFields = array();
+		$res = array();
+		$allFields = array();
 
 		// sort array by poids
 		$fieldArray = array();
-		foreach ($result['result']['fields'] as $key => $row)
-		{
+		foreach ($result['result']['fields'] as $key => $row) {
 
-		    $fieldArray[$key] = $row["info"]["poids"];
+			$fieldArray[$key] = $row["info"]["poids"];
 		}
 		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
-			if(preg_match("/<!--\s*table\s*-->/i",$description)) {				
+			if (preg_match("/<!--\s*table\s*-->/i", $description)) {
 				$res[] =  $value['id'];
 			}
-			if($value['id'] == "_id") continue;
+			if ($value['id'] == "_id") continue;
 			$allFields[] =  $value['id'];
 		}
-		if(count($res) > 0){
+		if (count($res) > 0) {
 			return $res;
 		} else {
 			return $allFields;
 		}
-		
-	 }
+	}
 
-	public function getMapTooltipFields($id) {
+	public function getMapTooltipFields($id)
+	{
 
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $id . "&limit=0";
-				//echo $callUrl;
+		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
-		$res = array();$allFields = array();
+		$res = array();
+		$allFields = array();
 
 		foreach ($result['result']['fields'] as $value) {
 			$description = $value['info']['notes'];
-			if(preg_match("/<!--\s*tooltip\s*-->/i",$description)) {				
+			if (preg_match("/<!--\s*tooltip\s*-->/i", $description)) {
 				$res[] =  $value['id'];
 			}
-			if($value['id'] == "_id") continue;
+			if ($value['id'] == "_id") continue;
 			$allFields[] =  $value['id'];
 		}
-		if(count($res) > 0){
+		if (count($res) > 0) {
 			return $res;
 		} else {
 			return $allFields;
 		}
-		
 	}
 
-	public function getRecordsDownload($params) {
+	public function getRecordsDownload($params)
+	{
 		$patternId = '/id|num|code|siren/i';
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
@@ -1716,24 +1732,23 @@ class Api{
 		$filters_init = array();
 		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
-       	
-       
 
 
-        if($query_params['user_defined_fields']) {
+
+
+		if ($query_params['user_defined_fields']) {
 			//array_pop($query_params);
 			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
-			
 		}
-		 
+
 		$fields = $this->getAllFields($query_params['resource_id'], FALSE, FALSE);
 
 		//echo json_encode($fields);
 		$fieldId = "_id";
-		$reqFields="";
+		$reqFields = "";
 
-		$fieldCoordinates='';
-		$fieldGeometries='';
+		$fieldCoordinates = '';
+		$fieldGeometries = '';
 
 		$reqQfilter;
 		/*foreach ($fields as $value) {
@@ -1761,119 +1776,118 @@ class Api{
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
 			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];*/
-			if(!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
+			if (!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
 				$fieldCoordinates = $value['name'];
 				$coordinatesAlreadyDefined = true;
 			}
-			if(!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
+			if (!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
 				$fieldGeometries = $value['name'];
 				$geometriesAlreadyDefined = true;
-			}					  
+			}
 		}
 
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-		        unset($query_params[$key]);
-		        //echo preg_replace($pattern,"",$key);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-		    if (preg_match($patternBbox,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-			if (preg_match($patternDistance,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-			if (preg_match($patternSerie,$key)){
-		    	unset($query_params[$key]);
-		    }
-			if ($key == "geofilter.polygon"){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-			if ($key == "geo_digest"){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-		    if($key == "format"){
+				unset($query_params[$key]);
+				//echo preg_replace($pattern,"",$key);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternBbox, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternDistance, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if (preg_match($patternSerie, $key)) {
+				unset($query_params[$key]);
+			}
+			if ($key == "geofilter.polygon") {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if ($key == "geo_digest") {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if ($key == "format") {
 				$globalFormat = $value;
 
-		    	if($value == "json"){
-		    		$format = "objects";
-		    	} else if($value == "csv" || $value == "xls"){
-		    		$format = "csv";
-		    	} else if($value == "tsv"){
-		    		$format = "tsv";
-		    	} else if($value == "geojson"){
-		    		$format = "objects";
-		    	} else {
-		    		$format = "objects";
-		    	}
-		    	unset($query_params[$key]);
-		    }
-		    if($key == "geo_simplify"){
+				if ($value == "json") {
+					$format = "objects";
+				} else if ($value == "csv" || $value == "xls") {
+					$format = "csv";
+				} else if ($value == "tsv") {
+					$format = "tsv";
+				} else if ($value == "geojson") {
+					$format = "objects";
+				} else {
+					$format = "objects";
+				}
 				unset($query_params[$key]);
-		    }
-		    if($key == "geo_simplify_zoom"){
+			}
+			if ($key == "geo_simplify") {
 				unset($query_params[$key]);
-		    }
-		    if($key == "rows"){
+			}
+			if ($key == "geo_simplify_zoom") {
+				unset($query_params[$key]);
+			}
+			if ($key == "rows") {
 				$query_params['limit'] = $value;
 				unset($query_params['rows']);
-		    }
-			if($key == "fields"){
+			}
+			if ($key == "fields") {
 				$reqFields = $value;
 				unset($query_params['fields']);
-		    }
-			if($key == "start"){
+			}
+			if ($key == "start") {
 				$query_params['offset'] = $value;
 				unset($query_params['start']);
 				$query_params['limit'] = $query_params['limit'] + $query_params['offset'];
-		    }
-		    if($key == "q"){
-		    	$reqQfilter = $this->constructReqQToSQL($value);
-		    	//$pattern = '/and (\w+) /i';
-		    	//preg_match($pattern,$reqQfilter,$qField); 
-		    }
-		    
-		    if($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom" || $key == "clusterdistance" || $key == "dataset"){
-				unset($query_params[$key]);
-		    }
-		    if($key == "use_labels_for_header" || $key == "return_polygons" || $key == "calendarview" || $key == "dataChart"){
-				unset($query_params[$key]);
-		    }
-		}
-		
+			}
+			if ($key == "q") {
+				$reqQfilter = $this->constructReqQToSQL($value);
+				//$pattern = '/and (\w+) /i';
+				//preg_match($pattern,$reqQfilter,$qField); 
+			}
 
-		if($reqFields == "") {
+			if ($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom" || $key == "clusterdistance" || $key == "dataset") {
+				unset($query_params[$key]);
+			}
+			if ($key == "use_labels_for_header" || $key == "return_polygons" || $key == "calendarview" || $key == "dataChart") {
+				unset($query_params[$key]);
+			}
+		}
+
+
+		if ($reqFields == "") {
 			$i = 0;
 			foreach ($fields as $value) {
-				if($i > 0) {
+				if ($i > 0) {
 					$reqFields .= ',';
-					
 				}
-				if($value['name'] != '_id' && $value['name'] != '_full_text') {
+				if ($value['name'] != '_id' && $value['name'] != '_full_text') {
 					$reqFields .= $value['name'];
 					$i++;
 				}
-				
 			}
 		}
 
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
-		$where = "";$limit  = "";
-		if(!empty($filters_init)){
+		$where = "";
+		$limit  = "";
+		if (!empty($filters_init)) {
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
-				if($key == "geofilter.bbox"){
+				if ($key == "geofilter.bbox") {
 					$bbox = explode(',', $value);
 					$minlat = $bbox[0];
 					$minlong = $bbox[1];
@@ -1881,13 +1895,13 @@ class Api{
 					$maxlong = $bbox[3];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geofilter.distance"){
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geofilter.distance") {
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
-					if(count($coord)> 2){
+					if (count($coord) > 2) {
 						$dist = $coord[2];
 						//$bbox = $this->getBbox($lat,$long,$dist);
 						//$bbox = explode(',', $bbox);
@@ -1897,63 +1911,60 @@ class Api{
 						//$maxlong = $bbox[3];
 						//$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
 						//$where .= "circle(point(" . $lat . "," . $long . "), " . $dist/100000 . ") @> point(".$fieldCoordinates.") and ";
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat,$long,$dist) . ") @> point(".$fieldCoordinates.") and ";
+						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
 						//$where .= "circle(polygon(path '(" . $this->getLosangePath($lat,$long,$dist) . ")')) @> point(".$fieldCoordinates.") and ";
 					} else {
 						//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 						//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
-						$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
+						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
 					}
-					
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geo_digest"){
-					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
-				} else if($key == "geofilter.polygon"){
+
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geo_digest") {
+					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
+				} else if ($key == "geofilter.polygon") {
 					//polygon(path '((0,0),(1,1),(2,0))')
-					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
+					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
 
 					//We add a Postgis function because polygon(path) use the bounding box and with the tolerance it can contains multiples point
 					// if ($this->isPostgis) {
 					// 	$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
 					// }
 
-					$where .= $fieldCoordinates." not in ('', ',') and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
 				} else {
-					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
-					} else if(is_array($value)){ 
+					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
-				
-				
 			}
-			$where = substr($where, 0, strlen($where)-4 );
+			$where = substr($where, 0, strlen($where) - 4);
 
-			if($reqQfilter != NULL){
+			if ($reqQfilter != NULL) {
 				$where .= $reqQfilter;
 			}
-		}
-		else if($reqQfilter != NULL){
+		} else if ($reqQfilter != NULL) {
 			$where = " where " . substr($reqQfilter, 5);
 		}
-		
-		if(array_key_exists("limit", $query_params)){
-			$limit = " limit ".$query_params['limit'];
+
+		if (array_key_exists("limit", $query_params)) {
+			$limit = " limit " . $query_params['limit'];
 		}
 
-		
+
 		$req = array();
-		$sql = "Select ".$fieldId." as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
+		$sql = "Select " . $fieldId . " as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-		
-		
+
+
 
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
@@ -1961,7 +1972,7 @@ class Api{
 		$result = curl_exec($curl);
 		//echo $result . "\r\n";
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
 		//We build the first row with the header's name
 		$fieldsHeader = "";
@@ -1976,10 +1987,10 @@ class Api{
 
 
 
-		if($exportUserField  != null ) {
+		if ($exportUserField  != null) {
 			//set header fields with exportapi as true
 			foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
-				if($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"]!= "")) {
+				if ($valuefields["info"] != null && ($valuefields["info"]["label"] != null or $valuefields["info"]["label"] != "")) {
 					array_push($stack, $valuefields["id"]);
 				}
 			}
@@ -1995,56 +2006,48 @@ class Api{
 			}
 
 			//set header fields with exportapi as true
-			if($exportUserField  != null ) {
+			if ($exportUserField  != null) {
 
 				/* get all fields from exportuserfield */
-				if (in_array( $value['name'], $stack) ) {
+				if (in_array($value['name'], $stack)) {
 					foreach ($exportUserField["result"]["fields"] as $keyfields => $valuefields) {
 
-						if( $valuefields["id"] == $value['name']){
-							/* Get name of ever field user and assign it to fields Header*/ 
+						if ($valuefields["id"] == $value['name']) {
+							/* Get name of ever field user and assign it to fields Header*/
 							if (isset($reqFieldsArray)) {
-									if (in_array($valuefields["id"], $reqFieldsArray)) {
-										$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
-										$first = false;
-									}
-								}
-								else {
-									$fieldsHeader .= (!$first ? ";" : "" ) . $valuefields["info"]["label"];
+								if (in_array($valuefields["id"], $reqFieldsArray)) {
+									$fieldsHeader .= (!$first ? ";" : "") . $valuefields["info"]["label"];
 									$first = false;
 								}
+							} else {
+								$fieldsHeader .= (!$first ? ";" : "") . $valuefields["info"]["label"];
+								$first = false;
+							}
 
 							break;
 						}
 					}
-				}
-				else { 
-						if (isset($reqFieldsArray)) {
-							if (in_array($value['name'], $reqFieldsArray)) {
-								$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-								$first = false;
-							}
-						}
-						else {
-							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
-							$first = false;
-						}
-					
-				}
-			}
-			else {
+				} else {
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
-							$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+							$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
 							$first = false;
 						}
-					}
-					else {
-						$fieldsHeader .= (!$first ? ";" : "" ) . $value['name'];
+					} else {
+						$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
 						$first = false;
 					}
-					
-			
+				}
+			} else {
+				if (isset($reqFieldsArray)) {
+					if (in_array($value['name'], $reqFieldsArray)) {
+						$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+						$first = false;
+					}
+				} else {
+					$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+					$first = false;
+				}
 			}
 		}
 
@@ -2055,20 +2058,22 @@ class Api{
 			$ids[] = $value["id"];
 		}
 		$chunk = array_chunk($ids, 850);
-		if($format == "objects"){
+		if ($format == "objects") {
 			$records = array();
 		}
-		
 
-		
-		foreach ($chunk as $_ids){
+
+
+		foreach ($chunk as $_ids) {
 			$query_params['filters'] = json_encode(array($fieldId => $_ids));
-			if($reqFields != ""){$query_params['fields'] = $reqFields;}
+			if ($reqFields != "") {
+				$query_params['fields'] = $reqFields;
+			}
 			$query_params['records_format'] = $format;
-			if(!array_key_exists('limit', $query_params)){
+			if (!array_key_exists('limit', $query_params)) {
 				$query_params['limit'] = 100000000;
 			}
-			if($query_params['user_defined_fields']) {
+			if ($query_params['user_defined_fields']) {
 				//$query_params = array_pop($query_params);
 				unset($query_params['user_defined_fields']);
 			}
@@ -2084,37 +2089,37 @@ class Api{
 			//echo $result2 . "\r\n";
 			curl_close($curl);
 
-	//		header('Content-Type:text/csv');
-	//		header('Content-Disposition:attachment; filename=file.csv');
-	//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
-			if($format == "objects"){
-				$records = array_merge($records, json_decode($result2,true)["result"]["records"]);
+			//		header('Content-Type:text/csv');
+			//		header('Content-Disposition:attachment; filename=file.csv');
+			//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
+			if ($format == "objects") {
+				$records = array_merge($records, json_decode($result2, true)["result"]["records"]);
 			} else {
 				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
-				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'.$callUrl );
-				$records .=json_decode($result2,true)["result"]["records"];
+				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa' . $callUrl);
+				$records .= json_decode($result2, true)["result"]["records"];
 			}
-		
 		}
-		if($format == "objects"){
+		if ($format == "objects") {
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
 			// return json_encode($records);
 		} else {
-			$records = chr(239) . chr(187) . chr(191) . $fieldsHeader . preg_replace('/,(?![^"]*",)/i', ';',$records);
+			$records = chr(239) . chr(187) . chr(191) . $fieldsHeader . preg_replace('/,(?![^"]*",)/i', ';', $records);
 			return 	$records;
 		}
-		
-		
-//		$response = new Response();
-//		$response->setContent(json_encode($result));
-//		$response->headers->set('Content-Type', 'application/octet-stream');
-//		$response->headers->set("Content-Transfer-Encoding","Binary");
-//		$response->headers->set("Content-Disposition","attachment; filename=file.csv");
-//		$response->send();
+
+
+		//		$response = new Response();
+		//		$response->setContent(json_encode($result));
+		//		$response->headers->set('Content-Type', 'application/octet-stream');
+		//		$response->headers->set("Content-Transfer-Encoding","Binary");
+		//		$response->headers->set("Content-Disposition","attachment; filename=file.csv");
+		//		$response->send();
 	}
 
-	public function callDatastoreApiDownload($params) {
+	public function callDatastoreApiDownload($params)
+	{
 		$result = $this->getRecordsDownload($params);
 
 		echo $result;
@@ -2123,8 +2128,9 @@ class Api{
 		return $response;
 	}
 
-	public function callDatastoreApiDownloadFile($params) {
-		
+	public function callDatastoreApiDownloadFile($params)
+	{
+
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
 
@@ -2143,29 +2149,25 @@ class Api{
 			$exportval = true;
 
 			foreach ($value["annotations"] as $keyAnnota => $annotat) {
-				if($annotat["name"] == "exportApi") {
+				if ($annotat["name"] == "exportApi") {
 					$exportval = false;
 					$oneColumnIsHidden = true;
-					break;	
+					break;
 				}
 			}
-			if($i > 0 && $exportval) {
+			if ($i > 0 && $exportval) {
 				$reqFields .= ',';
-					
 			}
-			if($exportval) {
+			if ($exportval) {
 				$reqFields .= $value['name'];
 				$i++;
 			}
-				
 		}
 		if ($oneColumnIsHidden && ($reqFields == null || $reqFields == "")) {
 			$actual_link = $_SERVER['HTTP_REFERER'];
 
 			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
-			
-		}
-		else {
+		} else {
 			$resource = $this->getResource($query_params['resource_id']);
 			$resource = json_decode($resource, true);
 			$resourceName = $resource['result']['name'];
@@ -2195,10 +2197,10 @@ class Api{
 				header('Content-Type:application/json');
 				header('Content-Disposition:attachment; filename=' . $filename . '.json');
 			}
-			
-			$result = $this->getRecordsDownload($params."&fields=".$reqFields);
-		
-		
+
+			$result = $this->getRecordsDownload($params . "&fields=" . $reqFields);
+
+
 			if ($format == "csv" || $format == "json" || $format == "geojson") {
 				echo $result;
 			} else if ($format == "xls") {
@@ -2215,27 +2217,27 @@ class Api{
 
 				// $spreadsheet = new Spreadsheet();
 				// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-				
+
 				// /* Set CSV parsing options */
 				// $reader->setDelimiter(';');
 				// $reader->setEnclosure('"');
 				// $reader->setSheetIndex(0);
-				
+
 				// /* Load a CSV file and save as a XLS */
 				// $spreadsheet = $reader->load($pathInput);
 				// $writer = new Xls($spreadsheet);
 				// $writer->save($pathOutput);
 				// $spreadsheet->disconnectWorksheets();
-				
+
 				// unset($spreadsheet);
-				
+
 				$reader = ReaderFactory::create(Type::CSV);
 				$reader->setFieldDelimiter(';');
 				$reader->setFieldEnclosure('"');
 				$reader->setEndOfLineCharacter("\r");
-				
+
 				$writer = WriterFactory::create(Type::XLSX);
-				
+
 				$reader->open($pathInput);
 				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
 
@@ -2243,7 +2245,7 @@ class Api{
 					foreach ($sheet->getRowIterator() as $row) {
 						$writer->addRow($row);
 					}
-				}//$writer->addRows($multipleRows); // add multiple rows at a time
+				} //$writer->addRows($multipleRows); // add multiple rows at a time
 
 				$reader->close();
 				$writer->close();
@@ -2259,7 +2261,7 @@ class Api{
 
 				//Get current Php directory to call the script
 				$dir = dirname(__FILE__);
-				$scriptPath = $dir.'/convert_geo_files_ogr2ogr.sh';
+				$scriptPath = $dir . '/convert_geo_files_ogr2ogr.sh';
 
 				if ($format == "shp") {
 					$typeConvert = 'ESRI Shapefile';
@@ -2268,19 +2270,20 @@ class Api{
 					$pathOutput = $this->tempdir(null, 'output_convert_geo_file_');
 				} else if ($format == "kml") {
 					$typeConvert = 'KML';
-				
+
 					//We create a temp file
 					$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 				}
 
-				$command = $scriptPath." 2>&1 '".$typeConvert."' ".$pathOutput." ".$pathInput."";
+				$projection = $this->config->client->shapefile_projection;
+
+				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . " " . $projection . " " . $filename;
 				$message = shell_exec($command);
 
 				if ($format == "kml") {
 					header('Content-Length: ' . filesize($pathOutput));
 					readfile($pathOutput);
-				}
-				else if ($format == "shp") {
+				} else if ($format == "shp") {
 					$pathOutputZip = tempnam(sys_get_temp_dir(), 'output_zip_convert_geo_file_');
 
 					$zip = new ZipArchive();
@@ -2289,8 +2292,8 @@ class Api{
 					}
 					if ($handle = opendir($pathOutput)) {
 						while (false !== ($entry = readdir($handle))) {
-							if ($entry != "." && $entry != ".." && !strstr($entry,'.php')) {
-								$zip->addFile($pathOutput."/".$entry, $entry);
+							if ($entry != "." && $entry != ".." && !strstr($entry, '.php')) {
+								$zip->addFile($pathOutput . "/" . $entry, $entry);
 							}
 						}
 						closedir($handle);
@@ -2304,9 +2307,8 @@ class Api{
 			} else {
 				echo $result;
 			}
-
 		}
-		
+
 		$response = new Response();
 		return $response;
 	}
@@ -2331,10 +2333,10 @@ class Api{
 	 *     endless loops).
 	 * @return string|bool Full path to newly-created dir, or false on failure.
 	 */
-	public function tempdir($dir = null, $prefix = 'tmp_', $mode = 0700, $maxAttempts = 1000) {
+	public function tempdir($dir = null, $prefix = 'tmp_', $mode = 0700, $maxAttempts = 1000)
+	{
 		/* Use the system temp dir by default. */
-		if (is_null($dir))
-		{
+		if (is_null($dir)) {
 			$dir = sys_get_temp_dir();
 		}
 
@@ -2344,14 +2346,12 @@ class Api{
 		/* If we don't have permission to create a directory, fail, otherwise we will
 		* be stuck in an endless loop.
 		*/
-		if (!is_dir($dir) || !is_writable($dir))
-		{
+		if (!is_dir($dir) || !is_writable($dir)) {
 			return false;
 		}
 
 		/* Make sure characters in prefix are safe. */
-		if (strpbrk($prefix, '\\/:*?"<>|') !== false)
-		{
+		if (strpbrk($prefix, '\\/:*?"<>|') !== false) {
 			return false;
 		}
 
@@ -2360,8 +2360,7 @@ class Api{
 		* and our loop could otherwise become endless.
 		*/
 		$attempts = 0;
-		do
-		{
+		do {
 			$path = sprintf('%s%s%s%s', $dir, DIRECTORY_SEPARATOR, $prefix, mt_rand(100000, mt_getrandmax()));
 		} while (
 			!mkdir($path, $mode) &&
@@ -2370,17 +2369,19 @@ class Api{
 
 		return $path;
 	}
-  
-	public function callPackageShow3($params) {
+
+	public function callPackageShow3($params)
+	{
 		$query_params = $this->proper_parse_str($params);
 		$datasetid = $query_params['id'];
 		return $this->callPackageShow2($datasetid, $params);
 	}
-    
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $useApiKey = true) {
-        $result = '';
-        
-		if($callCkan) {
+
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $useApiKey = true)
+	{
+		$result = '';
+
+		if ($callCkan) {
 			// $query_params = $this->proper_parse_str($params);
 			//$callUrl =  $this->urlCkan . "api/action/package_show?" . $params . "&id=" . $datasetid;
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
@@ -2390,7 +2391,7 @@ class Api{
 			$result = curl_exec($curl);
 			curl_close($curl);
 			//echo $callUrl. "\r\n";
-			$result = json_decode($result,true);
+			$result = json_decode($result, true);
 		} else {
 			$result = $datasetid;
 		}
@@ -2402,30 +2403,31 @@ class Api{
 				return array();
 			}
 		}
- 
+
 		$resourcesid = "";
 		$isGeo = false;
-		$resourceCSV=NULL;
-		
-		$alternative_exports = array(); 
-		foreach ($result['result']['resources'] as $value) {
-		 	if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
-		 		$resourcesid = $value['id'];
-				$resourceCSV = $value;
-		 	}
+		$resourceCSV = NULL;
 
-		 	if($value['format'] == 'GeoJSON'){
-		 		$isGeo = true;
-		 	}
-			
+		$alternative_exports = array();
+		foreach ($result['result']['resources'] as $value) {
+			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+				$resourcesid = $value['id'];
+				$resourceCSV = $value;
+			}
+
+			if ($value['format'] == 'GeoJSON') {
+				$isGeo = true;
+			}
+
 			if ($selectedResourceId != null && $selectedResourceId == $resourcesid) {
 				//If the selected resource ID is defined, we select it
 				break;
 			}
 		}
 		foreach ($result['result']['resources'] as $value) {
-		 	if ((($value['format'] != '' && $value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'JSON' && $value['format'] != 'KML' && $value['format'] != 'SHP' && $value['format'] != 'PDF' && $value['format'] != 'WFS' && $value['format'] != 'WMS'))
-					|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)){
+			if ((($value['format'] != '' && $value['format'] != 'CSV' && $value['format'] != 'XLS' && $value['format'] != 'XLSX' && $value['format'] != 'GeoJSON' && $value['format'] != 'KML' && $value['format'] != 'SHP' && $value['format'] != 'PDF' && $value['format'] != 'WFS' && $value['format'] != 'WMS'))
+				|| (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == false)
+			) {
 
 				$a = array();
 				$a["title"] = $value['name'];
@@ -2459,12 +2461,12 @@ class Api{
 		$data_array['extra_metas'] = array();
 		$data_array['extra_metas']['explore'] = ''; //{"feedback_enabled": true, "file_field_download_count": 0, "popularity_score": 143.7, "reuse_count": 0, "api_call_count": 18317845, "download_count": 12126, "attachment_download_count": 0}
 		$data_array['extra_metas']['processing'] = ''; //{"processing_modified": "2018-06-06T09:19:06+02:00", "records_size": 137993224.0, "security_last_modified": "2018-06-06T11:45:40+02:00"}	
-				
+
 		$visu = array();
-		
+
 		$visu['map_tooltip_html'] = $this->getMapTooltip(false, null);
 		$visu['image_tooltip_html_enabled'] = false;
-		$visu['map_marker_color'] = "#0e7ce3";//"#df0ee3";
+		$visu['map_marker_color'] = "#0e7ce3"; //"#df0ee3";
 
 		/*if($result['result']['name'] == 'observatoire_2g_3g_4g' || $result['result']['name'] == 'observatoire-2g'){
 			$visu['map_tooltip_html_enabled'] = true; //true si page d'accueil, false sinon
@@ -2475,20 +2477,20 @@ class Api{
 		$visu['map_tooltip_disabled'] = false;
 		$visu['map_tooltip_fields'] =  array();
 		$visu['map_tooltip_title'] = '';
-		
+
 		$visu['map_marker_picto'] = "dot";
 		$visu['map_marker_hidemarkershape'] = true;
-		
-		foreach($result['result']['extras'] as $value){
-			if($value["key"] == "type_map"){
+
+		foreach ($result['result']['extras'] as $value) {
+			if ($value["key"] == "type_map") {
 				$visu["default_map"] = $value["value"];
 			}
-			if($value["key"] == "overlays"){
+			if ($value["key"] == "overlays") {
 				$visu["overlays"] = $value["value"];
 			}
-			if($value["key"] == "tooltip"){
+			if ($value["key"] == "tooltip") {
 				$val = json_decode($value["value"], true);
-				if($val["type"] == "html"){
+				if ($val["type"] == "html") {
 					$visu['map_tooltip_html_enabled'] = true;
 					$visu['map_tooltip_html'] = $this->getMapTooltip(true, $val["value"]);
 				} else {
@@ -2496,23 +2498,22 @@ class Api{
 					$visu['map_tooltip_fields'] =  explode(",", $val["value"]["fields"]);
 					$visu['map_tooltip_title'] = $val["value"]["title"];
 				}
-				
 			}
-			if($value["key"] == "reports"){
+			if ($value["key"] == "reports") {
 				$visu['map_tooltip_html_enabled'] = true;
 				$visu["reports"] = json_decode($value["value"]);
 			}
-			if($value["key"] == "records_count"){
+			if ($value["key"] == "records_count") {
 				$data_array["extra_metas"]["data_visible"] = $data_array["data_visible"];
 				$data_array["extra_metas"]["records_count"] = floatval($value["value"]);
 			}
-			if($value["key"] == "features"){
+			if ($value["key"] == "features") {
 				$data_array['features'] = explode(",", $value["value"]);
 			}
-			if($value["key"] == "Picto"){
+			if ($value["key"] == "Picto") {
 				$visu['map_marker_picto'] = $value["value"];
 			}
-			if($value["key"] == "FieldColor" && $value["value"] != ''){
+			if ($value["key"] == "FieldColor" && $value["value"] != '') {
 
 				$visu['map_marker_color'] = array();
 				$visu['map_marker_color']['type'] = "field";
@@ -2528,11 +2529,11 @@ class Api{
 				// $visu['map_marker_color']['field'] = $value["value"];
 				// $visu['map_marker_color']['ranges'] = $ranges;
 			}
-			if($value["key"] == "PredefinedFilters" && $value["value"] != ''){
+			if ($value["key"] == "PredefinedFilters" && $value["value"] != '') {
 				$filters = explode(",", $value["value"]);
 
 				$data_array["extra_metas"]["predefined_filters"] = array();
-				foreach($filters as $filter) {
+				foreach ($filters as $filter) {
 					$myFilter = explode("==", $filter);
 					$filterName = $myFilter[0];
 					$filterValue = $myFilter[1];
@@ -2542,67 +2543,70 @@ class Api{
 			}
 		}
 
-		if($resourcesid == ""){
+		if ($resourcesid == "") {
 			$visu['table_fields'] =  array();
 			//$visu['map_tooltip_fields'] =  array();
 			//$visu['map_tooltip_title'] = '';
-			
-			$data_array['fields'] =array();
-		}
-		else {
+
+			$data_array['fields'] = array();
+		} else {
 			$visu['table_fields'] = $this->getTableFields($resourcesid); //["code_insee","en_service","mutualisation_public","sup_id","mutualisation","nom_reg","nom_com","nom_dept"]
-			if(count($visu['map_tooltip_fields']) == 0){
-				$visu['map_tooltip_fields'] = $this->getMapTooltipFields($resourcesid);// ["emr_lb_systeme","emr_dt_service","generation","coord","nom_com","nom_dept","nom_reg"]fields
+			if (count($visu['map_tooltip_fields']) == 0) {
+				$visu['map_tooltip_fields'] = $this->getMapTooltipFields($resourcesid); // ["emr_lb_systeme","emr_dt_service","generation","coord","nom_com","nom_dept","nom_reg"]fields
 				$visu['map_tooltip_title'] = $visu['map_tooltip_fields'][0];
 			}
-			
-			
+
+
 			$data_array['fields'] = $this->getAllFields($resourcesid, TRUE, FALSE);
 		}
 
 		$visu['calendar_tooltip_html_enabled'] = false;
 		$visu['analyze_default'] = ''; //"{\"queries\":[{\"charts\":[{\"type\":\"line\",\"func\":\"COUNT\",\"color\":\"range-Accent\",\"scientificDisplay\":true}],\"xAxis\":\"nom_com\",\"maxpoints\":\"\",\"timescale\":null,\"sort\":\"\",\"seriesBreakdown\":\"emr_lb_systeme\"}],\"timescale\":\"\",\"displayLegend\":true,\"alignMonth\":true}"
-				
+
 		//$data_array['features'] = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud"]
 		//$data_array['features'][] = "analyze"; //tab chart
-		if($isGeo){
+		if ($isGeo) {
 			$data_array['features'][] = "geo"; //tab map 
 		}
 		//$data_array['features'][] = "analyze"; //tab chart 
 		//$data_array['features'][] = "timeline"; //tab timeline 
 		//$data_array['features'][] = "timeserie"; //unknown tab
-        
-        if(count($data_array['fields'])>0){
-			$colStart = null;$colEnd = null;$colWordCount = null;$colTimeline=null;
-			foreach($data_array['fields'] as $f){
-				foreach($f["annotations"] as $a){
-					if($a["name"] == "startDate"){
+
+		if (count($data_array['fields']) > 0) {
+			$colStart = null;
+			$colEnd = null;
+			$colWordCount = null;
+			$colTimeline = null;
+			foreach ($data_array['fields'] as $f) {
+				foreach ($f["annotations"] as $a) {
+					if ($a["name"] == "startDate") {
 						$colStart = $f["name"];
-					} else if($a["name"] == "endDate"){
+					} else if ($a["name"] == "endDate") {
 						$colEnd = $f["name"];
-					} else if($a["name"] == "date"){
-						$colEnd = $f["name"];$colStart = $f["name"];
-					} else if($a["name"] == "wordcount" || $a["name"] == "wordcountNumber"){
+					} else if ($a["name"] == "date") {
+						$colEnd = $f["name"];
+						$colStart = $f["name"];
+					} else if ($a["name"] == "wordcount" || $a["name"] == "wordcountNumber") {
 						$colWordCount = $f["name"];
 					}
-//                    else if($a["name"] == "timeline"){
-//						$colTimeline = $f["name"];
-//					}
+					//                    else if($a["name"] == "timeline"){
+					//						$colTimeline = $f["name"];
+					//					}
 				}
-				if($colEnd != null && $colStart != null){
+				if ($colEnd != null && $colStart != null) {
 					//break;
 				}
-				if($f["type"] == "file"){
+				if ($f["type"] == "file") {
 					//$data_array['features'][] = "image";
 					$visu['image_title'] = $visu['map_tooltip_title'];
 					$visu['image_fields'] = $visu['map_tooltip_fields'];
 				}
 			}
-			
-			if($colStart != null && $colEnd != null){
+
+			if ($colStart != null && $colEnd != null) {
 				//$data_array['features'][] = "timeserie";
 				//$data_array['features'][] = "calendar";
-				
+
 				$visu['calendar_enabled'] = true;
 				$visu['calendar_available_views'] = "month,agendaWeek,agendaDay";
 				$visu['calendar_event_color'] = "#C32D1C";
@@ -2615,72 +2619,73 @@ class Api{
 			} else {
 				$visu['calendar_enabled'] = false;
 			}
-			
-			if($colWordCount != null){
+
+			if ($colWordCount != null) {
 				//$data_array['features'][] = "wordcloud";
 				$visu['wordcloud_field'] = $colWordCount;
 			}
-            
-//            if($colTimeline != null){
-//				$data_array['features'][] = "timeline";
-//				$visu['timeline_field'] = $colTimeline;
-//			}
+
+			//            if($colTimeline != null){
+			//				$data_array['features'][] = "timeline";
+			//				$visu['timeline_field'] = $colTimeline;
+			//			}
 		}
-        
-        // a commenté la ligne parce qu'il y a quelques problèmes avec  CustomView !!!!!!!!!!!!
-        
-        
+
+		// a commenté la ligne parce qu'il y a quelques problèmes avec  CustomView !!!!!!!!!!!!
+
+
 		$customView = $this->getCustomView($result['result']['id']);
-		if($customView){ // TODO custom_view search
-		
+		if ($customView) { // TODO custom_view search
+
 			//$data_array['features'][] = "custom_view";
 			$visu["custom_view_title"] = $customView->cv_title;
 			$visu["custom_view_slug"] = $customView->cv_name;
 			$visu["custom_view_icon"] = $customView->cv_icon;
-			$i = $customView->cv_template;$html = "";
-			foreach($customView->html as $key => $obj){
-				$customView->html[$key]->cvh_html = str_replace("d4c-chart ", 'd4c-chart d4c-order="'.$obj->cvh_order.'" ', $obj->cvh_html);
+			$i = $customView->cv_template;
+			$html = "";
+			foreach ($customView->html as $key => $obj) {
+				$customView->html[$key]->cvh_html = str_replace("d4c-chart ", 'd4c-chart d4c-order="' . $obj->cvh_order . '" ', $obj->cvh_html);
 			}
 			if ($i == 1) {
-				if(isset($customView->html[0])){
+				if (isset($customView->html[0])) {
 					$html = $customView->html[0]->cvh_html;
 				}
 			} elseif ($i == 2) {
-				if(isset($customView->html[0])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[0]->cvh_html.'</div></div>';
+				if (isset($customView->html[0])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[0]->cvh_html . '</div></div>';
 				}
-				if(isset($customView->html[1])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[1]->cvh_html.'</div></div>';
+				if (isset($customView->html[1])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[1]->cvh_html . '</div></div>';
 				}
 			} elseif ($i == 3) {
 				$html .= '<div class="row">';
-				if(isset($customView->html[0])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[0]->cvh_html.'</div></div>';
+				if (isset($customView->html[0])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[0]->cvh_html . '</div></div>';
 				}
-				if(isset($customView->html[1])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[1]->cvh_html.'</div></div>';
+				if (isset($customView->html[1])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[1]->cvh_html . '</div></div>';
 				}
 				$html .= '</div>';
 				$html .= '<div class="row"><div class="d4c-box">';
-				if(isset($customView->html[2])){
+				if (isset($customView->html[2])) {
 					$html .= $customView->html[2]->cvh_html;
 				}
 				$html .= '</div></div>';
 			} elseif ($i == 4) {
 				$html .= '<div class="row">';
-				if(isset($customView->html[0])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[0]->cvh_html.'</div></div>';
+				if (isset($customView->html[0])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[0]->cvh_html . '</div></div>';
 				}
-				if(isset($customView->html[1])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[1]->cvh_html.'</div></div>';
+				if (isset($customView->html[1])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[1]->cvh_html . '</div></div>';
 				}
 				$html .= '</div>';
 				$html .= '<div class="row">';
-				if(isset($customView->html[2])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[2]->cvh_html.'</div></div>';
+				if (isset($customView->html[2])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[2]->cvh_html . '</div></div>';
 				}
-				if(isset($customView->html[3])){
-					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">'.$customView->html[3]->cvh_html.'</div></div>';
+				if (isset($customView->html[3])) {
+					$html .= '<div class="col-md-12 col-sm-12"><div class="d4c-box">' . $customView->html[3]->cvh_html . '</div></div>';
 				}
 				$html .= '</div>';
 			}
@@ -2697,74 +2702,82 @@ class Api{
 		}
 		$visu['custom_view_enabled'] = $customView != null;
 
-		if (\Drupal::currentUser()->isAuthenticated()){
+		if (\Drupal::currentUser()->isAuthenticated()) {
 			$idUser = \Drupal::currentUser()->id();
 			$isSubscribed = $this->isSubscribed($datasetid, $idUser);
 			$data_array['is_subscribed'] = $isSubscribed;
 		}
 
 		$data_array['extra_metas']['visualization'] = $visu;
-		
+
 		$data_array['has_records'] = true;
 		$data_array['metas'] = $result['result'];
-		
-		$data_array["metas"]["domain"]="";
-		$data_array["metas"]["language"]="fr";
+
+		$data_array["metas"]["domain"] = "";
+		$data_array["metas"]["language"] = "fr";
 		//$data_array["metas"]["title"]=$result["result"]["name"];
 		$desc = str_replace(PHP_EOL, '<br>', $result["result"]["notes"]);
-		$data_array["metas"]["description"]= $desc;
-		$data_array["metas"]["modified"] = $this->findMostRecentDate(current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"], $result["result"]["metadata_modified"]);
-		$data_array["metas"]["visibility"]="domain";
-		$data_array["metas"]["metadata_processed"]=current(array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"];
-		$data_array["metas"]["license"]=$data_array["metas"]["license_title"];
+		$data_array["metas"]["description"] = $desc;
+		$data_array["metas"]["modified"] = $this->findMostRecentDate(current(array_filter($result["result"]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_last_modification";
+		}))["value"], $result["result"]["metadata_modified"]);
+		$data_array["metas"]["visibility"] = "domain";
+		$data_array["metas"]["metadata_processed"] = current(array_filter($result["result"]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_last_modification";
+		}))["value"];
+		$data_array["metas"]["license"] = $data_array["metas"]["license_title"];
 		//$data_array["metas"]["data_processed"]="2018-07-05T12:07:03+00:00";
-		$data_array["metas"]["publisher"]=$data_array["metas"]["organization"]["title"];
+		$data_array["metas"]["publisher"] = $data_array["metas"]["organization"]["title"];
 		// set default producer in metas array
 		$data_array['metas']["producer"] = "";
-		foreach($data_array['metas']['extras'] as $value){
-			if($value["key"] == "theme"){
+		foreach ($data_array['metas']['extras'] as $value) {
+			if ($value["key"] == "theme") {
 				$data_array['metas']["theme"] = str_replace(",", ", ", $value["value"]);
 			}
-			if($value["key"] == "themes"){
+			if ($value["key"] == "themes") {
 				$data_array['metas']["themes"] = $value["value"];
 			}
 			//add producer to metas dataset
-			if($value["key"] == "producer"){
+			if ($value["key"] == "producer") {
 				$data_array['metas']["producer"] = $value["value"];
 			}
 		}
-        $result["result"]["results"][$i]["metadata_imported"] = $result["result"]["results"][$i]["metadata_modified"];
-			$result["result"]["results"][$i]["metadata_modified"] = current(array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $result["result"]["results"][$i]["metadata_modified"];
-			$result["result"]["results"][$i]["metadata_created"] = current(array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"] ?: $result["result"]["results"][$i]["metadata_created"];
-//        foreach($data_array['metas']['extras'] as $value){
-//			if($value["key"] == "LinkedDataSet"){
-//                
-//                
-//                
-//				//$data_array['metas']["LinkedDataSet"] = str_replace(";", "; ", $value["value"]);
-//                
-//                $name_id =explode(";", $value["value"]);
-//                     
-//                for($t=0; $t < count($name_id); $t++){
-//                    
-//                    $a = (":", $name_id[$i]);
-//                    
-//                    $data_array['metas']["LinkedDataSet"][$a[0]]=$data_array['metas']["LinkedDataSet"][$a[1]];
-//                    
-//                 
-//                }
-//                 
-//                
-//			}
-//		}
-		if(count($data_array["metas"]["tags"]) > 0){
-			$data_array["metas"]["keyword"]=array_column($data_array["metas"]["tags"],"display_name");
+		$result["result"]["results"][$i]["metadata_imported"] = $result["result"]["results"][$i]["metadata_modified"];
+		$result["result"]["results"][$i]["metadata_modified"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_last_modification";
+		}))["value"] ?: $result["result"]["results"][$i]["metadata_modified"];
+		$result["result"]["results"][$i]["metadata_created"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
+			return $f["key"] == "date_moissonnage_creation";
+		}))["value"] ?: $result["result"]["results"][$i]["metadata_created"];
+		//        foreach($data_array['metas']['extras'] as $value){
+		//			if($value["key"] == "LinkedDataSet"){
+		//                
+		//                
+		//                
+		//				//$data_array['metas']["LinkedDataSet"] = str_replace(";", "; ", $value["value"]);
+		//                
+		//                $name_id =explode(";", $value["value"]);
+		//                     
+		//                for($t=0; $t < count($name_id); $t++){
+		//                    
+		//                    $a = (":", $name_id[$i]);
+		//                    
+		//                    $data_array['metas']["LinkedDataSet"][$a[0]]=$data_array['metas']["LinkedDataSet"][$a[1]];
+		//                    
+		//                 
+		//                }
+		//                 
+		//                
+		//			}
+		//		}
+		if (count($data_array["metas"]["tags"]) > 0) {
+			$data_array["metas"]["keyword"] = array_column($data_array["metas"]["tags"], "display_name");
 		} else {
 			$data_array["metas"]["keyword"] = array();
 		}
-		
 
-        /*if($resourceCSV != NULL){
+
+		/*if($resourceCSV != NULL){
 			$records_result = $this->getDatastoreRecord_v2("dataset=".$data_array['datasetid']."&rows=1");
 			
 			$data_array["metas"]["data_visible"] = $data_array["data_visible"];
@@ -2774,7 +2787,8 @@ class Api{
 		return $data_array;
 	}
 
-	public function findMostRecentDate($firstDateStr, $lastDateStr) {
+	public function findMostRecentDate($firstDateStr, $lastDateStr)
+	{
 		if ($firstDateStr) {
 			$firstDate = strtotime($firstDateStr);
 			$lastDate = strtotime($lastDateStr);
@@ -2786,22 +2800,24 @@ class Api{
 		return $lastDateStr;
 	}
 
-	public function callPackageShow2($datasetid,$params) {
-        
+	public function callPackageShow2($datasetid, $params)
+	{
 
 
-		$res = $this->getPackageShow2($datasetid,$params);
-        
-        
+
+		$res = $this->getPackageShow2($datasetid, $params);
+
+
 		echo json_encode($res);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	}	   
-  
-	public function callDatastoreApiGeoClusterOld($params) {
-		
+	}
+
+	public function callDatastoreApiGeoClusterOld($params)
+	{
+
 		$params = $this->retrieveParameters($params);
 
 		$patternRefine = '/refine./i';
@@ -2810,73 +2826,73 @@ class Api{
 		$patternSerie = '/y.serie/i';
 		$filters_init = array();
 		$fieldId = "id";
-		$fieldCoordinates="";
-		$reqQfilter="";
+		$fieldCoordinates = "";
+		$reqQfilter = "";
 		$ySeries = array();
 
 		//echo $params . "\r\n";
 		$query_params = $this->proper_parse_str($params);
 
 
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-		        unset($query_params[$key]);
-		        //echo preg_replace($pattern,"",$key);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    	$disj[] = preg_replace($patternDisj,"",$key);
-		    }
+				unset($query_params[$key]);
+				//echo preg_replace($pattern,"",$key);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+				$disj[] = preg_replace($patternDisj, "", $key);
+			}
 
-			if($key == "q"){
-		    	$reqQfilter = $this->constructReqQToSQL($value);
-		    	//$pattern = '/and (\w+) /i';
-		    	//preg_match($pattern,$reqQfilter,$qField); 
-		    }
-			if (preg_match($patternSerie,$key)){
-		    	$var = explode('.', $key);
+			if ($key == "q") {
+				$reqQfilter = $this->constructReqQToSQL($value);
+				//$pattern = '/and (\w+) /i';
+				//preg_match($pattern,$reqQfilter,$qField); 
+			}
+			if (preg_match($patternSerie, $key)) {
+				$var = explode('.', $key);
 				$nom = $var[1];
 				$app = $var[2];
-				
-				if(array_key_exists($nom, $ySeries)){
+
+				if (array_key_exists($nom, $ySeries)) {
 					$ySeries[$nom][$app] = $value;
 				} else {
 					$ySeries[$nom]["name"] = $nom;
 					$ySeries[$nom][$app] = $value;
 				}
-		    }
+			}
 		}
 
 
 		$clusterDistance = 50;
-		if(array_key_exists("clusterdistance", $query_params)){
+		if (array_key_exists("clusterdistance", $query_params)) {
 			$clusterDistance = $query_params["clusterdistance"];
 		}
 		unset($query_params["clusterdistance"]);
 
 		$clusterPrec = 5;
-		if(array_key_exists("clusterprecision", $query_params)){
-			$clusterPrec = $query_params["clusterprecision"]-2;
+		if (array_key_exists("clusterprecision", $query_params)) {
+			$clusterPrec = $query_params["clusterprecision"] - 2;
 		}
 		unset($query_params["clusterprecision"]);
 
 		$return_polygons = false;
-		if(array_key_exists("return_polygons", $query_params)){
+		if (array_key_exists("return_polygons", $query_params)) {
 			$clusterDistance = $query_params["return_polygons"];
 		}
 		unset($query_params["return_polygons"]);
-		
+
 
 		$geofilter_bbox = explode(",", $query_params["geofilter.bbox"]);
 		unset($query_params["geofilter.bbox"]);
 		unset($query_params["q"]);
 		$datasetId = $query_params["dataset"];
-//		unset($query_params["dataset"]);
+		//		unset($query_params["dataset"]);
 
-		if(array_key_exists("geofilter.distance", $query_params) || array_key_exists("geofilter.polygon", $query_params)){
-			
+		if (array_key_exists("geofilter.distance", $query_params) || array_key_exists("geofilter.polygon", $query_params)) {
+
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -2884,13 +2900,13 @@ class Api{
 			//echo $package . "\r\n";
 			curl_close($curl);
 			$package = json_decode($package, true);
-			foreach ($package['result']['resources'] as $value) { 
-			 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-			 		$resourceCSV = $value['id'];
-			 		break;
-			 	}
+			foreach ($package['result']['resources'] as $value) {
+				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$resourceCSV = $value['id'];
+					break;
+				}
 			}
-			
+
 			/*if(count($ySeries)>0){
 				$fields = $this->getAllFields($resourceCSV);
 				$fieldId = "_id";
@@ -2902,7 +2918,7 @@ class Api{
 				}
 			}*/
 
-			$geojson = $this->getRecordsDownload($params."&format=geojson&resource_id=".$resourceCSV);
+			$geojson = $this->getRecordsDownload($params . "&format=geojson&resource_id=" . $resourceCSV);
 			//echo $geojson . "\r\n";
 			$arr = array();
 			$arr["data"] = $geojson;
@@ -2935,32 +2951,32 @@ class Api{
 				$c = array();
 				$c["clusters"] = array();
 				$c["cluster_center"] = array_reverse($value["geometry"]["coordinates"]);
-				$c["count"] = $value["properties"]["point_count"];//echo $c["count"]. "\r\n";
-				if($c["count"] == NULL) $c["count"]=1;
-				
-				if(count($ySeries) > 0){
+				$c["count"] = $value["properties"]["point_count"]; //echo $c["count"]. "\r\n";
+				if ($c["count"] == NULL) $c["count"] = 1;
+
+				if (count($ySeries) > 0) {
 					$c["series"] = array();
 					$serFilteredValues = array();
-					if($c["count"] > 1){
+					if ($c["count"] > 1) {
 						$ids = array_flip($value["properties"]["ids"]);
-						foreach($allFeatures as $f){
-							if(isset($ids[$f["properties"]["_id"]])){
+						foreach ($allFeatures as $f) {
+							if (isset($ids[$f["properties"]["_id"]])) {
 								$serFilteredValues[] = $f["properties"];
 							}
 						}
 					} else {
 						$serFilteredValues[] = $value["properties"];
 					}
-					
-					foreach($ySeries as $y){
-						$colValues = array_column($serFilteredValues,$y["expr"]);
+
+					foreach ($ySeries as $y) {
+						$colValues = array_column($serFilteredValues, $y["expr"]);
 						$func = $y["func"];
 						switch ($func) {
 							case "AVG":
 								$f = 0;
-								if(count($colValues)){
+								if (count($colValues)) {
 									$f = array_sum($colValues) / count($colValues);
-								} 
+								}
 								break;
 							case "MIN":
 								$f = min($colValues);
@@ -2970,9 +2986,11 @@ class Api{
 								break;
 							case "STDDEV":
 								$f = 0;
-								if(count($colValues)>1){
-									$rr = function($x, $mean) { return pow($x - $mean,2); };
-									$f = sqrt(array_sum(array_map($rr, $colValues, array_fill(0,count($colValues), (array_sum($colValues) / count($colValues)) ) ) ) / (count($colValues)-1) );
+								if (count($colValues) > 1) {
+									$rr = function ($x, $mean) {
+										return pow($x - $mean, 2);
+									};
+									$f = sqrt(array_sum(array_map($rr, $colValues, array_fill(0, count($colValues), (array_sum($colValues) / count($colValues))))) / (count($colValues) - 1));
 								}
 								break;
 							case "SUM":
@@ -2982,17 +3000,17 @@ class Api{
 								$f = max($colValues);
 								break;
 						}
-						$c["series"][$y["name"]] = $f; 
+						$c["series"][$y["name"]] = $f;
 					}
 				}
-				
+
 				$clusters[] = $c;
 			}
 			$data_array['clusters'] = $clusters;
-		
+
 			$data_array['clusterprecision'] = $clusterPrec;
 			$data_array['series'] = array();
-			foreach($ySeries as $y){
+			foreach ($ySeries as $y) {
 				$data_array["series"][$y["name"]] = array();
 				$values = array_column(array_column($clusters, 'series'), $y["name"]);
 				$data_array["series"][$y["name"]]["min"] = min($values);
@@ -3002,26 +3020,26 @@ class Api{
 			$counts = array_column($clusters, 'count');
 			$data_array['count']['min'] = min($counts);
 			$data_array['count']['max'] = max($counts);
-			
 
-			echo json_encode( $data_array );
-			
+
+			echo json_encode($data_array);
+
 			$response = new Response();
-	//		$response->setContent(json_encode($result));
+			//		$response->setContent(json_encode($result));
 			$response->headers->set('Content-Type', 'application/json');
 			return $response;
 		}
 
-		$query = "idRes=".$datasetId."&zoom=".$clusterPrec."&minLat=".$geofilter_bbox[0]."&minLong=".$geofilter_bbox[1]."&maxLat=".$geofilter_bbox[2]."&maxLong=".$geofilter_bbox[3];
+		$query = "idRes=" . $datasetId . "&zoom=" . $clusterPrec . "&minLat=" . $geofilter_bbox[0] . "&minLong=" . $geofilter_bbox[1] . "&maxLat=" . $geofilter_bbox[2] . "&maxLong=" . $geofilter_bbox[3];
 		/*$ckanurl = $this->urlCkan;
 		if(substr($ckanurl, -1) == "/"){
 			$ckanurl = substr($ckanurl, 0, -1);
 		}
 		$callUrl =  "http://192.168.2.223:1337/cluster?".$query;
 		//$callUrl =  "https://anfr2.data4citizen.com:1337/cluster?".$query;*/
-		
-		$callUrl = $this->config->cluster->url . "cluster?".$query;
-		
+
+		$callUrl = $this->config->cluster->url . "cluster?" . $query;
+
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleGetOptions());
@@ -3030,8 +3048,8 @@ class Api{
 
 		//echo $dataset . "\r\n";
 		$dataset = json_decode($dataset, true);
-		if(empty($dataset["features"])) {
-			if($clusterPrec < 20) {
+		if (empty($dataset["features"])) {
+			if ($clusterPrec < 20) {
 				$params = str_replace('clusterprecision=' . ($clusterPrec + 2), 'clusterprecision=' . ($clusterPrec + 4), $params);
 				//error_log($params);
 				return $this->callDatastoreApiGeoClusterOld($params);
@@ -3039,12 +3057,12 @@ class Api{
 		}
 
 		//recup resourceCSV
-		$resourceCSV; 
+		$resourceCSV;
 		$maxCount;
 		$array_filter_id;
 		$result2;
-				 
-		if(count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0){
+
+		if (count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0) {
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -3052,11 +3070,11 @@ class Api{
 			//echo $package . "\r\n";
 			curl_close($curl);
 			$package = json_decode($package, true);
-			foreach ($package['result']['resources'] as $value) { 
-			 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-			 		$resourceCSV = $value['id'];
-			 		break;
-			 	}
+			foreach ($package['result']['resources'] as $value) {
+				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$resourceCSV = $value['id'];
+					break;
+				}
 			}
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
@@ -3071,14 +3089,14 @@ class Api{
 				} 
 			}*/
 			foreach ($fields as $value) {
-				if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+				if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
 			}
-			
+
 			//series
 			$series = "";
-			if(count($ySeries) > 0){
-				foreach($ySeries as $y){
-					if($y["expr"] == NULL){
+			if (count($ySeries) > 0) {
+				foreach ($ySeries as $y) {
+					if ($y["expr"] == NULL) {
 						$y["expr"] = "*";
 					}
 					/*
@@ -3089,38 +3107,36 @@ class Api{
 					 Minimum : y.serie1.expr=prix_gazole&y.serie1.func=MIN
 					 Moyenne : y.serie1.expr=prix_gazole&y.serie1.func=AVG
 					*/
-					$f = "string_agg(".$y["expr"]."::text,',') as ". $y["name"].",";
+					$f = "string_agg(" . $y["expr"] . "::text,',') as " . $y["name"] . ",";
 					$series .= $f;
 				}
-				$series = ", ". substr($series, 0, -1);
+				$series = ", " . substr($series, 0, -1);
 			}
-			
+
 
 			//where
 			$where = "";
-			if(!empty($filters_init)){
+			if (!empty($filters_init)) {
 				$where = " where ";
 				foreach ($filters_init as $key => $value) {
-					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
-					} else if(is_array($value)){ 
+					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
-					
 				}
-				$where = substr($where, 0, strlen($where)-4 );
-				if($reqQfilter != ""){
+				$where = substr($where, 0, strlen($where) - 4);
+				if ($reqQfilter != "") {
 					$where .= $reqQfilter;
 				}
-			}
-			else if($reqQfilter != ""){
+			} else if ($reqQfilter != "") {
 				$where = " where " . substr($reqQfilter, 5);
 			}
-		 
+
 			$req = array();
-			$sql = "Select string_agg(".$fieldId."::text,',') as agg". $series ." from \"" . $query_params['resource_id'] . "\"" . $where ;
+			$sql = "Select string_agg(" . $fieldId . "::text,',') as agg" . $series . " from \"" . $query_params['resource_id'] . "\"" . $where;
 			$req['sql'] = $sql;
 			//echo $sql;
 			$url2 = http_build_query($req);
@@ -3133,42 +3149,42 @@ class Api{
 			curl_close($curl);
 			$result2 = json_decode($result2, true);
 			//$array_filter_id = array_column($result2["result"]["records"], $fieldId);//echo count($array_filter_id). "\r\n";
-			$array_filter_id = explode(",",$result2["result"]["records"][0]["agg"]);//echo count($array_filter_id). "\r\n";
+			$array_filter_id = explode(",", $result2["result"]["records"][0]["agg"]); //echo count($array_filter_id). "\r\n";
 
 		}
-		
+
 
 		$data_array = array();
-		
+
 		$clusters = array();
 		foreach ($dataset["features"] as $value) {
 			$c = array();
 			$c["clusters"] = array();
 			$c["cluster_center"] = array_reverse($value["geometry"]["coordinates"]);
 			//$c["cluster_center"] = $value["geometry"]["coordinates"];
-			$c["count"] = $value["properties"]["point_count"];//echo $c["count"]. "\r\n";
-			if($c["count"] == NULL) $c["count"]=1;
-			
+			$c["count"] = $value["properties"]["point_count"]; //echo $c["count"]. "\r\n";
+			if ($c["count"] == NULL) $c["count"] = 1;
+
 			$ids = array();
 			foreach ($value["properties"]["ids"] as $v) {
 				$ids[] = $v;
 			}
-			
-			if(count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0){
-			
+
+			if (count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0) {
+
 				//$array = array_intersect($array_filter_id, $ids);
-				$index = array_flip($array_filter_id);					   
+				$index = array_flip($array_filter_id);
 				$second = array_flip($ids);
 
 				$x = array_intersect_key($index, $second);
 				$array = array_flip($x);
-				
+
 				//$array_filter_id = array_diff($array_filter_id, $ids);							  
-				$c["count"] = count($array);//echo $c["count"]. "\r\n";
-				if($c["count"] == 1){
-					$id = array_values($array)[0]; 
+				$c["count"] = count($array); //echo $c["count"]. "\r\n";
+				if ($c["count"] == 1) {
+					$id = array_values($array)[0];
 					$req = array();
-					$sql = "Select ".$fieldCoordinates." as coord from \"" . $resourceCSV . "\" where " . $fieldId . "=".$id;
+					$sql = "Select " . $fieldCoordinates . " as coord from \"" . $resourceCSV . "\" where " . $fieldId . "=" . $id;
 					$req['sql'] = $sql;
 					//echo $sql;
 					$url2 = http_build_query($req);
@@ -3179,23 +3195,23 @@ class Api{
 					$record = curl_exec($curl);
 					//echo $result . "\r\n";
 					curl_close($curl);
-					$record = json_decode($record,true);
+					$record = json_decode($record, true);
 					//echo $record["result"]["records"][0]["coord"];						
 					$c["cluster_center"] = array_map('floatval', explode(',', $record["result"]["records"][0]["coord"]));
 				}
-				
-				if(count($ySeries) > 0){
+
+				if (count($ySeries) > 0) {
 					$c["series"] = array();
-					foreach($ySeries as $y){
-						$serAllValues = explode(",",$result2["result"]["records"][0][$y["name"]]);
+					foreach ($ySeries as $y) {
+						$serAllValues = explode(",", $result2["result"]["records"][0][$y["name"]]);
 						$serFilteredValues = array_intersect_key($serAllValues, $array);
 						$func = $y["func"];
 						switch ($func) {
 							case "AVG":
 								$f = 0;
-								if(count($serFilteredValues)){
+								if (count($serFilteredValues)) {
 									$f = array_sum($serFilteredValues) / count($serFilteredValues);
-								} 
+								}
 								break;
 							case "MIN":
 								$f = min($serFilteredValues);
@@ -3219,8 +3235,10 @@ class Api{
 									$f = sqrt ($division);
 								}*/
 								//stats_standard_deviation($serFilteredValues);
-								$rr = function($x, $mean) { return pow($x - $mean,2); };
-								$f = sqrt(array_sum(array_map($rr, $serFilteredValues, array_fill(0,count($serFilteredValues), (array_sum($serFilteredValues) / count($serFilteredValues)) ) ) ) / (count($serFilteredValues)-1) );
+								$rr = function ($x, $mean) {
+									return pow($x - $mean, 2);
+								};
+								$f = sqrt(array_sum(array_map($rr, $serFilteredValues, array_fill(0, count($serFilteredValues), (array_sum($serFilteredValues) / count($serFilteredValues))))) / (count($serFilteredValues) - 1));
 								break;
 							case "SUM":
 								$f = array_sum($serFilteredValues);
@@ -3229,20 +3247,20 @@ class Api{
 								$f = max($serFilteredValues);
 								break;
 						}
-						$c["series"][$y["name"]] = $f; 
+						$c["series"][$y["name"]] = $f;
 					}
 				}
 			}
-			if($c["count"] != 0){
+			if ($c["count"] != 0) {
 				$clusters[] = $c;
 			}
 		}
 		//echo count($array_filter_id);asort($array_filter_id);print_r($array_filter_id);
 		$data_array['clusters'] = $clusters;
-		
+
 		$data_array['clusterprecision'] = $clusterPrec;
 		$data_array['series'] = array();
-		foreach($ySeries as $y){
+		foreach ($ySeries as $y) {
 			$data_array["series"][$y["name"]] = array();
 			$values = array_column(array_column($clusters, 'series'), $y["name"]);
 			$data_array["series"][$y["name"]]["min"] = min($values);
@@ -3252,44 +3270,45 @@ class Api{
 		$counts = array_column($clusters, 'count');
 		$data_array['count']['min'] = min($counts);
 		$data_array['count']['max'] = max($counts);
-		
 
-		echo json_encode( $data_array );
+
+		echo json_encode($data_array);
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
 
-													  
-	public function callDatastoreApiGeoPreview($params) {
+
+	public function callDatastoreApiGeoPreview($params)
+	{
 
 		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
-		
+
 		$fields = $this->getAllFields($query_params['resource_id']);
-		
-		$fieldGeometries="";
-		$fieldColor="";
+
+		$fieldGeometries = "";
+		$fieldColor = "";
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_shape") $fieldGeometries = $value['id'];
 			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
-			if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
-			if($value['name'] == "route_color") $fieldColor = $value['name'].",";
+			if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
+			if ($value['name'] == "route_color") $fieldColor = $value['name'] . ",";
 		}
 
 		//$result = $this->getRecordsDownload($params . "&format=json");
 		//echo $result;
 		//$result = json_decode($result, true);
 
-		if(array_key_exists("rows", $query_params)){
-			$limit = " limit ".$query_params['rows'];
+		if (array_key_exists("rows", $query_params)) {
+			$limit = " limit " . $query_params['rows'];
 		}
 
 		$where = $this->getSQLWhereRecordsDownload($params);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
-		$sql = "Select  " .$fieldColor.$fieldGeometries." as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
+		$sql = "Select  " . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
 		Logger::logMessage("Geopreview query : " . $req['sql']);
@@ -3299,14 +3318,14 @@ class Api{
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		
+
 		curl_close($curl);
-		$result = json_decode($result,true);
-		
-		
+		$result = json_decode($result, true);
+
+
 		$data_array = array();
 		foreach ($result["result"]["records"] as $value) {
-		
+
 			// $res = array();
 			// foreach ($value as $key => $val) {
 			// 	if ($key == 'geo') {
@@ -3342,11 +3361,11 @@ class Api{
 			// 		$res['geo_digest'] = md5($val); //3566411980376893035
 			// 		// try{
 			// 		// 	Logger::logMessage("Found geo : " . $val);
-		
+
 			// 		// 	$res['geometry'] = json_decode($val, true); 
 			// 		// } catch(Exception $e){
 			// 		// 	Logger::logMessage("Found geo with cast error : " . $val);
-		
+
 			// 			$res['geometry'] = $val; 
 			// 		// }
 			// 	}
@@ -3356,45 +3375,47 @@ class Api{
 			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
 			$res['route_color'] = $value["route_color"];
-			try{
+			try {
 				// Logger::logMessage("Found geo  : " . $value["geo"]);
-			    $res['geometry'] = json_decode($value["geo"], true); 
-			} catch(Exception $e){
+				$res['geometry'] = json_decode($value["geo"], true);
+			} catch (Exception $e) {
 				// Logger::logMessage("Found geo with cast error : " . $value["geo"]);
-			    $res['geometry'] = $value["geo"]; 
+				$res['geometry'] = $value["geo"];
 			}
-			
+
 
 			$data_array[] = $res;
 		}
-		
-		echo json_encode( $data_array );
+
+		echo json_encode($data_array);
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	}												  
-				   
-  
+	}
 
-	public function getMapTooltip($hasCustomHtml, $html){
+
+
+	public function getMapTooltip($hasCustomHtml, $html)
+	{
 		$res = "<div class=\"tooltipcustom\">";
-		if($hasCustomHtml){
+		if ($hasCustomHtml) {
 			$res = $html;
 		} else {
-			$res = "<h2 class=\"d4cwidget-map-tooltip__header\" ng-show=\"!!getTitle(record)\"><span ng-bind=\"getTitle(record)\"></span></h2>".
-			"<ul style=\"display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;\">".
-			"<li  ng-repeat=\"field in context.dataset.extra_metas.visualization.map_tooltip_fields\"><strong>{{field}}</strong> : {{record.fields[field]}}</li>".
-			"</ul>";
+			$res = "<h2 class=\"d4cwidget-map-tooltip__header\" ng-show=\"!!getTitle(record)\"><span ng-bind=\"getTitle(record)\"></span></h2>" .
+				"<ul style=\"display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;\">" .
+				"<li  ng-repeat=\"field in context.dataset.extra_metas.visualization.map_tooltip_fields\"><strong>{{field}}</strong> : {{record.fields[field]}}</li>" .
+				"</ul>";
 		}
-		$res .= "<div  ng-repeat=\"report in context.dataset.extra_metas.visualization.reports\">".
-			"<strong>Rapport de d\u00e9tail</strong> : <a ng-href=\"{{getReportUrl(report[0], record)}}\" target=\"_blank\">Voir</a>".
+		$res .= "<div  ng-repeat=\"report in context.dataset.extra_metas.visualization.reports\">" .
+			"<strong>Rapport de d\u00e9tail</strong> : <a ng-href=\"{{getReportUrl(report[0], record)}}\" target=\"_blank\">Voir</a>" .
 			"</div>";
 		$res .= "</div>";
 		//return utf8_encode ("<div class=\"tooltipcustom\"><h2 class=\"d4cwidget-map-tooltip__header\" ng-show=\"!!getTitle(record)\"><span ng-bind=\"getTitle(record)\"></span></h2><ul style=\"display: block; list-style-type: none; color: #2c3f56; padding:0; margin:0;\"><li  ng-repeat=\"field in context.dataset.extra_metas.visualization.map_tooltip_fields\">".			"<strong>{{field}}</strong> : {{record.fields[field]}}</li></ul><div  ng-repeat=\"report in context.dataset.extra_metas.visualization.reports\">".			"<strong>Rapport de d\u00e9tail</strong> : <a ng-href=\"{{getReportUrl(report[0], record)}}\" target=\"_blank\">Voir</a></div></div>");
-		return utf8_encode ($res);
+		return utf8_encode($res);
 	}
 
-	public function getPackageShow2_v2($params){
+	public function getPackageShow2_v2($params)
+	{
 		$query_params = $this->proper_parse_str($params);
 
 		unset($query_params["facet"]);
@@ -3402,123 +3423,132 @@ class Api{
 		unset($query_params["DATASETID"]);
 
 		$url2 = http_build_query($query_params);
-	
-		$callUrl =  $this->urlCkan . "api/action/package_show?". $url2; //temporaire
-		
-		
+
+		$callUrl =  $this->urlCkan . "api/action/package_show?" . $url2; //temporaire
+
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
-		$result = json_decode($result,true);
-		
+		$result = json_decode($result, true);
+
 		$data_array = array();
-		$data_array["datasetid"]= $result["result"]["id"];
-		$data_array["metas"]["domain"]="anfr";
-		$data_array["metas"]["language"]="fr";
-		$data_array["metas"]["title"]=$result["result"]["name"];
-		
-		$data_array["metas"]["modified"]= $result["result"]["metadata_modified"];
-		$data_array["metas"]["visibility"]="domain";
-		$data_array["metas"]["metadata_processed"]=$result["result"]["metadata_created"];
+		$data_array["datasetid"] = $result["result"]["id"];
+		$data_array["metas"]["domain"] = "anfr";
+		$data_array["metas"]["language"] = "fr";
+		$data_array["metas"]["title"] = $result["result"]["name"];
+
+		$data_array["metas"]["modified"] = $result["result"]["metadata_modified"];
+		$data_array["metas"]["visibility"] = "domain";
+		$data_array["metas"]["metadata_processed"] = $result["result"]["metadata_created"];
 		//$data_array["metas"]["data_processed"]="2018-07-05T12:07:03+00:00";
-		$data_array["attachments"]="";
-	    $data_array["alternative_exports"]="";
-		$data_array["features"]=array("timeserie","analyse","geo");
+		$data_array["attachments"] = "";
+		$data_array["alternative_exports"] = "";
+		$data_array["features"] = array("timeserie", "analyse", "geo");
 		$resourceCSV;
-	
-        foreach ($result['result']['resources'] as $value) {
-         	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-             	$resourceCSV = $value;
-             	break;
-         	}
-        }
-        if($resourceCSV != NULL){
-			$data_array["has_records"]=true;
-			$data_array["data_visible"]=$resourceCSV['datastore_active'];
+
+		foreach ($result['result']['resources'] as $value) {
+			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+				$resourceCSV = $value;
+				break;
+			}
+		}
+		if ($resourceCSV != NULL) {
+			$data_array["has_records"] = true;
+			$data_array["data_visible"] = $resourceCSV['datastore_active'];
 			$data_array["metas"]["data_visible"] = $data_array["data_visible"];
 			$data_array["metas"]["records_count"] = $resourceCSV["size"];
 			$fields = $this->getAllFields($resourceCSV['id'], TRUE);
-			$data_array["fields"]=$fields;
+			$data_array["fields"] = $fields;
 		} else {
-			$data_array["has_records"]=false;
+			$data_array["has_records"] = false;
 		}
-		
-	
-		return $data_array ;
-	
+
+
+		return $data_array;
 	}
 
-	public function callPackageShow2_v2($params){
-		$res = $this->getPackageShow2_v2($params);	
+	public function callPackageShow2_v2($params)
+	{
+		$res = $this->getPackageShow2_v2($params);
 		echo json_encode($res);
 
 		$response = new Response();
 		//$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	
 	}
 
-	public function callPackageSearch_v2($params) {
+	public function callPackageSearch_v2($params)
+	{
 		$query_params = $this->proper_parse_str($params);
 
 		//  q lang rows start sort facet refine exclude refine.features source extrametas interopmetas fields
-		
+
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
-		
+
 		$data_array = array();
-		  
+
 		//unset($query_params["refine"]);//TODO
 		//unset($query_params["exclude"]);//TODO
 		unset($query_params["lang"]);
 		unset($query_params["source"]);
 		unset($query_params["extrametas"]);
 		unset($query_params["interopmetas"]);
-		
+
 		unset($query_params["sort"]);
-		
-		
-		foreach($query_params as $key => $value) {
-			if(!empty($key)){
-			  	$data_array["parameters"][$key] =  $value;
-			}	
+
+
+		foreach ($query_params as $key => $value) {
+			if (!empty($key)) {
+				$data_array["parameters"][$key] =  $value;
+			}
 		}
 		//rows
 		$rows = $query_params["rows"];
 		$query_params["rows"] = 1000;
-		
+
 		//filters
 		$refineFeatures = null;
 		$filters = array();
 		$reqQ = null;
-		foreach($query_params as $key => $value) {
-			if($key == "refine.features"){	
-				if(is_array($query_params["refine.features"])){
+		foreach ($query_params as $key => $value) {
+			if ($key == "refine.features") {
+				if (is_array($query_params["refine.features"])) {
 					$refineFeatures = $query_params["refine.features"];
 				} else {
 					$refineFeatures = array();
 					$refineFeatures[] = $query_params["refine.features"];
 				}
-				$filters[preg_replace($patternRefine,"",$key)] =  "(*". implode("* OR *", $refineFeatures) ."*)";
+				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineFeatures) . "*)";
 				unset($query_params[$key]);
-			} else
-			if (preg_match($patternRefine,$key)){
-		    	$filters[preg_replace($patternRefine,"",$key)] =  $value;
-		        unset($query_params[$key]);
-		    }else 
-			if (preg_match($patternExclude,$key)){
-		    	$filters["-".preg_replace($patternExclude,"",$key)] =  $value;
-		        unset($query_params[$key]);
-		    }
-			
+			}
+			else if ($key == "refine.themes") {
+				if (is_array($query_params["refine.themes"])) {
+					$refineThemes = $query_params["refine.themes"];
+				} else {
+					$refineThemes = array();
+					$refineThemes[] = $query_params["refine.themes"];
+				}
+				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineThemes) . "*)";
+				unset($query_params[$key]);
+			}
+			else if (preg_match($patternRefine, $key)) {
+				$filters[preg_replace($patternRefine, "", $key)] =  $value;
+				unset($query_params[$key]);
+			}
+			else  if (preg_match($patternExclude, $key)) {
+				$filters["-" . preg_replace($patternExclude, "", $key)] =  $value;
+				unset($query_params[$key]);
+			}
 		}
-		if(!empty($filters)){
+		if (!empty($filters)) {
 			$reqQ = "";
-			foreach($filters as $key => $value) {
-				if($key != "features"){
+			foreach ($filters as $key => $value) {
+				if ($key != "features" && $key != "themes") {
 					$reqQ .= $key . ':"' . $value . '" AND ';
 				} else {
 					$reqQ .= $key . ':' . $value . ' AND ';
@@ -3527,65 +3557,63 @@ class Api{
 			$reqQ = substr($reqQ, 0, -5);
 			$query_params["fq"] = $reqQ;
 		}
-		
-		
+
+
 		//facets / fields
 		$reqFacet = null;
-		if(array_key_exists("facet", $query_params) || array_key_exists("fields", $query_params)){	
+		if (array_key_exists("facet", $query_params) || array_key_exists("fields", $query_params)) {
 			$fac = array();
-			if(array_key_exists("facet", $query_params)){
-				if(is_array($query_params["facet"])){
+			if (array_key_exists("facet", $query_params)) {
+				if (is_array($query_params["facet"])) {
 					$fac = $query_params["facet"];
 				} else {
 					$fac = array();
 					$fac[] = $query_params["facet"];
 				}
 			}
-			if(array_key_exists("fields", $query_params)){
+			if (array_key_exists("fields", $query_params)) {
 				$fields = explode(",", $query_params["fields"]);
 				$fac = array_merge($fac, $fields);
 			}
 			$reqFacet = "[";
-			foreach($fac as $f) {
-				$reqFacet .= '"'.$f.'",';
+			foreach ($fac as $f) {
+				$reqFacet .= '"' . $f . '",';
 			}
 			$reqFacet = substr($reqFacet, 0, -1);
 			$reqFacet .= "]";
 			unset($query_params["facet"]);
 			unset($query_params["fields"]);
 		} else {
-			
+
 			$fac = array();
-			foreach($data_array["parameters"] as $key => $value) {
-				if (preg_match($patternRefine,$key) && $key != "refine.features"){
-					$fac[] = preg_replace($patternRefine,"",$key);
-				}	
+			foreach ($data_array["parameters"] as $key => $value) {
+				if (preg_match($patternRefine, $key) && $key != "refine.features" && $key != "refine.themes") {
+					$fac[] = preg_replace($patternRefine, "", $key);
+				}
 			}
-			if(count($fac) > 0){
+			if (count($fac) > 0) {
 				$reqFacet = "[";
-				foreach($fac as $f) {
-					$reqFacet .= '"'.$f.'",';
+				foreach ($fac as $f) {
+					$reqFacet .= '"' . $f . '",';
 				}
 				$reqFacet = substr($reqFacet, 0, -1);
 				$reqFacet .= "]";
 			}
-			
 		}
-		if($reqFacet != null){
+		if ($reqFacet != null) {
 			$query_params["facet.field"] = $reqFacet;
 		}
-		
-		//echo json_encode($query_params);
-	  	$url2 = http_build_query($query_params);
-		  
 
-	      //$callUrl =  $this->urlCkan . "api/action/package_search";
-	  	$callUrl =  $this->urlCkan . "api/action/package_search?". $url2;
+		//echo json_encode($query_params);
+		$url2 = http_build_query($query_params);
+
+
+		//$callUrl =  $this->urlCkan . "api/action/package_search";
+		$callUrl =  $this->urlCkan . "api/action/package_search?" . $url2;
 		/*if(!is_null($params)){
 			$callUrl .= "?" . $params;
 		} */
-				
-		
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
@@ -3593,47 +3621,47 @@ class Api{
 
 		//echo $result . "\r\n";
 
-        $datasets = array();   
+		$datasets = array();
 		$facet_groups = array();
-		$result = json_decode($result,true);
-		foreach($result["result"]["results"] as $value){
-			if($rows != null && count($datasets) >= $rows){
+		$result = json_decode($result, true);
+		foreach ($result["result"]["results"] as $value) {
+			if ($rows != null && count($datasets) >= $rows) {
 				break;
 			}
-			
+
 			$dataset = array();
 			$isGeo = false;
 
-		   	$dataset["datasetid"]= $value["id"];
-			$dataset["metas"]["domain"]="anfr";
-			$dataset["metas"]["language"]="fr";
-			$dataset["metas"]["title"]=$value["name"];
-			
-			$dataset["metas"]["modified"]= $value["metadata_modified"];
-			$dataset["metas"]["visibility"]="domain";
-			$dataset["metas"]["metadata_processed"]=$value["metadata_created"];
-			$dataset["attachments"]="";
-		    $dataset["alternative_exports"]="";
-			
+			$dataset["datasetid"] = $value["id"];
+			$dataset["metas"]["domain"] = "anfr";
+			$dataset["metas"]["language"] = "fr";
+			$dataset["metas"]["title"] = $value["name"];
+
+			$dataset["metas"]["modified"] = $value["metadata_modified"];
+			$dataset["metas"]["visibility"] = "domain";
+			$dataset["metas"]["metadata_processed"] = $value["metadata_created"];
+			$dataset["attachments"] = "";
+			$dataset["alternative_exports"] = "";
+
 			$resourceCSV;
-		
-	        foreach ($value['resources'] as $v) {
-	         	if(($v['format'] == 'CSV' || $v['format'] == 'XLS' || $v['format'] == 'XLSX') && $v["datastore_active"] == true){ 
-	             	$resourceCSV = $v;
-	         	}
-				if($v['format'] == 'GeoJSON'){
+
+			foreach ($value['resources'] as $v) {
+				if (($v['format'] == 'CSV' || $v['format'] == 'XLS' || $v['format'] == 'XLSX') && $v["datastore_active"] == true) {
+					$resourceCSV = $v;
+				}
+				if ($v['format'] == 'GeoJSON') {
 					$isGeo = true;
 				}
-	        }
-	        if($resourceCSV != NULL){
-				$dataset["has_records"]=true;
-				$dataset["data_visible"]=$resourceCSV['datastore_active'];
+			}
+			if ($resourceCSV != NULL) {
+				$dataset["has_records"] = true;
+				$dataset["data_visible"] = $resourceCSV['datastore_active'];
 				$dataset["metas"]["data_visible"] = $dataset["data_visible"];
 				//$dataset["metas"]["records_count"] = $resourceCSV["size"];
 				$fields = $this->getAllFields($resourceCSV['id']);
-				$dataset["fields"]=$fields;
+				$dataset["fields"] = $fields;
 			} else {
-				$dataset["has_records"]=false;
+				$dataset["has_records"] = false;
 			}
 
 			$dataset['features'] = array(); //["timeserie", "analyze", "geo", "image", "calendar", "timeserie", "custom_view"]
@@ -3643,13 +3671,13 @@ class Api{
 			$dataset['features'][] = "analyze"; //tab chart 
 			//$dataset['features'][] = "timeserie"; //unknown tab
 			//echo json_encode($dataset['features']);*/
-			
-			foreach($value['extras'] as $extra){
-				if($extra["key"] == "features"){
+
+			foreach ($value['extras'] as $extra) {
+				if ($extra["key"] == "features") {
 					$dataset['features'] = explode(",", $extra["value"]);
 				}
 			}
-			
+
 			/*if($refineFeatures != null){
 				$match = false;
 				foreach($refineFeatures as $feat) {
@@ -3662,27 +3690,57 @@ class Api{
 					continue;
 				}
 			}*/
-			
 
-			$datasets[]=$dataset;
-		   
-	   		//echo $datasets;
-		}	
+
+			$datasets[] = $dataset;
+
+			//echo $datasets;
+		}
 		$data_array["datasets"] = $datasets;
-		
-		foreach($result["result"]["facets"] as $key => $value){
+
+		$hasFacetThemes = array_key_exists("themes", $result["result"]["facets"]);
+		if ($hasFacetThemes) {
+			$themes = array();
+			foreach ($result["result"]["facets"]["themes"] as $key => $count) {
+				for ($i = 0; $i < $count; $i++) {
+					$themes = array_merge($themes, json_decode($key, true));
+				}
+			}
+
+			$result["result"]["facets"]["themes"] = array_count_values($themes);
+
+			$result["result"]["search_facets"]["themes"]["items"] = array();
+			foreach ($result["result"]["facets"]["themes"] as $theme => $c) {
+				$result["result"]["search_facets"]["themes"]["items"][] = array(
+					"count" => $c,
+					"display_name" => $theme,
+					"name" => $theme
+				);
+			}
+		}
+
+		foreach ($result["result"]["facets"] as $key => $value) {
 			if (!empty((array) $value)) {
 				$facet = array();
 				$facet["name"] = $key;
 				$facet["facets"] = array();
-				foreach($value as $val => $count){
+				foreach ($value as $val => $count) {
+					$facetName = $val;
+					if ($key == "themes") {
+						$facetName = $this->getThemeLabel($val);
+
+						if (isset($refineThemes) && is_array($refineThemes) && !in_array($val, $refineThemes)) {
+							continue;
+						}
+					}
+
 					$item = array();
-					$item["name"] = $val;
+					$item["name"] = $facetName;
 					$item["path"] = $val;
 					$item["count"] = $count;
-					if(array_key_exists("refine.".$key, $data_array["parameters"])){
-						$filter = $data_array["parameters"]["refine.".$key];
-						if((is_array($filter) && in_array($val, $filter)) || (!is_array($filter) && $val = $filter)){
+					if (array_key_exists("refine." . $key, $data_array["parameters"])) {
+						$filter = $data_array["parameters"]["refine." . $key];
+						if ((is_array($filter) && in_array($val, $filter)) || (!is_array($filter) && $val = $filter)) {
 							$item["state"] = "refined";
 						} else {
 							$item["state"] = "displayed";
@@ -3690,38 +3748,42 @@ class Api{
 					} else {
 						$item["state"] = "displayed";
 					}
-					
+
 					$facet["facets"][] = $item;
 				}
+				
+				usort($facet["facets"], function ($a, $b) {
+					$key = "count";
+					return  $b[$key] - $a[$key];
+				});
+
 				$facet_groups[] = $facet;
 			}
 		}
+
 		$data_array["facet_groups"] = $facet_groups;
-		$data_array["nhits"] = $result["result"]["count"];//count($datasets);
-		echo json_encode( $data_array );
+		$data_array["nhits"] = $result["result"]["count"]; //count($datasets);
+		echo json_encode($data_array);
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
-	
-	
-	
 	}
 
-	public function callDatastoreApi_v2($params) {
-		$res = $this->getDatastoreRecord_v2($params);	
+	public function callDatastoreApi_v2($params)
+	{
+		$res = $this->getDatastoreRecord_v2($params);
 		echo json_encode($res);
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
-		
-		
 	}
 
-	public function getDatastoreRecord_v2($params) {								 
+	public function getDatastoreRecord_v2($params)
+	{
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
@@ -3729,20 +3791,21 @@ class Api{
 		$patternDistance = '/geofilter.distance/i';
 		$filters_init = array();
 		$fieldId = "_id";
-		$fieldCoordinates='';$fieldGeometries='';
+		$fieldCoordinates = '';
+		$fieldGeometries = '';
 		$reqQfilter;
 
 		$params = $this->retrieveParameters($params);
 
 		$query_params = $this->proper_parse_str($params);
 		$data_array = array();
-		foreach($query_params as $key => $value) {
-			if(!empty($key)){
-			  	$data_array["parameters"][$key] =  $value;
-			}	
+		foreach ($query_params as $key => $value) {
+			if (!empty($key)) {
+				$data_array["parameters"][$key] =  $value;
+			}
 		}
-		
-		
+
+
 		unset($query_params["lang"]);
 		//unset($query_params["geofilter.distance"]); //TODO
 		unset($query_params["geofilter.polygon"]); //TODO
@@ -3750,9 +3813,9 @@ class Api{
 		unset($query_params["geo_simplify"]);
 		unset($query_params["geo_simplify_zoom"]);
 
-		
-		$datasetId ="";
-		if(!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)){
+
+		$datasetId = "";
+		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
 			$resourceCSV;
 			$datasetId = $query_params['dataset'];
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
@@ -3762,19 +3825,19 @@ class Api{
 			//echo $package . "\r\n";
 			curl_close($curl);
 			$package = json_decode($package, true);
-			foreach ($package['result']['resources'] as $value) { 
-			 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-			 		$resourceCSV = $value['id'];
-			 		break;
-			 	}
+			foreach ($package['result']['resources'] as $value) {
+				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$resourceCSV = $value['id'];
+					break;
+				}
 			}
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
-		
-		$fields = $this->getAllFields($query_params['resource_id'], TRUE);	
+
+		$fields = $this->getAllFields($query_params['resource_id'], TRUE);
 		foreach ($fields as $value) {
-			if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+			if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
 		}
 		/*foreach ($fields as $value) {
 			if(preg_match("/id|num|code|siren/i",$value['name'])){
@@ -3783,68 +3846,71 @@ class Api{
 			} 
 		}*/
 
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-				
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+
 				$value = str_replace('_plussign_', '+', $value);
-				
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
-		        unset($query_params[$key]);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    }
-		    /*if (preg_match($patternBbox,$key)){
+
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
+				unset($query_params[$key]);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+			}
+			/*if (preg_match($patternBbox,$key)){
 		    	unset($query_params[$key]);
 		    	$filters_init[$key] =  $value;
 		    }*/
-		    if (preg_match($patternExclude,$key)){
-		    	unset($query_params[$key]);
-		    }
-		    if (preg_match($patternDistance,$key)){
-		    	
-				if(count(explode(',', $query_params[$key])) == 3){ //distance + meters
+			if (preg_match($patternExclude, $key)) {
+				unset($query_params[$key]);
+			}
+			if (preg_match($patternDistance, $key)) {
+
+				if (count(explode(',', $query_params[$key])) == 3) { //distance + meters
 					$args = explode(',', $query_params[$key]);
-					$filters_init["geofilter.bbox"] =  $this->getBbox($args[0],$args[1],$args[2]);
+					$filters_init["geofilter.bbox"] =  $this->getBbox($args[0], $args[1], $args[2]);
 				} else { //distance precision
 					$filters_init[$key] =  $value;
 				}
 				unset($query_params[$key]);
-		    }
-		    if($key == "rows"){
+			}
+			if ($key == "rows") {
 				$query_params['limit'] = $query_params['rows'];
 				unset($query_params['rows']);
-		    }
-		    if($key == "start"){
+			}
+			if ($key == "start") {
 				$query_params['offset'] = $value;
 				unset($query_params['start']);
 				$query_params['limit'] = $query_params['limit'] /*+ $query_params['offset']*/;
-		    }
-		    //$query_params['sort'] TODO 
-		    if(array_key_exists('facet', $query_params)){
+			}
+			//$query_params['sort'] TODO 
+			if (array_key_exists('facet', $query_params)) {
 				$query_params['fields'] = implode(",", $query_params['facet']);
-		    }
-		    if($key == "q"){
-		    	$reqQfilter = $this->constructReqQToSQL($value);
-		    }
-		    if($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom"){
+			}
+			if ($key == "q") {
+				$reqQfilter = $this->constructReqQToSQL($value);
+			}
+			if ($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom") {
 				unset($query_params[$key]);
-		    }
-		    /*if($key == "use_labels_for_header"){
+			}
+			/*if($key == "use_labels_for_header"){
 			unset($query_params[$key]);
 		    }*/
-			if($key == "recordid"){
+			if ($key == "recordid") {
 				$filters_init[$fieldId] = $value;
 				unset($query_params["recordid"]);
-		    }
+			}
 		}
-		
-		$where = "";$limit  = "";$offset  = "";$orderby = "";
-		
-		if(!empty($filters_init)){
+
+		$where = "";
+		$limit  = "";
+		$offset  = "";
+		$orderby = "";
+
+		if (!empty($filters_init)) {
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
-				if($key == "geofilter.bbox"){
+				if ($key == "geofilter.bbox") {
 					$bbox = explode(',', $value);
 					$minlat = $bbox[0];
 					$minlong = $bbox[1];
@@ -3852,78 +3918,74 @@ class Api{
 					$maxlong = $bbox[3];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geofilter.distance"){
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geofilter.distance") {
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
-					$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
+					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
 				}/* else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				}*/ else {
 					$ftype == null;
-					foreach($fields as $field){
-						if($field["name"] == $key){
+					foreach ($fields as $field) {
+						if ($field["name"] == $key) {
 							$ftype = $field["type"];
 							break;
 						}
 					}
-					if(($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")){
+					if (($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
 						$where .= $key . "=" . $value . " and ";
-					} else if(is_array($value)){ 
+					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
-				
-				
 			}
-			$where = substr($where, 0, strlen($where)-4 );
+			$where = substr($where, 0, strlen($where) - 4);
 
-			if($reqQfilter != NULL){
+			if ($reqQfilter != NULL) {
 				$where .= $reqQfilter;
 			}
-		}
-		else if($reqQfilter != NULL){
+		} else if ($reqQfilter != NULL) {
 			$where = " where " . substr($reqQfilter, 5);
 		}
 
-		if(array_key_exists("limit", $query_params)){
-			$limit = " limit ".$query_params['limit'];
+		if (array_key_exists("limit", $query_params)) {
+			$limit = " limit " . $query_params['limit'];
 		} else {
 			$limit = " limit 100"; //par defaut
 		}
-		
-		if(array_key_exists("offset", $query_params)){
-			$offset = " offset ".$query_params['offset'];
+
+		if (array_key_exists("offset", $query_params)) {
+			$offset = " offset " . $query_params['offset'];
 		}
-		
-		if((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != ""){
+
+		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
-			foreach(explode(',', $query_params["sort"]) as $sort){
-				if(substr($sort, 0, 1) == "-"){
+			foreach (explode(',', $query_params["sort"]) as $sort) {
+				if (substr($sort, 0, 1) == "-") {
 					$orderby .= substr($sort, 1) . " DESC,";
 				} else {
 					$orderby .= $sort . " ASC,";
 				}
-				
 			}
 			$orderby = substr($orderby, 0, -1);
 		}
 
-	  	$req = array();
-	  	// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
-	  	if($query_params['fields'] != null) {
-	  		$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
-	  	} else {
-	  		$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
-	  	}
-	  	$req['sql'] = $sql;
+		$req = array();
+		// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
+		if ($query_params['fields'] != null) {
+			$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+		} else {
+			$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+		}
+		$req['sql'] = $sql;
 
 		//echo $sql;
 		$url2 = http_build_query($req);
@@ -3935,72 +3997,71 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
-		
-		$result = json_decode($result,true);
-		
- 
+
+		$result = json_decode($result, true);
+
+
 		//$data_array["nhits"] = $result["result"]["total"];
 		$colFile = null;
-		foreach($fields as $f){
-			if($f["type"] == "file"){
+		foreach ($fields as $f) {
+			if ($f["type"] == "file") {
 				$colFile = $f["name"];
 			}
 		}
-		$records = array();	
-		foreach($result["result"]["records"] as $value){
-			
+		$records = array();
+		foreach ($result["result"]["records"] as $value) {
+
 			$rec;
-			$rec["datasetid"]=$datasetId;
-     			//$rec["recordid"]=$value["_id"];
-			$rec["recordid"]= $value[$fieldId];
-			foreach($value as $k => $v) {
-		  		$rec["fields"][$k] =  $v;
+			$rec["datasetid"] = $datasetId;
+			//$rec["recordid"]=$value["_id"];
+			$rec["recordid"] = $value[$fieldId];
+			foreach ($value as $k => $v) {
+				$rec["fields"][$k] =  $v;
 				/*if(preg_match("/id|num|code|siren/i",$k)){
 					$rec["recordid"] = $value[$k];				
 				}*/
-				if($colFile != null && $colFile == $k){
+				if ($colFile != null && $colFile == $k) {
 					$rec["fields"][$k] = array();
 					$rec["fields"][$k]["url"] = $v;
-					if(strrpos($v, "/")){
-						$rec["fields"][$k]["filename"] = substr($v, strrpos($v, "/")+1);
+					if (strrpos($v, "/")) {
+						$rec["fields"][$k]["filename"] = substr($v, strrpos($v, "/") + 1);
 					}
-					
+
 					$size = getimagesize($v);
 					$rec["fields"][$k]["width"] = $size[0];
 					$rec["fields"][$k]["height"] = $size[1];
 				}
-		  	}
-			
-	   		$records[]=$rec;
-					 
+			}
+
+			$records[] = $rec;
 		}
 		$data_array["records"] = $records;
 		//$data_array["nhits"] = count($records);
-		if(count($records) == 0){
+		if (count($records) == 0) {
 			$data_array["nhits"] = 0;
 		} else {
 			$data_array["nhits"] = $result["result"]["records"][0]["total_count"];
 		}
 		$data_array["status"] = $result["success"] == true ? "success" : "error";
 		return $data_array;
-				
 	}
 
-	public function getDatastoreRecord_v2OLD($params) {								 
+	public function getDatastoreRecord_v2OLD($params)
+	{
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
 		$patternDisj = '/disjunctive./i';
 
-		
+
 		$query_params = $this->proper_parse_str($params);
 		unset($query_params["lang"]);
 		unset($query_params["geofilter.distance"]); //TODO
 		unset($query_params["geofilter.polygon"]); //TODO
 		unset($query_params["timezone"]);
 		$init_params = array_merge(array(), $query_params);
-		$datasetId ="";
-		if(!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)){
+		$datasetId = "";
+		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
 			$resourceCSV;
 			$datasetId = $query_params['dataset'];
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
@@ -4010,17 +4071,17 @@ class Api{
 			//echo $package . "\r\n";
 			curl_close($curl);
 			$package = json_decode($package, true);
-			foreach ($package['result']['resources'] as $value) { 
-			 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-			 		$resourceCSV = $value['id'];
-			 		break;
-			 	}
+			foreach ($package['result']['resources'] as $value) {
+				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$resourceCSV = $value['id'];
+					break;
+				}
 			}
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
-		
-			
+
+
 
 		/*if(array_key_exists('q', $query_params)){
 			if (strpos($query_params['q'], '{') == false) {
@@ -4033,87 +4094,84 @@ class Api{
 			}
 		}*/
 
-		if(array_key_exists('rows', $query_params)){
+		if (array_key_exists('rows', $query_params)) {
 			$query_params['limit'] = $query_params['rows'];
 			unset($query_params['rows']);
 		}
-		if(array_key_exists('start', $query_params)){
+		if (array_key_exists('start', $query_params)) {
 			$query_params['offset'] = $query_params['start'];
 			unset($query_params['start']);
 			$query_params['limit'] = $query_params['limit'] + $query_params['offset'];
 		}
 		//$query_params['sort'] TODO 
-		if(array_key_exists('facet', $query_params)){
+		if (array_key_exists('facet', $query_params)) {
 			$query_params['fields'] = implode(",", $query_params['facet']);
 		}
-		
+
 
 		$filters_init = array();
-		
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
-		        unset($query_params[$key]);
-		    }
-		    if (preg_match($patternExclude,$key)){
-		    	unset($query_params[$key]);
-		    }
-			if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    }
-		    if($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom"){
-		    	unset($query_params[$key]);
-		    }
+
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
+				unset($query_params[$key]);
+			}
+			if (preg_match($patternExclude, $key)) {
+				unset($query_params[$key]);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+			}
+			if ($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom") {
+				unset($query_params[$key]);
+			}
 		}
-		if(!empty($filters_init)){
+		if (!empty($filters_init)) {
 			$query_params['filters'] = json_encode($filters_init);
 		}
 
-		
-	  	$url2 = http_build_query($query_params);
+
+		$url2 = http_build_query($query_params);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
-		
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
-		
-		$result = json_decode($result,true);
+
+		$result = json_decode($result, true);
 		$data_array = array();
- 
+
 		$data_array["nhits"] = $result["result"]["total"];
-		foreach($init_params as $key => $value) {
-			if(!empty($key)){
-			  	$data_array["parameters"][$key] =  $value;
-			}	
+		foreach ($init_params as $key => $value) {
+			if (!empty($key)) {
+				$data_array["parameters"][$key] =  $value;
+			}
 		}
 		$records = array();
-		
-		foreach($result["result"]["records"] as $value){
+
+		foreach ($result["result"]["records"] as $value) {
 			$rec;
-			$rec["datasetid"]=$datasetId;
-     			//$rec["recordid"]=$value["_id"];
-			$rec["recordid"]= "";
-			foreach($value as $k => $v) {
-		  		$rec["fields"][$k] =  $v;
-				if(preg_match("/id|num|code|siren/i",$k)){
-					$rec["recordid"] = $value[$k];				
-				} 
-		  	}
-			
-	   		$records[]=$rec;
-	   		
-					 
+			$rec["datasetid"] = $datasetId;
+			//$rec["recordid"]=$value["_id"];
+			$rec["recordid"] = "";
+			foreach ($value as $k => $v) {
+				$rec["fields"][$k] =  $v;
+				if (preg_match("/id|num|code|siren/i", $k)) {
+					$rec["recordid"] = $value[$k];
+				}
+			}
+
+			$records[] = $rec;
 		}
 		$data_array["records"] = $records;
-			
+
 		return $data_array;
-		
-		
 	}
 
-	public function metaBasic() {
+	public function metaBasic()
+	{
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$basic = '{"schema": [
 		{"widget": "textinput", "name": "title", "uri": "http://purl.org/dc/terms/title", "search": true, "label": "Title", "allow_empty": false, "type": "text"}, 
@@ -4139,97 +4197,99 @@ class Api{
 		{"widget": null, "name": "oauth_scope", "uri": null, "search": true, "label": "OAuth2 Scope", "allow_empty": true, "type": "text"}, 
 		{"widget": null, "name": "parent_domain", "uri": null, "search": true, "label": "Parent domain identifier", "allow_empty": true, "type": "text"}
 		]}';
-		
-			
+
+
 		echo $basic;
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
-		
-		
 	}
 
-	public function metaInterop() {
+	public function metaInterop()
+	{
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$interop = '[]';
-			
+
 		echo $interop;
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
-		
-		
 	}
 
-	private function getBbox($lat, $long, $meters){
+	private function getBbox($lat, $long, $meters)
+	{
 
- 		//Earth's radius, sphere
- 		$R=6378137;
+		//Earth's radius, sphere
+		$R = 6378137;
 
- 		//Coordinate offsets in radians
- 		$dLat = $meters/$R;
- 		$dLon = $meters/($R*cos(pi()*$lat/180));
+		//Coordinate offsets in radians
+		$dLat = $meters / $R;
+		$dLon = $meters / ($R * cos(pi() * $lat / 180));
 
- 		//OffsetPosition, decimal degrees
- 		$minLat = $lat - $dLat * 180/pi();
- 		$minLong = $long - $dLon * 180/pi();
- 		$maxLat = $lat + $dLat * 180/pi();
- 		$maxLong = $long + $dLon * 180/pi(); 
+		//OffsetPosition, decimal degrees
+		$minLat = $lat - $dLat * 180 / pi();
+		$minLong = $long - $dLon * 180 / pi();
+		$maxLat = $lat + $dLat * 180 / pi();
+		$maxLong = $long + $dLon * 180 / pi();
 		return $minLat . "," . $minLong . "," . $maxLat . "," . $maxLong;
 	}
-	
-	private function getRadius($lat, $long, $meters){
 
- 		//Earth's radius, sphere
- 		$R=6378137;
+	private function getRadius($lat, $long, $meters)
+	{
 
- 		//Coordinate offsets in radians
- 		$dLat = $meters/$R;
-		$dLon = $meters/($R*cos(pi()*$lat/180));
+		//Earth's radius, sphere
+		$R = 6378137;
 
- 		//radius
- 		$rad = /*($dLon * 180/pi() + */$dLat * 180/pi()/*)/2*/;
+		//Coordinate offsets in radians
+		$dLat = $meters / $R;
+		$dLon = $meters / ($R * cos(pi() * $lat / 180));
+
+		//radius
+		$rad = /*($dLon * 180/pi() + */ $dLat * 180 / pi()/*)/2*/;
 		return $rad;
 	}
-	
-	private function getLosangePath($lat, $long, $meters){
 
- 		//Earth's radius, sphere
- 		$R=6378137;
+	private function getLosangePath($lat, $long, $meters)
+	{
 
- 		//Coordinate offsets in radians
- 		$dLat = $meters/$R;
- 		$dLon = $meters/($R*cos(pi()*$lat/180));
+		//Earth's radius, sphere
+		$R = 6378137;
 
- 		//OffsetPosition, decimal degrees
- 		$minLat = $lat - $dLat * 180/pi();
- 		$minLong = $long - $dLon * 180/pi();
- 		$maxLat = $lat + $dLat * 180/pi();
- 		$maxLong = $long + $dLon * 180/pi(); 
-		return "(".$maxLat.",".$long."),(".$lat.",".$maxLong."),(".$minLat.",".$long."),(".$lat.",".$minLong.")";
+		//Coordinate offsets in radians
+		$dLat = $meters / $R;
+		$dLon = $meters / ($R * cos(pi() * $lat / 180));
+
+		//OffsetPosition, decimal degrees
+		$minLat = $lat - $dLat * 180 / pi();
+		$minLong = $long - $dLon * 180 / pi();
+		$maxLat = $lat + $dLat * 180 / pi();
+		$maxLong = $long + $dLon * 180 / pi();
+		return "(" . $maxLat . "," . $long . "),(" . $lat . "," . $maxLong . "),(" . $minLat . "," . $long . "),(" . $lat . "," . $minLong . ")";
 	}
-	
-	public function getOrganization($params) {
+
+	public function getOrganization($params)
+	{
 		$callUrl =  $this->urlCkan . "api/action/organization_show?" . $params;
-				
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
 
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		unset($result["help"]);
 		return $result;
 	}
-	
-	public function orgaShow($params) {
+
+	public function orgaShow($params)
+	{
 		$result = $this->getOrganization($params);
-		
+
 		echo json_encode($result);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
@@ -4237,23 +4297,25 @@ class Api{
 		return $response;
 	}
 
-	function getLicenses() {
-		$callUrl =  $this->urlCkan . "api/action/license_list" ;
-				
+	function getLicenses()
+	{
+		$callUrl =  $this->urlCkan . "api/action/license_list";
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		unset($result["help"]);
 
 		return $result;
 	}
 
-	public function licenseList() {
+	public function licenseList()
+	{
 		$result = $this->getLicenses();
-		
+
 		echo json_encode($result);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
@@ -4261,24 +4323,26 @@ class Api{
 		return $response;
 	}
 
-	public function getPackageList() {
-		$callUrl =  $this->urlCkan . "api/action/package_list" ;
-				
+	public function getPackageList()
+	{
+		$callUrl =  $this->urlCkan . "api/action/package_list";
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
 
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 		unset($result["help"]);
-		
+
 		return $result;
 	}
-	
-	public function packageList() {
+
+	public function packageList()
+	{
 		$result = $this->getPackageList();
-		
+
 		echo json_encode($result);
 		$response = new Response();
 		//$response->setContent(json_encode($result));
@@ -4286,30 +4350,32 @@ class Api{
 		return $response;
 	}
 
-	public function cluster($params) {
-		
+	public function cluster($params)
+	{
+
 		$ckanurl = $this->urlCkan;
-		if(substr($ckanurl, -1) == "/"){
+		if (substr($ckanurl, -1) == "/") {
 			$ckanurl = substr($ckanurl, 0, -1);
 		}
-		$callUrl =  "192.168.2.184:1337/cluster?".$params;
+		$callUrl =  "192.168.2.184:1337/cluster?" . $params;
 
-		
-//		echo $callUrl . "\r\n";
+
+		//		echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
 		$dataset = curl_exec($curl);
 		curl_close($curl);
 		//echo $dataset . "\r\n";
-		
+
 		echo $dataset;
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
-	public function getSQLWhereRecordsDownload($params) {
+
+	public function getSQLWhereRecordsDownload($params)
+	{
 
 		$patternId = '/id|num|code|siren/i';
 		$patternRefine = '/refine./i';
@@ -4322,109 +4388,112 @@ class Api{
 
 		$fields = $this->getAllFields($query_params['resource_id']);
 		//echo json_encode($fields);
-		$fieldId = "id";$reqFields="";
-		$fieldCoordinates='';$fieldGeometries='';
+		$fieldId = "id";
+		$reqFields = "";
+		$fieldCoordinates = '';
+		$fieldGeometries = '';
 		$reqQfilter;
 		foreach ($fields as $value) {
-			if(preg_match("/id|num|code|siren/i",$value['name'])){
+			if (preg_match("/id|num|code|siren/i", $value['name'])) {
 				$fieldId = $value['name'];
 				break;
-			} 
+			}
 		}
 		foreach ($fields as $value) {
 			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
 			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
 			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];*/
-			if($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
-			if($value['type'] == "geo_shape") $fieldGeometries = $value['name'];					  
+			if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+			if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
 		}
 
 
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternRefine,$key)){
-		    	$filters_init[preg_replace($patternRefine,"",$key)] =  $value;
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternRefine, $key)) {
+				$filters_init[preg_replace($patternRefine, "", $key)] =  $value;
 
-		        unset($query_params[$key]);
-		        //echo preg_replace($pattern,"",$key);
-		    }
-		    if (preg_match($patternDisj,$key)){
-		    	unset($query_params[$key]);
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-		    if (preg_match($patternBbox,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-			if (preg_match($patternDistance,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-			if (preg_match($patternPolygon,$key)){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    	//$disj[] = preg_replace($patternDisj,"",$key);
-		    }
-			if ($key == "geo_digest"){
-		    	unset($query_params[$key]);
-		    	$filters_init[$key] =  $value;
-		    }
-		    if($key == "format"){
+				unset($query_params[$key]);
+				//echo preg_replace($pattern,"",$key);
+			}
+			if (preg_match($patternDisj, $key)) {
+				unset($query_params[$key]);
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternBbox, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternDistance, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if (preg_match($patternPolygon, $key)) {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+				//$disj[] = preg_replace($patternDisj,"",$key);
+			}
+			if ($key == "geo_digest") {
+				unset($query_params[$key]);
+				$filters_init[$key] =  $value;
+			}
+			if ($key == "format") {
 				$globalFormat = $value;
 
-		    	if($value == "json"){
-		    		$format = "objects";
-		    	} else if($value == "csv" || $value == "xls"){
-		    		$format = "csv";
-		    	} else if($value == "tsv"){
-		    		$format = "tsv";
-		    	} else if($value == "geojson"){
-		    		$format = "objects";
-		    	} else {
-		    		$format = "objects";
-		    	}
-		    	unset($query_params[$key]);
-		    }
-		    if($key == "geo_simplify"){
+				if ($value == "json") {
+					$format = "objects";
+				} else if ($value == "csv" || $value == "xls") {
+					$format = "csv";
+				} else if ($value == "tsv") {
+					$format = "tsv";
+				} else if ($value == "geojson") {
+					$format = "objects";
+				} else {
+					$format = "objects";
+				}
 				unset($query_params[$key]);
-		    }
-		    if($key == "geo_simplify_zoom"){
+			}
+			if ($key == "geo_simplify") {
 				unset($query_params[$key]);
-		    }
-		    if($key == "rows"){
+			}
+			if ($key == "geo_simplify_zoom") {
+				unset($query_params[$key]);
+			}
+			if ($key == "rows") {
 				$query_params['limit'] = $value;
 				unset($query_params['rows']);
-		    }
-			if($key == "fields"){
+			}
+			if ($key == "fields") {
 				$reqFields = $value;
 				unset($query_params['fields']);
-		    }
-			if($key == "start"){
+			}
+			if ($key == "start") {
 				$query_params['offset'] = $value;
 				unset($query_params['start']);
 				$query_params['limit'] = $query_params['limit'] + $query_params['offset'];
-		    }
-		    if($key == "q"){
-		    	$reqQfilter = $this->constructReqQToSQL($value);
-		    	//$pattern = '/and (\w+) /i';
-		    	//preg_match($pattern,$reqQfilter,$qField); 
-		    }
-		    
-		    if($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom"){
+			}
+			if ($key == "q") {
+				$reqQfilter = $this->constructReqQToSQL($value);
+				//$pattern = '/and (\w+) /i';
+				//preg_match($pattern,$reqQfilter,$qField); 
+			}
+
+			if ($key == "id" || $key == "basemap" || $key == "location" || $key == "datasetcard" || $key == "static" || $key == "scrollWheelZoom") {
 				unset($query_params[$key]);
-		    }
-		    if($key == "use_labels_for_header"){
+			}
+			if ($key == "use_labels_for_header") {
 				unset($query_params[$key]);
-		    }
+			}
 		}
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
-		$where = "";$limit  = "";
-		if(!empty($filters_init)){
+		$where = "";
+		$limit  = "";
+		if (!empty($filters_init)) {
 			$where = " where ";
 			foreach ($filters_init as $key => $value) {
-				if($key == "geofilter.bbox"){
+				if ($key == "geofilter.bbox") {
 					$bbox = explode(',', $value);
 					$minlat = $bbox[0];
 					$minlong = $bbox[1];
@@ -4432,53 +4501,51 @@ class Api{
 					$maxlong = $bbox[3];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) between " . $minlat . " and " . $maxlat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) between " . $minlong . " and " . $maxlong . " and ";
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geofilter.distance"){
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geofilter.distance") {
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',1)AS FLOAT) = " . $lat . " and ";
 					//$where .= "CAST(split_part(".$fieldCoordinates.",',',2)AS FLOAT) = " . $long . " and ";
-					$where .= "point(" . $lat . "," . $long . ") ~= point(".$fieldCoordinates.") and ";
-					$where .= $fieldCoordinates." not in ('', ',') and ";
-				} else if($key == "geo_digest"){
-					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
-				} else if($key == "geofilter.polygon"){
+					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				} else if ($key == "geo_digest") {
+					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
+				} else if ($key == "geofilter.polygon") {
 					Logger::logMessage("Build query for geofilter.polygon \r\n");
 
 					//polygon(path '((0,0),(1,1),(2,0))')
-					$where .= "polygon(path '(" . $value . ")') @> point(".$fieldCoordinates.") and ";
+					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
 				} else {
-					if(is_numeric($value) && $key != "insee_com" && $key != "code_insee"){
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
-					} else if(is_array($value)){ 
+					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
-				
-				
 			}
-			$where = substr($where, 0, strlen($where)-4 );
+			$where = substr($where, 0, strlen($where) - 4);
 
-			if($reqQfilter != NULL){
+			if ($reqQfilter != NULL) {
 				$where .= $reqQfilter;
 			}
-		}
-		else if($reqQfilter != NULL){
+		} else if ($reqQfilter != NULL) {
 			$where = " where " . substr($reqQfilter, 5);
 		}
-		
+
 		return $where;
 	}
-	
-	public function renderFrame(Request $request, $tab) {
+
+	public function renderFrame(Request $request, $tab)
+	{
 		$id = $request->query->get('id');
-		
+
 		$api = new API();
-		$dataset = $api->getPackageShow2($id,"");
+		$dataset = $api->getPackageShow2($id, "");
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 		$element =  '<body>
         <div class="d4c-content">
@@ -4488,63 +4555,63 @@ class Api{
 				d4c-dataset-context
 				context="ctx"
 				ctx-urlsync="true"
-				ctx-dataset-schema="'.$ctx.'">';
-			
-			if($tab == "information"){
-				$element .= '';
-			}
-            if($tab == "table"){
-				$element .= '<d4c-table context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--table d4cwidget-table--embedded" ></d4c-table>';
-			}
-            if($tab == "map"){
-				$element .= '<d4c-map context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--map" sync-to-url="true" static-map=""></d4c-map>';
-			}
-            if($tab == "analyze"){
-				$element .= '<d4c-analyze context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--analyze" sync-to-url="true" auto-resize="true" no-controls="true"></d4c-analyze>';
-			}
-            if($tab == "images"){
-				$element .= '<d4c-media-gallery context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--images" d4c-auto-resize d4c-widget-tooltip display-mode="compact"></d4c-media-gallery>';
-			}
-            if($tab == "calendar"){
-				$element .= '<d4c-calendar context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--calendar"></d4c-calendar>';
-			}
-            if($tab == "custom_view"){
-				$element .= '<div d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_html" do-not-decode-content></div>
+				ctx-dataset-schema="' . $ctx . '">';
+
+		if ($tab == "information") {
+			$element .= '';
+		}
+		if ($tab == "table") {
+			$element .= '<d4c-table context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--table d4cwidget-table--embedded" ></d4c-table>';
+		}
+		if ($tab == "map") {
+			$element .= '<d4c-map context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--map" sync-to-url="true" static-map=""></d4c-map>';
+		}
+		if ($tab == "analyze") {
+			$element .= '<d4c-analyze context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--analyze" sync-to-url="true" auto-resize="true" no-controls="true"></d4c-analyze>';
+		}
+		if ($tab == "images") {
+			$element .= '<d4c-media-gallery context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--images" d4c-auto-resize d4c-widget-tooltip display-mode="compact"></d4c-media-gallery>';
+		}
+		if ($tab == "calendar") {
+			$element .= '<d4c-calendar context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--calendar"></d4c-calendar>';
+		}
+		if ($tab == "custom_view") {
+			$element .= '<div d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_html" do-not-decode-content></div>
                         <style type="text/css" d4c-bind-angular-content="ctx.dataset.extra_metas.visualization.custom_view_css"></style>';
-				$tab = "custom";
-			}
-			if($tab == "wordcloud"){
-				$element .= '<d4c-wordcloud context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--wordcloud"  sync-to-url="true"></d4c-wordcloud>';
-			}
-			if($tab == "timeline"){
-				$element .= '<d4c-timeline context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--timeline" sync-to-url="true"></d4c-timeline>';
-			}
-            if($tab == "export"){
-				$element .= '';
-			}
-			if($tab == "api"){
-				$element .= '';
-			}
-            
-			
-            $element .= '
-			<a class="d4c-embed-watermark d4c-embed-watermark--'.$tab.'"
+			$tab = "custom";
+		}
+		if ($tab == "wordcloud") {
+			$element .= '<d4c-wordcloud context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--wordcloud"  sync-to-url="true"></d4c-wordcloud>';
+		}
+		if ($tab == "timeline") {
+			$element .= '<d4c-timeline context="ctx" class="d4c-app-embed-dataset__visualization d4c-app-embed-dataset__visualization--timeline" sync-to-url="true"></d4c-timeline>';
+		}
+		if ($tab == "export") {
+			$element .= '';
+		}
+		if ($tab == "api") {
+			$element .= '';
+		}
+
+
+		$element .= '
+			<a class="d4c-embed-watermark d4c-embed-watermark--' . $tab . '"
                target="_parent"
-               href="'.str_replace("/frame/", "/", $request->getUri()).'">
-                <img class="d4c-embed-watermark__image" ng-src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png" />
+               href="' . str_replace("/frame/", "/", $request->getUri()) . '">
+                <img class="d4c-embed-watermark__image" ng-src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png" />
             </a>
         
     </div>
-		<script src="'. $this->config->client->routing_prefix . '/modules/ckan_admin/js/routing.js"></script>
-        <script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
-        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
-        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
-		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
-		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
-		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
-		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
-		<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/underscore-min.js"></script>
-        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
+		<script src="' . $this->config->client->routing_prefix . '/modules/ckan_admin/js/routing.js"></script>
+        <script src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-3.2.1.js"></script>
+        <script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/libraries.js"></script>
+		<script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/qtip/jquery.qtip.min.js"></script>	
+		<script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/moment.min.js"></script>
+		<script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/fullcalendar.min.js"></script>
+		<script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/fullcalendar/lang/fr.js"></script>
+		<script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/underscore-min.js"></script>
+        <script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-core.js"></script>
         <script type="text/javascript">
         	
             var app = angular.module(\'d4c.core.config\', []);
@@ -4561,7 +4628,7 @@ class Api{
                     LANGUAGE: \'fr\',
                     AVAILABLE_LANGUAGES: ["fr"],
                     USER: null,
-                    BRAND_HOSTNAME: "'.$this->config->client->domain.'",
+                    BRAND_HOSTNAME: "' . $this->config->client->domain . '",
                     DEFAULT_BASEMAP: {"provider": "osm","minZoom": 0,"maxZoom": 22,"label": "Plan"},
                 
                     DOMAIN_ID: "",
@@ -4579,8 +4646,8 @@ class Api{
                 }
             }]);
         </script>
-        <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
-        <script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
+        <script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
+        <script src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
 		<script type="text/javascript">
         angular.module(\'d4c.frontend\', [\'d4c\']);
 
@@ -4596,17 +4663,17 @@ class Api{
             });
         });
     </script>
-    <script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/embed-dataset.js"></script>
+    <script type="text/javascript" src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/embed-dataset.js"></script>
 
    <script>
    			$("head").append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/> ");
-			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
-			//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
+			//$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/' . $this->config->client->css_file . '\" rel=\"stylesheet\">");
 			$("head").append("<base href=\"/\">");	
-			$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
+			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 	</script>
 
 </body>';
@@ -4614,23 +4681,23 @@ class Api{
 		$response = new Response();
 
 		$response->headers->set('Content-Type', 'text/html');
-		
-		return $response;
 
+		return $response;
 	}
 
-	public function getAnalyze($params) {
-		$params = preg_replace('/_slash_/i',"/",$params);
+	public function getAnalyze($params)
+	{
+		$params = preg_replace('/_slash_/i', "/", $params);
 		//echo $params;
 		//dataset x sort y.serie1-{j} maxpoints y.serie1-1.expr y.serie1-2.func y.serie1-1.cumulative y.serie1-1-range-0.expr timezone
 		$patternSerie = '/y.serie[\d]-/i';
-		
+
 		$query_params = $this->proper_parse_str($params);
 		unset($query_params["timezone"]);
-		
-		
-		$datasetId ="";
-		if(!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)){
+
+
+		$datasetId = "";
+		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
 			$resourceCSV;
 			$datasetId = $query_params['dataset'];
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
@@ -4640,31 +4707,31 @@ class Api{
 			//echo $package . "\r\n";
 			curl_close($curl);
 			$package = json_decode($package, true);
-			foreach ($package['result']['resources'] as $value) { 
-			 	if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){ 
-			 		$resourceCSV = $value['id'];
-			 		break;
-			 	}
+			foreach ($package['result']['resources'] as $value) {
+				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$resourceCSV = $value['id'];
+					break;
+				}
 			}
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
-		
+
 		$ySeries = array();
-		foreach($query_params as $key => $value) {
-		    if (preg_match($patternSerie,$key)){
-		    	$var = explode('.', $key);
-				$nom = $var[0].'.'.$var[1];
+		foreach ($query_params as $key => $value) {
+			if (preg_match($patternSerie, $key)) {
+				$var = explode('.', $key);
+				$nom = $var[0] . '.' . $var[1];
 				$app = $var[2];
-				
-				if(array_key_exists($nom, $ySeries)){
+
+				if (array_key_exists($nom, $ySeries)) {
 					$ySeries[$nom][$app] = $value;
 				} else {
 					$ySeries[$nom]["name"] = $nom;
 					$ySeries[$nom][$app] = $value;
 				}
-				
-/*				$exists = false;
+
+				/*				$exists = false;
 				$c= 0;
 				foreach($ySeries as $y){
 					if($y["name"] == $nom){
@@ -4678,11 +4745,11 @@ class Api{
 					$ySeries[]["name"] = $nom;
 					$ySeries[count($ySeries)-1][$app] = $value;
 				}*/
-		    }
+			}
 		}
 		$fields = "";
-		foreach($ySeries as $y){
-			if($y["expr"] == NULL){
+		foreach ($ySeries as $y) {
+			if ($y["expr"] == NULL) {
 				$y["expr"] = "*";
 			}
 			/*
@@ -4696,115 +4763,124 @@ class Api{
 			 Moyenne : y.serie1-1.func=AVG&y.serie1-1.cumulative=false
 			 Compte : y.serie1-1.func=COUNT&y.serie1-1.cumulative=false
 			*/
-			$func = $y["func"]; $f = "";
-			if (is_numeric($y["expr"][0])){
-				$y["expr"] = ''.$y["expr"].'';
+			$func = $y["func"];
+			$f = "";
+			if (is_numeric($y["expr"][0])) {
+				$y["expr"] = '' . $y["expr"] . '';
 			}
 			switch ($func) {
 				case "COUNT":
-					$f = "cast(count(". $y["expr"] .") as integer)";
+					$f = "cast(count(" . $y["expr"] . ") as integer)";
 					break;
 				case "AVG":
-					$f = "cast(avg(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
+					$f = "cast(avg(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "MIN":
-					$f = "cast(min(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
+					$f = "cast(min(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "MAX":
-					$f = "cast(max(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
+					$f = "cast(max(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "STDDEV":
-					$f = "cast(stddev_pop(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
+					$f = "cast(stddev_pop(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "SUM":
-					$f = "cast(sum(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
+					$f = "cast(sum(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as DOUBLE PRECISION)";
 					break;
 				case "QUANTILES":
 					$n = $y["subsets"];
-					$f = "percentile_cont(".($n/100).") within group ( order by ". $y["expr"] .")";
+					$f = "percentile_cont(" . ($n / 100) . ") within group ( order by " . $y["expr"] . ")";
 					break;
 				default:
-					$f = "cast(count(cast(replace(cast(". $y["expr"] ." as text), ',', '.') as DOUBLE PRECISION)) as integer)";
+					$f = "cast(count(cast(replace(cast(" . $y["expr"] . " as text), ',', '.') as DOUBLE PRECISION)) as integer)";
 					break;
 			}
-	
-			
-			if($y["subsets"] == NULL){
-				$fields .= $f . " as \"". $y["name"] ."\",";
+
+
+			if ($y["subsets"] == NULL) {
+				$fields .= $f . " as \"" . $y["name"] . "\",";
 			} else {
-				$fields .= $f . " as \"". $y["name"] .".".$y["subsets"]."\",";
+				$fields .= $f . " as \"" . $y["name"] . "." . $y["subsets"] . "\",";
 			}
-			
+
 			//$fields .= $f . ",";
 		}
 		$fields = substr($fields, 0, -1);
-/*		if($fields == ""){
+		/*		if($fields == ""){
 			$fields = "count(*)";
 		}
-*/		
+*/
 		//$xSeries = array();
 		//foreach($query_params["x"] as $value) {
 		//    $xSeries[] = explode(".", $value)[0];
 		//}
 		//$xSeries = array_unique($xSeries);
 		$groupby = "";
-		if(count($query_params["x"]) > 0){
+		if (count($query_params["x"]) > 0) {
 			$groupby = " group by ";
 			$fields .= ",";
-			if(is_array($query_params["x"])){
-				foreach($query_params["x"] as $x){
-					$col = $x; $app = NULL;
-					if(strpos($x, '.') !== false){
+			if (is_array($query_params["x"])) {
+				foreach ($query_params["x"] as $x) {
+					$col = $x;
+					$app = NULL;
+					if (strpos($x, '.') !== false) {
 						$col = explode(".", $x)[0];
 						$app = explode(".", $x)[1];
 					}
 					$groupby .= '"' . $x . '",';
-					if($app != NULL){
-						if($app == "weekday"){ $app = "dow";}
-						if($app == "yearday"){ $app = "doy";}
-						$fields .= "extract(".$app." from ". $col . ") as \"". $x ."\",";
+					if ($app != NULL) {
+						if ($app == "weekday") {
+							$app = "dow";
+						}
+						if ($app == "yearday") {
+							$app = "doy";
+						}
+						$fields .= "extract(" . $app . " from " . $col . ") as \"" . $x . "\",";
 					} else {
 						$fields .= $x . ",";
 					}
-					
 				}
 			} else {
-				$col = $query_params["x"]; $app = NULL;
-				if(strpos($query_params["x"], '.') !== false){
+				$col = $query_params["x"];
+				$app = NULL;
+				if (strpos($query_params["x"], '.') !== false) {
 					$col = explode(".", $query_params["x"])[0];
 					$app = explode(".", $query_params["x"])[1];
 				}
 				$groupby .= "\"" . $query_params["x"] . "\",";
-				if($app != NULL){
-					if($app == "weekday"){ $app = "dow";}
-					if($app == "yearday"){ $app = "doy";}
-					$fields .= "extract(".$app." from ". $col . ") as \"". $query_params["x"] ."\",";
+				if ($app != NULL) {
+					if ($app == "weekday") {
+						$app = "dow";
+					}
+					if ($app == "yearday") {
+						$app = "doy";
+					}
+					$fields .= "extract(" . $app . " from " . $col . ") as \"" . $query_params["x"] . "\",";
 				} else {
 					$fields .= $query_params["x"] . ",";
 				}
 			}
-			
+
 			$groupby = substr($groupby, 0, -1);
 			$fields = substr($fields, 0, -1);
 		}
-		
+
 		$orderby = "";
-		
-		if((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != ""){
+
+		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
-			foreach(explode(',', $query_params["sort"]) as $sort){
-				if(preg_match('/serie1-/i',$sort)){
+			foreach (explode(',', $query_params["sort"]) as $sort) {
+				if (preg_match('/serie1-/i', $sort)) {
 					$orderby .=  "\"y." . $sort . "\",";
 				} else {
 					$orderby .=  "\"" . substr($sort, 2) . "\",";
 				}
-				
 			}
 			$orderby = substr($orderby, 0, -1);
-		} else if(!is_array($query_params["x"])){
+		} else if (!is_array($query_params["x"])) {
 			$orderby = " order by " . $query_params["x"];
 		}
-/*		if(array_key_exists('rows', $query_params)){, extract(MONTH from daterun) as \"daterun.month\"
+		/*		if(array_key_exists('rows', $query_params)){, extract(MONTH from daterun) as \"daterun.month\"
 			$query_params['limit'] = $query_params['rows'];
 			unset($query_params['rows']);
 		}
@@ -4817,18 +4893,18 @@ class Api{
 		$where = "";
 		$where = $this->getSQLWhereRecordsDownload($params);
 
-		if(array_key_exists("maxpoints", $query_params) && $query_params['maxpoints'] != ""){
-			$limit = " limit ".$query_params['maxpoints'];
+		if (array_key_exists("maxpoints", $query_params) && $query_params['maxpoints'] != "") {
+			$limit = " limit " . $query_params['maxpoints'];
 		} else {
 			$limit = " limit 1000"; //par defaut
 		}
-	
 
-	  	$req = array();
-		$sql = "Select ". $fields ." from \"" . $query_params['resource_id'] . "\"" . $where . $groupby . $orderby . $limit;
-		
+
+		$req = array();
+		$sql = "Select " . $fields . " from \"" . $query_params['resource_id'] . "\"" . $where . $groupby . $orderby . $limit;
+
 		//error_log($sql);
-		
+
 		$req['sql'] = $sql;
 		//echo $sql;
 		$url2 = http_build_query($req);
@@ -4839,62 +4915,60 @@ class Api{
 		$result = curl_exec($curl);
 		curl_close($curl);
 		//echo $result . "\r\n";
-		
+
 		error_log('ttt' . $result);
-		
-		$result = json_decode($result,true);
-	
+
+		$result = json_decode($result, true);
+
 		$data_array = array();
-		foreach($result["result"]["records"] as $value){
+		foreach ($result["result"]["records"] as $value) {
 			$row = array();
-			foreach($value as $key => $val){
-				if(strpos($key, "y.") !== FALSE){
-					if($val == null) continue;		   
+			foreach ($value as $key => $val) {
+				if (strpos($key, "y.") !== FALSE) {
+					if ($val == null) continue;
 					$cumul = $ySeries[$key]["cumulative"]; //true or false
-					
+
 					$key = str_replace("y.", "", $key);
-					if($cumul == "true"){
-						$row[$key] = $data_array[count($data_array)-1][$key] + $val;
+					if ($cumul == "true") {
+						$row[$key] = $data_array[count($data_array) - 1][$key] + $val;
 					} else {
-						if(strpos($key, ".") !== FALSE){
+						if (strpos($key, ".") !== FALSE) {
 							$row[explode('.', $key)[0]][explode('.', $key)[1]] = $val;
 						} else {
 							$row[$key] = $val;
 						}
-						
 					}
-					
 				} else {
-					if($val == "" && $val != 0){ continue 2;}
-					if(strpos($key, ".") !== FALSE){
+					if ($val == "" && $val != 0) {
+						continue 2;
+					}
+					if (strpos($key, ".") !== FALSE) {
 						/*if(is_array($query_params["x"]) && count($query_params["x"])>1){
 							$row["x"][explode('.', $key)[0]][explode('.', $key)[1]] = $val;
 						} else {*/
-							$row["x"][explode('.', $key)[1]] = $val;
+						$row["x"][explode('.', $key)[1]] = $val;
 						/*}*/
 					} else {
-						if(is_array($query_params["x"]) && count($query_params["x"])>1){
+						if (is_array($query_params["x"]) && count($query_params["x"]) > 1) {
 							$row["x"][$key] = $val;
 						} else {
 							$row["x"] = $val;
 						}
-						
 					}
 				}
-				
 			}
-			if(count(array_keys($row)) == 1 && array_keys($row)[0] == "x") continue;
+			if (count(array_keys($row)) == 1 && array_keys($row)[0] == "x") continue;
 			$data_array[] = $row;
 		}
-		
+
 		echo json_encode($data_array);
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-		
 	}
-	
-	public function callALternativeExport($datasetid, $resourceid) {
+
+	public function callALternativeExport($datasetid, $resourceid)
+	{
 		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceid;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
@@ -4902,40 +4976,41 @@ class Api{
 		echo $res . "\r\n";
 		curl_close($curl);
 		$res = json_decode($res, true);
-		
-		header('Location: '.$res["result"]["url"]);
+
+		header('Location: ' . $res["result"]["url"]);
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
-	public function mapBuilder($idmap) {
+
+	public function mapBuilder($idmap)
+	{
 		$method = $_SERVER['REQUEST_METHOD'];
 		$table = "d4c_maps";
 		$idUser = null;
-		
-		if(\Drupal::currentUser()->isAuthenticated()){
+
+		if (\Drupal::currentUser()->isAuthenticated()) {
 			$idUser = \Drupal::currentUser()->id();
-    	} else {
+		} else {
 			$response = new Response();
 			$response->setStatusCode(404);
 			$response->headers->set('Content-Type', 'application/json');
-			
+
 			return $response;
 		}
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		switch ($method) {
 			case 'POST': //create map, no idMap
 				//$data = json_decode(file_get_contents('php://input'), true);  
-				$data = file_get_contents('php://input');  
+				$data = file_get_contents('php://input');
 				$data = json_decode($data, true);
 				$name = str_replace(" ", "-", strtolower($data["title"]));
 				$res = $this->getMaps($idUser, $name);
-				if(count($res) > 0){
-					$name .= (count($res)+1);
+				if (count($res) > 0) {
+					$name .= (count($res) + 1);
 				}
 				$data["persist_id"] = $name;
 				$data = json_encode($data);
@@ -4954,21 +5029,21 @@ class Api{
 				]);
 
 				$query->execute();
-				
+
 				$response->setStatusCode(200);
 				echo $data;
 				break;
 			case 'PUT': //save existing map, get idMap
-				if($idmap == ""){
+				if ($idmap == "") {
 					$response = new Response();
 					$response->setStatusCode(500);
 					$response->headers->set('Content-Type', 'application/json');
-					
-					return $response;	
+
+					return $response;
 				}
 				//$data = json_decode(file_get_contents('php://input'), true);  
 				$data = file_get_contents('php://input');
-				
+
 				$query = \Drupal::database()->update($table);
 				$query->fields([
 					'map_json' => $data
@@ -4976,39 +5051,39 @@ class Api{
 				$query->condition('map_name', $idmap);
 				$query->condition('map_id_user', $idUser);
 				$query->execute();
-				
+
 				$response->setStatusCode(200);
 
 				break;
 			case 'GET':  //if idMap => getMap, if not => listMap
 				$res = $this->getMaps($idUser, $idmap);
 				$data_array;
-				if($idmap != '' && $idmap != null){//echo json_encode($res);
+				if ($idmap != '' && $idmap != null) { //echo json_encode($res);
 					$data_array = $res[0]->map_json;
 					echo $data_array;
 				} else {
 					$data_array = array();
-					foreach($res as $map){
-						$data_array[] = json_decode($map->map_json, TRUE);	
+					foreach ($res as $map) {
+						$data_array[] = json_decode($map->map_json, TRUE);
 					}
 					echo json_encode($data_array);
 				}
-				
+
 				/*if(count($res) == 1){//echo json_encode($res[0]);
 					$res = $res[0]->json;
 					echo $res;
 				} else {
 					echo json_encode($res);
 				}*/
-				
+
 				break;
 			case 'DELETE':  //delete existing map, get idMap
-				if($idmap == ""){
+				if ($idmap == "") {
 					$response = new Response();
 					$response->setStatusCode(500);
 					$response->headers->set('Content-Type', 'application/json');
-					
-					return $response;	
+
+					return $response;
 				}
 				$query = \Drupal::database()->delete($table);
 				$query->condition('map_name', $idmap);
@@ -5018,12 +5093,13 @@ class Api{
 
 				break;
 		}
-				
+
 		return $response;
 	}
-	
-	public function getMaps($idUser, $idMap) {
-        Logger::logMessage("Getting maps for user : " . $idUser ."\r\n");
+
+	public function getMaps($idUser, $idMap)
+	{
+		Logger::logMessage("Getting maps for user : " . $idUser . "\r\n");
 
 		$table = "d4c_maps";
 		$query = \Drupal::database()->select($table, 'map');
@@ -5034,33 +5110,35 @@ class Api{
 			'map_name',
 			'map_json'
 		]);
-		
-		$query->condition('map_id_user',$idUser);
-		if($idMap != "" && $idMap != null){
-			$query->condition('map_name',$idMap);
+
+		$query->condition('map_id_user', $idUser);
+		if ($idMap != "" && $idMap != null) {
+			$query->condition('map_name', $idMap);
 		}
-		
-		$prep=$query->execute();
+
+		$prep = $query->execute();
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
 		return $res;
 	}
-	
-	public function isLoggedIn() {
+
+	public function isLoggedIn()
+	{
 		$data_array = array();
 		$data_array["logged_in"] = \Drupal::currentUser()->isAuthenticated();
 		$data_array["pending"] = false;
 		echo json_encode($data_array);
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
 	}
-	public function getCustomView($idDataset) {
+	public function getCustomView($idDataset)
+	{
 		$table = "d4c_custom_views";
 		$query = \Drupal::database()->select($table, 'map');
 
@@ -5071,17 +5149,17 @@ class Api{
 			'cv_icon',
 			'cv_template'
 		]);
-		
-		$query->condition('cv_dataset_id',$idDataset);		
-		$prep=$query->execute();
+
+		$query->condition('cv_dataset_id', $idDataset);
+		$prep = $query->execute();
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-		if(count($res) > 0){
-			$cv = $res[count($res)-1];
-			
+		if (count($res) > 0) {
+			$cv = $res[count($res) - 1];
+
 			$table = "d4c_custom_views_html";
 			$query = \Drupal::database()->select($table, 'map');
 
@@ -5089,33 +5167,34 @@ class Api{
 				'cvh_html',
 				'cvh_order'
 			]);
-			
-			$query->condition('cvh_id_cv',$cv->cv_id);
+
+			$query->condition('cvh_id_cv', $cv->cv_id);
 			$query->orderBy('cvh_order', 'ASC');
-			
-			$prep=$query->execute();
+
+			$prep = $query->execute();
 			//$prep->setFetchMode(PDO::FETCH_OBJ);
-			$html= array();
+			$html = array();
 			while ($enregistrement = $prep->fetch()) {
 				array_push($html, $enregistrement);
 			}
 			$cv->html = $html;
-			
+
 			return $cv;
 		} else {
 			return null;
 		}
 	}
-	
-	public function getMapLayers($type = null) {
+
+	public function getMapLayers($type = null)
+	{
 		$jsonTiles = json_encode($this->config->map_tiles);
 
 		$data_array = array();
 		$tiles = json_decode($jsonTiles, true);
 
-		if($type != null){
-			foreach($tiles as $tile){
-				if($tile["type"] == $type){
+		if ($type != null) {
+			foreach ($tiles as $tile) {
+				if ($tile["type"] == $type) {
 					$data_array["layers"][] = $tile;
 				}
 			}
@@ -5124,40 +5203,42 @@ class Api{
 		}
 
 		Logger::logMessage("Found bounding box " . $this->config->client->default_bounding_box);
-		
+
 		$default_bbox = $this->config->client->default_bounding_box;
-		if($default_bbox != null && $default_bbox != ""){
+		if ($default_bbox != null && $default_bbox != "") {
 			$data_array["default_bbox"] = $default_bbox;
 		} else {
 			$data_array["default_bbox"] = null;
 		}
-		
+
 		return $data_array;
 	}
-	
-	public function callMapLayers($params) {
+
+	public function callMapLayers($params)
+	{
 		$type = null;
 		$query_params = $this->proper_parse_str($params);
-		if(array_key_exists('type', $query_params)){
+		if (array_key_exists('type', $query_params)) {
 			$type = $query_params["type"];
 		}
 		$data_array = $this->getMapLayers($type);
-		
+
 		echo json_encode($data_array);
-		
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
 	}
-	
-	public function addMapLayer($params) {
-		if(is_array($params)){
+
+	public function addMapLayer($params)
+	{
+		if (is_array($params)) {
 			$tile = $params;
 		} else {
 			$tile = $this->proper_parse_str($params);
 		}
-		
+
 		/*$tile = array();
 		$tile["name"] = $query_params["name"];
 		$tile["label"] = $query_params["label"];
@@ -5166,20 +5247,21 @@ class Api{
 		$tile["maxZoom"] = $query_params["maxZoom"];
 		$tile["type"] = $query_params["type"];
 		$tile["key"] = $query_params["key"];*/
-		
+
 		$this->config->map_tiles[] = $tile;
 		//json_decode(file_get_contents(__DIR__ ."/../../config.json"));
-		$res = file_put_contents(__DIR__ ."/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
-		
+		$res = file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
 	}
-	
-	public function updateMapLayer($params) {
-		
-		if(is_array($params)){
+
+	public function updateMapLayer($params)
+	{
+
+		if (is_array($params)) {
 			$tile = $params;
 		} else {
 			$tile = json_decode($_POST["json"], true);
@@ -5187,25 +5269,26 @@ class Api{
 		$content2 = $_POST["json"];
 		error_log(json_encode($content2));
 		$exists = false;
-		foreach($this->config->map_tiles as &$layer){
-			if($layer->name == $tile["name"]){
+		foreach ($this->config->map_tiles as &$layer) {
+			if ($layer->name == $tile["name"]) {
 				$layer = $tile;
 				$exists = true;
 				break;
 			}
 		}
-		if(!$exists){
+		if (!$exists) {
 			$this->config->map_tiles[] = $tile;
 		}
 
-		file_put_contents(__DIR__ ."/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
 	}
-	
-	public function deleteMapLayer($idLayer) { //id directement
+
+	public function deleteMapLayer($idLayer)
+	{ //id directement
 		/*if(is_array($params)){
 			$tile = $params;
 		} else {
@@ -5213,27 +5296,28 @@ class Api{
 		}*/
 		error_log(json_encode($this->config->map_tiles));
 		$arr = array();
-		foreach($this->config->map_tiles as $layer){
-			if($layer->name != $idLayer){
+		foreach ($this->config->map_tiles as $layer) {
+			if ($layer->name != $idLayer) {
 				$arr[] = $layer;
 				//break;
 			}
 		}
 		$this->config->map_tiles = $arr;
 		error_log(json_encode($this->config->map_tiles));
-		file_put_contents(__DIR__ ."/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		return $response;
 	}
-	
-	public function precluster() {
+
+	public function precluster()
+	{
 		$query = $_SERVER['QUERY_STRING'];
 		$callUrl = $this->config->cluster->url . "precluster";
-		$callUrl .= "?".$query;
+		$callUrl .= "?" . $query;
 
-		
+
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		$opt = $this->getSimpleGetOptions();
@@ -5242,140 +5326,141 @@ class Api{
 		$opt[CURLOPT_HTTPHEADER] = array(                                                                          
 			'Content-Type: application/json',                                                                                
 			'Content-Length: ' . strlen($data)                                                                       
-		); */                                        
-		curl_setopt_array($curl, $opt);    
+		); */
+		curl_setopt_array($curl, $opt);
 		$res = curl_exec($curl);
 		curl_close($curl);
 		//echo json_encode($opt) . "\r\n";
-		
+
 		echo $res;
 		$response = new Response();
-//		$response->setContent(json_encode($result));
+		//		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
-	
-	public function callPackageSearchWithRecordsCount($params) {
-		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
+
+	public function callPackageSearchWithRecordsCount($params)
+	{
+		$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);
 		$callUrl =  $this->urlCkan . "api/action/package_search";
-		
-        
-        if(!is_null($params)){
+
+
+		if (!is_null($params)) {
 			$callUrl .= "?" . $params;
-		} 
-        $cle = $this->config->ckan->api_key;
-			$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => "POST",
-				CURLOPT_HTTPHEADER => array (
-						'Content-type:application/json',
-						'Content-Length: ' . strlen ( $jsonData ),
-						'Authorization:  ' .$cle 
-				)
-		);	
+		}
+		$cle = $this->config->ckan->api_key;
+		$options = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData),
+				'Authorization:  ' . $cle
+			)
+		);
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $options);
 		$result = curl_exec($curl);
 		//echo $callUrl;
 		curl_close($curl);
 
-		$result = json_decode($result,true);
-        $data = array();
-		unset($result["help"]);//echo count($result["result"]["results"]);
-		foreach($result["result"]["results"] as $i => $dataset) {
-			foreach($dataset["resources"] as $j => $value) {
+		$result = json_decode($result, true);
+		$data = array();
+		unset($result["help"]); //echo count($result["result"]["results"]);
+		foreach ($result["result"]["results"] as $i => $dataset) {
+			foreach ($dataset["resources"] as $j => $value) {
 				//unset($result["result"]["results"][$i]["resources"][$j]["url"]);	//echo $value["url"];
-				
+
 				$format = $result["result"]["results"][$i]["resources"][$j]["format"];
-				if(($format == "CSV" || $format = "XLS" || $format == "XLSX") && $result["result"]["results"][$i]["resources"][$j]["datastore_active"] == true){
+				if (($format == "CSV" || $format = "XLS" || $format == "XLSX") && $result["result"]["results"][$i]["resources"][$j]["datastore_active"] == true) {
 					$req["sql"] = 'Select count(*) from "' . $result["result"]["results"][$i]["resources"][$j]["id"] . '"';
 					$url2 = http_build_query($req);
-					$callUrl =  $this->urlCkan . 'api/action/datastore_search_sql?'.$url2;
+					$callUrl =  $this->urlCkan . 'api/action/datastore_search_sql?' . $url2;
 					$curl = curl_init($callUrl);
 					curl_setopt_array($curl, $this->getSimpleOptions());
 					$res = curl_exec($curl);
-//					//echo $callUrl;
+					//					//echo $callUrl;
 					curl_close($curl);
-					$res = json_decode($res,true);
+					$res = json_decode($res, true);
 					$data[$dataset["id"]] = floatval($res["result"]["records"][0]["count"]);
 					break;
-				}	
+				}
 			}
 		}
-				
+
 		echo json_encode($data);
 		$response = new Response();
 		$response->setContent();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	}   
-	
-	
-	function callVanillaUrlReports(){
-    
-        $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
-        $vanilla=$this->config->vanilla->url;
-        $result = Query::callSolrServer($vanilla."/VanillaRuntime/vanillaExternalAccess?objecttype=url");
-        $response = new Response();
+	}
+
+
+	function callVanillaUrlReports()
+	{
+
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$vanilla = $this->config->vanilla->url;
+		$result = Query::callSolrServer($vanilla . "/VanillaRuntime/vanillaExternalAccess?objecttype=url");
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response;    
-        
-        
-    }
-    
-    function getCsvXls($params){
+
+		return $response;
+	}
+
+	function getCsvXls($params)
+	{
 
 
 
-        $params = explode(";", $params);
-        $url = $params[0];
-		$url =str_replace('!', '/', $url);
+		$params = explode(";", $params);
+		$url = $params[0];
+		$url = str_replace('!', '/', $url);
 
-	
 
-        
-        $format = $params[1];
-        $site = $params[2];
-        
-        $site_2 = explode(":", $site);
-   
-        
-        if($site=='Public.OpenDataSoft.com'){
-           $url = 'https://public.opendatasoft.com/explore/dataset/'.$url.'/download/?format=csv&timezone=Europe/Madrid&use_labels_for_header=true'; 
-        }
-        
-        if($site_2[0]=='odsall'){
-			$url = 'https://'.$site_2[1].'/explore/dataset/'.$url.'/download/?format=csv&timezone=Europe/Madrid&use_labels_for_header=true';
-        }
-        
-        if($site_2[0]=='socrata'){
-			$url = 'https://'.$url.'/resource/'.$site_2[1].'.csv';   
-        }
-        
-        if($site=='Ckan' ){
-            if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-                $url = preg_replace("(^https?://)", "http://", $url );
-            }
-        }
+
+
+		$format = $params[1];
+		$site = $params[2];
+
+		$site_2 = explode(":", $site);
+
+
+		if ($site == 'Public.OpenDataSoft.com') {
+			$url = 'https://public.opendatasoft.com/explore/dataset/' . $url . '/download/?format=csv&timezone=Europe/Madrid&use_labels_for_header=true';
+		}
+
+		if ($site_2[0] == 'odsall') {
+			$url = 'https://' . $site_2[1] . '/explore/dataset/' . $url . '/download/?format=csv&timezone=Europe/Madrid&use_labels_for_header=true';
+		}
+
+		if ($site_2[0] == 'socrata') {
+			$url = 'https://' . $url . '/resource/' . $site_2[1] . '.csv';
+		}
+
+		if ($site == 'Ckan') {
+			if ($_SERVER['HTTP_HOST'] == '192.168.2.217') {
+				$url = preg_replace("(^https?://)", "http://", $url);
+			}
+		}
 
 		Logger::logMessage("Getting CSV / XLS with URL '" . $url . "' \r\n");
-        
-        $arr=array();
-        if($format=='csv'|| $format=='CSV'){
-                 
-            $delimiter = $this->getFileDelimiter($url);
-           
-            $arr1 =file($url);
-            $arr = array();
-            $a=15;
-            
-            if(count($arr1)<15){
-				$a=count($arr1);
+
+		$arr = array();
+		if ($format == 'csv' || $format == 'CSV') {
+
+			$delimiter = $this->getFileDelimiter($url);
+
+			$arr1 = file($url);
+			$arr = array();
+			$a = 15;
+
+			if (count($arr1) < 15) {
+				$a = count($arr1);
 			}
 
-            for($i=0; $i<$a; $i++){
+			for ($i = 0; $i < $a; $i++) {
 
 				$text = $arr1[$i];
 				//Trying to detect encoding to convert automatically to UTF-8
@@ -5383,59 +5468,58 @@ class Api{
 
 				// OLD way to keep track in case
 				// $arr[$i] = utf8_decode(iconv("UTF-8", "ISO-8859-1//IGNORE", $arr1[$i]));
-            }
-
-            if($arr[0]==null || $arr[0]==''){
-				$arr[0]="Pas d'accès de ligne ou de colonne aux tables non tabulaires";
 			}
-            $arr=array('delimiter'=>$delimiter, 'data'=>$arr);
-        }
-        else if($format=='XLS'|| $format=='xls' || $format=='XLSX'|| $format=='xlsx' ){
-                
-        }
 
-        $response = new Response();
+			if ($arr[0] == null || $arr[0] == '') {
+				$arr[0] = "Pas d'accès de ligne ou de colonne aux tables non tabulaires";
+			}
+			$arr = array('delimiter' => $delimiter, 'data' => $arr);
+		} else if ($format == 'XLS' || $format == 'xls' || $format == 'XLSX' || $format == 'xlsx') {
+		}
+
+		$response = new Response();
 		$response->setContent(json_encode($arr));
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response; 
-        
-    }
-    
-    function getFileDelimiter($file, $checkLines = 2){
-        $file = new SplFileObject($file);
-        $delimiters = array(
-          ',',
-          '\t',
-          ';',
-          '|',
-          ':'
-        );
-        $results = array();
-        $i = 0;
-         while($file->valid() && $i <= $checkLines){
-            $line = $file->fgets();
-            foreach ($delimiters as $delimiter){
-                $regExp = '/['.$delimiter.']/';
-                $fields = preg_split($regExp, $line);
-                if(count($fields) > 1){
-                    if(!empty($results[$delimiter])){
-                        $results[$delimiter]++;
-                    } else {
-                        $results[$delimiter] = 1;
-                    }   
-                }
-            }
-           $i++;
-        }
-        $results = array_keys($results, max($results));
-        return $results[0];
-    }
-    
-    function nettoyage( $str, $charset='utf-8' ) {   
+
+		return $response;
+	}
+
+	function getFileDelimiter($file, $checkLines = 2)
+	{
+		$file = new SplFileObject($file);
+		$delimiters = array(
+			',',
+			'\t',
+			';',
+			'|',
+			':'
+		);
+		$results = array();
+		$i = 0;
+		while ($file->valid() && $i <= $checkLines) {
+			$line = $file->fgets();
+			foreach ($delimiters as $delimiter) {
+				$regExp = '/[' . $delimiter . ']/';
+				$fields = preg_split($regExp, $line);
+				if (count($fields) > 1) {
+					if (!empty($results[$delimiter])) {
+						$results[$delimiter]++;
+					} else {
+						$results[$delimiter] = 1;
+					}
+				}
+			}
+			$i++;
+		}
+		$results = array_keys($results, max($results));
+		return $results[0];
+	}
+
+	function nettoyage($str, $charset = 'utf-8')
+	{
 		$str = utf8_decode($str);
-				
-		$str = str_replace("?", "", $str);   
+
+		$str = str_replace("?", "", $str);
 		//$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
 		$str = str_replace("`", "_", $str);
 		$str = str_replace("'", "_", $str);
@@ -5458,193 +5542,188 @@ class Api{
 		$str = str_replace('\'', "_", $str);
 		$str = str_replace("/", "_", $str);
 		$str = str_replace("|", "_", $str);
-		$str = strtolower($str);     
-		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
-		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
-		$str = preg_replace( '#&[^;]+;#', '', $str );      
-		
-		return $str;     
-			 
+		$str = strtolower($str);
+		$str = preg_replace('#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str);
+		$str = preg_replace('#&([A-za-z]{2})(?:lig);#', '\1', $str);
+		$str = preg_replace('#&[^;]+;#', '', $str);
+
+		return $str;
 	}
-    
-    function callInfocom94($params){
-        
-        $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
-        $siteSearch1=$this->config->sitesSearch;
-        $siteSearch=array();
-        foreach($siteSearch1 as &$val){
-			if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-                if("http://".$_SERVER['HTTP_HOST']."/"!=$val){
-					array_push($siteSearch, $val);  
+
+	function callInfocom94($params)
+	{
+
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$siteSearch1 = $this->config->sitesSearch;
+		$siteSearch = array();
+		foreach ($siteSearch1 as &$val) {
+			if ($_SERVER['HTTP_HOST'] == '192.168.2.217') {
+				if ("http://" . $_SERVER['HTTP_HOST'] . "/" != $val) {
+					array_push($siteSearch, $val);
 				}
-            }
-            else{
-                if("https://".$_SERVER['HTTP_HOST']."/"!=$val){
-					array_push($siteSearch, $val);    
+			} else {
+				if ("https://" . $_SERVER['HTTP_HOST'] . "/" != $val) {
+					array_push($siteSearch, $val);
 				}
-            }
-        }
-        
-//        $siteSearch=[
-//        'https://mla.data4citizen.com/',    
-//        'http://192.168.2.217/',
-//        'https://infocom94.data4citizen.com/',
-//        'https://chennevieres.data4citizen.com/',
-//        'https://boissy.data4citizen.com/',
-//        'https://sucy.data4citizen.com/',
-//        /*'https://mandres.data4citizen.com/',
-//        'https://nogent.data4citizen.com/',
-//        'https://la-queue-en-brie.data4citizen.com/',
-//        'https://perigny.data4citizen.com/',
-//        'https://ormesson.data4citizen.com/',
-//        'https://saintmaur.data4citizen.com/',
-//        'https://creteil.data4citizen.com/',
-//        'https://maisonsalfort.data4citizen.com/',
-//        'https://limeil.data4citizen.com/',
-//        'https://gpsea.data4citizen.com/',
-//        'https://villiers.data4citizen.com/',
-//        'https://saintmaurice.data4citizen.com/',
-//        'https://villecresnes.data4citizen.com/',
-//        'https://marolles.data4citizen.com/'*/
-//            
-//        ];
+			}
+		}
+
+		//        $siteSearch=[
+		//        'https://mla.data4citizen.com/',    
+		//        'http://192.168.2.217/',
+		//        'https://infocom94.data4citizen.com/',
+		//        'https://chennevieres.data4citizen.com/',
+		//        'https://boissy.data4citizen.com/',
+		//        'https://sucy.data4citizen.com/',
+		//        /*'https://mandres.data4citizen.com/',
+		//        'https://nogent.data4citizen.com/',
+		//        'https://la-queue-en-brie.data4citizen.com/',
+		//        'https://perigny.data4citizen.com/',
+		//        'https://ormesson.data4citizen.com/',
+		//        'https://saintmaur.data4citizen.com/',
+		//        'https://creteil.data4citizen.com/',
+		//        'https://maisonsalfort.data4citizen.com/',
+		//        'https://limeil.data4citizen.com/',
+		//        'https://gpsea.data4citizen.com/',
+		//        'https://villiers.data4citizen.com/',
+		//        'https://saintmaurice.data4citizen.com/',
+		//        'https://villecresnes.data4citizen.com/',
+		//        'https://marolles.data4citizen.com/'*/
+		//            
+		//        ];
 
 		Logger::logMessage("Searching in other Data4Citizen sites linked \r\n");
-       
-        $result=array();
-        foreach($siteSearch as &$val){
-			
+
+		$result = array();
+		foreach ($siteSearch as &$val) {
+
 			$callSolrUrl = $val . "api/datasets/2.0/search/q=" . $params;
 			Logger::logMessage("Call '" . $callSolrUrl . "' \r\n");
-            $t = Query::callSolrServer($callSolrUrl);
-            $t = json_decode($t);
-            
-            foreach($t->result->results as &$dataset){
-                $dataset->siteOfDataset = $val;
-                $dataset->url=$val . $this->config->client->routing_prefix . '/visualisation/table/?id='.$dataset->id;
-                array_push($result,$dataset);
-                
-                
-                $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-                $this->urlCkan = $this->config->ckan->url;
-                
-                $cle = $this->config->ckan->api_key;
-                $optionst = array(
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => "POST",
-                    CURLOPT_HTTPHEADER => array(
-                        'Content-type:application/json',
-                        'Content-Length: ' . strlen($jsonData),
-                        'Authorization:  ' . $cle,
-                    ),
-                );
+			$t = Query::callSolrServer($callSolrUrl);
+			$t = json_decode($t);
 
-				for($i=0; $i<count($dataset->resources); $i++){
-					
-					$callUrl = $val . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id;
-					$res= Query::callSolrServer($callUrl);
+			foreach ($t->result->results as &$dataset) {
+				$dataset->siteOfDataset = $val;
+				$dataset->url = $val . $this->config->client->routing_prefix . '/visualisation/table/?id=' . $dataset->id;
+				array_push($result, $dataset);
 
-					$dataset->resources[$i]->url = json_decode($res);	
-				}  
-                
-            }
-        }
-        
-        
-        
-        $response = new Response();
+
+				$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+				$this->urlCkan = $this->config->ckan->url;
+
+				$cle = $this->config->ckan->api_key;
+				$optionst = array(
+					CURLOPT_RETURNTRANSFER => true,
+					CURLOPT_CUSTOMREQUEST => "POST",
+					CURLOPT_HTTPHEADER => array(
+						'Content-type:application/json',
+						'Content-Length: ' . strlen($jsonData),
+						'Authorization:  ' . $cle,
+					),
+				);
+
+				for ($i = 0; $i < count($dataset->resources); $i++) {
+
+					$callUrl = $val . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/" . $dataset->resources[$i]->id;
+					$res = Query::callSolrServer($callUrl);
+
+					$dataset->resources[$i]->url = json_decode($res);
+				}
+			}
+		}
+
+
+
+		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response;    
-        
-    }
-    
-    function callD4c($params){
-        
-        $params = explode(";", $params);
 
-        $result=array();
+		return $response;
+	}
+
+	function callD4c($params)
+	{
+
+		$params = explode(";", $params);
+
+		$result = array();
 		/*$callUrl = 'https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1];
 		$curlOrg = curl_init($callUrl);
 		curl_setopt_array($curlOrg, $this->getSimpleOptions());
         $t = curl_exec($curlOrg);
         curl_close($curlOrg);
         echo 'https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1];*/
-        $t = Query::callSolrServer('https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=".$params[1]);
+		$t = Query::callSolrServer('https://' . $params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/2.0/search/q=" . $params[1]);
 		//echo $t; 
 		$t = json_decode($t);
-		
+
 		Logger::logMessage("callD4c - Search on " . $params[0] . " with params = " . $params[1]);
 		Logger::logMessage("Found " . count($t->result->results) . " results.");
-           
-		foreach($t->result->results as &$dataset){
+
+		foreach ($t->result->results as &$dataset) {
 			$dataset->siteOfDataset = $params[0];
-			$dataset->url='https://'.$params[0] . $this->config->client->routing_prefix . '/visualisation/table/?id='.$dataset->id;
+			$dataset->url = 'https://' . $params[0] . $this->config->client->routing_prefix . '/visualisation/table/?id=' . $dataset->id;
 
-            
-			for($i=0; $i<count($dataset->resources); $i++){
-				
-				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
-					
-					$res= Query::callSolrServer('http://'.$params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
+
+			for ($i = 0; $i < count($dataset->resources); $i++) {
+
+				if ($_SERVER['HTTP_HOST'] == '192.168.2.217') {
+
+					$res = Query::callSolrServer('http://' . $params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/" . $dataset->resources[$i]->id);
+				} else {
+					$res = Query::callSolrServer('https://' . $params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/" . $dataset->resources[$i]->id);
 				}
-				else{
-					$res= Query::callSolrServer('https://'.$params[0] . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/".$dataset->resources[$i]->id);   
-				}
-            
-                        
-                $dataset->resources[$i]->url = json_decode($res);
 
-                
-			}  
 
-			array_push($result,$dataset);
-			
+				$dataset->resources[$i]->url = json_decode($res);
+			}
+
+			array_push($result, $dataset);
+
 			//resource_show
-                
-                
-                
+
+
+
 		}
-        
-        
-        
-        
-        $response = new Response();
+
+
+
+
+		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-        
-    }
-    
-    function getResourceById($params){
-       
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-        $this->urlCkan = $this->config->ckan->url;
-                
-                $cle = $this->config->ckan->api_key;
-                $optionst = array(
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_CUSTOMREQUEST => "POST",
-                    CURLOPT_HTTPHEADER => array(
-                        'Content-type:application/json',
-                        'Content-Length: ' . strlen($jsonData),
-                        'Authorization:  ' . $cle,
-                    ),
-                );
-        
+
+		return $response;
+	}
+
+	function getResourceById($params)
+	{
+
+		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->urlCkan = $this->config->ckan->url;
+
+		$cle = $this->config->ckan->api_key;
+		$optionst = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData),
+				'Authorization:  ' . $cle,
+			),
+		);
+
 		$res = $this->getResource($params);
-		$res=json_decode($res);
-        
-        $response = new Response();
+		$res = json_decode($res);
+
+		$response = new Response();
 		$response->setContent(json_encode($res->result->url));
 		$response->headers->set('Content-Type', 'application/json');
-         return $response;
-        
-    }
+		return $response;
+	}
 
-	function getResource($resourceId) {
+	function getResource($resourceId)
+	{
 		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceId;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
@@ -5653,132 +5732,141 @@ class Api{
 		return $result;
 	}
 
-    
-    function getDataSetById($id){
-    
+
+	function getDataSetById($id)
+	{
+
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
 		$api = new Api;
 		$cle = $this->config->ckan->api_key;
 		$optionst = array(
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_HTTPHEADER => array(
-                'Content-type:application/json',
-                'Content-Length: ' . strlen($jsonData),
-                'Authorization:  ' . $cle,
-            ),
-        );
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => "POST",
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData),
+				'Authorization:  ' . $cle,
+			),
+		);
 
-        $callUrl = $this->urlCkan . "/api/action/package_show?id=".$id;
+		$callUrl = $this->urlCkan . "/api/action/package_show?id=" . $id;
 
-        $curl = curl_init($callUrl);
-        curl_setopt_array($curl, $optionst);
-        $res  = curl_exec($curl);
-        curl_close($curl);
-      
-    
-        $response = new Response();
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $optionst);
+		$res  = curl_exec($curl);
+		curl_close($curl);
+
+
+		$response = new Response();
 		$response->setContent($res);
 		$response->headers->set('Content-Type', 'application/json');
-        return $response;
-}
-    
-    function callSearchDataGouvOrg($params){
-        $result = Query::callSolrServer("https://www.data.gouv.fr/api/1/organizations/?page_size=10000&q=".$params);
-        $response = new Response();
+		return $response;
+	}
+
+	function callSearchDataGouvOrg($params)
+	{
+		$result = Query::callSolrServer("https://www.data.gouv.fr/api/1/organizations/?page_size=10000&q=" . $params);
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }
-    
-    function callSearchDataGouvDataset($params){
-        $result = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/?page_size=10000&q=".$params);
-        $response = new Response();
+
+		return $response;
+	}
+
+	function callSearchDataGouvDataset($params)
+	{
+		$result = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/?page_size=10000&q=" . $params);
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }
-    
-    function callSearchDataGouvDatasetByOrg($params){
-        $result = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/?page_size=10000&organization=".$params);
-        $response = new Response();
+
+		return $response;
+	}
+
+	function callSearchDataGouvDatasetByOrg($params)
+	{
+		$result = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/?page_size=10000&organization=" . $params);
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }
-    
-    function callSearchOpendatasoft($params){
-        $result = Query::callSolrServer("https://public.opendatasoft.com/api/datasets/1.0/search/?q=".$params);
-        
-        
-         //error_log("https://public.opendatasoft.com/api/v1/console/datasets/1.0/search/?q=".$params);
-        
-        $response = new Response();
+
+		return $response;
+	}
+
+	function callSearchOpendatasoft($params)
+	{
+		$result = Query::callSolrServer("https://public.opendatasoft.com/api/datasets/1.0/search/?q=" . $params);
+
+
+		//error_log("https://public.opendatasoft.com/api/v1/console/datasets/1.0/search/?q=".$params);
+
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }
-    
-    function callSearchOpendatasoftAllSite($params){
+
+		return $response;
+	}
+
+	function callSearchOpendatasoftAllSite($params)
+	{
 		$params = explode(";", $params);
 
-		$url = "https://".$params[0]."/api/datasets/1.0/search/?rows=10000&q=".$params[1];
+		$url = "https://" . $params[0] . "/api/datasets/1.0/search/?rows=10000&q=" . $params[1];
 		$result = Query::callSolrServer($url);
-        Logger::logMessage("Calling ODS with url '" . $url . "'");
+		Logger::logMessage("Calling ODS with url '" . $url . "'");
 
-        $response = new Response();
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    	return $response;    
-    }
-    
-	function callSearchSocrata($params){
-        
-        $params = explode(";", $params);
-        
-        //$result = Query::callSolrServer($params[0]."/api/catalog/v1?q=".$params[1]);
-        $result = Query::callSolrServer("http://api.us.socrata.com/api/catalog/v1?domains=".$params[0]."&search_context=".$params[0]."&q=".$params[1]);
-        
-        
-        $response = new Response();
+
+		return $response;
+	}
+
+	function callSearchSocrata($params)
+	{
+
+		$params = explode(";", $params);
+
+		//$result = Query::callSolrServer($params[0]."/api/catalog/v1?q=".$params[1]);
+		$result = Query::callSolrServer("http://api.us.socrata.com/api/catalog/v1?domains=" . $params[0] . "&search_context=" . $params[0] . "&q=" . $params[1]);
+
+
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }	
-    
-    function ckanSearchCall($params){
-        $params = explode(";", $params);
-		
+
+		return $response;
+	}
+
+	function ckanSearchCall($params)
+	{
+		$params = explode(";", $params);
+
 		$callUrl = 'https://' . $params[0] . "/api/3/action/package_search?rows=1000&q=" . $params[1];
-        
+
 		Logger::logMessage("ckanSearchCall - Search on " . $callUrl);
-        
-        //$result = Query::callSolrServer('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
-        $curl = curl_init($callUrl);
-		$opt = $this->getSimpleGetOptions();                               
-		curl_setopt_array($curl, $opt);    
+
+		//$result = Query::callSolrServer('https://'.$params[0]."/api/3/action/package_search?q=".$params[1]);
+		$curl = curl_init($callUrl);
+		$opt = $this->getSimpleGetOptions();
+		curl_setopt_array($curl, $opt);
 		$result = curl_exec($curl);
 		curl_close($curl);
-		
+
 		Logger::logMessage("ckanSearchCall - Found " . count(json_decode($result)->result->results) . " datasets");
-        
-        $response = new Response();
+
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-    return $response;    
-    }
-    
-    function callCustomView($params) {
-        
-      $idDataset=$params;
+
+		return $response;
+	}
+
+	function callCustomView($params)
+	{
+
+		$idDataset = $params;
 		$table = "d4c_custom_views";
 		$query = \Drupal::database()->select($table, 'map');
 
@@ -5789,22 +5877,22 @@ class Api{
 			'cv_icon',
 			'cv_template'
 		]);
-		
-		$query->condition('cv_dataset_id',$idDataset);		
-		$prep=$query->execute();
-        
-        
-        
+
+		$query->condition('cv_dataset_id', $idDataset);
+		$prep = $query->execute();
+
+
+
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-        
-        
-		if(count($res) > 0){
-			$cv = $res[count($res)-1];
-			
+
+
+		if (count($res) > 0) {
+			$cv = $res[count($res) - 1];
+
 			$table = "d4c_custom_views_html";
 			$query = \Drupal::database()->select($table, 'map');
 
@@ -5812,57 +5900,60 @@ class Api{
 				'cvh_html',
 				'cvh_order'
 			]);
-			
-			$query->condition('cvh_id_cv',$cv->cv_id);
+
+			$query->condition('cvh_id_cv', $cv->cv_id);
 			$query->orderBy('cvh_order', 'ASC');
-			
-			$prep=$query->execute();
+
+			$prep = $query->execute();
 			//$prep->setFetchMode(PDO::FETCH_OBJ);
-			$html= array();
+			$html = array();
 			while ($enregistrement = $prep->fetch()) {
 				array_push($html, $enregistrement);
 			}
 			$cv->html = $html;
-            
-            
-            
-           
-        $response = new Response();
-		$response->setContent(json_encode($cv));
-		$response->headers->set('Content-Type', 'application/json');
-        
-        return $response;  
+
+
+
+
+			$response = new Response();
+			$response->setContent(json_encode($cv));
+			$response->headers->set('Content-Type', 'application/json');
+
+			return $response;
 		} else {
 			return "null";
 		}
-//        $cv=$res;
-//        
-//      $response = new Response();
-//		$response->setContent(json_encode($cv));
-//		$response->headers->set('Content-Type', 'application/json');
-//        
-//        return $response;
-        
-        
+		//        $cv=$res;
+		//        
+		//      $response = new Response();
+		//		$response->setContent(json_encode($cv));
+		//		$response->headers->set('Content-Type', 'application/json');
+		//        
+		//        return $response;
+
+
 	}
-    
-	function getPackageTheme(){
+
+	function getPackageTheme()
+	{
 		$t = $this->getThemes(false);
-        
+
 		$response = new Response();
-        $response->setContent($t);
+		$response->setContent($t);
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-    }
+	}
 
 	function getThemes($returnJson = false, $sort = false) {
-		$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
-        $themes = $themConfig->get('themes');
+		if ($this->themes == null) {
+			$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
+			$this->themes = $themConfig->get('themes');
+		}
 		if ($returnJson) {
-			$themes = json_decode($themes, true);
+			$themes = json_decode($this->themes, true);
 
 			if ($sort) {
-				usort($themes , function($a, $b){
+				usort($themes, function ($a, $b) {
 					$key = "title";
 					$result = strcmp(strtolower($a[$key]), strtolower($b[$key]));
 					return $result;
@@ -5871,107 +5962,121 @@ class Api{
 			return $themes;
 		}
 		else {
-			return $themes;
+			return $this->themes;
 		}
 	}
-    
-    function updateNbDownload( $params ){
-        $this->updatePackage($params,"nb_download");
-        //$this->getThemeArray()
-        $response = new Response();
+
+	function getThemeLabel($themeValue) {
+		$themes = $this->getThemes(true);
+		foreach ($themes as $theme) {
+			if ($theme['title'] == $themeValue) {
+				return isset($theme['label']) ? $theme['label'] : $themeValue;
+			}
+		}
+		return $themeValue;
+	}
+
+	function updateNbDownload($params)
+	{
+		$this->updatePackage($params, "nb_download");
+		//$this->getThemeArray()
+		$response = new Response();
 		//$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-    }
-    
-    function updateNbViews( $params ){
-        $this->updatePackage($params,"nb_views");
-        $response = new Response();
-//    	$response->setContent(json_encode($result));
+	}
+
+	function updateNbViews($params)
+	{
+		$this->updatePackage($params, "nb_views");
+		$response = new Response();
+		//    	$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-    }
-    
-    function updatePackage($dataseId,$keyToUpdate){
-        $result = $this->getPackageShow("id=".$dataseId);
-        $keyExists = false;
-        $index=0;
-        for($i=0; $i< count($result['result']['extras']) ; $i++){
-            
-            if( $result['result']['extras'][$i]['key']==$keyToUpdate){
-                $keyExists = true;
-                $index= $i;
-                break;
-            }
-        }
-        if( $keyExists ){
+	}
+
+	function updatePackage($dataseId, $keyToUpdate)
+	{
+		$result = $this->getPackageShow("id=" . $dataseId);
+		$keyExists = false;
+		$index = 0;
+		for ($i = 0; $i < count($result['result']['extras']); $i++) {
+
+			if ($result['result']['extras'][$i]['key'] == $keyToUpdate) {
+				$keyExists = true;
+				$index = $i;
+				break;
+			}
+		}
+		if ($keyExists) {
 			$value = intval($result['result']['extras'][$index]['value']) + 1;
 			$value = str_pad($value, 8, '0', STR_PAD_LEFT);
-            $result['result']['extras'][$index]['value'] = $value;
-        }    
-        else{
+			$result['result']['extras'][$index]['value'] = $value;
+		} else {
 			$value = str_pad(1, 8, '0', STR_PAD_LEFT);
-            $data = array(
-                        "key" => $keyToUpdate,
-                        "value" => $value
-            );
-            array_push($result['result']['extras'] , $data  ) ;
-        }    
-        $callUrl = $this->urlCkan."api/action/package_update";
-		
-        $return = $this->updateRequest($callUrl,$result['result'],"POST" );
-    }
+			$data = array(
+				"key" => $keyToUpdate,
+				"value" => $value
+			);
+			array_push($result['result']['extras'], $data);
+		}
+		$callUrl = $this->urlCkan . "api/action/package_update";
 
-    function updateRequest($callUrl, $binaryData, $requestType) {
-		$jsonData = json_encode( $binaryData );
-        $cle = $this->config->ckan->api_key; 
-		$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => $requestType,
-				CURLOPT_POSTFIELDS => $jsonData,
-				CURLOPT_HTTPHEADER => array (
-						'Content-type:application/json',
-						'Content-Length: ' . strlen ( $jsonData ),
-						'Authorization:  ' .$cle 
-				)
+		$return = $this->updateRequest($callUrl, $result['result'], "POST");
+	}
+
+	function updateRequest($callUrl, $binaryData, $requestType)
+	{
+		$jsonData = json_encode($binaryData);
+		$cle = $this->config->ckan->api_key;
+		$options = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => $requestType,
+			CURLOPT_POSTFIELDS => $jsonData,
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData),
+				'Authorization:  ' . $cle
+			)
 		);
 
-		$curl = curl_init ( $callUrl );
-		curl_setopt_array ( $curl, $options );
-		$result = curl_exec ( $curl );
-		curl_close ( $curl );
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $options);
+		$result = curl_exec($curl);
+		curl_close($curl);
 		return $result;
 	}
-	
-	function externalCallDatapusher($resourceId) {
+
+	function externalCallDatapusher($resourceId)
+	{
 		$callUrl = 'http://127.0.0.1:8800/job';
-		$cle = $this->config->ckan->api_key; 
-		$url = $this->config->ckan->url; 
+		$cle = $this->config->ckan->api_key;
+		$url = $this->config->ckan->url;
 		$binaryData['api_key'] = $cle;
 		$binaryData['job_type'] = 'push_to_datastore';
 		$binaryData['metadata']['resource_id'] = $resourceId;
 		$binaryData['metadata']['ckan_url'] = $url;
 		$binaryData['api_key'] = $cle;
 		// error_log(json_encode( $binaryData ));
-		$jsonData = json_encode( $binaryData );
-        
-		$options = array (
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => 'POST',
-				CURLOPT_POSTFIELDS => $jsonData,
-				CURLOPT_HTTPHEADER => array (
-					'Content-type:application/json',
-					'Content-Length: ' . strlen ( $jsonData )
-				)
+		$jsonData = json_encode($binaryData);
+
+		$options = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CUSTOMREQUEST => 'POST',
+			CURLOPT_POSTFIELDS => $jsonData,
+			CURLOPT_HTTPHEADER => array(
+				'Content-type:application/json',
+				'Content-Length: ' . strlen($jsonData)
+			)
 		);
-	
-		$curl = curl_init ( $callUrl );
-		curl_setopt_array ( $curl, $options );
-		$result = curl_exec ( $curl );
-		curl_close ( $curl );
-		
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $options);
+		$result = curl_exec($curl);
+		curl_close($curl);
+
 		$response = new Response();
-        $response->setContent('Done');
+		$response->setContent('Done');
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
@@ -5979,12 +6084,13 @@ class Api{
 	/**
 	 * This method reload all resources from a Dataset in the Datastore
 	 */
-	function callDatapusher($resourceId) {
+	function callDatapusher($resourceId)
+	{
 		$command = '/usr/lib/ckan/default/bin/paster --plugin=ckan datapusher submit_resource ' . $resourceId . ' -c /etc/ckan/default/production.ini';
-        Logger::logMessage($command);
+		Logger::logMessage($command);
 
 		$output = shell_exec($command);
-        Logger::logMessage("Output " . $output);
+		Logger::logMessage("Output " . $output);
 
 		// $callUrl = 'http://127.0.0.1:8800/job';
 		// $cle = $this->config->ckan->api_key; 
@@ -5996,7 +6102,7 @@ class Api{
 		// $binaryData['api_key'] = $cle;
 		// // error_log(json_encode( $binaryData ));
 		// $jsonData = json_encode( $binaryData );
-        
+
 		// $options = array (
 		// 		CURLOPT_RETURNTRANSFER => true,
 		// 		CURLOPT_CUSTOMREQUEST => 'POST',
@@ -6006,12 +6112,12 @@ class Api{
 		// 			'Content-Length: ' . strlen ( $jsonData )
 		// 		)
 		// );
-	
+
 		// $curl = curl_init ( $callUrl );
 		// curl_setopt_array ( $curl, $options );
 		// $result = curl_exec ( $curl );
 		// curl_close ( $curl );
-		
+
 		// $resp = json_decode($result);
 		// // error_log($result);
 		// $jobId = $resp->job_id;
@@ -6034,7 +6140,7 @@ class Api{
 		// 	curl_setopt_array ( $curl, $options );
 		// 	$result = curl_exec ( $curl );
 		// 	curl_close ( $curl );
-			
+
 		// 	$resp = json_decode($result);
 		// 	if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
 		// 		break;
@@ -6055,7 +6161,7 @@ class Api{
 		// 	}
 		// }
 	}
-	
+
 	// Old method keep for keeping tracks
 	// function callDatapusher($resourceId) {
 	// 	$callUrl = 'http://127.0.0.1:8800/job';
@@ -6068,7 +6174,7 @@ class Api{
 	// 	$binaryData['api_key'] = $cle;
 	// 	// error_log(json_encode( $binaryData ));
 	// 	$jsonData = json_encode( $binaryData );
-        
+
 	// 	$options = array (
 	// 			CURLOPT_RETURNTRANSFER => true,
 	// 			CURLOPT_CUSTOMREQUEST => 'POST',
@@ -6078,12 +6184,12 @@ class Api{
 	// 				'Content-Length: ' . strlen ( $jsonData )
 	// 			)
 	// 	);
-	
+
 	// 	$curl = curl_init ( $callUrl );
 	// 	curl_setopt_array ( $curl, $options );
 	// 	$result = curl_exec ( $curl );
 	// 	curl_close ( $curl );
-		
+
 	// 	$resp = json_decode($result);
 	// 	// error_log($result);
 	// 	$jobId = $resp->job_id;
@@ -6106,7 +6212,7 @@ class Api{
 	// 		curl_setopt_array ( $curl, $options );
 	// 		$result = curl_exec ( $curl );
 	// 		curl_close ( $curl );
-			
+
 	// 		$resp = json_decode($result);
 	// 		if($resp->status == 'complete' || $resp->status == 'error' || $resp->status == 'failed') {
 	// 			break;
@@ -6127,8 +6233,9 @@ class Api{
 	// 		}
 	// 	}
 	// }
-	
-	function callDatapusherJobStatus($resourceId) {
+
+	function callDatapusherJobStatus($resourceId)
+	{
 		$result = $this->getDatapusherJobStatus($resourceId);
 
 		echo $result;
@@ -6137,7 +6244,8 @@ class Api{
 		return $response;
 	}
 
-	function getDatapusherJobStatus($resourceId) {
+	function getDatapusherJobStatus($resourceId)
+	{
 		Logger::logMessage("Get datapusher status for resource '" . $resourceId . "'");
 
 		$database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
@@ -6150,25 +6258,25 @@ class Api{
 			$jobValue = json_decode($task["value"], true);
 			$jobId = $jobValue["job_id"];
 
-			$callUrl = 'http://127.0.0.1:8800/job/' .$jobId;
+			$callUrl = 'http://127.0.0.1:8800/job/' . $jobId;
 			Logger::logMessage("Getting datapusher infos '" . $callUrl . "'");
-	
-			$cle = $this->config->ckan->datapusher_key; 
-			$url = $this->config->ckan->url; 
-	
-			$options = array (
-					CURLOPT_RETURNTRANSFER => true,
-					CURLOPT_CUSTOMREQUEST => 'GET',
-					// CURLOPT_POSTFIELDS => $jsonData,
-					CURLOPT_HTTPHEADER => array (
-						'Authorization: ' . $cle
-					)
+
+			$cle = $this->config->ckan->datapusher_key;
+			$url = $this->config->ckan->url;
+
+			$options = array(
+				CURLOPT_RETURNTRANSFER => true,
+				CURLOPT_CUSTOMREQUEST => 'GET',
+				// CURLOPT_POSTFIELDS => $jsonData,
+				CURLOPT_HTTPHEADER => array(
+					'Authorization: ' . $cle
+				)
 			);
-	
-			$curl = curl_init ( $callUrl );
-			curl_setopt_array ( $curl, $options );
-			$result = curl_exec ( $curl );
-			curl_close ( $curl );
+
+			$curl = curl_init($callUrl);
+			curl_setopt_array($curl, $options);
+			$result = curl_exec($curl);
+			curl_close($curl);
 
 			return $result;
 		}
@@ -6176,50 +6284,51 @@ class Api{
 		throw new \Exception("Impossible de trouver une tâche associée à la ressource '" . $resourceId . "'");
 	}
 
-    function sortDatasetbyKey($key){
-        //global $key ;
-        //$key="nb_download";//"nb_download" "nb_views"
-        $datasetList = $this->getPackageSearch("q=");
-        //echo $datasetList->getContent() ;
-        $data = json_decode($datasetList->getContent() );
-        $dataJson = $datasetList->getContent() ;
-       // echo "<!Doctype html><html>";
-        $key_found=false;
-        $listbyKey = $this->getdatasetListByKey($key);
-        if( $key=="nb_download"){
-            usort($listbyKey , function($a,$b){
-                $key="nb_download";//"nb_download";
-                return $b[$key] - $a[$key] ;
-            }  ) ;
-        }
-        else if( $key=="nb_views" ) {
-            usort($listbyKey , function($a,$b){
-                $key="nb_views";//"nb_download";
-                return $b[$key] - $a[$key] ;
-            }  ) ;            
-        }
-        $result = $listbyKey;
-        $response = new Response();
-        $response->setContent(json_encode($result));
+	function sortDatasetbyKey($key)
+	{
+		//global $key ;
+		//$key="nb_download";//"nb_download" "nb_views"
+		$datasetList = $this->getPackageSearch("q=");
+		//echo $datasetList->getContent() ;
+		$data = json_decode($datasetList->getContent());
+		$dataJson = $datasetList->getContent();
+		// echo "<!Doctype html><html>";
+		$key_found = false;
+		$listbyKey = $this->getdatasetListByKey($key);
+		if ($key == "nb_download") {
+			usort($listbyKey, function ($a, $b) {
+				$key = "nb_download"; //"nb_download";
+				return $b[$key] - $a[$key];
+			});
+		} else if ($key == "nb_views") {
+			usort($listbyKey, function ($a, $b) {
+				$key = "nb_views"; //"nb_download";
+				return $b[$key] - $a[$key];
+			});
+		}
+		$result = $listbyKey;
+		$response = new Response();
+		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-    }
-    
-    function getdatasetListByKey($key){
-        $datasetList = $this->getPackageSearch("q=");
-        $dataJson = $datasetList->getContent() ;
-        //echo "$dataJson" ;
-        $data = json_decode($datasetList->getContent() );
-        for($i=0; $i< count($data->result->results) ; $i++){
-            $id=$data->result->results[$i]->id;
-            $title=$data->result->results[$i]->title;
-            $key_found=false;
-            $nb_download=0;
-			$theme="";
-			$nb_view=0;
-            $themeList = array();
-            //if( $i==0 ) var_dump( $data->result->results[$i]->extras[0] ) ;
-           /* if($key=="theme"){
+	}
+
+	function getdatasetListByKey($key)
+	{
+		$datasetList = $this->getPackageSearch("q=");
+		$dataJson = $datasetList->getContent();
+		//echo "$dataJson" ;
+		$data = json_decode($datasetList->getContent());
+		for ($i = 0; $i < count($data->result->results); $i++) {
+			$id = $data->result->results[$i]->id;
+			$title = $data->result->results[$i]->title;
+			$key_found = false;
+			$nb_download = 0;
+			$theme = "";
+			$nb_view = 0;
+			$themeList = array();
+			//if( $i==0 ) var_dump( $data->result->results[$i]->extras[0] ) ;
+			/* if($key=="theme"){
                 for($j=0; $j<count($data->result->results[$i]->extras) ; $j++ ){
                     if( $data->result->results[$i]->extras[$j]->key == "nb_download" ){
                         $nb_download = $data->result->results[$i]->extras[$j]->value;
@@ -6248,173 +6357,180 @@ class Api{
                 }
                 
             }*/
-			for($j=0; $j<count($data->result->results[$i]->extras) ; $j++ ){
-                if( $data->result->results[$i]->extras[$j]->key == "nb_download" ){
+			for ($j = 0; $j < count($data->result->results[$i]->extras); $j++) {
+				if ($data->result->results[$i]->extras[$j]->key == "nb_download") {
 					$nb_download = $data->result->results[$i]->extras[$j]->value;
 				}
-				if( $data->result->results[$i]->extras[$j]->key == "nb_view" ){
+				if ($data->result->results[$i]->extras[$j]->key == "nb_view") {
 					$nb_view = $data->result->results[$i]->extras[$j]->value;
 				}
-				if( $data->result->results[$i]->extras[$j]->key == "theme" ){
+				if ($data->result->results[$i]->extras[$j]->key == "theme") {
 					$theme = $data->result->results[$i]->extras[$j]->value;
 				}
-            }
-			$listbyKey[] = array( "id" => $id ,
-                                  "title" => $title,
-                                  "nb_download" => $nb_download,
-                                  "nb_view" => $nb_view,
-                                  "theme" => $theme
-                        );
-        }
-        
-        //var_dump($listbyKey);
-        return $listbyKey ;
-    }
-    
-    function getThemeArray(){
- 
-        $listbyKey = $this->getdatasetListByKey("theme") ;
-        
-        for($l=0; $l<count($listbyKey);$l++ ){
-            
-            $tmp = explode(',', $listbyKey[$l]["theme"] ) ;
-            for($n=0; $n<count($tmp);$n++ ){
-                $tmp[$n] = trim($tmp[$n] );
-            }
-                        
-            for($k=0; $k <count($tmp); $k++ ){       
-                if( !in_array( trim($tmp[$k]),$themeList )){
-                    $themeList[] = $tmp[$k];
-                }
-            }
-        }
-        
-        //echo " list apres" ;
-        
-       // echo json_encode($listbyKey);
-        
-        $result = $themeList;
-        $response = new Response();
-        $response->setContent(json_encode($themeList));
+			}
+			$listbyKey[] = array(
+				"id" => $id,
+				"title" => $title,
+				"nb_download" => $nb_download,
+				"nb_view" => $nb_view,
+				"theme" => $theme
+			);
+		}
+
+		//var_dump($listbyKey);
+		return $listbyKey;
+	}
+
+	function getThemeArray()
+	{
+
+		$listbyKey = $this->getdatasetListByKey("theme");
+
+		for ($l = 0; $l < count($listbyKey); $l++) {
+
+			$tmp = explode(',', $listbyKey[$l]["theme"]);
+			for ($n = 0; $n < count($tmp); $n++) {
+				$tmp[$n] = trim($tmp[$n]);
+			}
+
+			for ($k = 0; $k < count($tmp); $k++) {
+				if (!in_array(trim($tmp[$k]), $themeList)) {
+					$themeList[] = $tmp[$k];
+				}
+			}
+		}
+
+		//echo " list apres" ;
+
+		// echo json_encode($listbyKey);
+
+		$result = $themeList;
+		$response = new Response();
+		$response->setContent(json_encode($themeList));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-      }
-    
-    //-------------
-    function themebydownload(){
-        
-        $theme = $this->getThemeArray() ;
-        $theme = json_decode ($theme->getContent() ); 
-        $dataset = $this->getdatasetListByKey("theme");
-        $list = array();
-        //var_dump($theme);
-        //($dataset);
-        for($i=0; $i<count($theme) ; $i++){
-            
-            $list[$i] = array("theme" => $theme[$i],
-                            "nb_download"=>0
-                           );
-        
-            for($j=0; $j<count($dataset) ; $j++ ){
-                
-                if($dataset[$j]['theme'] !=null ){
-                    $tmp = explode(',',$dataset[$j]['theme']) ;
-                    $tmp = $this->trim_array($tmp);
-                    //$dataset[$j]['theme'] !=null 
-                   if( in_array( $theme[$i], $tmp  )   ){
-                       //echo $theme[$i] ." existe dans ".$dataset[$j]['title'] ."\r";
-                       $list[$i]["nb_download"] =    $list[$i]["nb_download"] + $dataset[$j]['nb_download'];
-                    }
-                }
-            }
-        }
-        
-        usort($list , function($a,$b){
-            $key="nb_download";//"nb_download";
-            return $b[$key] - $a[$key] ;
-        }  ) ;  
-        
-        $result = $list;
-        //$result = $dataset;
-        $response = new Response();
-        $response->setContent(json_encode($result));
+	}
+
+	//-------------
+	function themebydownload()
+	{
+
+		$theme = $this->getThemeArray();
+		$theme = json_decode($theme->getContent());
+		$dataset = $this->getdatasetListByKey("theme");
+		$list = array();
+		//var_dump($theme);
+		//($dataset);
+		for ($i = 0; $i < count($theme); $i++) {
+
+			$list[$i] = array(
+				"theme" => $theme[$i],
+				"nb_download" => 0
+			);
+
+			for ($j = 0; $j < count($dataset); $j++) {
+
+				if ($dataset[$j]['theme'] != null) {
+					$tmp = explode(',', $dataset[$j]['theme']);
+					$tmp = $this->trim_array($tmp);
+					//$dataset[$j]['theme'] !=null 
+					if (in_array($theme[$i], $tmp)) {
+						//echo $theme[$i] ." existe dans ".$dataset[$j]['title'] ."\r";
+						$list[$i]["nb_download"] =    $list[$i]["nb_download"] + $dataset[$j]['nb_download'];
+					}
+				}
+			}
+		}
+
+		usort($list, function ($a, $b) {
+			$key = "nb_download"; //"nb_download";
+			return $b[$key] - $a[$key];
+		});
+
+		$result = $list;
+		//$result = $dataset;
+		$response = new Response();
+		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-        
-    }
-    
-    function datasetByTheme($theme){
+	}
+
+	function datasetByTheme($theme)
+	{
 		$datasetList = $this->callPackageSearch_public_private('include_private=true&rows=10000');
 		$datasetList = $datasetList->getContent();
-		
+
 		$dataset_list = json_decode($datasetList)->result->results;
-		
-        $selectedDataset = array();
-        for($i=0; $i< count($dataset_list) ; $i++){
-			
-            $theme_found=false;
-			for($j=0; $j<count($dataset_list[$i]->extras) ; $j++ ){
-				
+
+		$selectedDataset = array();
+		for ($i = 0; $i < count($dataset_list); $i++) {
+
+			$theme_found = false;
+			for ($j = 0; $j < count($dataset_list[$i]->extras); $j++) {
+
 				if ($dataset_list[$i]->extras[$j]->key == "theme") {
-					$dataset_theme = $dataset_list[$i]->extras[$j]->value;      
-                    if ( stristr( trim($dataset_theme) , trim($theme)  ) !==False ) $selectedDataset[] = $dataset_list[$i];
-                    $theme_found = true ;
+					$dataset_theme = $dataset_list[$i]->extras[$j]->value;
+					if (stristr(trim($dataset_theme), trim($theme)) !== False) $selectedDataset[] = $dataset_list[$i];
+					$theme_found = true;
 				}
-				
+
 				if ($dataset_list[$i]->extras[$j]->key == "themes") {
 					$themes = $dataset_list[$i]->extras[$j]->value;
-					
-                    if ( stristr( trim($themes) , trim($theme)  ) !== False ) {
+
+					if (stristr(trim($themes), trim($theme)) !== False) {
 						$selectedDataset[] = $dataset_list[$i];
 					}
-                    $theme_found = true ;
-				} 
-            }
-            
-            if ($theme=="default"  && $theme_found==false ) {
-                $selectedDataset[] = $dataset_list[$i] ;
-            }
-        }
+					$theme_found = true;
+				}
+			}
 
-        $response = new Response();
-        $response->setContent(json_encode($selectedDataset));
+			if ($theme == "default"  && $theme_found == false) {
+				$selectedDataset[] = $dataset_list[$i];
+			}
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($selectedDataset));
 		$response->headers->set('Content-Type', 'application/json');
-		return $response;        
-    }
-    
-    function trim_array($array){
-        $res = array();
-        for($n=0; $n<count($array);$n++ ){
-            $res[] = trim($array[$n] );
-        }        
-        return $res;
-    }
-	
-	function callSearchArcGIS($params){
-		if($params == ''){ 
+		return $response;
+	}
+
+	function trim_array($array)
+	{
+		$res = array();
+		for ($n = 0; $n < count($array); $n++) {
+			$res[] = trim($array[$n]);
+		}
+		return $res;
+	}
+
+	function callSearchArcGIS($params)
+	{
+		if ($params == '') {
 			$query_params = $_POST;
 		} else {
 			$query_params = $this->proper_parse_str($params);
-		} 
-        $result = Query::callSolrServer($query_params["url"]."?f=pjson");
-    //error_log($result); 
-        //error_log("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
-        
-        $response = new Response();
+		}
+		$result = Query::callSolrServer($query_params["url"] . "?f=pjson");
+		//error_log($result); 
+		//error_log("https://".$params[0] . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/search/?q=".$params[1]);
+
+		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response;    
-    }
-	
-	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE, $applySecurity = false){
+
+		return $response;
+	}
+
+	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE, $applySecurity = false)
+	{
 		$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=" . ($allFields ? 'true' : 'false') . "&include_extras=" . ($include_extra ? 'true' : 'false');
-        
+
 		$curlOrg = curl_init($callUrlOrg);
 		curl_setopt_array($curlOrg, $this->getSimpleOptions());
-        $orgs = curl_exec($curlOrg);
-        curl_close($curlOrg);
-        $orgs = json_decode($orgs, true);
+		$orgs = curl_exec($curlOrg);
+		curl_close($curlOrg);
+		$orgs = json_decode($orgs, true);
 		$orgs = $orgs["result"];
 
 		if ($applySecurity) {
@@ -6426,167 +6542,174 @@ class Api{
 			}
 		}
 		return $orgs;
-    }
-	
-	function callAllOrganisations($params){
+	}
+
+	function callAllOrganisations($params)
+	{
 		$query_params = $this->proper_parse_str($params);
 		$all_fields = FALSE;
 		$include_extras = FALSE;
-		if($query_params["all_fields"]){
+		if ($query_params["all_fields"]) {
 			$all_fields = TRUE;
 		}
-		if($query_params["include_extras"]){
+		if ($query_params["include_extras"]) {
 			$include_extras = TRUE;
 		}
 		$result = $this->getAllOrganisations($all_fields, $include_extras);
 		$response = new Response();
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response;  
-    }
-	
-	function calculateVisualisations($id, $blockDateModification=FALSE){
+
+		return $response;
+	}
+
+	function calculateVisualisations($id, $blockDateModification = FALSE)
+	{
 		//error_log($id);
 
 		Logger::logMessage("Calculate visualisation for " . $id . "\r\n");
-		
+
 		$features = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud", timeline]
 		$records_count = 0;
 		$fields = array();
-		
-		//if($dataset == null){
-			$dataset = $this->getPackageShow("id=".$id);
-			$dataset = $dataset["result"];
 
-			
-			//Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
+		//if($dataset == null){
+		$dataset = $this->getPackageShow("id=" . $id);
+		$dataset = $dataset["result"];
+
+
+		//Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
 		//}
 		//$id = $dataset["id"];
-		
-		//if(!$hasFields){
-			$resourcesid = null;
-			foreach ($dataset['resources'] as $value) {
-				if(($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true){
-					$resourcesid = $value['id'];
-				}
-			}
-			if($resourcesid != null){
-				$fields = $this->getAllFields($resourcesid, TRUE);
-				$records_result = $this->getDatastoreApi("resource_id=".$resourcesid."&limit=0");
-				$records_count = str_pad($records_result["result"]["total"], 10, "0", STR_PAD_LEFT);
 
-				
-				Logger::logMessage("Found ressource with id " .$resourcesid . " with record count = " . $records_count . "\r\n");
+		//if(!$hasFields){
+		$resourcesid = null;
+		foreach ($dataset['resources'] as $value) {
+			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+				$resourcesid = $value['id'];
 			}
+		}
+		if ($resourcesid != null) {
+			$fields = $this->getAllFields($resourcesid, TRUE);
+			$records_result = $this->getDatastoreApi("resource_id=" . $resourcesid . "&limit=0");
+			$records_count = str_pad($records_result["result"]["total"], 10, "0", STR_PAD_LEFT);
+
+
+			Logger::logMessage("Found ressource with id " . $resourcesid . " with record count = " . $records_count . "\r\n");
+		}
 		//}
-	
-		
-		
+
+
+
 		//$features[] = "analyze"; //tab chart
 
-		if(count($fields)>0){
+		if (count($fields) > 0) {
 			Logger::logMessage("Search features" . "\r\n");
 
-			$colStart = null;$colEnd = null;$colWordCount = null;$colTimeline=null;$colGeo=null;
-			foreach($fields as $f){
-				foreach($f["annotations"] as $a){
-					if($a["name"] == "startDate"){
+			$colStart = null;
+			$colEnd = null;
+			$colWordCount = null;
+			$colTimeline = null;
+			$colGeo = null;
+			foreach ($fields as $f) {
+				foreach ($f["annotations"] as $a) {
+					if ($a["name"] == "startDate") {
 						$colStart = $f["name"];
-					} else if($a["name"] == "endDate"){
+					} else if ($a["name"] == "endDate") {
 						$colEnd = $f["name"];
-					} else if($a["name"] == "date"){
-						$colEnd = $f["name"];$colStart = $f["name"];
-					} else if($a["name"] == "wordcount" || $a["name"] == "wordcountNumber"){
+					} else if ($a["name"] == "date") {
+						$colEnd = $f["name"];
+						$colStart = $f["name"];
+					} else if ($a["name"] == "wordcount" || $a["name"] == "wordcountNumber") {
 						$colWordCount = $f["name"];
-					} else if($a["name"] == "date_timeLine"  || $a["name"] == "title_for_timeLine"  || $a["name"] == "descr_for_timeLine"){
+					} else if ($a["name"] == "date_timeLine"  || $a["name"] == "title_for_timeLine"  || $a["name"] == "descr_for_timeLine") {
 						$colTimeline = $f["name"];
 					}
 				}
 				/*if($colEnd != null && $colStart != null){
 					//break;
 				}*/
-				if($f["type"] == "file"){
+				if ($f["type"] == "file") {
 					$features[] = "image";
 				}
-				if($f["type"] == "geo_point_2d"  || $f["type"] == "geo_shape"){
+				if ($f["type"] == "geo_point_2d"  || $f["type"] == "geo_shape") {
 					$colGeo = $f["name"];
 				}
 			}
-			
-			if($colStart != null && $colEnd != null){
+
+			if ($colStart != null && $colEnd != null) {
 				$features[] = "timeserie";
 				$features[] = "calendar";
 			}
-			if($colWordCount != null){
+			if ($colWordCount != null) {
 				$features[] = "wordcloud";
 			}
-			if($colTimeline != null){
+			if ($colTimeline != null) {
 				$features[] = "timeline";
 			}
-			if($colGeo != null){
+			if ($colGeo != null) {
 				$features[] = "geo";
 			}
-			
+
 			$found = false;
-			foreach($dataset['extras'] as $value){
-				if($value["key"] == "dont_visualize_tab"){
-					if(strpos($value["value"], "api") === false){
+			foreach ($dataset['extras'] as $value) {
+				if ($value["key"] == "dont_visualize_tab") {
+					if (strpos($value["value"], "api") === false) {
 						$features[] = "api";
 					}
-					if(strpos($value["value"], "analize") === false){
+					if (strpos($value["value"], "analize") === false) {
 						$features[] = "analyze";
 					}
 					$found = true;
 					break;
 				}
 			}
-			if(!$found){
+			if (!$found) {
 				$features[] = "api";
 				$features[] = "analyze";
 			}
 			$features[] = "table";
 		}
-		
+
 		$customView = $this->getCustomView($dataset['id']);
-		if($customView){
+		if ($customView) {
 			Logger::logMessage("Found custom view" . "\r\n");
 
 			$features[] = "custom_view";
 		}
-		
+
 		$extras = $dataset["extras"];
 		$foundFeat = false;
 		$foundCount = false;
 		$foundCV = false;
 		$foundLM = false;
-		foreach($extras as &$e){
-			if($e["key"] == "records_count"){
+		foreach ($extras as &$e) {
+			if ($e["key"] == "records_count") {
 				$e["value"] = $records_count;
 				$foundCount = true;
-			} else if($e["key"] == "features"){
+			} else if ($e["key"] == "features") {
 				$e["value"] = implode(",", $features);
 				$foundFeat = true;
-			} else if($e["key"] == "custom_view" && $customView != null){
+			} else if ($e["key"] == "custom_view" && $customView != null) {
 				$cv = array();
 				$cv["title"] = $customView->cv_title;
 				$cv["slug"] = $customView->cv_name;
 				$cv["icon"] = $customView->cv_icon;
 				$e["value"] = json_encode($cv);
 				$foundCV = true;
-			} else if($e["key"] == "date_moissonnage_last_modification"){
+			} else if ($e["key"] == "date_moissonnage_last_modification") {
 				$foundLM = true;
 			}
 		}
-		if(!$foundCount){
+		if (!$foundCount) {
 			$extras[count($extras)]['key'] = 'records_count';
 			$extras[(count($extras) - 1)]['value'] = $records_count;
 		}
-		if(!$foundFeat){
+		if (!$foundFeat) {
 			$extras[count($extras)]['key'] = 'features';
 			$extras[(count($extras) - 1)]['value'] = implode(",", $features);
 		}
-		if(!$foundCV && $customView != null){
+		if (!$foundCV && $customView != null) {
 			$extras[count($extras)]['key'] = 'custom_view';
 			$cv = array();
 			$cv["title"] = $customView->cv_title;
@@ -6594,52 +6717,57 @@ class Api{
 			$cv["icon"] = $customView->cv_icon;
 			$extras[(count($extras) - 1)]['value'] = json_encode($cv);
 		}
-		if(!$foundLM){
+		if (!$foundLM) {
 			$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
 			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
 		$dataset["extras"] = $extras;
 		//error_log(json_encode($fields));
 		//error_log(json_encode($dataset['extras']));
-		if($blockDateModification){
+		if ($blockDateModification) {
 			$dataset["modified_date_forced"] = true;
 		}
 
-		
+
 		Logger::logMessage("Update package" . "\r\n");
-		
+
 		$callUrl = $this->urlCkan . "api/action/package_update";
 		$this->updateRequest($callUrl, $dataset, "POST");
 	}
-	
-	function callPackageSearchDownload($format, $params){
+
+	function callPackageSearchDownload($format, $params)
+	{
 		$query_params = $this->proper_parse_str($params);
 		$query_params["rows"] = 1000;
 		$query_params["start"] = 0;
 		unset($query_params["facet.field"]);
-		
+
 		$params = "";
-		foreach($query_params as $key => $value){
-			$params .= $key ."=". $value . "&";
+		foreach ($query_params as $key => $value) {
+			$params .= $key . "=" . $value . "&";
 		}
 		$params = substr($params, 0, -1);
 		//$params = implode("&",$query_params);
 		//$params = http_build_query($query_params);
-		
+
 		$result = $this->getExtendedPackageSearch($params);
-		
-		foreach($result["result"]["results"] as &$dataset) {
+
+		foreach ($result["result"]["results"] as &$dataset) {
 			$dataset["metadata_imported"] = $dataset["metadata_modified"];
-			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"] ?: $dataset["metadata_modified"];
-			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"] ?: $dataset["metadata_created"];
-			
-			foreach($dataset["resources"] as $j => $value) {
+			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "date_moissonnage_last_modification";
+			}))["value"] ?: $dataset["metadata_modified"];
+			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
+				return $f["key"] == "date_moissonnage_creation";
+			}))["value"] ?: $dataset["metadata_created"];
+
+			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
 		}
-		
+
 		$result = $result["result"]["results"];
-		
+
 		if ($format == "csv") {
 			header('Content-Type:text/csv');
 			header('Content-Disposition:attachment; filename=datasets.csv');
@@ -6671,21 +6799,21 @@ class Api{
 			rename($pathInput, $pathInput .= '.csv');
 
 			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
-			
+
 			$reader = ReaderFactory::create(Type::CSV);
 			$reader->setFieldDelimiter(';');
 			$reader->setFieldEnclosure('"');
 			$reader->setEndOfLineCharacter("\n");
-			
+
 			$writer = WriterFactory::create(Type::XLSX);
-			
+
 			$style = (new StyleBuilder())
-			   //->setFontBold()
-			   ->setFontSize(11)
-			   ->setFontName('Calibri')
-			   ->setShouldWrapText(false)
-			   ->build();
-			
+				//->setFontBold()
+				->setFontSize(11)
+				->setFontName('Calibri')
+				->setShouldWrapText(false)
+				->build();
+
 			$reader->open($pathInput);
 			$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
 
@@ -6694,11 +6822,11 @@ class Api{
 					//$row->setStyle($style);
 					$writer->addRowWithStyle($row, $style);
 				}
-			}//$writer->addRows($multipleRows); // add multiple rows at a time
+			} //$writer->addRows($multipleRows); // add multiple rows at a time
 
 			$reader->close();
 			$writer->close();
-			
+
 			unlink($fileInput);
 
 			header('Content-Length: ' . filesize($pathOutput));
@@ -6710,68 +6838,79 @@ class Api{
 		$response = new Response();
 		return $response;
 	}
-	
-	function callCalculateVisualisations($id) {
+
+	function callCalculateVisualisations($id)
+	{
 		$this->calculateVisualisations($id);
 		$response = new Response();
 		return $response;
 	}
-	
-	function reBuildAllDataset(){
+
+	function reBuildAllDataset()
+	{
 		$allDatasets = $this->callPackageSearch_public_private("include_private=true&rows=10000");
 		$allDatasets = $allDatasets->getContent();
-        $allDatasets = json_decode($allDatasets, true);
-		if($allDatasets["success"] == true){
-			foreach($allDatasets["result"]["results"] as $d){
+		$allDatasets = json_decode($allDatasets, true);
+		if ($allDatasets["success"] == true) {
+			foreach ($allDatasets["result"]["results"] as $d) {
 				$this->calculateVisualisations($d["id"], TRUE);
 			}
 			//echo count($allDatasets["result"]["results"]);
 		}
-		
+
 		$response = new Response();
 		return $response;
 	}
-	
-	function callGetReuses($datasetid){
+
+	function callGetReuses($datasetid)
+	{
 		$method = $_SERVER['REQUEST_METHOD'];
-		
+
+		$dataset = $this->getPackageShow2($datasetid, "");
+		//We define the dataset ID with the name
+		$datasetid = $dataset["datasetid"];
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-		
+
 		$data_array = array();
-		
+
 		switch ($method) {
-			case 'POST': 
+			case 'POST':
 				$data = array();
-				
+
 				$r = date_default_timezone_set('Europe/Paris');
-				
-				if($_POST["recaptcha_response"] != ""){
+
+				if ($_POST["recaptcha_response"] != "") {
 					//check captcha
 					$callUrl =  "https://www.google.com/recaptcha/api/siteverify";
 					$data_string = array();
 					$data_string["secret"] = "6LcT58UaAAAAAM3TgHCvTYpTv0ziCuOfGrfUGUt0";
 					$data_string["response"] = $_POST["recaptcha_response"];
-					
+
 					$curl = curl_init($callUrl);
 					curl_setopt_array($curl, $this->getSimpleOptions());
 					curl_setopt($curl, CURLOPT_POSTFIELDS, $data_string);
-					curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
-						'Content-Type: application/json',                                                                                
-						'Content-Length: ' . strlen($data_string))                                                                       
-					); 
+					curl_setopt(
+						$ch,
+						CURLOPT_HTTPHEADER,
+						array(
+							'Content-Type: application/json',
+							'Content-Length: ' . strlen($data_string)
+						)
+					);
 					$resp = curl_exec($curl);
-					curl_close($curl);//error_log($resp);
+					curl_close($curl); //error_log($resp);
 					$resp = json_decode($resp, true);
-					if($resp["success"] == false){
+					if ($resp["success"] == false) {
 						$data_array["status"] = "captcha_failed";
 						$data_array["message"] = json_encode($resp["error-codes"]);
 						echo json_encode($data_array);
 						return $response;
 					}
 				}
-				
-				if($_FILES['file']['size'] > 0){
+
+				if ($_FILES['file']['size'] > 0) {
 					switch ($_FILES['upfile']['error']) {
 						case UPLOAD_ERR_OK:
 							break;
@@ -6804,7 +6943,7 @@ class Api{
 						return $response;
 						//throw new RuntimeException('Exceeded filesize limit.');
 					}
-					
+
 					$finfo = new finfo(FILEINFO_MIME_TYPE);
 					if (false === $ext = array_search(
 						$finfo->file($_FILES['file']['tmp_name']),
@@ -6814,14 +6953,14 @@ class Api{
 							'gif' => 'image/gif',
 						),
 						true
-					)) { 
+					)) {
 						$data_array["status"] = "error";
 						$data_array["message"] = 'Invalid file format.';
 						echo json_encode($data_array);
 						return $response;
 						//throw new RuntimeException('Invalid file format.');
 					}
-					
+
 					//on ecrit le fichier
 					$uploaddir = DRUPAL_ROOT . '/sites/default/files/reuses/';
 					if (!file_exists($uploaddir)) {
@@ -6829,23 +6968,23 @@ class Api{
 					}
 					$uploadfile = $uploaddir . basename($_FILES['file']['name']);
 					//error_log( "eeeeeeeee :: ".$uploadfile);
-					
+
 					if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
-						error_log( "Le fichier est valide, et a été téléchargé avec succès. Voici plus d'informations :\n");
-						$protocol = /*isset($_SERVER['HTTPS']) ? */'https://' /*: 'http://'*/;
-						$url = $protocol.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/reuses/'.basename($_FILES['file']['name']);
+						error_log("Le fichier est valide, et a été téléchargé avec succès. Voici plus d'informations :\n");
+						$protocol = /*isset($_SERVER['HTTPS']) ? */ 'https://' /*: 'http://'*/;
+						$url = $protocol . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/reuses/' . basename($_FILES['file']['name']);
 					} else {
-						error_log( "Attaque potentielle par téléchargement de fichiers. Voici plus d'informations :\n");
+						error_log("Attaque potentielle par téléchargement de fichiers. Voici plus d'informations :\n");
 					}
 					//error_log(json_encode($_FILES));
 					$data["image"] = $url;
 				} else {
 					$data["image"] = $_POST["image"];
 				}
-				
+
 				$name = str_replace(" ", "-", strtolower($_POST["title"]));
-				
-				if(\Drupal::currentUser()->isAuthenticated()){
+
+				if (\Drupal::currentUser()->isAuthenticated()) {
 					$user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
 					//$data["author_name"] = $user->get('name')->value;
 					$data["author_name"] = $_POST["author_name"];
@@ -6856,7 +6995,7 @@ class Api{
 					$data["author_name"] = $_POST["author_name"];
 					$data["author_email"] = $_POST["author_email"];
 				}
-				
+
 				$data["dataset_id"] = $datasetid;
 				$data["dataset_title"] = $_POST["dataset_title"];
 				$data["name"] = $name;
@@ -6869,19 +7008,19 @@ class Api{
 				$data["date"] = date("Y-m-d H:i:s");
 				$data["status"] = 0;
 				$data["type"] = $_POST["type"];
-				
+
 				$this->addReuse($data);
-				
+
 				$data_array = array();
 				$data_array["status"] = "reuse_pending";
 				echo json_encode($data_array);
-				
+
 				//reuse_pending
 				//reuse_created
 				//captcha_techerror
 				//captcha_failed
 				//error
-				
+
 				//envoie mail
 				$sitename = \Drupal::config('system.site')->get('name');
 				$langcode = \Drupal::config('system.site')->get('langcode');
@@ -6891,11 +7030,13 @@ class Api{
 				$reply = NULL;
 				$send = TRUE;
 
-				$params['message'][] = t('Une réutilisation "@name" a été déposée par @author sur le site @sitename, et est en attente de validation de votre part.',
-											array('@sitename' => $sitename,'@name' => $name,'@author' => $data["author_email"]));
+				$params['message'][] = t(
+					'Une réutilisation "@name" a été déposée par @author sur le site @sitename, et est en attente de validation de votre part.',
+					array('@sitename' => $sitename, '@name' => $name, '@author' => $data["author_email"])
+				);
 				$params['message'][] = t('Titre de la réutilisation : @name', array('@name' => $name));
 				$params['message'][] = t('Jeu de données concerné : @name', array('@name' => $data["dataset_title"]));
-				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://".$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . "/admin/config/data4citizen/reusesManagement"));
+				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://" . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . "/admin/config/data4citizen/reusesManagement"));
 				$params['message'][] = t("Cordialement.");
 				$params['subject'] = t('Nouvelle réutilisation à valider');
 				//$params['options']['username'] = "KMO";
@@ -6903,23 +7044,24 @@ class Api{
 				//$params['options']['footer'] = t('blabla');
 				//$params['headers']['Content-Type'] = 'charset=UTF-8;';
 				//$params['from'] = \Drupal::config('system.site')->get('mail');
-				
+
 				$mailManager = \Drupal::service('plugin.manager.mail');
 				$mailManager->mail($module, $key, $to, $langcode, $params, $reply, $send);
-				
+
 				break;
-			case 'GET':  
+			case 'GET':
 				$res = $this->getReuses(null, $datasetid, null, "online", null, null);
 				echo json_encode($res);
-				
+
 				break;
 		}
-		
+
 		return $response;
 	}
-	
-	function getReuses($orga = null, $dataset = null, $q = null, $status = null, $rows = null, $start = null){
-		
+
+	function getReuses($orga = null, $dataset = null, $q = null, $status = null, $rows = null, $start = null)
+	{
+
 		$table = "d4c_reuses";
 		$query = \Drupal::database()->select($table, 'reuse');
 
@@ -6939,64 +7081,64 @@ class Api{
 			'reu_status',
 			'reu_type'
 		]);
-		
-		if ($dataset != null && $dataset != ""){
-			$query->condition('reu_dataset_id',$dataset);
-		} else if($orga != null && $orga != ""){
-			
-			$req = "include_private=true&rows=10000&q=organization:".$orga;
+
+		if ($dataset != null && $dataset != "") {
+			$query->condition('reu_dataset_id', $dataset);
+		} else if ($orga != null && $orga != "") {
+
+			$req = "include_private=true&rows=10000&q=organization:" . $orga;
 
 			$datasets = $this->getPackageSearch($req)["result"]["results"]; //error_log(json_encode($datasets));
 			$ids = array();
-			
-			foreach($datasets as $row){
-				$ids[] = $row["id"];
+
+			foreach ($datasets as $row) {
+				$ids[] = $row["name"];
 			}
 			//$ids = implode(",", $ids);
-			$query->condition('reu_dataset_id',$ids, "IN");
-		} 
+			$query->condition('reu_dataset_id', $ids, "IN");
+		}
 
-		if($q != null && $q != ""){
+		if ($q != null && $q != "") {
 			$orGroup = $query->orConditionGroup()
-				->condition('reu_title','%' . \Drupal::database()->escapeLike($q) . '%', 'LIKE')
-				->condition('reu_description','%' . \Drupal::database()->escapeLike($q) . '%', 'LIKE');
-  
+				->condition('reu_title', '%' . \Drupal::database()->escapeLike($q) . '%', 'LIKE')
+				->condition('reu_description', '%' . \Drupal::database()->escapeLike($q) . '%', 'LIKE');
+
 			$query->condition($orGroup);
 		}
-		if ($status != null && $status != ""){
-			if($status == "waiting"){
+		if ($status != null && $status != "") {
+			if ($status == "waiting") {
 				$s = 0;
-			} else if($status == "online"){
+			} else if ($status == "online") {
 				$s = 1;
-			} else if($status == "offline"){
+			} else if ($status == "offline") {
 				$s = 2;
 			}
-			$query->condition('reu_status',$s);
+			$query->condition('reu_status', $s);
 		}
-		if ($rows != null && $rows != ""){
-			if ($start != null && $start != ""){
-				$query->range($start, $start+$rows);
+		if ($rows != null && $rows != "") {
+			if ($start != null && $start != "") {
+				$query->range($start, $start + $rows);
 			} else {
 				$query->range(0, $rows);
-			}			
+			}
 		}
 		$query->orderBy('reu_date', 'DESC');
-		
-		$prep=$query->execute();
+
+		$prep = $query->execute();
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-		
+
 		$query->range();
-		$nhits= $query->countQuery()->execute()->fetchField();
-		
-		if(count($res) > 0){
+		$nhits = $query->countQuery()->execute()->fetchField();
+
+		if (count($res) > 0) {
 			$data = array();
 			$data["nhits"] = $nhits;
-			
-			foreach($res as $reu){
+
+			foreach ($res as $reu) {
 				$row = array();
 				$row['id'] = $reu->reu_id;
 				$row['dataset_id'] = $reu->reu_dataset_id;
@@ -7010,19 +7152,19 @@ class Api{
 				$row['url'] = $reu->reu_url;
 				$row['image'] = $reu->reu_image;
 				$row['date'] = $reu->reu_date;
-				if($reu->reu_status == 0){
+				if ($reu->reu_status == 0) {
 					$row['status'] = "waiting";
-				} else if($reu->reu_status == 1){
+				} else if ($reu->reu_status == 1) {
 					$row['status'] = "online";
-				} else if($reu->reu_status == 2){
+				} else if ($reu->reu_status == 2) {
 					$row['status'] = "offline";
 				}
 				$row['type'] = $reu->reu_type;
 				$data["reuses"][] = $row;
 			}
-			
+
 			//$data["reuses"] = $res;
-			
+
 			return $data;
 		} else {
 			$data = array();
@@ -7031,8 +7173,9 @@ class Api{
 			return $data;
 		}
 	}
-	
-	function getReuse($id){
+
+	function getReuse($id)
+	{
 		$table = "d4c_reuses";
 		$query = \Drupal::database()->select($table, 'reuse');
 
@@ -7052,16 +7195,16 @@ class Api{
 			'reu_status',
 			'reu_type'
 		]);
-		
-		$query->condition('reu_id',$id);		
-		$prep=$query->execute();
+
+		$query->condition('reu_id', $id);
+		$prep = $query->execute();
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-		if(count($res) > 0){
-			$reu = $res[count($res)-1];
+		if (count($res) > 0) {
+			$reu = $res[count($res) - 1];
 			$row = array();
 			$row['id'] = $reu->reu_id;
 			$row['dataset_id'] = $reu->reu_dataset_id;
@@ -7075,11 +7218,11 @@ class Api{
 			$row['url'] = $reu->reu_url;
 			$row['image'] = $reu->reu_image;
 			$row['date'] = $reu->reu_date;
-			if($reu->reu_status == 0){
+			if ($reu->reu_status == 0) {
 				$row['status'] = "waiting";
-			} else if($reu->reu_status == 1){
+			} else if ($reu->reu_status == 1) {
 				$row['status'] = "online";
-			} else if($reu->reu_status == 2){
+			} else if ($reu->reu_status == 2) {
 				$row['status'] = "offline";
 			}
 			$row['type'] = $reu->reu_type;
@@ -7088,20 +7231,30 @@ class Api{
 			return null;
 		}
 	}
-	
-	function updateReuse($reuse){
+
+	function updateReuse($reuse)
+	{
 		$reu_id = $reuse["id"];
-		$query = \Drupal::database()->update('d4c_reuses');
-		$query->fields([
-			'reu_status' => $reuse["status"]			
-		]);
-		$query->condition('reu_id', $reu_id);
-		$query->execute();
 		
+		// Statut delete
+		if ($reuse["status"] == 3) {
+			$query = \Drupal::database()->delete('d4c_reuses');
+			$query->condition('reu_id', $reu_id);
+			$query->execute();
+		}
+		else {
+			$query = \Drupal::database()->update('d4c_reuses');
+			$query->fields([
+				'reu_status' => $reuse["status"]
+			]);
+			$query->condition('reu_id', $reu_id);
+			$query->execute();
+		}
 	}
-	
-	public function addReuse($params) {
-		if(is_array($params)){
+
+	public function addReuse($params)
+	{
+		if (is_array($params)) {
 			$reuse = $params;
 		} else {
 			$reuse = $this->proper_parse_str($params);
@@ -7141,17 +7294,17 @@ class Api{
 
 		$query->execute();
 	}
-	
-	function callOrangeApiGetData($params){
+
+	function callOrangeApiGetData($params)
+	{
 		//ex : /webservice/?service=getData&key=nXG9o1MSJxHbs1qH&db=stationnement&table=disponibilite_parking&format=json
-		
+
 		$query_params = $this->proper_parse_str($params);
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json; charset=utf-8');
-		if($query_params["service"] != "getData"){
+		if ($query_params["service"] != "getData") {
 			echo "Ce service n'est pas supporté";
 			$response->setStatusCode(404);
-			
 		} else {
 			$cle = $query_params["key"];
 			$db = $query_params["db"];
@@ -7159,19 +7312,20 @@ class Api{
 			$format = $query_params["format"];
 			$limit = $query_params["limit"];
 			$offset = $query_params["offset"];
-			$start = "";$rows = "";
-			if($limit != null && $limit != ""){
-				if($offset != null && $offset != ""){
+			$start = "";
+			$rows = "";
+			if ($limit != null && $limit != "") {
+				if ($offset != null && $offset != "") {
 					$rows = "&rows=" . ($limit - $offset);
 				} else {
 					$rows = "&rows=" . $limit;
 				}
 			}
-			if($offset != null && $offset != ""){
+			if ($offset != null && $offset != "") {
 				$start = "&start=" . $offset;
 			}
-			
-			$res = $this->getDatastoreRecord_v2("dataset=".$dataset.$rows.$start);
+
+			$res = $this->getDatastoreRecord_v2("dataset=" . $dataset . $rows . $start);
 			//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 			//echo json_encode($res);
 			//$res = utf8_encode(json_encode($res));echo $res;
@@ -7183,54 +7337,59 @@ class Api{
 			$opendata = array();
 			$answer = array();
 			$status = array();
-			if($res["status"] == "success"){
+			if ($res["status"] == "success") {
 				$status["code"] = 0;
 				$status["message"] = "Success";
 				$answer["status"] = $status;
-				
+
 				$data = array();
 				//$data = array_column($res["records"], "fields");
-				$data = array_map(function($d){ unset($d["fields"]["_full_text"]);unset($d["fields"]["_id"]);return $d["fields"];}, $res["records"]);
+				$data = array_map(function ($d) {
+					unset($d["fields"]["_full_text"]);
+					unset($d["fields"]["_id"]);
+					return $d["fields"];
+				}, $res["records"]);
 				$answer["data"] = $data;
 			} else {
 				$status["code"] = 7;
 				$status["message"] = "Une erreur s'est produite lors de l’exécution de la requête.";
 				$answer["status"] = $status;
 			}
-			
+
 			$opendata["request"] = $url;
 			$opendata["answer"] = $answer;
 			$result["opendata"] = $opendata;
-			
+
 			echo json_encode($result);
 		}
 
-		
+
 		return $response;
 	}
-	
-	function updateResourceAndPushDatastore($resource){
-		
+
+	function updateResourceAndPushDatastore($resource)
+	{
+
 		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resource["id"] . "&limit=0";
-		
+
 		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		curl_close($curl);//error_log($result);
-		$fields = json_decode($result,true)["result"]["fields"];
-		
+		curl_close($curl); //error_log($result);
+		$fields = json_decode($result, true)["result"]["fields"];
+
 		$resource["uuid"] = uniqid();
 		$callUrl =  $this->urlCkan . "/api/action/resource_update";
 		$return = $this->updateRequest($callUrl, $resource, "POST");
 		//error_log($return);
 		$fields2 = array();
-		foreach($fields as $f){
-			if($f["id"] != "_id"){
+		foreach ($fields as $f) {
+			if ($f["id"] != "_id") {
 				$fields2[] = $f;
 			}
 		}
-		for($i=0; $i<1; $i++){
+		for ($i = 0; $i < 1; $i++) {
 			sleep(10);
 			$callUrl =  $this->urlCkan . "/api/action/datastore_create";
 			$data = array();
@@ -7241,61 +7400,64 @@ class Api{
 			$res2 = $this->updateRequest($callUrl, $data, "POST");
 			//error_log($res2);
 		}
-		
-		
+
+
 		return $return;
 	}
 
-	public function calculValueFromFiltre() {
+	public function calculValueFromFiltre()
+	{
 
 		$req = array();
 
-		$where ="";
-		if($_POST['colonne_filtre'] && $_POST['valeur_filtre'] && $_POST['colonne_filtre']!= null && $_POST['valeur_filtre']!= null ) {
+		$where = "";
+		if ($_POST['colonne_filtre'] && $_POST['valeur_filtre'] && $_POST['colonne_filtre'] != null && $_POST['valeur_filtre'] != null) {
 			$where = " where ";
-			$where .= $_POST['colonne_filtre']." IN ( '".$_POST['valeur_filtre']. "' )";
+			$where .= $_POST['colonne_filtre'] . " IN ( '" . $_POST['valeur_filtre'] . "' )";
 		}
-		
-		$sql = "Select ".$_POST['operation']."(".$_POST['colonne'].") as result from \"" . $_POST['idRes'] . "\"" .$where ;
-		
+
+		$sql = "Select " . $_POST['operation'] . "(" . $_POST['colonne'] . ") as result from \"" . $_POST['idRes'] . "\"" . $where;
+
 		$req['sql'] = $sql;
 
 		$url2 = http_build_query($req);
 
-		
+
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 
 		curl_close($curl);
-		$result = json_decode($result,true);
+		$result = json_decode($result, true);
 
-		
-		$response = new Response(json_encode(array('result' =>$result["result"]["records"][0]["result"])));
-		
+
+		$response = new Response(json_encode(array('result' => $result["result"]["records"][0]["result"])));
+
 
 
 		return $response;
 	}
 
-function _get_id($tableName, $fieldName) {
+	function _get_id($tableName, $fieldName)
+	{
 
-    $select = \Drupal::database()->select($tableName, 'o');
-    $fields = array(
-        $fieldName,
-    );
-    $select->fields('o', $fields);
-    $result = $select->orderBy($fieldName)->execute()->fetchAll();
-    return (int)$result[sizeof($result)-1]->story_id;
-}
-
-
-public function addWidget($params,$lastid_story) {
+		$select = \Drupal::database()->select($tableName, 'o');
+		$fields = array(
+			$fieldName,
+		);
+		$select->fields('o', $fields);
+		$result = $select->orderBy($fieldName)->execute()->fetchAll();
+		return (int)$result[sizeof($result) - 1]->story_id;
+	}
 
 
+	public function addWidget($params, $lastid_story)
+	{
 
-	/*var_dump($imgUrl);*/
+
+
+		/*var_dump($imgUrl);*/
 		$query_widget = \Drupal::database()->insert('d4c_user_story_widget');
 		$query_widget->fields([
 			'widget_label',
@@ -7308,16 +7470,16 @@ public function addWidget($params,$lastid_story) {
 			$params["widget"],
 			$lastid_story,
 			$params["urlimg"]
-			
+
 		]);
 
 
 
 		$query_widget->execute();
-		
-}
-public function addStory($params) {
-		if(is_array($params)){
+	}
+	public function addStory($params)
+	{
+		if (is_array($params)) {
 			$story = $params;
 		} else {
 			$story = $this->proper_parse_str($params);
@@ -7325,7 +7487,7 @@ public function addStory($params) {
 
 		$query = \Drupal::database()->insert('d4c_user_story');
 
-		
+
 		$scrolltime = (int)$story["scrolling_time"];
 
 		$query->fields([
@@ -7335,43 +7497,41 @@ public function addStory($params) {
 		$query->values([
 			$scrolltime,
 			$story["title_story"]
-			
+
 		]);
 
 		$query->execute();
-		$lastId = $this->_get_id('d4c_user_story' , 'story_id');
+		$lastId = $this->_get_id('d4c_user_story', 'story_id');
 
 		foreach ($story["widget"] as $key => $value) {
-			
+
 			$this->addWidget($value, $lastId);
 		}
-
-
 	}
 
-function updatewidget($widget){
-			$story_id = $story["story_id"];
+	function updatewidget($widget)
+	{
+		$story_id = $story["story_id"];
 		$query = \Drupal::database()->update('d4c_user_story');
 		$query->fields([
 			'widget_label' => $story["label_widget"],
 			'widget' => $story["widget"],
 			'scroll_time' => (int)$story["scrolling_time"],
-			'image' => $story["img_widget"]			
+			'image' => $story["img_widget"]
 		]);
 
 		$query->condition('story_id', $story_id);
 		$query->execute();
-
-
-}
-function updateStory($story){
+	}
+	function updateStory($story)
+	{
 
 
 		$story_id = $story["story_id"];
 		$query = \Drupal::database()->update('d4c_user_story');
 		$query->fields([
 			'scroll_time' => (int)$story["scrolling_time"],
-			'title_story' => $story["title_story"]			
+			'title_story' => $story["title_story"]
 		]);
 
 		$query->condition('story_id', $story_id);
@@ -7383,14 +7543,14 @@ function updateStory($story){
 		}
 
 		foreach ($story["widget"] as $key => $value) {
-			
+
 			$this->addWidget($value, $story_id);
 		}
-		
 	}
 
-public function getStories() {
-		$res=array();
+	public function getStories()
+	{
+		$res = array();
 		$table = "d4c_user_story";
 		$query2 = \Drupal::database()->select($table, 'story');
 
@@ -7402,17 +7562,18 @@ public function getStories() {
 		]);
 
 
-		$prep=$query2->execute();
-		$res= array();
+		$prep = $query2->execute();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
 
 		return $res;
-}
+	}
 
-public function getWidgets() {
-		$res=array();
+	public function getWidgets()
+	{
+		$res = array();
 		$table = "d4c_user_story_widget";
 		$query2 = \Drupal::database()->select($table, 'widget');
 
@@ -7426,8 +7587,8 @@ public function getWidgets() {
 		]);
 
 
-		$prep=$query2->execute();
-		$res= array();
+		$prep = $query2->execute();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
@@ -7435,7 +7596,8 @@ public function getWidgets() {
 		return $res;
 	}
 
-	function getWidgetByStory($story_id){
+	function getWidgetByStory($story_id)
+	{
 		$table = "d4c_user_story_widget";
 		$query = \Drupal::database()->select($table, 'widget');
 
@@ -7446,11 +7608,11 @@ public function getWidgets() {
 			'story_id',
 			'image'
 		]);
-		
-		$query->condition('story_id',$story_id);		
-		$prep=$query->execute();
+
+		$query->condition('story_id', $story_id);
+		$prep = $query->execute();
 		//$prep->setFetchMode(PDO::FETCH_OBJ);
-		$res= array();
+		$res = array();
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
@@ -7461,17 +7623,17 @@ public function getWidgets() {
 
 
 
-function deleteWidget($widget_id){
+	function deleteWidget($widget_id)
+	{
 
-			$query_widget = \Drupal::database()->delete('d4c_user_story_widget');
-			$query_widget->condition('widget_id', $widget_id);
-			$query_widget->execute();
-		
-		
-}
+		$query_widget = \Drupal::database()->delete('d4c_user_story_widget');
+		$query_widget->condition('widget_id', $widget_id);
+		$query_widget->execute();
+	}
 
 
-function deleteStory($story_id){
+	function deleteStory($story_id)
+	{
 
 		$query = \Drupal::database()->delete('d4c_user_story');
 
@@ -7483,7 +7645,7 @@ function deleteStory($story_id){
 		$query->condition('story_id', $story_id);
 		$query->execute();
 	}
-		
+
 	/**
 	 * This method update the current task for the dataset integration
 	 * 
@@ -7528,11 +7690,11 @@ function deleteStory($story_id){
 	 * ALTER TABLE ONLY dpl_d4c_task_status_test ALTER COLUMN last_updated SET DEFAULT (current_timestamp AT TIME ZONE 'UTC');
 	 * 
 	 */
-	function updateDatabaseStatus($isNew, $uniqId, $entityId, $entityType, $taskType, $action, $status, $message) {
+	function updateDatabaseStatus($isNew, $uniqId, $entityId, $entityType, $taskType, $action, $status, $message)
+	{
 		if ($entityId) {
 			Logger::logMessage("Updating task status for resource '" . $entityId . "' \r\n");
-		}
-		else {
+		} else {
 			Logger::logMessage("Updating task status with uniqId '" . $uniqId . "' \r\n");
 		}
 		$table = "d4c_task_status";
@@ -7559,8 +7721,7 @@ function deleteStory($story_id){
 				$message,
 				'now'
 			]);
-		}
-		else {
+		} else {
 			$query = \Drupal::database()->update($table);
 			$query->fields([
 				'entity_id' => $entityId,
@@ -7570,8 +7731,8 @@ function deleteStory($story_id){
 				'last_updated' => 'now'
 			]);
 			$query->condition($query->orConditionGroup()
-					->condition('id', $uniqId)
-					->condition('entity_id', $uniqId));
+				->condition('id', $uniqId)
+				->condition('entity_id', $uniqId));
 		}
 
 		$query->execute();
@@ -7581,28 +7742,30 @@ function deleteStory($story_id){
 	 * This method retrieve the status for the last dataset integration define by the dataset ID
 	 * 
 	 */
-	function getTaskStatus($id) {
+	function getTaskStatus($id)
+	{
 		$table = "dpl_d4c_task_status";
 
 		// $database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
-		$sqlQuery = "SELECT action, status, message FROM " . $table . " WHERE (id = '" . $id ."' OR entity_id = '" . $id . "') and task_type = 'MANAGE_DATASET'";
-		
+		$sqlQuery = "SELECT action, status, message FROM " . $table . " WHERE (id = '" . $id . "' OR entity_id = '" . $id . "') and task_type = 'MANAGE_DATASET'";
+
 		$query = \Drupal::database()->query($sqlQuery);
 		$task = $query->fetchAssoc();
-		
+
 		if ($task) {
 			$action = $task["action"];
 			$status = $task["status"];
 			$message = $task["message"];
 
-			$status = ["id" => $id,
+			$status = [
+				"id" => $id,
 				"action" => $action,
 				"status" => $status,
 				"message" => $message
 			];
-		}
-		else {
-			$status = ["id" => $id,
+		} else {
+			$status = [
+				"id" => $id,
 				"action" => 'UNKNOWN',
 				"status" => 'ERROR',
 				"message" => ''
@@ -7615,11 +7778,12 @@ function deleteStory($story_id){
 		$response = new Response();
 		$response->setContent($result);
 		$response->headers->set('Content-Type', 'application/json');
-        
-		return $response;  
+
+		return $response;
 	}
 
-	public function callPackageReutilisation($params) {
+	public function callPackageReutilisation($params)
+	{
 		$reuses = $this->getReuses(null, null, null, "online", 1000, 0);
 
 		$response = new Response();
@@ -7628,27 +7792,28 @@ function deleteStory($story_id){
 
 		return $response;
 	}
-	
-	function deleteDataset($datasetId) {
+
+	function deleteDataset($datasetId)
+	{
 		$ressourceManager = new ResourceManager();
 		$result = $ressourceManager->deleteDataset($datasetId);
 
-		if($result) {
+		if ($result) {
 			return new Response("true");
-		}
-		else {
+		} else {
 			throw new \Exception('Impossible de supprimer le dataset (' . $datasetId . ' is not supported.');
 		}
 	}
 
-	function getThesaurus($params) {
+	function getThesaurus($params)
+	{
 		$query_params = $this->proper_parse_str($params);
-		$spam_words = file(__DIR__ ."/../../thesaurus.txt", FILE_IGNORE_NEW_LINES);
+		$spam_words = file(__DIR__ . "/../../thesaurus.txt", FILE_IGNORE_NEW_LINES);
 
 		Logger::logMessage('Thesaurus with params ' . $query_params["query"]);
 
 		$words = array();
-		foreach($spam_words as $word) {
+		foreach ($spam_words as $word) {
 
 			if (strpos($word, $query_params["query"]) === 0) {
 				$wordValue = array();
@@ -7666,8 +7831,9 @@ function deleteStory($story_id){
 
 		return $response;
 	}
-	
-	public function callSearchDatasets() {
+
+	public function callSearchDatasets()
+	{
 		$query = $_POST['q'];
 
 		try {
@@ -7679,7 +7845,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -7691,7 +7857,8 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	private function searchDataset($params) {
+	private function searchDataset($params)
+	{
 		$callUrl =  $this->urlCkan . "api/action/package_search?" . $params;
 
 		$curl = curl_init($callUrl);
@@ -7703,7 +7870,8 @@ function deleteStory($story_id){
 		return $dataset[result];
 	}
 
-	public function callFindDataset() {
+	public function callFindDataset()
+	{
 		$datasetId = $_POST['dataset_id'];
 
 		try {
@@ -7715,7 +7883,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -7727,7 +7895,8 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	public function findDataset($datasetId) {
+	public function findDataset($datasetId)
+	{
 		$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 
 		$curl = curl_init($callUrl);
@@ -7738,8 +7907,9 @@ function deleteStory($story_id){
 		$dataset = json_decode($dataset, true);
 		return $dataset[result];
 	}
-	
-	public function callRemoveDataset() {
+
+	public function callRemoveDataset()
+	{
 		$datasetId = $_POST['dataset_id'];
 
 		try {
@@ -7751,7 +7921,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -7762,8 +7932,9 @@ function deleteStory($story_id){
 
 		return $response;
 	}
-	
-	public function callRemoveResources() {
+
+	public function callRemoveResources()
+	{
 		$datasetId = $_POST['dataset_id'];
 
 		try {
@@ -7777,7 +7948,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -7788,8 +7959,9 @@ function deleteStory($story_id){
 
 		return $response;
 	}
-    
-	public function callManageDataset() {
+
+	public function callManageDataset()
+	{
 		Logger::logMessage("Create or update dataset by API");
 
 		// Taking too much time, we now load only admin users
@@ -7810,7 +7982,7 @@ function deleteStory($story_id){
 
 		//Options for update
 		$datasetId = $_POST['dataset_id'];
-	
+
 		// Define Dataset name
 		if (!isset($datasetName)) {
 			$datasetName = $resourceManager->defineDatasetName($title);
@@ -7823,7 +7995,7 @@ function deleteStory($story_id){
 		if (isset($extrasAsJson)) {
 			$extrasAsJson = json_decode($extrasAsJson, true);
 			$extras = array();
-			foreach ($extrasAsJson as $key=>$value) {
+			foreach ($extrasAsJson as $key => $value) {
 				$extraValue = array();
 				$extraValue['key'] = $key;
 				$extraValue['value'] = $value;
@@ -7860,8 +8032,7 @@ function deleteStory($story_id){
 		try {
 			if (!$datasetId) {
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
-			}
-			else {
+			} else {
 				$datasetToUpdate = $this->findDataset($datasetId);
 
 				$datasetName = $datasetToUpdate[name];
@@ -7882,7 +8053,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -7894,13 +8065,14 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	public function callUploadResource() {
+	public function callUploadResource()
+	{
 		Logger::logMessage("Upload resource by API");
 
 		$result = array();
-			
+
 		$resourceManager = new ResourceManager;
-		
+
 		$datasetId = $_POST['selected_data_id'];
 
 		$resourceName = $_POST['resource_name'];
@@ -7915,6 +8087,17 @@ function deleteStory($story_id){
 		//Options for update
 		$resourceId = $_POST['selected_resource_id'];
 
+		Logger::logMessage("Upload informations");
+		Logger::logMessage("Dataset ID: " . $datasetId);
+		Logger::logMessage("Resource name: " . $resourceName);
+		Logger::logMessage("Resource URL: " . $resourceUrl);
+		Logger::logMessage("Description: " . $description);
+		Logger::logMessage("Format: " . $format);
+		Logger::logMessage("Encoding: " . $encoding);
+		Logger::logMessage("Unzip ZIP: " . $unzipZip);
+		Logger::logMessage("Manage file: " . $manageFile);
+		Logger::logMessage("Resource ID: " . $resourceId);
+
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
 			$results = array();
@@ -7922,36 +8105,46 @@ function deleteStory($story_id){
 				if (!$resourceId) {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						$resourceUrl = $manageFileResult["url"];
-						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
-				
-						//We update the visualisation's icons
-						$this->calculateVisualisations($datasetId);
-					}
-					else {
+						
+						if ($manageFileResult["status"] == "error") {
+							throw new \Exception($manageFileResult["message"]);
+						}
+						else if ($manageFileResult["status"] == "success") {
+
+							$resourceUrl = $manageFileResult["url"];
+							//Managing resources
+							$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+
+							//We update the visualisation's icons
+							$this->calculateVisualisations($datasetId);
+						}
+					} else {
 						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
 					}
-	
+
 					$result["result"] = $results;
 					$result["status"] = "success";
-				}
-				else {
+				} else {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						$resourceUrl = $manageFileResult["url"];
-						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
-				
-						//We update the visualisation's icons
-						$this->calculateVisualisations($datasetId);
-					}
-					else {
+						
+						if ($manageFileResult["status"] == "error") {
+							throw new \Exception($manageFileResult["message"]);
+						}
+						else if ($manageFileResult["status"] == "success") {
+							$resourceUrl = $manageFileResult["url"];
+							//Managing resources
+							$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+
+							//We update the visualisation's icons
+							$this->calculateVisualisations($datasetId);
+						}
+					} else {
 						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
 						$results[] = $resultUpload;
 					}
-				
+
 					$result["result"] = $results;
 					$result["status"] = "success";
 				}
@@ -7959,26 +8152,23 @@ function deleteStory($story_id){
 				Logger::logMessage($e->getMessage());
 				$data_array = array();
 				$data_array["message"] = $e->getMessage();
-				
+
 				$result["result"] = $data_array;
 				$result["status"] = "error";
 			}
-		}
-		else {
+		} else {
 			$manageFileResult = $this->manageFile();
 			if ($manageFileResult["status"] == "error") {
 				$result["status"] = "error";
 				$result["result"] = $manageFileResult;
-			}
-			else if ($manageFileResult["status"] == "success") {
+			} else if ($manageFileResult["status"] == "success") {
 				$resourceUrl = $manageFileResult["url"];
-				
+
 				try {
 					if (!$resourceId) {
 						//Managing resources
 						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip);
-					}
-					else {	
+					} else {
 						//Managing resources
 						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
 					}
@@ -7992,7 +8182,7 @@ function deleteStory($story_id){
 					Logger::logMessage($e->getMessage());
 					$data_array = array();
 					$data_array["message"] = $e->getMessage();
-					
+
 					$result["result"] = $data_array;
 					$result["status"] = "error";
 				}
@@ -8006,7 +8196,8 @@ function deleteStory($story_id){
 		return $response;
 	}
 
-	function manageFileByUrl($resourceManager, $resourceName, $resourceFormat, $resourceUrl) {
+	function manageFileByUrl($resourceManager, $resourceName, $resourceFormat, $resourceUrl)
+	{
 		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
 		$data_array = array();
 
@@ -8019,12 +8210,30 @@ function deleteStory($story_id){
 			$fileName = $resourceManager->nettoyage2($resourceName) . "." . $resourceFormat;
 		}
 
-		Logger::logMessage("TRM - FILENAME " . $fileName);
-
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
-   
-		if (file_put_contents($uploadfile, file_get_contents($resourceUrl))) {
+
+		$encodingUrl = str_replace (' ', '%20', $resourceUrl);
+
+		// Checking file size. If over 1GB, we return an error
+		$file_size = $this->getFileSize( $encodingUrl );
+		if ($file_size > 1000000000) {
+
+			Logger::logMessage("Exceeded filesize limit.");
+
+			$data_array["message"] = "The file is too big. Please upload a file smaller than 1GB.";
+			$data_array["status"] = "error";
+			return $data_array;
+		}
+
+
+		if (($data = @file_put_contents($uploadfile, file_get_contents($encodingUrl))) === false) {
+			$error = error_get_last();
+
+			$data_array["status"] = "error";
+			$data_array["message"] = $error['message'];
+			Logger::logMessage("File downloading failed: " . $error['message']);
+		} else {
 			Logger::logMessage("File downloaded successfully");
 			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $fileName;
 
@@ -8032,15 +8241,11 @@ function deleteStory($story_id){
 			$data_array["url"] = $url;
 			return $data_array;
 		}
-		else {
-			$data_array["status"] = "error";
-			$data_array["message"] = 'File downloading failed.';
-			Logger::logMessage("File downloading failed.");
-		}
 		return $data_array;
 	}
 
-	function manageFile() {
+	function manageFile()
+	{
 		Logger::logMessage("Managing file received from POST");
 		Logger::logMessage("File infos : " . json_encode($_FILES['upload_file']));
 
@@ -8054,30 +8259,30 @@ function deleteStory($story_id){
 			Logger::logMessage("Invalid parameters.");
 			return $data_array;
 		}
-		
+
 		switch ($_FILES['upload_file']['error']) {
-		case UPLOAD_ERR_OK:
-			break;
-		case UPLOAD_ERR_NO_FILE:
-			$data_array["status"] = "error";
-			$data_array["message"] = 'No file sent.';
-			Logger::logMessage("No file sent.");
-			return $data_array;
-		case UPLOAD_ERR_INI_SIZE:
-		case UPLOAD_ERR_FORM_SIZE:
-			$data_array["status"] = "error";
-			$data_array["message"] = 'Exceeded filesize limit.';
-			Logger::logMessage("Exceeded filesize limit.");
-			return $data_array;
-		default:
-			$data_array["status"] = "error";
-			$data_array["message"] = 'Unknown errors.';
-			Logger::logMessage("Unknown errors.");
-			return $data_array;
+			case UPLOAD_ERR_OK:
+				break;
+			case UPLOAD_ERR_NO_FILE:
+				$data_array["status"] = "error";
+				$data_array["message"] = 'No file sent.';
+				Logger::logMessage("No file sent.");
+				return $data_array;
+			case UPLOAD_ERR_INI_SIZE:
+			case UPLOAD_ERR_FORM_SIZE:
+				$data_array["status"] = "error";
+				$data_array["message"] = 'Exceeded filesize limit.';
+				Logger::logMessage("Exceeded filesize limit.");
+				return $data_array;
+			default:
+				$data_array["status"] = "error";
+				$data_array["message"] = 'Unknown errors.';
+				Logger::logMessage("Unknown errors.");
+				return $data_array;
 		}
 
 		// You should also check filesize here.
-		if ($_FILES['upload_file']['size'] > 100000000) {
+		if ($_FILES['upload_file']['size'] > 1000000000) {
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Exceeded filesize limit.';
 			Logger::logMessage("Exceeded filesize limit.");
@@ -8093,23 +8298,23 @@ function deleteStory($story_id){
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
 				'text' => 'text/plain',
+				'xml' => 'text/xml',
 			),
 			true
-		)) { 
+		)) {
 			Logger::logMessage("Invalid file format.");
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Invalid file format.';
 			return $data_array;
 		}
-			
+
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . basename($_FILES['upload_file']['name']);
 
 		if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadfile)) {
 			Logger::logMessage("The file is valid and has been uploaded with success");
 			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
-		}
-		else {
+		} else {
 			Logger::logMessage("Potential attack by file upload.");
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Potential attack by file upload.';
@@ -8121,7 +8326,54 @@ function deleteStory($story_id){
 		return $data_array;
 	}
 	
-	public function callRemoveResource() {
+	/**
+	 * Returns the size of a file without downloading it, or -1 if the file
+	 * size could not be determined.
+	 *
+	 * @param $url - The location of the remote file to download. Cannot
+	 * be null or empty.
+	 *
+	 * @return The size of the file referenced by $url, or -1 if the size
+	 * could not be determined.
+	 */
+	function getFileSize( $url ) {
+		// Assume failure.
+		$result = -1;
+	
+		$curl = curl_init( $url );
+	
+		// Issue a HEAD request and follow any redirects.
+		curl_setopt( $curl, CURLOPT_NOBODY, true );
+		curl_setopt( $curl, CURLOPT_HEADER, true );
+		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
+	
+		$data = curl_exec( $curl );
+		curl_close( $curl );
+	
+		if( $data ) {
+			$content_length = "unknown";
+			$status = "unknown";
+		
+			if( preg_match( "/^HTTP\/1\.[01] (\d\d\d)/", $data, $matches ) ) {
+				$status = (int)$matches[1];
+			}
+		
+			if( preg_match( "/Content-Length: (\d+)/", $data, $matches ) ) {
+				$content_length = (int)$matches[1];
+			}
+		
+			// http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+			if( $status == 200 || ($status > 300 && $status <= 308) ) {
+				$result = $content_length;
+			}
+		}
+	
+		return $result;
+	}
+
+	public function callRemoveResource()
+	{
 		$resourceId = $_POST['resource_id'];
 
 		try {
@@ -8135,7 +8387,7 @@ function deleteStory($story_id){
 			Logger::logMessage($e->getMessage());
 			$data_array = array();
 			$data_array["message"] = $e->getMessage();
-			
+
 			$result["result"] = $data_array;
 			$result["status"] = "error";
 		}
@@ -8151,7 +8403,8 @@ function deleteStory($story_id){
 	 * This method add a version for a specified resource
 	 * 
 	 */
-	function addResourceVersion($datasetId, $resourceId, $filePath) {
+	function addResourceVersion($datasetId, $resourceId, $filePath)
+	{
 		Logger::logMessage("Adding version for resource '" . $resourceId . "' from dataset '" . $datasetId . "' \r\n");
 		$table = "d4c_resource_version";
 
@@ -8176,13 +8429,14 @@ function deleteStory($story_id){
 	 * This method retrieve the versions for the resource
 	 * 
 	 */
-	function getResourceVersions($resourceId) {
+	function getResourceVersions($resourceId)
+	{
 		$table = "dpl_d4c_resource_version";
-		$sqlQuery = "SELECT filePath, creation_date FROM " . $table . " WHERE resource_id = '" . $resourceId ."' ORDER BY creation_date";
-		
+		$sqlQuery = "SELECT filePath, creation_date FROM " . $table . " WHERE resource_id = '" . $resourceId . "' ORDER BY creation_date";
+
 		$query = \Drupal::database()->query($sqlQuery);
 
-		$res= array();
+		$res = array();
 		while ($enregistrement = $query->fetch()) {
 			array_push($res, $enregistrement);
 		}
@@ -8194,7 +8448,7 @@ function deleteStory($story_id){
 		// $response = new Response();
 		// $response->setContent($result);
 		// $response->headers->set('Content-Type', 'application/json');
-        
+
 		// return $response;  
 	}
 
@@ -8202,7 +8456,8 @@ function deleteStory($story_id){
 	 * This method allow the user to subscribe to a dataset
 	 * 
 	 */
-	function subscribeDataset($datasetId) {
+	function subscribeDataset($datasetId)
+	{
 		return $this->subscribe($datasetId, true);
 	}
 
@@ -8210,12 +8465,14 @@ function deleteStory($story_id){
 	 * This method allow the user to unsubscribe to a dataset
 	 * 
 	 */
-	function unsubscribeDataset($datasetId) {
+	function unsubscribeDataset($datasetId)
+	{
 		return $this->subscribe($datasetId, false);
 	}
 
-	function subscribe($datasetId, $subscribe) {
-		if (\Drupal::currentUser()->isAuthenticated()){
+	function subscribe($datasetId, $subscribe)
+	{
+		if (\Drupal::currentUser()->isAuthenticated()) {
 			$userId = \Drupal::currentUser()->id();
 
 			$isSubscribed = $this->isSubscribed($datasetId, $userId);
@@ -8226,11 +8483,10 @@ function deleteStory($story_id){
 
 				$query = \Drupal::database()->delete($table);
 				$query->condition($query->andConditionGroup()
-						->condition('user_id', $userId)
-						->condition('dataset_id', $datasetId));
+					->condition('user_id', $userId)
+					->condition('dataset_id', $datasetId));
 				$query->execute();
-			}
-			else if (!$isSubscribed && $subscribe) {
+			} else if (!$isSubscribed && $subscribe) {
 				Logger::logMessage("Subscribing for dataset '" . $datasetId . "'");
 
 				$query = \Drupal::database()->insert($table);
@@ -8248,31 +8504,31 @@ function deleteStory($story_id){
 			}
 
 			$status = ["result" => "success"];
-	
+
 			$result = json_encode($status);
-	
+
 			$response = new Response();
 			$response->setContent($result);
 			$response->headers->set('Content-Type', 'application/json');
-			
-			return $response;  
-		}
-		else {
+
+			return $response;
+		} else {
 			$response = new Response();
 			$response->setStatusCode(404);
 			$response->headers->set('Content-Type', 'application/json');
-			
+
 			return $response;
 		}
 	}
-	
-	function isSubscribed($datasetId, $userId) {
+
+	function isSubscribed($datasetId, $userId)
+	{
 		$table = "d4c_dataset_subscription";
 
 		$query = \Drupal::database()->select($table, 's');
 		$query->condition($query->andConditionGroup()
-				->condition('s.user_id', $userId)
-				->condition('s.dataset_id', $datasetId));
+			->condition('s.user_id', $userId)
+			->condition('s.dataset_id', $datasetId));
 
 		$query->addExpression('COUNT(*)');
 		$count = $query->execute()->fetchField();
@@ -8284,7 +8540,8 @@ function deleteStory($story_id){
 
 	/* SECURITY PART WITH ROLES AND ORGANIZATION */
 
-	function getUserOrganisations() {
+	function getUserOrganisations()
+	{
 		$allowedOrganizations = array();
 
 		$current_user = \Drupal::currentUser();
@@ -8310,7 +8567,8 @@ function deleteStory($story_id){
 		return $allowedOrganizations;
 	}
 
-	function getUserOrganizationsParameter($allowedOrganizations) {
+	function getUserOrganizationsParameter($allowedOrganizations)
+	{
 		$hasParameter = false;
 
 		//We add all the organization allowed for the user
@@ -8333,7 +8591,8 @@ function deleteStory($story_id){
 		return $hasParameter ? $organizationParameter : null;
 	}
 
-	function isOrganizationAllowed($organization, $allowedOrganizations) {
+	function isOrganizationAllowed($organization, $allowedOrganizations)
+	{
 		foreach ($allowedOrganizations as $org) {
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
@@ -8342,7 +8601,8 @@ function deleteStory($story_id){
 		return false;
 	}
 
-	function isDatasetAllowed($organization, $allowedOrganizations) {
+	function isDatasetAllowed($organization, $allowedOrganizations)
+	{
 		foreach ($allowedOrganizations as $org) {
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
@@ -8352,7 +8612,8 @@ function deleteStory($story_id){
 		return false;
 	}
 
-	function getAdministrators() {
+	function getAdministrators()
+	{
 		$userStorage = \Drupal::entityTypeManager()->getStorage('user');
 
 		$query = $userStorage->getQuery();

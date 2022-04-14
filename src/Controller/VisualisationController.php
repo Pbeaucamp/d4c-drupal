@@ -5,6 +5,8 @@ use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
+use \Parsedown;
 
 /**
  * Provides route responses for the Example module.
@@ -46,7 +48,8 @@ class VisualisationController extends ControllerBase {
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
 		$resourceId = $request->query->get('resourceId');
-		return $this->myPage2($id, $resourceId, $tab);
+		$location = $request->query->get('location');
+		return $this->myPage2($id, $tab, $resourceId, $location);
 	}
 
 	/**
@@ -55,21 +58,76 @@ class VisualisationController extends ControllerBase {
 	 * @return array
 	 *   A simple renderable array.
 	 */
-	public function myPage2($id, $resourceId, $tab) {
+	public function myPage2($id, $tab, $resourceId, $location = null) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
 		$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
 		
 		$api = new API();
+		
+		$pageId = $id;
 
 		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
-		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
-		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
+		if (!isset($dataset["metas"]["id"])) {
+			//Dataset is not found we set a 404 page
+			$imports = $this->buildImports($id, null, null, null, null, null, null, null);
+			$ctx = "";
+
+			$errorPage = '<body>
+				<div class="d4c-content">			
+					<header class="ng-scope"></header>
+					<main class="main--dataset">
+						<div class="container-fluid d4c-app-explore-dataset ng-cloak"
+								ng-app="d4c.frontend"
+								ng-controller="ExploreDatasetController"
+								d4c-dataset-context
+								ng-init="toggleState={expandedFilters: false};"
+								context="ctx"
+								ctx-urlsync="true"
+								ctx-dataset-schema="' . $ctx . '"
+								ctx-selected-resource-id="' . $resourceId . '">
+							<div class="d4c-dataset-visualization__header">
+								<h1 class="d4c-dataset-visualization__dataset-title">
+									<div class="box_3">
+										<button class="d4c-button" ng-click="goBackToSearch()">
+											<i class="fa fa-angle-left" aria-hidden="true"></i>
+											RETOUR AUX RESULTATS DE RECHERCHE
+										</button>
+									</div>
+								</h1>
+								<div class="d4c-error-404">
+									<span>La resource avec l\'ID \'' . $id . '\' n\'existe pas ou n\'est pas disponible.</span>
+								</div>
+							</div>
+						</div>
+					</main>
+				</div>
+				' . $imports . '
+			</body>';
+
+			$element = array(
+				'example one' => [
+					'#type' => 'inline_template',
+					'#template' => $errorPage,
+							
+				],
+			);
+			$element['#attached']['library'][] = 'ckan_admin/visu.angular';
+			return $element;
+		}
+
+		// We redefine the $id variable to be the dataset id because we can use the name id of the dataset in the url
+		$id = $dataset["metas"]["id"];
+
+		// $dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
+		// $dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
 
 		$name = $dataset["metas"]["title"];
 		//Removing HTML tags
-		$description = $dataset["metas"]["description"];
+		$Parsedown = new Parsedown();
+		$description = $Parsedown->text($dataset["metas"]["notes"]);
+
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$licence = $dataset["metas"]["license"];
@@ -149,7 +207,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location);
 		 
 		$element = array(
 			'example one' => [
@@ -162,7 +220,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras) {
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -203,14 +261,14 @@ class VisualisationController extends ControllerBase {
 		// $imgTheme = $themes[0];
 		// $themes = $themes[1];
 		
-		$resourcesList = $this->buildResourcesList($id, $dataset, $resourceId);
+		$resourcesList = $this->buildResourcesList($pageId, $dataset, $resourceId);
 
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $isRgpd, $rgpdNonConnected);
+		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -310,14 +368,14 @@ class VisualisationController extends ControllerBase {
 			</div>';
 	}
 
-	function buildResourcesList($datasetId, $dataset, $selectedResourceId) {
+	function buildResourcesList($pageId, $dataset, $selectedResourceId) {
 		$resources = $dataset["metas"]["resources"];
 		$numberOfResources = 0;
 
 		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
 				<p>Jeu de données affiché : </p>
-				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $datasetId . '\', selectedItem)">
+				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $pageId . '\', selectedItem)">
 					<option value="" ng-if="false">Choix du jeu de données</option>
 		';
 
@@ -349,13 +407,13 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
+	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
 		if (!$rgpdNonConnected) {
 			$tabTable = $this->buildTabTable();
-			$tabMap = $this->buildTabMap($dataset);
+			$tabMap = $this->buildTabMap($dataset, $metadataExtras, $location);
 			$tabAnalyze = $this->buildTabAnalyze();
 			$tabImage = $this->buildTabImage();
 			$tabCalendar = $this->buildTabCalendar();
@@ -928,6 +986,10 @@ class VisualisationController extends ControllerBase {
 	
 	function buildMethodeProductionEtQualite($metadataExtras) {
 		$lineage = $this->exportExtras($metadataExtras, 'lineage');
+		if (isset($lineage)) {
+			$Parsedown = new Parsedown();
+			$lineage = $Parsedown->text($lineage);
+		}
 		return $lineage;
 	}
 
@@ -996,8 +1058,6 @@ class VisualisationController extends ControllerBase {
 		for ($i = 1; $i <= 5; $i++) {
 			$organisation = $this->exportExtras($metadataExtras, 'responsible-organisation-' . $i);
 			if ($organisation != null) {
-				Logger::logMessage("TRM - Organisation " . $organisation);
-
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
 
@@ -1008,14 +1068,18 @@ class VisualisationController extends ControllerBase {
 				$contactEmail = $organisation['contact-info']['email'];
 				$phone = $organisation['contact-info']['phone'];
 
+				$address = !$this->isNullOrEmptyString($address) ? '<p class="mb-0">' . $address . '</p>' : "";
+				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
+				$contactEmail = !$this->isNullOrEmptyString($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
+				$phone = !$this->isNullOrEmptyString($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
 				$contacts .= '
 					<div class="d-flex align-items-center mt-3">
 						<div class="flex-grow-1 ms-3"><strong id="displayContact1">' . $organisationName . '</strong>
-							<p class="mb-0">' . $address . '</p>
-							<p class="mb-0">' . $postalCode . ' ' . $city . '</p>
-							<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>
-							<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>
+							' . $address . '
+							' . $postalCodeCity . '
+							' . $contactEmail . '
+							' . $phone . '
 						</div>
 					</div>
 					<hr>
@@ -1036,6 +1100,8 @@ class VisualisationController extends ControllerBase {
 		if (sizeof($resources) > 0 ) {
 			// $lastResourceId = $this->getLastDataResource($resources);
 
+			$resourcesUrl = array();
+
 			foreach($resources as $key=>$value){
 				$resourceId = $value["id"];
 				$name = $value["name"];
@@ -1045,6 +1111,11 @@ class VisualisationController extends ControllerBase {
 				$mimeType = $value["mimetype"];
 				$datastoreActive = $value["datastore_active"];
 
+				// Checking if resource already exist
+				if (in_array($url, $resourcesUrl)) {
+					continue;
+				}
+
 				// $classImg = strpos($protocol, 'download') !== false || strpos($protocol, 'DOWNLOAD') !== false ? 'fa-download' : 'fa-link';
 				$classImg = 'fa-link';
 				if ($excludeDataResources && (strcasecmp($format , 'zip') == 0 || strcasecmp($format , 'xls') == 0 || strcasecmp($format , 'xlsx') == 0 
@@ -1053,7 +1124,7 @@ class VisualisationController extends ControllerBase {
 				}
 
 				//Deactivate WMS and WFS
-				if (strcasecmp($format , 'wms') == 0 || strcasecmp($format , 'wfs') == 0) {
+				if (strcasecmp($format , 'wms') == 0 || strcasecmp($format , 'wfs') == 0 || strpos($url, "wms") !== false || strpos($url, "wfs") !== false || strpos($name, "wms") !== false || strpos($name, "wfs") !== false) {
 					continue;
 				}
 
@@ -1074,7 +1145,7 @@ class VisualisationController extends ControllerBase {
 
 					$button .= '
 						<button class="btn btn-info" ng-click="openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')">
-							Ouvrir dans Mapfishapp
+							Consulter
 						</button>
 					';
 				}
@@ -1083,6 +1154,8 @@ class VisualisationController extends ControllerBase {
 					$buttonText = 'Consulter';
 					$button .= '<a class="btn btn-info" role="button" target="_blank" href="' . $url . '" >' . $buttonText . '</a>';
 				}
+
+				$resourcesUrl[] = $url;
 
 				$additionnalResources .= '
 					<div class="row">
@@ -1170,9 +1243,30 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabMap($dataset) {
+	function buildTabMap($dataset, $metadataExtras, $location) {
 		$resources = $dataset["metas"]["resources"];
-		
+
+		$customBounds = '';
+
+		if ($location != null) {
+			$location = $location;
+		}
+		else {
+			$location = $this->config->client->default_bounding_box;
+
+			$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
+			$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
+			$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
+			$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
+			
+			$bounds = '';
+			if (!$this->isNullOrEmptyString($bboxEastLong) && !$this->isNullOrEmptyString($bboxNorthLat) && !$this->isNullOrEmptyString($bboxSouthLat) && !$this->isNullOrEmptyString($bboxWestLong)) {
+				$bounds = $bboxEastLong . ',' . $bboxNorthLat . ',' . $bboxSouthLat . ',' . $bboxWestLong;
+			}
+
+			$customBounds = 'custom-bounds="' . $bounds . '"';
+		}
+
 		if (sizeof($resources) > 0 ) {
 			foreach($resources as $key=>$value) {
 				$name = $value["name"];
@@ -1180,7 +1274,7 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				// $url = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$btnMapFishapp = '<a class="d4c-map-flux-wms" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Editer en mode avancé</span></span></a>';
@@ -1190,7 +1284,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
-				<d4c-map context="ctx" sync-to-url="true" auto-resize="true"></d4c-map>
+				<d4c-map context="ctx" location="' . $location . '" ' . $customBounds . ' sync-to-url="true" auto-resize="true"></d4c-map>
 
 				' . $btnMapFishapp . '
 			
@@ -1302,16 +1396,87 @@ class VisualisationController extends ControllerBase {
 		// Default projection
 		$srs = "EPSG%3A4326";
 
+		$serviceUrlWithoutParams = explode("?", $serviceUrl)[0];
+		$queryString = explode("?", $serviceUrl)[1];
+		
 		if ($type == "WMS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.1.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
+			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetMap');
+			$queryString = Tools::updateQueryStringParameter($queryString, "layers", $layerName);
+			$queryString = Tools::updateQueryStringParameter($queryString, "bbox", $bbox);
+			$queryString = Tools::updateQueryStringParameter($queryString, "width", $width);
+			$queryString = Tools::updateQueryStringParameter($queryString, "height", $height);
+			$queryString = Tools::updateQueryStringParameter($queryString, "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, "format", '');
+			
+			// $url = $serviceUrl . '?service=' . $type . '&version=1.3.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
 		}
 		else if ($type == "WFS") {
-			$url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
+			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.0.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetFeature');
+			$queryString = Tools::updateQueryStringParameter($queryString, "typeName", $layerName);
+			$queryString = Tools::updateQueryStringParameter($queryString, "outputFormat", '');
+
+			// $url = $serviceUrl . '?service=' . $type . '&version=1.0.0&request=GetFeature&typeName=' . $layerName . '&outputFormat=';
 		}
+
+		$url = $serviceUrlWithoutParams . '?' . $queryString;
+		Logger::logMessage("TRM - Service URL: " . $url);
 
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
 		return $url;
+	}
+
+	function getAvailableFormats($serviceUrl, $type) {
+		$formats = array();
+
+		$serviceUrlWithoutParams = explode("?", $serviceUrl)[0];
+		$queryString = explode("?", $serviceUrl)[1];
+
+		$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
+		$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetCapabilities');
+		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+		$url = $serviceUrlWithoutParams . '?' . $queryString;
+
+		$xml = simplexml_load_file($url);
+
+		$formats = array();
+		if ($type == "WMS") {
+			foreach($xml->Capability->Request->GetMap->Format as $format) {
+				$format = urlencode($format);
+				$displayValue = $this->translateValue($this->locale["codelists"]["MD_FormatGeoExportWMS"], $format);
+
+				$formatValue = array(
+					"format" => $format,
+					"displayValue" => $displayValue
+				);
+				$formats[] = $formatValue;
+			}
+		}
+		else if ($type == "WFS") {
+			$extractedFormats = $xml->xpath('//ows:OperationsMetadata/ows:Operation[@name="GetFeature"]/ows:Parameter[@name="outputFormat"]/ows:Value');
+			foreach ($extractedFormats as $format) {
+				$format = urlencode($format);
+				$displayValue = $this->translateValue($this->locale["codelists"]["MD_FormatGeoExportWFS"], $format);
+				
+				$formatValue = array(
+					"format" => $format,
+					"displayValue" => $displayValue
+				);
+				$formats[] = $formatValue;
+			}
+		}
+
+		usort($formats, function($a, $b) {
+			return $a['displayValue'] <=> $b['displayValue'];
+		});
+
+		Logger::logMessage("TRM - Available formats: " . json_encode($formats));
+
+		return $formats;
 	}
 
 	function buildTabExport($dataset, $metadataExtras) {
@@ -1328,18 +1493,19 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				$displayName = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
+					$availableFormatsWMS = $this->getAvailableFormats($url, "WMS");
 
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
-								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
-								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Ouvrir dans Mapfishapp</span></span></a>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
+								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
 						</li>
@@ -1347,13 +1513,14 @@ class VisualisationController extends ControllerBase {
 				}
 				else if ($format == "WFS" || strpos($url, "wfs") !== false) {
 					$wfsURL = $this->buildServiceUrl($metadataExtras, $url, "WFS", $name, $maxFeatures);
+					$availableFormatsWFS = $this->getAvailableFormats($url, "WFS");
 
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WFS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
-								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $url . '</span>
+								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
 								<a class="d4c-dataset-export-link__link" target="_blank" href="' . $url . '" ><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
@@ -1365,57 +1532,25 @@ class VisualisationController extends ControllerBase {
 
 		$additionnalResources .= '</ul>';
 
-		// https://www.geograndest.fr/geoserver/cd67/wms?service=WMS&version=1.1.0&request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
-		// https://www.geograndest.fr/geoserver/cd67/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
-
 		if (isset($wmsURL) || isset($wfsURL)) {
-			if (isset($wmsURL)) {
-				$optionsWMS = '
-					<optgroup label="WMS">
-						<option value="application%2Fatom%20xml">AtomPub</option>
-						<option value="application%2Fbil">BIL</option>
-						<option value="image%2Fdds">DDS</option>
-						<option value="image%2Fgif">GIF</option>
-						<option value="rss">GeoRSS</option>
-						<option value="image%2Fgeotiff">GeoTiff</option>
-						<option value="image%2Fgeotiff8">GeoTiff 8-bits</option>
-						<option value="image%2Fjpeg">JPEG</option>
-						<option value="image%2Fvnd.jpeg-png">JPEG-PNG</option>
-						<option value="image%2Fvnd.jpeg-png8">JPEG-PNG8</option>
-						<option value="application%2Fvnd.google-earth.kmz%20xml">KML (compressé)</option>
-						<option value="application%2Fvnd.google-earth.kml%2Bxml%3Bmode%3Dnetworklink">KML (lien réseau)</option>
-						<option value="application%2Fvnd.google-earth.kml">KML (plain)</option>
-						<option value="application%2Fx-sqlite3">MBTiles</option>
-						<option value="text%2Fhtml%3B%20subtype%3Dopenlayers">OpenLayers</option>
-						<option value="application%2Fopenlayers2">OpenLayers 2</option>
-						<option value="application%2Fopenlayers3">OpenLayers 3</option>
-						<option value="application%2Fpdf">PDF</option>
-						<option value="image%2Fpng">PNG</option>
-						<option value="image%2Fpng%3B%20mode%3D8bit">PNG 8bit</option>
-						<option value="image%2Fsvg%20xml">SVG</option>
-						<option value="image%2Ftiff">Tiff</option>
-						<option value="image%2Ftiff8">Tiff 8-bits</option>
-						<option value="application%2Fjson%3Btype%3Dutfgrid">UTFGrid</option>
-					</optgroup>
-				';
+			if (isset($availableFormatsWMS) && count($availableFormatsWMS) > 0) {
+				$optionsWMS = '<optgroup label="WMS">';
+
+				foreach ($availableFormatsWMS as $format) {
+					$optionsWMS .= '<option value="' . $format["format"] . '">' . $format["displayValue"] . '</option>';
+				}
+
+				$optionsWMS .= '</optgroup>';
 			}
 
-			if (isset($wfsURL)) {
-				$optionsWFS = '
-					<optgroup label="WFS">
-						<option value="csv">CSV</option>
-						<option value="DXF-ZIP">DXF (Compressed)</option>
-						<option value="DXF">DXF (plain)</option>
-						<option value="excel">Excel (.xls)</option>
-						<option value="excel2007">Excel 2007 (.xslx)</option>
-						<option value="text%2Fxml%3B%20subtype%3Dgml%2F2.1.2">GML2</option>
-						<option value="gml3">GML3.1</option>
-						<option value="application%2Fgml%2Bxml%3B%20version%3D3.2">GML3.2</option>
-						<option value="application%2Fjson">GeoJSON</option>
-						<option value="application%2Fvnd.google-earth.kml%2Bxml">KML</option>
-						<option value="SHAPE-ZIP">Shapefile</option>
-					</optgroup>
-				';
+			if (isset($availableFormatsWFS) && count($availableFormatsWFS) > 0) {
+				$optionsWFS = '<optgroup label="WFS">';
+
+				foreach ($availableFormatsWFS as $format) {
+					$optionsWFS .= '<option value="' . $format["format"] . '">' . $format["displayValue"] . '</option>';
+				}
+
+				$optionsWFS .= '</optgroup>';
 			}
 
 
@@ -1453,7 +1588,7 @@ class VisualisationController extends ControllerBase {
 				$format = $value["format"];
 
 				//Removing parameters
-				$url = strtok($url, '?');
+				// $url = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
 					$flux .= '

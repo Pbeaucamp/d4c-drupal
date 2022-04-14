@@ -42,16 +42,24 @@ Il est impératif d'indiquer, l'url ckan, la clé api ckan, l'url cluster et le 
 	- redémarrer nginx
 
 - Spout (permet l'export xls)
-	- se mettre dans le dossier root de Drupal `cd /opt/{drupal}/`
+	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
 	- `composer require box/spout`
 	
 - Php SpreadSheets
-	- se mettre dans le dossier root de Drupal `cd /opt/{drupal}/`
+	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
 	- composer require phpoffice/phpspreadsheet
 	
 	Note: Il faut peut être installer composer pour pouvoir l'utiliser dans Drupal
 	https://getcomposer.org/download/ (Suivre Command Line Installation)
 	
+-  Halaxa json-machine
+	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
+	- composer require halaxa/json-machine
+	
+-  ParseDown (https://github.com/erusev/parsedown)
+	- se mettre dans le dossier root de Drupal `cd /home/user-client/drupal-d4c/{subdirectory_if_exist}`
+	- composer require erusev/parsedown
+
 ---
 
 ## Configuration Recaptcha

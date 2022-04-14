@@ -60,7 +60,9 @@ function confirm(event){
 	if(selectedAction == "online"){
 		question = "Vous êtes sur le point de valider cette réutilisation. Elle sera visible publiquement sur la palteforme."; 
 	} else if (selectedAction == "offline"){
-		question = "Vous êtes sur le point de refuser cette réutilisation. Elle ne sera pas visible sur la palteforme, mais restera accessible pour les administrateurs."; 
+		question = "Vous êtes sur le point de refuser cette réutilisation. Elle ne sera pas visible sur la plateforme, mais restera accessible pour les administrateurs."; 
+	} else if (selectedAction == "delete"){
+		question = "Vous êtes sur le point de supprimer cette réutilisation. Elle ne sera plus visible sur la plateforme et ne sera plus accessible pour les administrateurs."; 
 	}
 
 	//var position = event.srcElement.getBoundingClientRect();

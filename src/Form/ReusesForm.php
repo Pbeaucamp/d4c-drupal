@@ -85,9 +85,9 @@ class ReusesForm extends HelpFormBase {
 				$row["description"] = substr($row["description"], 0, 600) . "...";
 			}	
 			if($row["status"] == "online" || $row["status"] == "offline"){
-				$options = array('online'=>'Validé', 'offline' => 'Refusé');
+				$options = array('online'=>'Validé', 'offline' => 'Refusé', 'delete' => 'Supprimé');
 			} else {
-				$options = array('waiting'=>'En attente de validation', 'online'=>'Validé', 'offline' => 'Refusé');
+				$options = array('waiting'=>'En attente de validation', 'online'=>'Validé', 'offline' => 'Refusé', 'delete' => 'Supprimé');
 			}
 			
 			$output[] = [
@@ -99,7 +99,7 @@ class ReusesForm extends HelpFormBase {
 				'description' => array('data' => array('#markup' => "<span><small>".$row["description"]."</small></span>")),
 				'status' => array('data' => array(
 					'#type' => 'select',     
-					'#options' => $options,//array('waiting'=>'En attente de validation', 'online'=>'Validé', 'offline' => 'Refusé'),    
+					'#options' => $options,
 					'#value' => $row["status"] ,
 					'#attributes' => array(
 						'onchange' => 'confirm(event)', 
@@ -265,9 +265,8 @@ class ReusesForm extends HelpFormBase {
 		$id = $form_state->getValue("selected_id");
 		
 		$res = $api->getReuse($id);
-		//error_log(json_encode($res));
-		//$res = json_decode(json_encode($res), true);
-		$label;
+
+		$label = '';
 		if($status == "waiting"){
 			$res["status"] = 0;
 			$label = " a été mise en validation";
@@ -277,6 +276,9 @@ class ReusesForm extends HelpFormBase {
 		} else if($status == "offline"){
 			$res["status"] = 2;
 			$label = " a été retirée";
+		} else if($status == "delete"){
+			$res["status"] = 3;
+			$label = " a été supprimée";
 		}
 		
 		$api->updateReuse($res);
