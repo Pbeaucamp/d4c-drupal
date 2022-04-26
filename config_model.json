@@ -2,7 +2,8 @@
 	"ckan":
 	{
 		"url":"https://xxx-backoffice.data4citizen.com/",
-		"api_key": "xxx"
+		"api_key": "xxx",
+		"datapusher_key": "DodDHpXihz7p9nr"
 	},
 	"cluster":
 	{

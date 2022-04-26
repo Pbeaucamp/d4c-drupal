@@ -13,7 +13,7 @@ use \JsonMachine\JsonMachine;
 
 class ResourceManager {
 
-	const ROOT = '/home/user-client/drupal-d4c/';
+	const ROOT = '/home/user-client/drupal-d4c/web/';
 	/**
 	 * This constant represent the maximum time the user can wait for the datapusher to load in the datastore (success or error)
 	 * In sec
@@ -21,9 +21,20 @@ class ResourceManager {
 	const DATAPUSHER_WAIT_TIME = 120;
 
 	function __construct() {
-
         $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
+		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';
+		$this->host = $this->config->client->host;
+		$this->port = isset($this->config->client->port) ? ':' . $this->config->client->port : '';
+	}
+
+	function getRoutingPrefix($includePreSlash) {
+		if ($includePreSlash) {
+			return isset($this->config->client->routing_prefix) ? $this->config->client->routing_prefix . '/' : '/';
+		}
+		else {
+			return isset($this->config->client->routing_prefix) ? substr($this->config->client->routing_prefix, 1)  . '/' : '';
+		}
 	}
 
 	function updateDatabaseStatus($isNew, $uniqId, $datasetId, $action, $status, $message) {
@@ -88,7 +99,7 @@ class ResourceManager {
 		}
 
 		$api = new Api;
-        $callUrl = $this->urlCkan . "/api/action/package_update";
+        $callUrl = $this->urlCkan . "api/action/package_update";
 		$result = $api->updateRequest($callUrl, $datasetToUpdate, "POST");
 		$result = json_decode($result);
 		if ($result->success == true) {
@@ -98,7 +109,7 @@ class ResourceManager {
 			if ($currentOrganization != $organization) {
 				Logger::logMessage("Updating organization.");
 			
-				$callUrl = $this->urlCkan . "/api/action/package_owner_org_update";
+				$callUrl = $this->urlCkan . "api/action/package_owner_org_update";
 				$result = $api->updateRequest($callUrl, ["id" => $datasetToUpdate[id], "organization_id" => $organization], "POST");
 				$result = json_decode($result);
 				if ($result->success != true) {
@@ -137,7 +148,7 @@ class ResourceManager {
 		$fileName = parse_url($resourceUrl);
 		$datasetFolder = $this->generateDatasetFolder($datasetId);
 
-		$host = $fileName[host];
+		$host = isset($this->host) ? $this->host : $fileName[host];
 		$fileName = $fileName[path];
 		$filePath = $fileName;
 
@@ -145,7 +156,7 @@ class ResourceManager {
 		Logger::logMessage("Manage file with name '" . $fileName . "' and path '" . $filePath . "'");
 
 		if ($moveFileToDatasetFolder) {
-			$newPath = "/" . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/' . $fileName;
+			$newPath = $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $fileName;
 		}
 		else {
 			$newPath = urldecode($this->nettoyage2($filePath));
@@ -154,8 +165,7 @@ class ResourceManager {
 		$filePath = $newPath;
 		Logger::logMessage("File has been renamed to " . $filePath);
 
-		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
-		$resourceUrl = 'https://' . $host . '' . $filePath;
+		$resourceUrl = $this->protocol . $host . $this->port . $filePath;
 		Logger::logMessage("File resource " . $resourceUrl);
 
 		$api = new Api;
@@ -221,7 +231,7 @@ class ResourceManager {
 				$writer = new Csv($spreadsheet);
 				if ($generateColumns) {
 					$filePath = str_ireplace('.csv', '_gencol.csv', $filePath);
-					$resourceUrl = 'https://' . $host . $filePath;
+					$resourceUrl = $this->protocol . $host . $this->port . $filePath;
 				}
 				$writer->save(self::ROOT . $filePath);
 			}
@@ -296,7 +306,7 @@ class ResourceManager {
 						Logger::logMessage("Found the previous ZIP resource '" . $resourceId . "' with name '" . $name . "'");
 
 
-						$rootDirectory = substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/';
+						$rootDirectory = $this->getRoutingPrefix(false) . 'sites/default/files/dataset/';
 						
 						$rootOldFile = self::ROOT . $rootDirectory . $name;
 						$oldFile = '/' . $rootDirectory . $name;
@@ -365,13 +375,13 @@ class ResourceManager {
 				$isUpdate = false;
 			}
 			
-			$rootCsv = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/' . $name;
+			$rootCsv = self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 
 			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv, $datasetFolder);
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 
 			if ($csvGenerated) {
-				$resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $datasetFolder . '/' . $name;
+				$resourceUrl = $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 				
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName);
 				$resourceId = $this->array_key_first($result[0]);
@@ -424,7 +434,7 @@ class ResourceManager {
 
 		$datasetFolder = $year . "/" . $month . "/" . $day . "/" . $datasetId;
 
-		$folder = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder;
+		$folder = self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/' . $datasetFolder;
 		$folder = str_replace('//', '/', $folder);
 
 		if (!file_exists($folder)) {
@@ -572,14 +582,14 @@ class ResourceManager {
 			}
 		}
 		else if ($type == 'kml' || $type == 'shp' || $type == 'gml') {
-			$scriptPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
+			$scriptPath = self::ROOT . $this->getRoutingPrefix(false) . 'modules/ckan_admin/src/Utils/convert_geo_files_ogr2ogr.sh';
 
 			$typeConvert = 'GEOJSON';
 			$projection = $this->config->client->shapefile_projection;
 			
 			Logger::logMessage("Building Geojson from geo file '" . $resourceUrl . "' with file path '" . $filePath . "'");
 
-			$rootJson= self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $datasetFolder . '/gen_' . uniqid() . '.geojson';
+			$rootJson= self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/' . $datasetFolder . '/gen_' . uniqid() . '.geojson';
 			$command = $scriptPath." 2>&1 '" . $typeConvert . "' " . $rootJson . " " . $filePath . " " . $projection;
 			
 			Logger::logMessage("OGR2OGR command '" . $command . "'");
@@ -621,13 +631,13 @@ class ResourceManager {
 
         // save the content of GSheeturl in csv file and get url of resource
 		$data = $contenturlsheet;
-		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/")) {
-			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/", 0777, true);
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/" . $datasetFolder . "/urlsheet/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/" . $datasetFolder . "/urlsheet/", 0777, true);
 		}
 
 		$fileName = $datasetId . ".csv";
 
-		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/" . $datasetFolder . "/urlsheet/" . $fileName, "wb");
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/" . $datasetFolder . "/urlsheet/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
 			fputcsv($fp, $line);
@@ -636,7 +646,7 @@ class ResourceManager {
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier Google Sheet \'' . $urlGsheet . '\'');
 
-		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $datasetFolder . '/urlsheet/' . $fileName;
+		return $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/urlsheet/' . $fileName;
 	}
 
 	function manageXmlfile($url) {
@@ -653,14 +663,14 @@ class ResourceManager {
 
         // save the content of xml url in csv file and get url of resource
 		$data = $contenturlsheet;
-		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/")) {
-			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/", 0777, true);
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/xmlfile/")) {
+			mkdir($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/xmlfile/", 0777, true);
 		}
 		
 		$query_params = $api->proper_parse_str($url);
 		$fileName = $query_params["resource_id"] . "-xml" . ".csv";
 
-		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->config->client->routing_prefix . "/sites/default/files/dataset/xmlfile/" . $fileName, "wb");
+		$fp = fopen($_SERVER['DOCUMENT_ROOT'] . $this->getRoutingPrefix(true) . "sites/default/files/dataset/xmlfile/" . $fileName, "wb");
 		fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
 		foreach ( $data as $line ) {
 			
@@ -670,7 +680,7 @@ class ResourceManager {
 		fclose($fp);
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
 
-		return 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/xmlfile/' . $fileName;
+		return $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/xmlfile/' . $fileName;
 	}
 	
 	function managePackage($uniqId, $resourceUrl, $security, $organization) {
@@ -678,7 +688,7 @@ class ResourceManager {
 
 		$fileName = parse_url($resourceUrl);
 
-		$host = $fileName[host];
+		$host = isset($this->host) ? $this->host : $fileName['host'];
 		$fileName = $fileName[path];
 		$filePath = $fileName;
 
@@ -690,13 +700,12 @@ class ResourceManager {
 		rename(self::ROOT . urldecode($filePath), self::ROOT . $filePathN); 
 		$filePath = $filePathN;
 
-		$resourceUrl = str_replace('http:', 'https:', $resourceUrl);
-		$resourceUrl = 'https://' . $host . '' . $filePath;
+		$resourceUrl = $this->protocol . $host . $this->port . $filePath;
 
 		Logger::logMessage("Managing package with path '" . $filePath . "'");
 
 		$directoryName = 'package_extraction_' . uniqid();
-		$directoryPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/' . $directoryName;
+		$directoryPath = self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/' . $directoryName;
 
 		$zip = new ZipArchive;
 		$res = $zip->open(self::ROOT . $filePath);
@@ -761,7 +770,7 @@ class ResourceManager {
 
 				if ($resourceId) {
 					Logger::logMessage("Found resource CSV " . $resourceId);
-					$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+					$callUrl =  $this->urlCkan . "api/action/datastore_create";
 					$data = array();
 					$data["resource_id"] = $resourceId;
 					$data["force"] = true;
@@ -789,7 +798,7 @@ class ResourceManager {
 		// $path = pathinfo(realpath($filePath), PATHINFO_DIRNAME);
 
 		$directoryName = 'zip_' . str_replace('-', '_', $datasetId) . '_' . uniqid();
-		$directoryPath = self::ROOT . substr($this->config->client->routing_prefix, 1) . '/sites/default/files/dataset/zipresources/' . $directoryName;
+		$directoryPath = self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/zipresources/' . $directoryName;
 
 		Logger::logMessage("Unzipping in path '" . $directoryPath . "'");
 		//Create the directory
@@ -894,11 +903,7 @@ class ResourceManager {
 					continue;
 				}
 				else {
-					// $fileName = pathinfo($file, PATHINFO_FILENAME);
-					// $fileExtension = pathinfo($file, PATHINFO_EXTENSION);
-					// $resourceUrl = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . $directoryName . '/' . $fileName . "." . $fileExtension;
-
-					$resourceUrl = str_replace(self::ROOT, 'https://' . $_SERVER['HTTP_HOST'] . '/', $file);
+					$resourceUrl = str_replace(self::ROOT, $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . '/', $file);
 					Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
 				}
 
@@ -1079,7 +1084,7 @@ class ResourceManager {
 				}
 				fclose($handle);
 			}
-			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
+			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->procotol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
 			return $newfile;
 		}
 	}
@@ -1133,7 +1138,7 @@ class ResourceManager {
 			
 			// We update the resource
 			Logger::logMessage("Updating the resource.");
-			$callUrl =  $this->urlCkan . "/api/action/resource_update";
+			$callUrl =  $this->urlCkan . "api/action/resource_update";
 			$return = $api->updateRequest($callUrl, $resource, "POST");
 
 			$fieldsWithoutId = array();
@@ -1167,7 +1172,7 @@ class ResourceManager {
 
 			// We reupload the dictionnary
 			Logger::logMessage("Reuploading dictionnary.");
-			$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+			$callUrl =  $this->urlCkan . "api/action/datastore_create";
 			$data = array();
 			$data["resource_id"] = $resourceId;
 			$data["force"] = true;
@@ -1195,7 +1200,7 @@ class ResourceManager {
 					"name" => $resourceName
 				];
 			}
-			$callUrluptres = $this->urlCkan . "/api/action/resource_create";
+			$callUrluptres = $this->urlCkan . "api/action/resource_create";
 			$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			$return = json_decode($return);
 			
@@ -1316,7 +1321,7 @@ class ResourceManager {
 			"force" => "True",
 		];
 
-		$callUrl = $this->urlCkan . "/api/action/resource_delete";
+		$callUrl = $this->urlCkan . "api/action/resource_delete";
 		$result = $api->updateRequest($callUrl, $delRes, "POST");
 		$result = json_decode($result);
 
@@ -1372,7 +1377,7 @@ class ResourceManager {
 
 			$url_pict = explode("/", $url_pict);
 			$url_pict = explode(".", $url_pict[(count($url_pict) - 1)]);
-			$url_pict = $this->config->client->routing_prefix . "/sites/default/files/theme_logo/".$url_pict[0].".svg";
+			$url_pict = $this->getRoutingPrefix(true) . "sites/default/files/theme_logo/".$url_pict[0].".svg";
 
 			return $url_pict;
 
@@ -2041,7 +2046,7 @@ class ResourceManager {
         $coll = $data[0];
         
         $api = new Api;
-		$callUrlNewData = $this->urlCkan . "/api/action/package_create";
+		$callUrlNewData = $this->urlCkan . "api/action/package_create";
 		$return = $api->updateRequest($callUrlNewData, $newData, "POST");   
 		$resnew = json_decode($return);
 
@@ -2117,7 +2122,7 @@ class ResourceManager {
 
 
 	function deleteDataset($datasetId) {
-		$callUrl = $this->urlCkan . "/api/action/package_delete";
+		$callUrl = $this->urlCkan . "api/action/package_delete";
             
 		$delDataset = [
 			"id" => $datasetId,

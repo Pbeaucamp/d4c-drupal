@@ -14,9 +14,9 @@ function ckan_admin_schema() {
         'type' => 'int',
         'not null' => TRUE,
       ),
-    'map_name'=>array(
+      'map_name'=>array(
         'type' => 'varchar',
-    'length' => 50,
+        'length' => 50,
         'not null' => TRUE,
       ),
       'map_json'=>array(
@@ -34,20 +34,28 @@ function ckan_admin_schema() {
         'type'=>'serial',
         'not null' => TRUE,
       ),
-      'cv_name'=>array(
-        'type' => 'varchar(50)',
+      'cv_dataset_id'=>array(
+        'type' => 'varchar',
+        'length' => 150,
         'not null' => TRUE,
       ),
-    'cv_title'=>array(
-        'type' => 'varchar(50)',
-    'length' => 50,
+      'cv_name'=>array(
+        'type' => 'varchar',
+        'length' => 150,
+        'not null' => TRUE,
+      ),
+      'cv_title'=>array(
+        'type' => 'varchar',
+        'length' => 150,
         'not null' => TRUE,
       ),
       'cv_icon'=>array(
-        'type' => 'varchar(20)'
+        'type' => 'varchar',
+        'length' => 20
       ),
       'cv_template'=>array(
-        'type' => 'int(11)',
+        'type' => 'int',
+        'length' => 11,
         'not null' => TRUE,
       )
     ),
@@ -80,54 +88,61 @@ function ckan_admin_schema() {
         'type'=>'serial',
         'not null' => TRUE,
       ),
-    'reu_dataset_id'=>array(
-        'type'=>'varchar(50)',
+      'reu_dataset_id'=>array(
+        'type'=>'varchar',
+        'length' => 50,
         'not null' => TRUE,
       ),
-    'reu_dataset_title'=>array(
-        'type'=>'varchar(100)',
+      'reu_dataset_title'=>array(
+        'type'=>'varchar',
+        'length' => 100,
         'not null' => TRUE,
       ),
       'reu_name'=>array(
-        'type' => 'varchar(100)',
+        'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
       ),
-    'reu_title'=>array(
-        'type' => 'varchar(100)',
-    'length' => 100,
+      'reu_title'=>array(
+        'type' => 'varchar',
+        'length' => 100,
         'not null' => TRUE,
       ),
-    'reu_description'=>array(
+      'reu_description'=>array(
         'type' => 'text',
       ),
       'reu_author_name'=>array(
-        'type' => 'varchar(30)',
-    'not null' => TRUE,
+        'type' => 'varchar',
+        'length' => 30,
+        'not null' => TRUE,
       ),
-    'reu_author_url'=>array(
+      'reu_author_url'=>array(
         'type' => 'text'
       ),
-    'reu_author_email'=>array(
-        'type' => 'varchar(50)'
+      'reu_author_email'=>array(
+        'type' => 'varchar',
+        'length' => 50
       ),
       'reu_url'=>array(
         'type' => 'text',
         'not null' => TRUE,
       ),
-    'reu_image'=>array(
+      'reu_image'=>array(
         'type' => 'text',
         'not null' => TRUE,
       ),
-    'reu_date'=>array(
+      'reu_date'=>array(
         'type' => 'datetime',
+        'pgsql_type' => 'timestamp without time zone',
+        'not null' => TRUE
+      ),
+      'reu_status'=>array(
+        'type' => 'int',
         'not null' => TRUE,
       ),
-    'reu_status'=>array(
-        'type' => 'integer',
-        'not null' => TRUE,
-      ),
-    'reu_type'=>array(
-        'type' => 'varchar(30)'
+      'reu_type'=>array(
+        'type' => 'varchar',
+        'length' => 30
       )
     ),
     'primary key' => array('reu_id'),
@@ -165,8 +180,7 @@ function ckan_admin_schema() {
       'last_updated'=>array(
         'type' => 'datetime',
         'pgsql_type' => 'timestamp without time zone',
-        'not null' => TRUE,
-        'default' => '',
+        'not null' => TRUE
       )
     )
   );
@@ -208,8 +222,7 @@ function ckan_admin_schema() {
       'creation_date'=>array(
         'type' => 'datetime',
         'pgsql_type' => 'timestamp without time zone',
-        'not null' => TRUE,
-        'default' => '',
+        'not null' => TRUE
       )
     )
   );
@@ -232,8 +245,7 @@ function ckan_admin_schema() {
       'creation_date'=>array(
         'type' => 'datetime',
         'pgsql_type' => 'timestamp without time zone',
-        'not null' => TRUE,
-        'default' => '',
+        'not null' => TRUE
       )
     )
   );
@@ -362,14 +374,14 @@ function ckan_admin_update_8704(&$sandbox) {
 }
 
 function ckan_admin_update_8705(&$sandbox) {
-     $spec = array(
-        'type' => 'varchar',
-        'description' => "Title",
-        'length' => 255
-      ); 
-     $schema = Database::getConnection()->schema();
-     $schema->addField('d4c_user_story', 'title_story', $spec);
-     return $schema;
+    $spec = array(
+      'type' => 'varchar',
+      'description' => "Title",
+      'length' => 255
+    ); 
+    $schema = Database::getConnection()->schema();
+    $schema->addField('d4c_user_story', 'title_story', $spec);
+    return $schema;
 }
 
 function ckan_admin_update_8706(&$sandbox) {
@@ -395,7 +407,7 @@ function ckan_admin_update_8706(&$sandbox) {
       'creation_date' => [
         'type' => 'datetime',
         'pgsql_type' => 'timestamp without time zone',
-        'not null' => TRUE,
+        'not null' => TRUE
       ]
     ]
   ]; 
@@ -422,7 +434,7 @@ function ckan_admin_update_8707(&$sandbox) {
       'creation_date' => [
         'type' => 'datetime',
         'pgsql_type' => 'timestamp without time zone',
-        'not null' => TRUE,
+        'not null' => TRUE
       ]
     ]
   ]; 
