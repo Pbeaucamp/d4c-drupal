@@ -59,6 +59,7 @@ class Api
 
 	//protected $config = \Drupal::config('ckan_admin.settings');
 	protected $urlCkan; // = "http://192.168.2.223/";
+	protected $urlDatapusher;
 	//protected $urlCkan = file_get_contents(__DIR__ ."/../../config.json");
 	protected $config;
 	protected $isSpecial;
@@ -70,6 +71,7 @@ class Api
 	{
 		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->urlCkan = $this->config->ckan->url;
+		$this->urlDatapusher = $this->config->ckan->datapusher_url;
 		$this->isSpecial = $this->config->client->name == 'cda2';
 		$this->isPostgis = $this->config->client->name == 'cda2';
 	}
@@ -116,7 +118,8 @@ class Api
 		return $options;
 	}
 
-	function getConfig() {
+	function getConfig()
+	{
 		return $this->config;
 	}
 
@@ -903,7 +906,7 @@ class Api
 				$query_params["fq"] .= " AND features:(*geo*)";
 			}
 		}
-		
+
 		if ($exclude_private_orgas) {
 			$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=true&include_extras=true";
 			$curlOrg = curl_init($callUrlOrg);
@@ -967,7 +970,8 @@ class Api
 		return $result;
 	}
 
-	public function callPackageSearch($params) {
+	public function callPackageSearch($params)
+	{
 		$arrFac;
 		$arrFacSearch;
 		$arr = array();
@@ -1013,9 +1017,9 @@ class Api
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
 		}
-		
+
 		if ($hasFacetFeature) {
-			
+
 			$arr = array();
 			foreach ($result["result"]["facets"]["features"] as $key => $count) {
 				for ($i = 0; $i < $count; $i++) {
@@ -1037,7 +1041,7 @@ class Api
 				);
 			}
 		}
-		
+
 		if ($this->config->client->nutch) {
 			Logger::logMessage("Nutch is enable. Calling nutch to search for page");
 			$nutchApi = new NutchApi;
@@ -3525,8 +3529,7 @@ class Api
 				}
 				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineFeatures) . "*)";
 				unset($query_params[$key]);
-			}
-			else if ($key == "refine.themes") {
+			} else if ($key == "refine.themes") {
 				if (is_array($query_params["refine.themes"])) {
 					$refineThemes = $query_params["refine.themes"];
 				} else {
@@ -3535,12 +3538,10 @@ class Api
 				}
 				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineThemes) . "*)";
 				unset($query_params[$key]);
-			}
-			else if (preg_match($patternRefine, $key)) {
+			} else if (preg_match($patternRefine, $key)) {
 				$filters[preg_replace($patternRefine, "", $key)] =  $value;
 				unset($query_params[$key]);
-			}
-			else  if (preg_match($patternExclude, $key)) {
+			} else  if (preg_match($patternExclude, $key)) {
 				$filters["-" . preg_replace($patternExclude, "", $key)] =  $value;
 				unset($query_params[$key]);
 			}
@@ -3751,7 +3752,7 @@ class Api
 
 					$facet["facets"][] = $item;
 				}
-				
+
 				usort($facet["facets"], function ($a, $b) {
 					$key = "count";
 					return  $b[$key] - $a[$key];
@@ -5748,7 +5749,7 @@ class Api
 			),
 		);
 
-		$callUrl = $this->urlCkan . "/api/action/package_show?id=" . $id;
+		$callUrl = $this->urlCkan . "api/action/package_show?id=" . $id;
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $optionst);
@@ -5942,7 +5943,8 @@ class Api
 		return $response;
 	}
 
-	function getThemes($returnJson = false, $sort = false) {
+	function getThemes($returnJson = false, $sort = false)
+	{
 		if ($this->themes == null) {
 			$themConfig = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
 			$this->themes = $themConfig->get('themes');
@@ -5958,13 +5960,13 @@ class Api
 				});
 			}
 			return $themes;
-		}
-		else {
+		} else {
 			return $this->themes;
 		}
 	}
 
-	function getThemeLabel($themeValue) {
+	function getThemeLabel($themeValue)
+	{
 		$themes = $this->getThemes(true);
 		foreach ($themes as $theme) {
 			if ($theme['title'] == $themeValue) {
@@ -6256,7 +6258,7 @@ class Api
 			$jobValue = json_decode($task["value"], true);
 			$jobId = $jobValue["job_id"];
 
-			$callUrl = 'http://127.0.0.1:8800/job/' . $jobId;
+			$callUrl = $this->urlDatapusher . 'job/' . $jobId;
 			Logger::logMessage("Getting datapusher infos '" . $callUrl . "'");
 
 			$cle = $this->config->ckan->datapusher_key;
@@ -7233,14 +7235,13 @@ class Api
 	function updateReuse($reuse)
 	{
 		$reu_id = $reuse["id"];
-		
+
 		// Statut delete
 		if ($reuse["status"] == 3) {
 			$query = \Drupal::database()->delete('d4c_reuses');
 			$query->condition('reu_id', $reu_id);
 			$query->execute();
-		}
-		else {
+		} else {
 			$query = \Drupal::database()->update('d4c_reuses');
 			$query->fields([
 				'reu_status' => $reuse["status"]
@@ -7378,7 +7379,7 @@ class Api
 		$fields = json_decode($result, true)["result"]["fields"];
 
 		$resource["uuid"] = uniqid();
-		$callUrl =  $this->urlCkan . "/api/action/resource_update";
+		$callUrl =  $this->urlCkan . "api/action/resource_update";
 		$return = $this->updateRequest($callUrl, $resource, "POST");
 		//error_log($return);
 		$fields2 = array();
@@ -7389,7 +7390,7 @@ class Api
 		}
 		for ($i = 0; $i < 1; $i++) {
 			sleep(10);
-			$callUrl =  $this->urlCkan . "/api/action/datastore_create";
+			$callUrl =  $this->urlCkan . "api/action/datastore_create";
 			$data = array();
 			$data["resource_id"] = $resource["id"];
 			$data["force"] = true;
@@ -8025,7 +8026,7 @@ class Api
 		// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
 		// 	null, null, null, null, null, 
 		// 	null, null, null, $security);
-					
+
 		$generatedTaskId = uniqid();
 		try {
 			if (!$datasetId) {
@@ -8103,11 +8104,10 @@ class Api
 				if (!$resourceId) {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						
+
 						if ($manageFileResult["status"] == "error") {
 							throw new \Exception($manageFileResult["message"]);
-						}
-						else if ($manageFileResult["status"] == "success") {
+						} else if ($manageFileResult["status"] == "success") {
 
 							$resourceUrl = $manageFileResult["url"];
 							//Managing resources
@@ -8126,11 +8126,10 @@ class Api
 				} else {
 					if ($manageFile || strcasecmp($format, "CSV") == 0) {
 						$manageFileResult = $this->manageFileByUrl($resourceManager, $resourceName, $format, $resourceUrl);
-						
+
 						if ($manageFileResult["status"] == "error") {
 							throw new \Exception($manageFileResult["message"]);
-						}
-						else if ($manageFileResult["status"] == "success") {
+						} else if ($manageFileResult["status"] == "success") {
 							$resourceUrl = $manageFileResult["url"];
 							//Managing resources
 							$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
@@ -8211,10 +8210,10 @@ class Api
 		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
 
-		$encodingUrl = str_replace (' ', '%20', $resourceUrl);
+		$encodingUrl = str_replace(' ', '%20', $resourceUrl);
 
 		// Checking file size. If over 1GB, we return an error
-		$file_size = $this->getFileSize( $encodingUrl );
+		$file_size = $this->getFileSize($encodingUrl);
 		if ($file_size > 1000000000) {
 
 			Logger::logMessage("Exceeded filesize limit.");
@@ -8323,7 +8322,7 @@ class Api
 		$data_array["url"] = $url;
 		return $data_array;
 	}
-	
+
 	/**
 	 * Returns the size of a file without downloading it, or -1 if the file
 	 * size could not be determined.
@@ -8334,39 +8333,40 @@ class Api
 	 * @return The size of the file referenced by $url, or -1 if the size
 	 * could not be determined.
 	 */
-	function getFileSize( $url ) {
+	function getFileSize($url)
+	{
 		// Assume failure.
 		$result = -1;
-	
-		$curl = curl_init( $url );
-	
+
+		$curl = curl_init($url);
+
 		// Issue a HEAD request and follow any redirects.
-		curl_setopt( $curl, CURLOPT_NOBODY, true );
-		curl_setopt( $curl, CURLOPT_HEADER, true );
-		curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $curl, CURLOPT_FOLLOWLOCATION, true );
-	
-		$data = curl_exec( $curl );
-		curl_close( $curl );
-	
-		if( $data ) {
+		curl_setopt($curl, CURLOPT_NOBODY, true);
+		curl_setopt($curl, CURLOPT_HEADER, true);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+
+		$data = curl_exec($curl);
+		curl_close($curl);
+
+		if ($data) {
 			$content_length = "unknown";
 			$status = "unknown";
-		
-			if( preg_match( "/^HTTP\/1\.[01] (\d\d\d)/", $data, $matches ) ) {
+
+			if (preg_match("/^HTTP\/1\.[01] (\d\d\d)/", $data, $matches)) {
 				$status = (int)$matches[1];
 			}
-		
-			if( preg_match( "/Content-Length: (\d+)/", $data, $matches ) ) {
+
+			if (preg_match("/Content-Length: (\d+)/", $data, $matches)) {
 				$content_length = (int)$matches[1];
 			}
-		
+
 			// http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-			if( $status == 200 || ($status > 300 && $status <= 308) ) {
+			if ($status == 200 || ($status > 300 && $status <= 308)) {
 				$result = $content_length;
 			}
 		}
-	
+
 		return $result;
 	}
 
