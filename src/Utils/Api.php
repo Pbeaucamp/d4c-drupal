@@ -5202,8 +5202,6 @@ class Api
 			$data_array["layers"] = $tiles;
 		}
 
-		Logger::logMessage("Found bounding box " . $this->config->client->default_bounding_box);
-
 		$default_bbox = $this->config->client->default_bounding_box;
 		if ($default_bbox != null && $default_bbox != "") {
 			$data_array["default_bbox"] = $default_bbox;

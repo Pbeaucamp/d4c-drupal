@@ -17,6 +17,22 @@ class portailController extends ControllerBase {
 	public function myPage() {
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+
+		$title = 'Jeux de données';
+		$producteurTitle = 'Producteurs';
+		$visualisations = '<h3> Visualisations</h3>
+			<ul id="list-visu" class="list-group"></ul>';
+		$themes = '<h3>Thèmes</h3>
+			<ul id="list-theme" class="list-group">
+				<input id="input-theme" type="hidden" class="hidden-filter">
+			</ul>';
+		if ($config->client->nutch) {
+			$title = 'pages de sites';
+			$producteurTitle = 'Origine des sites';
+			$visualisations = '';
+			$themes = '';
+		} 
+
 		$element = array(
 				'example one' => [
 					'#type' => 'inline_template',
@@ -65,7 +81,7 @@ class portailController extends ControllerBase {
 									</d4c-dataset-context>
 								</div>
 
-            					<h1> <span id="nb_jeux">0</span> pages de sites</h1>
+            					<h1> <span id="nb_jeux">0</span> ' . $title .'</h1>
 								<input id="input-tag" type="text" class="hidden-filter">
                                 						
 								<div class="form-group">
@@ -109,10 +125,10 @@ class portailController extends ControllerBase {
 									</div>
 									
 								</form> 
-								<!--<h3> Visualisations</h3>
-								<ul id="list-visu" class="list-group"></ul>-->
-								
-								<h3> Origine des sites</h3>
+
+								' . $visualisations . '
+
+								<h3>' . $producteurTitle . '</h3>
 								<ul id="list-producteur" class="list-group"></ul>
 								<input id="input-producteur" type="hidden" class="hidden-filter">
 								<input id="input-map-coordinate" type="hidden" class="hidden-filter">
@@ -122,26 +138,22 @@ class portailController extends ControllerBase {
 								<input id="input-granularite" type="hidden" class="hidden-filter">-->
 
 								<!-- <h3>Formats ressources</h3>
-								<ul id="list-format" class="list-group">
+								<ul id="list-format" class="list-group">-->
 
 								</ul>
 								<input id="input-format" type="hidden" class="hidden-filter">
-								
+
 								<h3>Mots Clés</h3>
-								<ul id="list-tag" class="list-group"></ul>-->
-								
-								<!--<h3>Thèmes</h3>
-								<ul id="list-theme" class="list-group">
-									<input id="input-theme" type="hidden" class="hidden-filter">
-								</ul>-->
-			
+								<ul id="list-tag" class="list-group"></ul>
+								' . $themes . '
+
 								<h2>Télécharger la liste de jeux de données</h2>
 								<ul id="list-cat" class="list-group">
 									<li class="list-item" data-cat="csv"><i class="fa fa-file" aria-hidden="true"></i>CSV <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="xls"><i class="fa fa-file" aria-hidden="true"></i>XLS <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="json"><i class="fa fa-file" aria-hidden="true"></i>JSON <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 								</ul>
-               
+
         					</div>
 
 					        <div class="col-md-10" style="display: flex; flex-direction: column;" >

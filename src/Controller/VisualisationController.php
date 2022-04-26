@@ -484,6 +484,8 @@ class VisualisationController extends ControllerBase {
 
 		$keywordsPart = $this->buildKeywords($keywords);
 
+		$ratingPart = $this->buildRating($loggedIn, $datasetId);
+
 		$rgpdPart = $this->buildRgpd($isRgpd, $rgpdNonConnected);
 
 		return '
@@ -498,6 +500,7 @@ class VisualisationController extends ControllerBase {
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
+						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
@@ -1193,6 +1196,10 @@ class VisualisationController extends ControllerBase {
 		return $keywordsPart;
 	}
 
+	function buildRating($loggedIn, $datasetId) {
+		return '<d4c-dataset-rating context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $datasetId . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-rating>';
+	}
+
 	function getLastDataResource($resources) {
 		$lastResource = null;
 		foreach($resources as $key=>$value) {
@@ -1252,7 +1259,8 @@ class VisualisationController extends ControllerBase {
 			$location = $location;
 		}
 		else {
-			$location = $this->config->client->default_bounding_box;
+			//Disable to let the map decide the bounds
+			//$location = $this->config->client->default_bounding_box;
 
 			$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
 			$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
