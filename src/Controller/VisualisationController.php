@@ -423,6 +423,7 @@ class VisualisationController extends ControllerBase {
 			$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 			$tabAPI = $this->buildTabAPI($dataset);
 			$tabReuses = $this->buildTabReuses($loggedIn, $name);
+			$tabAdmin = $this->buildTabAdmin($loggedIn, $name);
 		}
 
 		return '
@@ -439,9 +440,7 @@ class VisualisationController extends ControllerBase {
 				' . $tabExport . '
 				' . $tabAPI . '
 				' . $tabReuses . '
-
-				<!-- Enable this to enable dataset subscription -->
-				<!-- <d4c-dataset-subscription context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $id . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-subscription> -->
+				' . $tabAdmin . '
 			</d4c-tabs>
 		';
 	}
@@ -534,6 +533,9 @@ class VisualisationController extends ControllerBase {
 
 					</d4c-collapsible-fold>
 				</d4c-collapsible>
+
+				<!-- Enable this to enable dataset subscription -->
+				<d4c-dataset-subscription context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $datasetId . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-subscription>
 			</d4c-pane>
 		';
 	}
@@ -1651,6 +1653,14 @@ class VisualisationController extends ControllerBase {
 					anonymous-reuse="true"
 					logged-in="'.$loggedIn.'" recaptcha-pub-key="6LcT58UaAAAAAD_bIB7iAAeSJ6WggtNaFS74GbGk" dataset-title="'.$name.'"
 					config="{&#39;is_unique&#39;: True, &#39;max_width&#39;: 4096, &#39;max_height&#39;: 4096, &#39;resize_width&#39;: 200, &#39;resize_height&#39;: 200, &#39;asset_type&#39;: &#39;image&#39;, &#39;max_size&#39;: 2097152}"></d4c-dataset-reuses>
+			</d4c-pane>
+		';
+	}
+	
+	function buildTabAdmin($loggedIn, $name) {
+		return '
+			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
+				<p>Test</p>
 			</d4c-pane>
 		';
 	}
