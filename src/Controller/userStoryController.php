@@ -17,7 +17,9 @@ class userStoryController extends ControllerBase {
   public function myPage() {
   
     //$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-    $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+    // $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+    $config = include(__DIR__ . "/../../config.php");
+
     $element = array(
         'example one' => [
           '#type' => 'inline_template',

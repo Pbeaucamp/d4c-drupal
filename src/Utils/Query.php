@@ -41,7 +41,8 @@ Class Query{
 		$jsonData = json_encode ( $binaryData );
 
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		$config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
 		//$clef = $config->get('clef');
 		$clef = $config->ckan->api_key;
 		

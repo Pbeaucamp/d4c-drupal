@@ -33,7 +33,8 @@ class controDataslForm extends HelpFormBase {
         
         
         $form['#attached']['library'][] = 'ckan_admin/controDataslForm.form';
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         
 

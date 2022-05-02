@@ -16,7 +16,8 @@ class MapControllerOLD extends ControllerBase {
 	 */
 	public function myPage() {
 
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
 
 		$idUser = 0;
     	if(\Drupal::currentUser()->isAuthenticated()){

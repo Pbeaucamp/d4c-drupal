@@ -16,7 +16,8 @@ class portailController extends ControllerBase {
 	 */
 	public function myPage() {
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
 
 		$title = 'Jeux de données';
 		$producteurTitle = 'Producteurs';
