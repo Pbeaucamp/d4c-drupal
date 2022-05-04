@@ -25,7 +25,7 @@ Executer la commande : `git clone http://gitlab.bpm-conseil.com/data4citizen/d4c
 
 ## Configuration
 
-Il faut inscrire les informations adéquates dans le fichier config.json à la racine du module.
+Il faut inscrire les informations adéquates dans le fichier config.php à la racine du module (modèle disponible dans config.env.model.php ou config.model.php).
 
 Il est impératif d'indiquer, l'url ckan, la clé api ckan, l'url cluster et le fichier css client.
 
