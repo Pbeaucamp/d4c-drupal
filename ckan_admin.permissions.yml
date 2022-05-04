@@ -37,3 +37,7 @@ access view custom:
 access dataset_board:
  title: 'Tableau de contrôle des jeux de données'
  description: 'Tableau de contrôle des jeux de données '
+
+administer site configuration:
+ title: 'Configuration administration'
+ description: 'Interfaces administration de la plateforme'

@@ -13,7 +13,7 @@ use \JsonMachine\JsonMachine;
 
 class ResourceManager {
 
-	const ROOT = '/home/user-client/drupal-d4c/web/';
+	const ROOT = '/home/user-client/drupal-d4c/';
 	/**
 	 * This constant represent the maximum time the user can wait for the datapusher to load in the datastore (success or error)
 	 * In sec
@@ -1288,7 +1288,7 @@ class ResourceManager {
 				return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null);
 			}
 			else if ($datapusherStatus->status == null) {
-				Logger::logMessage("An error occured during status's checking, we try to check the status again.");
+				Logger::logMessage("An error occured during status's checking, we try to check the status again: " . json_encode($datapusherStatus));
 				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher);
 			}
 			else {

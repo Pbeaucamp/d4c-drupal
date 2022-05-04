@@ -423,7 +423,9 @@ class VisualisationController extends ControllerBase {
 			$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 			$tabAPI = $this->buildTabAPI($dataset);
 			$tabReuses = $this->buildTabReuses($loggedIn, $name);
-			$tabAdmin = $this->buildTabAdmin($loggedIn, $name);
+			if ($loggedIn) {
+				$tabAdmin = $this->buildTabAdmin($name);
+			}
 		}
 
 		return '
@@ -1657,10 +1659,10 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAdmin($loggedIn, $name) {
+	function buildTabAdmin($name) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
-				<p>Test</p>
+				<p>Administration du jeu de données: ' . $name . '</p>
 			</d4c-pane>
 		';
 	}
