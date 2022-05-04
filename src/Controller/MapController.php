@@ -40,8 +40,9 @@ class MapController extends ControllerBase {
 	public function myPage(Request $request) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
-		
+		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
+
 		$element = array(
 				'example one' => [
 						'#type' => 'inline_template',

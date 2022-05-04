@@ -21,7 +21,8 @@ class ResourceManager {
 	const DATAPUSHER_WAIT_TIME = 120;
 
 	function __construct() {
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';
 		$this->host = $this->config->client->host;

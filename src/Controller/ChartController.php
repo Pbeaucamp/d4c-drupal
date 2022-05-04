@@ -40,7 +40,8 @@ class ChartController extends ControllerBase {
 
 		
 
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
 		$api = new Api();
 		
 				
@@ -118,8 +119,9 @@ class ChartController extends ControllerBase {
 	public function myFrame(Request $request) {
 
 
-		$config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));		
-				
+		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));		
+		$config = include(__DIR__ . "/../../config.php");
+
 		$element = '
 		<head>
 			<base href="'. $config->client->routing_prefix . '/chart/frame">

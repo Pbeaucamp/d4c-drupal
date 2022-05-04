@@ -14,15 +14,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Drupal\ckan_admin\Utils\Logger;
 
 
-class DataSet{
-	
+class DataSet {
+
 	static function checkConnexion()
 	{
-		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		//$ckan = $config->get('ckan');
-		$ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-         $ckan = $ckan->ckan->url;
-		$query = Query::callSolrServer($ckan . "/api/action/organization_list");
+		$config = include(__DIR__ . "/../../config.php");
+		$query = Query::callSolrServer($config->ckan->url . "/api/action/organization_list");
 		$results = json_decode($query);
 		
 		return $results->success;
@@ -477,7 +474,8 @@ class DataSet{
 	{
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		//$ckan = $config->get('ckan');
-		$ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		
 		
@@ -533,7 +531,8 @@ class DataSet{
         
 //		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 //		$ckan = $config->get('ckan');
-		$ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		
 		if(strlen($name) > 99){
@@ -595,7 +594,8 @@ class DataSet{
 //		$config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 //		$ckan = $config->ckan->url;
 //		
-        $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+        // $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
         
 		$binaryData->description = $description;
@@ -642,7 +642,8 @@ class DataSet{
 	{
 	
 		$config2 = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		$config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$config = include(__DIR__ . "/../../config.php");
         
 		$clef = $config->ckan->api_key;
 
@@ -714,7 +715,8 @@ class DataSet{
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		//$ckan = $config->get('ckan');
 		
-        $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+        // $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
         
 		$config->set('ids_cron', null)->save();
@@ -742,7 +744,8 @@ class DataSet{
 	{	
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		//$ckan = $config->get('ckan');
-		$ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		$cronids = $config->get('ids_cron');
 		
@@ -970,7 +973,8 @@ class DataSet{
 		error_log('moissonage datagouv id : ' . print_r($name,true));
         $api = new Api();    
         
-        $config_file = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+        // $config_file = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$config_file = include(__DIR__ . "/../../config.php");
         $ckan = $config_file->ckan->url;
         
         if($site=='InfoCom94'){

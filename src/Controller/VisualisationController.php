@@ -41,7 +41,9 @@ class VisualisationController extends ControllerBase {
 	private $locale;
     
 	public function __construct(){
-        $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+        // $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
+
 		$this->locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
     }
 

@@ -69,7 +69,9 @@ class Api
 
 	public function __construct()
 	{
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		// $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
+
 		$this->urlCkan = $this->config->ckan->url;
 		$this->urlDatapusher = $this->config->ckan->datapusher_url;
 		$this->isSpecial = $this->config->client->name == 'cda2';
