@@ -16,6 +16,12 @@ return (object) array(
 		'domain' => getenv('CLIENT_DOMAIN'),
 		'css_file' => getenv('CLIENT_CSS'),
 		'default_bounding_box' => getenv('CLIENT_DEFAULT_BOUNDING_BOX'),
+		'routing_prefix' => getenv('CLIENT_ROUTING_PREFIX'),
+        'disqus' => getenv('CLIENT_DISQUS'),
+        'ressources_download_links' => getenv('CLIENT_RESSOURCES_DOWNLOAD_LINKS'),
+        'nutch' => getenv('CLIENT_NUTCH'),
+        'nutch_url' => getenv('CLIENT_NUTCH_URL'),
+        'check_rgpd' => getenv('CLIENT_CHECK_RGPD'),
 		'protocol' => getenv('CLIENT_PROTOCOL'),
 		'host' => getenv('CLIENT_HOST')
 	),
@@ -27,13 +33,18 @@ return (object) array(
 		'url' => getenv('GRAVITEE_URL'),
 		'api_key' => getenv('GRAVITEE_API_KEY')
 	),
+    'csw' => array(
+		'enabled' => getenv('CSW_ENABLED'),
+		'csw_server_path' => getenv('CSW_SERVER_PATH'),
+		'csw_model' => getenv('CSW_MODEL')
+	),
 	'map_tiles' => array(
 		(object) array(
             'name' => 'osm',
             'label' => 'OpenStreetMap',
             'provider' => 'osm',
             'url' => '',
-            'minZoom' => 0,
+            'minZoom' => 1,
             'maxZoom' => 19,
             'type' => 'tile',
             'key' => '',

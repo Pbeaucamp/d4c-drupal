@@ -16,6 +16,12 @@ return (object) array(
 		'domain' => 'CLIENT_NAME.data4citizen.com',
 		'css_file' => 'client.css',
 		'default_bounding_box' => '9,14.644846,-61.013067',
+		'routing_prefix' => '',
+        'disqus' => false,
+        'ressources_download_links' => true,
+        'nutch' => false,
+        'nutch_url' => '',
+        'check_rgpd' => true,
 		'protocol' => 'http',
 		'host' => 'localhost'
 	),
@@ -27,13 +33,18 @@ return (object) array(
 		'url' => '',
 		'api_key' => ''
 	),
+    'csw' => array(
+		'enabled' => false,
+		'csw_server_path' => '/home/user-client/csw-server',
+		'csw_model' => 'csw_server_model'
+	),
 	'map_tiles' => array(
 		(object) array(
             'name' => 'osm',
             'label' => 'OpenStreetMap',
             'provider' => 'osm',
             'url' => '',
-            'minZoom' => 0,
+            'minZoom' => 1,
             'maxZoom' => 19,
             'type' => 'tile',
             'key' => '',
