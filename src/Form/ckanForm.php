@@ -36,7 +36,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
            
         
         $form['#attached']['library'][] = 'ckan_admin/ckanForm.form';
-		// $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         
@@ -140,7 +139,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 	public function submitForm(array &$form, FormStateInterface $form_state){
            
         
-        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api;
@@ -179,7 +177,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         
 	public function datasetCallback(array &$form, FormStateInterface $form_state){
     
-        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api;
@@ -221,7 +218,6 @@ public function buildForm(array $form, FormStateInterface $form_state) {
     
 	public function updateDatasetNow(array &$form, FormStateInterface $form_state){
     
-		// $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api;

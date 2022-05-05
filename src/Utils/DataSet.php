@@ -474,7 +474,6 @@ class DataSet {
 	{
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		//$ckan = $config->get('ckan');
-		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		
@@ -531,7 +530,6 @@ class DataSet {
         
 //		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 //		$ckan = $config->get('ckan');
-		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		
@@ -589,12 +587,6 @@ class DataSet {
 	
 	static function createResource($id_dataSet,$url,$description,$name,$format,$idResource)
 	{
-
-		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-//		$config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
-//		$ckan = $config->ckan->url;
-//		
-        // $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
         
@@ -642,7 +634,6 @@ class DataSet {
 	{
 	
 		$config2 = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		// $config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$config = include(__DIR__ . "/../../config.php");
         
 		$clef = $config->ckan->api_key;
@@ -713,9 +704,6 @@ class DataSet {
 	static function deleteAll()
 	{
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		//$ckan = $config->get('ckan');
-		
-        // $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
         
@@ -743,8 +731,6 @@ class DataSet {
 	static function deleteOrgas($ids)
 	{	
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
-		//$ckan = $config->get('ckan');
-		// $ckan = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$ckan = include(__DIR__ . "/../../config.php");
          $ckan = $ckan->ckan->url;
 		$cronids = $config->get('ids_cron');
@@ -973,7 +959,6 @@ class DataSet {
 		error_log('moissonage datagouv id : ' . print_r($name,true));
         $api = new Api();    
         
-        // $config_file = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$config_file = include(__DIR__ . "/../../config.php");
         $ckan = $config_file->ckan->url;
         

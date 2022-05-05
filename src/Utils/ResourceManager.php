@@ -13,7 +13,7 @@ use \JsonMachine\JsonMachine;
 
 class ResourceManager {
 
-	const ROOT = '/home/user-client/drupal-d4c/';
+	const ROOT = '/home/user-client/drupal-d4c/web/';
 	/**
 	 * This constant represent the maximum time the user can wait for the datapusher to load in the datastore (success or error)
 	 * In sec
@@ -21,7 +21,6 @@ class ResourceManager {
 	const DATAPUSHER_WAIT_TIME = 120;
 
 	function __construct() {
-        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';

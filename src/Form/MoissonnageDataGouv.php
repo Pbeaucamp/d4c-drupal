@@ -129,7 +129,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 '#attributes' => array('style' => 'display: none;'),
 		);
         
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
         $cle = $this->config->ckan->api_key;
         $optionst = array(
             CURLOPT_RETURNTRANSFER => true,
@@ -217,7 +217,7 @@ class MoissonnageDataGouv extends HelpFormBase {
     
 	public function submitForm(array &$form, FormStateInterface $form_state){ 
         
-        $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
         $api = new Api;
         $resourceManager = new ResourceManager;
         $this->urlCkan = $this->config->ckan->url;

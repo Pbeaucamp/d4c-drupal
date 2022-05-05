@@ -45,7 +45,6 @@ class ExportPLUController extends ControllerBase {
 	 *   A simple renderable array.
 	 */
 	public function myPage(Request $request) {
-		// $config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$config = include(__DIR__ . "/../../config.php");
 
 		$content = '<body>

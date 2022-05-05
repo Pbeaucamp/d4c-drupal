@@ -57,19 +57,15 @@ SOFTWARE.
 class Api
 {
 
-	//protected $config = \Drupal::config('ckan_admin.settings');
-	protected $urlCkan; // = "http://192.168.2.223/";
+	protected $urlCkan;
 	protected $urlDatapusher;
-	//protected $urlCkan = file_get_contents(__DIR__ ."/../../config.json");
 	protected $config;
 	protected $isSpecial;
 	protected $isPostgis;
 	protected $themes;
-	//-------------- 
 
 	public function __construct()
 	{
-		// $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
 
 		$this->urlCkan = $this->config->ckan->url;
@@ -737,7 +733,7 @@ class Api
 		Logger::logMessage("Call search " . $callUrl);
 
 		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getSimpleOptions());
+		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
 
@@ -888,6 +884,33 @@ class Api
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
 		}
 
+		//Apply security
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		//If the user is not connected we do not apply security
+		if ($isConnected) {
+			$current_user = \Drupal::currentUser();
+
+			// We include private datasets
+			$query_params["include_private"] = true;
+
+			// If the user is an admin, we do not filter by organisation
+			if (!in_array("administrator", $current_user->getRoles())) {
+				//We include all public datasets
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "(organization:(*) AND private:(false))";
+				}
+				else {
+					$query_params["fq"] .= " AND " . "(organization:(*) AND private:(false))";
+				}
+
+				//We include private datasets from allowed organisations for the user
+				$allowedOrganizations = $this->getAllOrganisations(false, false, true);
+				foreach ($allowedOrganizations as $org) {
+					$query_params["fq"] .= " OR " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+				}
+			}
+		}
+		
 		$coordinateParam = null;
 		if (array_key_exists('coordReq', $query_params)) {
 			$coordinateParam = $query_params['coordReq'];
@@ -1044,7 +1067,7 @@ class Api
 			}
 		}
 
-		if ($this->config->client->nutch) {
+		if ($this->config->client->nutch === true) {
 			Logger::logMessage("Nutch is enable. Calling nutch to search for page");
 			$nutchApi = new NutchApi;
 			$result = $nutchApi->callNutch($this, $params, $result);
@@ -2383,7 +2406,7 @@ class Api
 		return $this->callPackageShow2($datasetid, $params);
 	}
 
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $useApiKey = true)
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $includeAllowedPrivate = false)
 	{
 		$result = '';
 
@@ -2393,7 +2416,7 @@ class Api
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
 
 			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions($useApiKey));
+			curl_setopt_array($curl, $this->getStoreOptions(true));
 			$result = curl_exec($curl);
 			curl_close($curl);
 			//echo $callUrl. "\r\n";
@@ -2403,6 +2426,15 @@ class Api
 		}
 
 		if ($applySecurity) {
+			$datasetOrganization = $result['result']['organization']['name'];
+			$allowedOrganizations = $this->getUserOrganisations();
+			if (!$this->isDatasetAllowed($datasetOrganization, $allowedOrganizations)) {
+				return array();
+			}
+		}
+
+		if ($callCkan && $includeAllowedPrivate && $result['result']['private'] == true) {
+			Logger::logMessage("Dataset " . $datasetid . " is private. Checking if user is allowed to see it.");
 			$datasetOrganization = $result['result']['organization']['name'];
 			$allowedOrganizations = $this->getUserOrganisations();
 			if (!$this->isDatasetAllowed($datasetOrganization, $allowedOrganizations)) {
@@ -2821,10 +2853,12 @@ class Api
 		return $response;
 	}
 
-	public function callDatastoreApiGeoClusterOld($params)
+	public function callDatastoreApiGeoClusterOld($params, $nbOfTries = 0)
 	{
 
 		$params = $this->retrieveParameters($params);
+
+		Logger::logMessage("TRM - callDatastoreApiGeoClusterOld with params: " . $nbOfTries);
 
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
@@ -3044,6 +3078,8 @@ class Api
 		$callUrl =  "http://192.168.2.223:1337/cluster?".$query;
 		//$callUrl =  "https://anfr2.data4citizen.com:1337/cluster?".$query;*/
 
+		Logger::logMessage("TRM - Calling cluster");
+
 		$callUrl = $this->config->cluster->url . "cluster?" . $query;
 
 		//echo $callUrl . "\r\n";
@@ -3052,13 +3088,14 @@ class Api
 		$dataset = curl_exec($curl);
 		curl_close($curl);
 
+		Logger::logMessage("TRM - Cluster called");
+
 		//echo $dataset . "\r\n";
 		$dataset = json_decode($dataset, true);
 		if (empty($dataset["features"])) {
-			if ($clusterPrec < 20) {
+			if ($clusterPrec < 20 && $nbOfTries < 40) {
 				$params = str_replace('clusterprecision=' . ($clusterPrec + 2), 'clusterprecision=' . ($clusterPrec + 4), $params);
-				//error_log($params);
-				return $this->callDatastoreApiGeoClusterOld($params);
+				return $this->callDatastoreApiGeoClusterOld($params, $nbOfTries + 1);
 			}
 		}
 
@@ -5249,9 +5286,9 @@ class Api
 		$tile["type"] = $query_params["type"];
 		$tile["key"] = $query_params["key"];*/
 
+		//TODO: Rework this with new config file
 		$this->config->map_tiles[] = $tile;
-		//json_decode(file_get_contents(__DIR__ ."/../../config.json"));
-		$res = file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		// $res = file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
@@ -5281,7 +5318,8 @@ class Api
 			$this->config->map_tiles[] = $tile;
 		}
 
-		file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		//TODO: Rework this with new config file
+		// file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 
@@ -5304,8 +5342,8 @@ class Api
 			}
 		}
 		$this->config->map_tiles = $arr;
-		error_log(json_encode($this->config->map_tiles));
-		file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		//TODO: Rework this with new config file
+		// file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 
@@ -5400,7 +5438,8 @@ class Api
 	function callVanillaUrlReports()
 	{
 
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
+
 		$vanilla = $this->config->vanilla->url;
 		$result = Query::callSolrServer($vanilla . "/VanillaRuntime/vanillaExternalAccess?objecttype=url");
 		$response = new Response();
@@ -5554,7 +5593,7 @@ class Api
 	function callInfocom94($params)
 	{
 
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$siteSearch1 = $this->config->sitesSearch;
 		$siteSearch = array();
 		foreach ($siteSearch1 as &$val) {
@@ -5609,7 +5648,7 @@ class Api
 				array_push($result, $dataset);
 
 
-				$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+				$this->config = include(__DIR__ . "/../../config.php");
 				$this->urlCkan = $this->config->ckan->url;
 
 				$cle = $this->config->ckan->api_key;
@@ -5700,7 +5739,7 @@ class Api
 	function getResourceById($params)
 	{
 
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 
 		$cle = $this->config->ckan->api_key;
@@ -5737,7 +5776,7 @@ class Api
 	function getDataSetById($id)
 	{
 
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 		$api = new Api;
 		$cle = $this->config->ckan->api_key;
@@ -6537,9 +6576,20 @@ class Api
 
 		if ($applySecurity) {
 			$allowedOrganizations = $this->getUserOrganisations();
-			foreach ($orgs as $valueKey => $org) {
-				if (!$this->isOrganizationAllowed($org["name"], $allowedOrganizations)) {
-					unset($orgs[$valueKey]);
+			if (!$allFields && !$include_extra) {
+				foreach ($orgs as $org) {
+					if (!$this->isOrganizationAllowed($org, $allowedOrganizations)) {
+						if (($key = array_search($org, $orgs)) !== false) {
+							unset($orgs[$key]);
+						}
+					}
+				}
+			}
+			else {
+				foreach ($orgs as $valueKey => $org) {
+					if (!$this->isOrganizationAllowed($org["name"], $allowedOrganizations)) {
+						unset($orgs[$valueKey]);
+					}
 				}
 			}
 		}

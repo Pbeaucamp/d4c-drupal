@@ -58,7 +58,7 @@ class themeForm extends HelpFormBase {
     
 	public function buildForm(array $form, FormStateInterface $form_state) {
         $form = parent::buildForm($form, $form_state);
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
          
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         $form['#attached']['library'][] = 'ckan_admin/theme.form';
@@ -210,7 +210,7 @@ class themeForm extends HelpFormBase {
 	
 	public function deleteTheme(array &$form, FormStateInterface $form_state){
 		$api = new Api;
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 		
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
@@ -256,7 +256,7 @@ class themeForm extends HelpFormBase {
 	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		
         $config = \Drupal::service('config.factory')->getEditable('ckan_admin.themeForm');
         
@@ -361,7 +361,7 @@ class themeForm extends HelpFormBase {
             
 			///// replace theme in dataset 
             
-			$this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
+			$this->config = include(__DIR__ . "/../../config.php");
 			$this->urlCkan = $this->config->ckan->url; 
         
 			$api = new Api;

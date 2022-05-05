@@ -70,7 +70,6 @@ class editMetaDataForm extends HelpFormBase {
 
         $form['#attached']['library'][] = 'ckan_admin/editMetaDataForm.form';
         $form['#attached']['library'][] = 'ckan_admin/editMetaDataFormModal.form';
-        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
 

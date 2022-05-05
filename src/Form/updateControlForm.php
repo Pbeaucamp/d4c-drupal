@@ -64,7 +64,7 @@ class updateControlForm extends HelpFormBase {
     ),
     "dd"];
 
-    $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
     $this->urlCkan = $this->config->ckan->url;
 
 

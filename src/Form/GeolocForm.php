@@ -33,7 +33,7 @@ class GeolocForm extends HelpFormBase
 	{
         $form = parent::buildForm($form, $form_state);
 		$form['#attached']['library'][] = 'ckan_admin/GeolocForm.form';
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 
 		$cle = $this->config->ckan->api_key;

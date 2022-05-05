@@ -45,8 +45,8 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $form['#attached']['library'][] = 'ckan_admin/PackagesForm.form';
         
 
-        // get contents of config json file
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+        // get contents of config.php file
+		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
 
         // call api entity
@@ -307,7 +307,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 	public function submitForm(array &$form, FormStateInterface $form_state)
 	{
 
-		$this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
+		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
         $api = new Api();
         $resourceManager = new ResourceManager;

@@ -41,7 +41,6 @@ class VisualisationController extends ControllerBase {
 	private $locale;
     
 	public function __construct(){
-        // $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
 
 		$this->locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
@@ -70,7 +69,7 @@ class VisualisationController extends ControllerBase {
 		
 		$pageId = $id;
 
-		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, false);
+		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, true);
 		if (!isset($dataset["metas"]["id"])) {
 			//Dataset is not found we set a 404 page
 			$imports = $this->buildImports($id, null, null, null, null, null, null, null);

@@ -46,7 +46,6 @@ class addThemeInDatasetForm extends HelpFormBase {
         
         $form['#attached']['library'][] = 'ckan_admin/addThemeInDatasetForm.form';
         
-        // $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url; 
         
@@ -127,7 +126,6 @@ class addThemeInDatasetForm extends HelpFormBase {
     
 	public function submitForm(array &$form, FormStateInterface $form_state){
         
-        // $this->config = json_decode(file_get_contents(__DIR__ ."/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url; 
         

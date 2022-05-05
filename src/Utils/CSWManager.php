@@ -4,7 +4,7 @@ namespace Drupal\ckan_admin\Utils;
 use Drupal\ckan_admin\Utils\Logger;
 
 /**
- * This class manage the creation of CSW node if enable in config.json
+ * This class manage the creation of CSW node if enable in config.php
  */
 class CSWManager {
 
@@ -12,7 +12,6 @@ class CSWManager {
 	const FLUX_NAME = '{$FLUX_NAME}';
 
 	function __construct() {
-        // $this->config = json_decode(file_get_contents(__DIR__ . "/../../config.json"));
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->isCSWEnabled = $this->config->csw->enabled;
 		$this->cswServerPath = $this->config->csw->csw_server_path;
