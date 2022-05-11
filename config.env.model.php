@@ -5,7 +5,13 @@ return (object) array(
 		'url' => getenv('CKAN_URL'),
 		'api_key' => getenv('CKAN_API_KEY'),
 		'datapusher_key' => getenv('DATAPUSHER_KEY'),
-		'datapusher_url' => getenv('DATAPUSHER_URL')
+		'datapusher_url' => getenv('DATAPUSHER_URL'),
+		'db_ckan_name' => getenv('CKAN_DATABASE_NAME'),
+		'db_datastore_name' => getenv('CKAN_DATASTORE_NAME'),
+		'db_user' => getenv('CKAN_DATABASE_USERNAME'),
+		'db_pass' => getenv('CKAN_DATABASE_PASSWORD'),
+		'db_host' => getenv('CKAN_DATABASE_HOST'),
+		'db_port' => getenv('CKAN_DATABASE_PORT')
 	),
 	'cluster' => (object) array(
 		'url' => getenv('CLUSTER_URL')

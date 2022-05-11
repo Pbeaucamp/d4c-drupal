@@ -391,11 +391,18 @@ class Api
 	}
 
 
-	public function callDatastoreApiFacet($params)
-	{
-		$params = $this->retrieveParameters($params);
+	public function callDatastoreApiFacet($params) {
+		$result = $this->datastoreApiFacet($params);
 
-		//error_log('params = ' . $params);
+		echo json_encode($result);
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
+
+	function datastoreApiFacet($params) {
+		
+		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 		if (array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)) {
 			$nhits;
@@ -550,6 +557,8 @@ class Api
 
 					$req['sql'] = $sql;
 
+					Logger::logMessage("SQL : " . $sql);
+
 					//echo $sql;
 					$url2 = http_build_query($req);
 					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -560,6 +569,8 @@ class Api
 					//echo $callUrl;
 					curl_close($curl);
 					$result = json_decode($result, true);
+
+					Logger::logMessage("Result : " . json_encode($result));
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);
@@ -644,13 +655,11 @@ class Api
 				$data_array['records'] = $data['records'];
 				$data_array['nhits'] = $data['nhits'];
 			}
-			echo json_encode($data_array);
-			$response = new Response();
-			$response->headers->set('Content-Type', 'application/json');
-			//$response->body(json_encode( $data_array ));
-			return $response;
-		} else {
-			return $this->callDatastoreApi($params);
+
+			return $data_array;
+		}
+		else {
+			return $this->getDatastoreApi($params);
 		}
 	}
 
@@ -8676,4 +8685,5 @@ class Api
 	}
 
 	/* END SECURITY PART WITH ROLES AND ORGANIZATION */
+
 }

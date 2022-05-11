@@ -1664,6 +1664,36 @@ class VisualisationController extends ControllerBase {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
 				<p>Administration du jeu de données: ' . $name . '</p>
+				<button ng-click="editData()">Editer le jeu de données</button>
+				<table id="edit_table" class="display">
+					<thead>
+						<tr>
+							<th>_id</th>
+							<th>id</th>
+							<th>geo_point_2d</th>
+							<th>adm_lb_nom</th>
+							<th>sup_id</th>
+							<th>emr_lb_systeme</th>
+							<th>emr_dt</th>
+							<th>sta_nm_dpt</th>
+							<th>code_insee</th>
+							<th>generation</th>
+							<th>date_maj</th>
+							<th>sta_nm_anfr</th>
+							<th>nat_id</th>
+							<th>sup_nm_haut</th>
+							<th>tpo_id</th>
+							<th>adr_lb_lieu</th>
+							<th>adr_lb_add1</th>
+							<th>adr_lb_add2</th>
+							<th>adr_lb_add3</th>
+							<th>adr_nm_cp</th>
+							<th>com_cd_insee</th>
+							<th>coord</th>
+							<th>statut</th>
+						</tr>
+					</thead>
+				</table>
 			</d4c-pane>
 		';
 	}
@@ -1710,7 +1740,11 @@ class VisualisationController extends ControllerBase {
 			<script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
-	
+  
+			// <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+			<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.11.5/b-2.2.2/fh-3.2.2/sc-2.0.5/sl-1.3.4/datatables.min.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/datatable-editor/js/dataTables.editor.js"></script>
+
 			<script>
 				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/normalize.css\" rel=\"stylesheet\">");
@@ -1719,28 +1753,27 @@ class VisualisationController extends ControllerBase {
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+				
+				// $("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css\">");
+				$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.11.5/b-2.2.2/fh-3.2.2/sc-2.0.5/sl-1.3.4/datatables.min.css\"/>");
+				$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/datatable-editor/css/editor.dataTables.css\">");
+			
 				$("head").append("<base href=\"/\">");
 					
 			</script>
 		
 			<script type="application/ld+json">
-			{
-				"@context":"http://schema.org/",
-				"@type":"Dataset",
-				"name":"'.$name.'",
-				"description":"'.$description.'",
-				"url":"'.$url.'",
-				"dateModified": "'.$dateModified.'"
-				,
-				"keywords": '.json_encode($keywords).'
-				
-			,
-				"distribution": '.json_encode($resources, JSON_UNESCAPED_SLASHES).'
-				
-				,
-				"license": "'.$licence.'"
-				
-			}
+				{
+					"@context":"http://schema.org/",
+					"@type":"Dataset",
+					"name":"'.$name.'",
+					"description":"'.$description.'",
+					"url":"'.$url.'",
+					"dateModified": "'.$dateModified.'",
+					"keywords": '.json_encode($keywords).',
+					"distribution": '.json_encode($resources, JSON_UNESCAPED_SLASHES).',
+					"license": "'.$licence.'"
+				}
 			</script>
 		';
 	}

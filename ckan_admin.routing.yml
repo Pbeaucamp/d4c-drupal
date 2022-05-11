@@ -962,10 +962,19 @@ ckan_admin.unsubscribeDataset:
     _permission: 'access content'
 
 
+# Part Datatable
+ckan_admin.api.datatable.manage:
+  path: '/d4c/api/datatable/manage/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\D4CDatatable::manageData'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
 
 
     
-
+# Part API
 ckan_admin.api.findDataset:
   path: '/d4c/api/v1/dataset/find'
   defaults:
