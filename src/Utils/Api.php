@@ -6294,6 +6294,9 @@ class Api
 		return $response;
 	}
 
+	/**
+	 * To test you can curl -H "Authorization: SECRET_KEY" URL_DATAPUSHER/job/JOB_ID
+	 */
 	function getDatapusherJobStatus($resourceId)
 	{
 		Logger::logMessage("Get datapusher status for resource '" . $resourceId . "'");

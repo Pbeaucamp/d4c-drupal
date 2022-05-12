@@ -2,12 +2,6 @@
 
 namespace Drupal\ckan_admin\Utils;
 
-/*
- * Editor server script for DB table test
- * Created by http://editor.datatables.net/generator
- */
-
-
 // Alias Editor classes so they are easy to use
 use
 	DataTables\Database,
@@ -61,31 +55,29 @@ class D4CDatatable {
 		$api = new Api;
 		$query_params = $api->proper_parse_str($params);
 
-		$datasetId = $query_params['id'];
-		$resourceId = $query_params['resource_id'];
+		// $datasetId = $query_params['datasetId'];
+		$resourceId = $query_params['resourceId'];
 		$fields = urldecode($query_params['fields']);
 		// Split fields by comma
 		$fields = explode(",", $fields);
 
-		Logger::logMessage("TRM - datasetId: " . $datasetId . " resourceId: " . $resourceId . " fields: " . json_encode($fields));
-
 		$tableName = $resourceId;
 		$columnKey = '_id';
 
-		Logger::logMessage("TRM - tableName: " . $tableName . " columnKey: " . $columnKey);
-
 		// New array to store the fields
 		$editorFields = array();
-		$editorFields[] = Field::inst('_id');
 		// Go through array of fields
 		foreach ($fields as $field) {
-			Logger::logMessage("TRM - field: " . $field);
-
 			$editorFields[] = Field::inst($field);
 		}
 
+		//TODO : Gestion des valeurs NULL et des types date !
+		//https://www.drupal8.ovh/en/tutoriels/353/get-table-column-names-drupal-8
+
 		// Build our Editor instance and process the data coming from _POST
-		Editor::inst($this->db, $tableName, $columnKey)
+		// Editor::inst($this->db, $tableName, $columnKey)
+		$editor = Editor::inst($this->db, $tableName, $columnKey)
+			->debug(true)
 			->fields( $editorFields )
 			->process( $_POST )
 			->json();

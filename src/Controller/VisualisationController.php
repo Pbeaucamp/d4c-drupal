@@ -1668,7 +1668,6 @@ class VisualisationController extends ControllerBase {
 				<table id="edit_table" class="display">
 					<thead>
 						<tr>
-							<th>_id</th>
 							<th>id</th>
 							<th>geo_point_2d</th>
 							<th>adm_lb_nom</th>
