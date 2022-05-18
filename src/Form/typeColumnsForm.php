@@ -164,6 +164,10 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('DATE pour Frise Chronologique'),
 					':action' => 'checkAll("-date_timeline","checkboxDateFriseChrono")'])
 				),
+				"canEdit" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxCanEdit" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Editable'),
+					':action' => 'checkAll("-can_edit","checkboxCanEdit")'])
+				),
 				"poids" => $this->t('Poids'),
 
 				//$this->t("image_url"),
@@ -279,6 +283,11 @@ class typeColumnsForm extends HelpFormBase {
 			//  );
 		
 			$form['table'][$i]['date_timeline'] = array(
+				'#type' => 'textfield',
+				'#size' => 15,
+			); 
+		
+			$form['table'][$i]['can_edit'] = array(
 				'#type' => 'textfield',
 				'#size' => 15,
 			); 
@@ -464,18 +473,18 @@ class typeColumnsForm extends HelpFormBase {
         $id_data = $selectData[0];
         $id_resource = $selectData[1];   
         
-        $filds = $api->getAllFieldsForTableParam($id_resource, 'true');
+        $fields = $api->getAllFieldsForTableParam($id_resource, 'true');
 
         $table_data = $form_state->getValue('table');
         
 		$json=array();
-        $json["resource_id"]=$filds[result][resource_id];
+        $json["resource_id"]=$fields[result][resource_id];
         $json["force"]='true';
         $json["fields"]=array();
         
-        //array_push($json["fields"], $filds[result][fields][0]);
+        //array_push($json["fields"], $fields[result][fields][0]);
 
-        for( $i=1; $i<count($filds[result][fields]); $i++){
+        for( $i=1; $i<count($fields[result][fields]); $i++){
             
             $notes='';
             $title='';
@@ -670,13 +679,20 @@ class typeColumnsForm extends HelpFormBase {
 //                  $notes=$notes.'<!----> ';
 //              }
             }
+            
+            if ($table_data[$i][can_edit]){
+                $canEdit = $table_data[$i][can_edit];
+                if ($canEdit == 1){
+                    $notes = $notes.'<!--can_edit-->,';
+                }
+            }
 			
-			$notes =substr($notes, 0, -1);
-			$filds[result][fields][$i][info][notes]=$notes;  
-			$filds[result][fields][$i][info][label]=$title;
-			$filds[result][fields][$i][info][poids]=$poids;
+			$notes = substr($notes, 0, -1);
+			$fields[result][fields][$i][info][notes] = $notes;  
+			$fields[result][fields][$i][info][label] = $title;
+			$fields[result][fields][$i][info][poids] = $poids;
         
-			array_push($json["fields"], $filds[result][fields][$i]);
+			array_push($json["fields"], $fields[result][fields][$i]);
 		}
 
         $callUrl = $this->urlCkan . "/api/action/datastore_create";//create
@@ -813,8 +829,8 @@ class typeColumnsForm extends HelpFormBase {
         for($i=0; $i<count($dataSet); $i++){
             for($j=0; $j<count($dataSet[$i][resources]); $j++){
                 if($dataSet[$i][resources][$j][format]=='CSV'){
-					// $filds = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
-					// $tableData[$i]=$filds;
+					// $fields = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
+					// $tableData[$i]=$fields;
 						
 					$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
 						

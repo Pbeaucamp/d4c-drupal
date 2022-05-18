@@ -425,7 +425,7 @@ class VisualisationController extends ControllerBase {
 			$tabAPI = $this->buildTabAPI($dataset);
 			$tabReuses = $this->buildTabReuses($loggedIn, $name);
 			if ($loggedIn) {
-				$tabAdmin = $this->buildTabAdmin($name);
+				$tabAdmin = $this->buildTabAdmin($dataset, $name);
 			}
 		}
 
@@ -1660,37 +1660,49 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAdmin($name) {
+	function buildTabAdmin($dataset, $name) {
+		$fields = $dataset["fields"];
+
+		$tableHeader = '<tr>';
+
+		if (sizeof($fields) > 0 ) {
+			foreach($fields as $key=>$value) {
+				$canEdit = false;
+				if (sizeof($value["annotations"]) > 0 ) {
+					foreach($value["annotations"] as $key2=>$annotation) {
+						if ($annotation["name"] == "can_edit") {
+							$canEdit = true;
+							break;
+						}
+					}
+				}
+
+				if ($canEdit) {
+					$tableHeader .= '<th>' . $value["name"] . '</th>';
+				}
+			}
+		}
+
+		$tableHeader .= '</tr>';
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
-				<p>Administration du jeu de données: ' . $name . '</p>
-				<button ng-click="editData()">Editer le jeu de données</button>
-				<table id="edit_table" class="display">
+				<details class="gris" open>
+					<summary>Administration</summary>
+					<div>
+						<a id="btn-edit-data" ng-click="editData()">
+							<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+							<span>Editer le jeu de données</span>
+						</a>
+						<a id="btn-validate-data" ng-click="validateData()">
+							<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
+							<span>Valider les données</span>
+						</a>
+					</div>
+				</details>
+				<table id="edit_table" class="display" style="display: none;">
 					<thead>
-						<tr>
-							<th>id</th>
-							<th>geo_point_2d</th>
-							<th>adm_lb_nom</th>
-							<th>sup_id</th>
-							<th>emr_lb_systeme</th>
-							<th>emr_dt</th>
-							<th>sta_nm_dpt</th>
-							<th>code_insee</th>
-							<th>generation</th>
-							<th>date_maj</th>
-							<th>sta_nm_anfr</th>
-							<th>nat_id</th>
-							<th>sup_nm_haut</th>
-							<th>tpo_id</th>
-							<th>adr_lb_lieu</th>
-							<th>adr_lb_add1</th>
-							<th>adr_lb_add2</th>
-							<th>adr_lb_add3</th>
-							<th>adr_nm_cp</th>
-							<th>com_cd_insee</th>
-							<th>coord</th>
-							<th>statut</th>
-						</tr>
+						' . $tableHeader . '
 					</thead>
 				</table>
 			</d4c-pane>

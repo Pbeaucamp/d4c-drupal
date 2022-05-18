@@ -76,7 +76,7 @@ class D4CDatatable {
 
 		// Build our Editor instance and process the data coming from _POST
 		// Editor::inst($this->db, $tableName, $columnKey)
-		$editor = Editor::inst($this->db, $tableName, $columnKey)
+		Editor::inst($this->db, $tableName, $columnKey)
 			->debug(true)
 			->fields( $editorFields )
 			->process( $_POST )

@@ -971,8 +971,6 @@ ckan_admin.api.datatable.manage:
     _title: ''
   requirements:
     _permission: 'access content'
-
-
     
 # Part API
 ckan_admin.api.findDataset:

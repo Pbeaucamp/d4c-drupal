@@ -1589,6 +1589,9 @@ class Api
 					$annotations[] = array("name" => "date_timeLine");
 					//$hasFacet = true; //echo "1";
 				}
+				if (preg_match("/<!--.*can_edit.*-->/i", $description)) {
+					$annotations[] = array("name" => "can_edit");
+				}
 
 				$descriptionLabel = $description;
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
