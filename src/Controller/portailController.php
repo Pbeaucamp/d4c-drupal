@@ -196,7 +196,7 @@ class portailController extends ControllerBase {
 
 		mod.factory("config", [function() {
 			return {
-				ID_DATASET: "'.$id.'",
+				ID_DATASET: "",
 				HOST: "'.$config->client->domain.'"
 			}
 		}]);

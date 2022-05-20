@@ -54,7 +54,9 @@ return (object) array(
             'maxZoom' => 19,
             'type' => 'tile',
             'key' => '',
-            'attribution' => ''
+            'attribution' => '',
+			'mapId' => '',
+			'layers' => ''
 		)
 	)
 );

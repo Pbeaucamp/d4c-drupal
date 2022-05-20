@@ -5273,11 +5273,11 @@ class Api
 		}
 		$data_array = $this->getMapLayers($type);
 
-		echo json_encode($data_array);
+		// echo json_encode($data_array);
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
-
+		$response->setContent(json_encode($data_array));
 		return $response;
 	}
 
