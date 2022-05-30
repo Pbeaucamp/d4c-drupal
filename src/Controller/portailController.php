@@ -2,6 +2,7 @@
 namespace Drupal\ckan_admin\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\ckan_admin\Utils\Logger;
 
 /**
  * Provides route responses for the Example module.
@@ -26,7 +27,7 @@ class portailController extends ControllerBase {
 			<ul id="list-theme" class="list-group">
 				<input id="input-theme" type="hidden" class="hidden-filter">
 			</ul>';
-		if ($config->client->nutch) {
+		if ($config->client->nutch === true) {
 			$title = 'pages de sites';
 			$producteurTitle = 'Origine des sites';
 			$visualisations = '';

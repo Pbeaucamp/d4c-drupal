@@ -6651,9 +6651,15 @@ class Api
 
 		//if(!$hasFields){
 		$resourcesid = null;
+		$hasWMS = false;
 		foreach ($dataset['resources'] as $value) {
 			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 				$resourcesid = $value['id'];
+			}
+
+			//Checking if we have a WMS resource to add the feature geo
+			if (strcasecmp($value['format'], "WMS") == 0) {
+				$hasWMS = true;
 			}
 		}
 		if ($resourcesid != null) {
@@ -6714,7 +6720,7 @@ class Api
 			if ($colTimeline != null) {
 				$features[] = "timeline";
 			}
-			if ($colGeo != null) {
+			if ($colGeo != null || $hasWMS) {
 				$features[] = "geo";
 			}
 
@@ -6736,6 +6742,9 @@ class Api
 				$features[] = "analyze";
 			}
 			$features[] = "table";
+		}
+		else if ($hasWMS) {
+			$features[] = "geo";
 		}
 
 		$customView = $this->getCustomView($dataset['id']);
