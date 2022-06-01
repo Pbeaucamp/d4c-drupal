@@ -29,7 +29,8 @@ return (object) array(
         'nutch_url' => getenv('CLIENT_NUTCH_URL'),
         'check_rgpd' => getenv('CLIENT_CHECK_RGPD'),
 		'protocol' => getenv('CLIENT_PROTOCOL'),
-		'host' => getenv('CLIENT_HOST')
+		'host' => getenv('CLIENT_HOST'),
+		'port' => getenv('CLIENT_PORT')
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',

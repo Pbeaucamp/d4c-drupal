@@ -23,7 +23,8 @@ return (object) array(
         'nutch_url' => '',
         'check_rgpd' => true,
 		'protocol' => 'http',
-		'host' => 'localhost'
+		'host' => 'localhost',
+		'port' => '80'
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',
