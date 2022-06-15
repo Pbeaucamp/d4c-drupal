@@ -1665,6 +1665,7 @@ class VisualisationController extends ControllerBase {
 
 		$tableHeader = '<tr>';
 
+		$displayEditor = false;
 		if (sizeof($fields) > 0 ) {
 			foreach($fields as $key=>$value) {
 				$canEdit = false;
@@ -1678,6 +1679,7 @@ class VisualisationController extends ControllerBase {
 				}
 
 				if ($canEdit) {
+					$displayEditor = true;
 					$tableHeader .= '<th>' . $value["name"] . '</th>';
 				}
 			}
@@ -1685,22 +1687,25 @@ class VisualisationController extends ControllerBase {
 
 		$tableHeader .= '</tr>';
 
+		$buttonEditor = $displayEditor ? '
+			<a id="btn-edit-data" ng-click="editData()">
+				<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+				<span>Editer le jeu de données</span>
+			</a>' : '';
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
 				<details class="gris" open>
 					<summary>Administration</summary>
 					<div>
-						<a id="btn-edit-data" ng-click="editData()">
-							<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-							<span>Editer le jeu de données</span>
-						</a>
+						' . $buttonEditor . '
 						<a id="btn-validate-data" ng-click="validateData()">
 							<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
 							<span>Valider les données</span>
 						</a>
 					</div>
 				</details>
-				<table id="edit_table" class="display" style="display: none;">
+				<table id="edit_table" class="display" style="display: none" width="100%">
 					<thead>
 						' . $tableHeader . '
 					</thead>
@@ -1751,10 +1756,7 @@ class VisualisationController extends ControllerBase {
 			<script src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
-  
-			// <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
-			<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.11.5/b-2.2.2/fh-3.2.2/sc-2.0.5/sl-1.3.4/datatables.min.js"></script>
-			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/datatable-editor/js/dataTables.editor.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/DataTables/datatables.min.js"></script>
 
 			<script>
 				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
@@ -1764,11 +1766,8 @@ class VisualisationController extends ControllerBase {
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$this->config->client->css_file.'\" rel=\"stylesheet\">");
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
+				$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/DataTables/datatables.min.css\" rel=\"stylesheet\" type=\"text/css\"/>");
 				
-				// $("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css\">");
-				$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.11.5/b-2.2.2/fh-3.2.2/sc-2.0.5/sl-1.3.4/datatables.min.css\"/>");
-				$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/datatable-editor/css/editor.dataTables.css\">");
-			
 				$("head").append("<base href=\"/\">");
 					
 			</script>

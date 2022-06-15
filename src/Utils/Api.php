@@ -2057,11 +2057,11 @@ class Api
 							/* Get name of ever field user and assign it to fields Header*/
 							if (isset($reqFieldsArray)) {
 								if (in_array($valuefields["id"], $reqFieldsArray)) {
-									$fieldsHeader .= (!$first ? ";" : "") . $valuefields["info"]["label"];
+									$fieldsHeader .= (!$first ? "," : "") . $valuefields["info"]["label"];
 									$first = false;
 								}
 							} else {
-								$fieldsHeader .= (!$first ? ";" : "") . $valuefields["info"]["label"];
+								$fieldsHeader .= (!$first ? "," : "") . $valuefields["info"]["label"];
 								$first = false;
 							}
 
@@ -2071,22 +2071,22 @@ class Api
 				} else {
 					if (isset($reqFieldsArray)) {
 						if (in_array($value['name'], $reqFieldsArray)) {
-							$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+							$fieldsHeader .= (!$first ? "," : "") . $value['name'];
 							$first = false;
 						}
 					} else {
-						$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+						$fieldsHeader .= (!$first ? "," : "") . $value['name'];
 						$first = false;
 					}
 				}
 			} else {
 				if (isset($reqFieldsArray)) {
 					if (in_array($value['name'], $reqFieldsArray)) {
-						$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+						$fieldsHeader .= (!$first ? "," : "") . $value['name'];
 						$first = false;
 					}
 				} else {
-					$fieldsHeader .= (!$first ? ";" : "") . $value['name'];
+					$fieldsHeader .= (!$first ? "," : "") . $value['name'];
 					$first = false;
 				}
 			}
@@ -2122,41 +2122,29 @@ class Api
 			$url2 = http_build_query($query_params);
 			//echo $url2;
 			$callUrl =  $this->urlCkan . "api/action/datastore_search?" . $url2;
-
-			//echo mb_strlen($callUrl , '8bit');				  
+			  
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
 			$result2 = curl_exec($curl);
-			//echo $result2 . "\r\n";
 			curl_close($curl);
 
-			//		header('Content-Type:text/csv');
-			//		header('Content-Disposition:attachment; filename=file.csv');
-			//		echo json_encode(json_decode($result2,true)["result"]["records"]);	
 			if ($format == "objects") {
 				$records = array_merge($records, json_decode($result2, true)["result"]["records"]);
-			} else {
-				// $records = array_merge($records, json_decode($result2,true)["result"]["records"]);
-				error_log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaa' . $callUrl);
+			}
+			else {
 				$records .= json_decode($result2, true)["result"]["records"];
 			}
 		}
 		if ($format == "objects") {
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
 			return json_encode($data_array);
-			// return json_encode($records);
-		} else {
-			$records = chr(239) . chr(187) . chr(191) . $fieldsHeader . preg_replace('/,(?![^"]*",)/i', ';', $records);
+		}
+		else {
+			//We use to export the data with ; as separator, now we came back to , as separator
+			// $records = chr(239) . chr(187) . chr(191) . $fieldsHeader . preg_replace('/,(?![^"]*",)/i', ';', $records);
+			$records = chr(239) . chr(187) . chr(191) . $fieldsHeader . $records;
 			return 	$records;
 		}
-
-
-		//		$response = new Response();
-		//		$response->setContent(json_encode($result));
-		//		$response->headers->set('Content-Type', 'application/octet-stream');
-		//		$response->headers->set("Content-Transfer-Encoding","Binary");
-		//		$response->headers->set("Content-Disposition","attachment; filename=file.csv");
-		//		$response->send();
 	}
 
 	public function callDatastoreApiDownload($params)
