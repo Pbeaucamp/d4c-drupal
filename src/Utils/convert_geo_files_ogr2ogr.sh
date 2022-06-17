@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 fileType=$1
 output=$2
 input=$3
