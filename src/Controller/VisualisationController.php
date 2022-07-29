@@ -413,14 +413,14 @@ class VisualisationController extends ControllerBase {
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
 		if (!$rgpdNonConnected) {
-			$tabTable = $this->buildTabTable();
-			$tabMap = $this->buildTabMap($dataset, $metadataExtras, $location);
-			$tabAnalyze = $this->buildTabAnalyze();
-			$tabImage = $this->buildTabImage();
-			$tabCalendar = $this->buildTabCalendar();
-			$tabCustomView = $this->buildTabCustomView();
-			$tabWordCloud = $this->buildTabWordCloud();
-			$tabTimeline = $this->buildTabTimeline();
+			$tabTable = $this->buildTabTable($loggedIn);
+			$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location);
+			$tabAnalyze = $this->buildTabAnalyze($loggedIn);
+			$tabImage = $this->buildTabImage($loggedIn);
+			$tabCalendar = $this->buildTabCalendar($loggedIn);
+			$tabCustomView = $this->buildTabCustomView($loggedIn);
+			$tabWordCloud = $this->buildTabWordCloud($loggedIn);
+			$tabTimeline = $this->buildTabTimeline($loggedIn);
 			$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 			$tabAPI = $this->buildTabAPI($dataset);
 			$tabReuses = $this->buildTabReuses($loggedIn, $name);
@@ -1242,7 +1242,7 @@ class VisualisationController extends ControllerBase {
 
 	/* END METADATA */
 
-	function buildTabTable() {
+	function buildTabTable($loggedIn) {
 		return '
 			<d4c-pane title="Table" icon="table" translate="title" slug="table">
 				<d4c-table context="ctx" auto-resize="true" dataset-feedback="true"></d4c-table>
@@ -1250,12 +1250,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="table"></d4c-embed-control>
+					embed-type="table"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabMap($dataset, $metadataExtras, $location) {
+	function buildTabMap($loggedIn, $dataset, $metadataExtras, $location) {
 		$resources = $dataset["metas"]["resources"];
 
 		$customBounds = '';
@@ -1304,12 +1305,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="map"></d4c-embed-control>
+					embed-type="map"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabAnalyze() {
+	function buildTabAnalyze($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Analyze" icon="chart-bar" translate="title" slug="analyze" do-not-register="!ctx.dataset.hasFeature(\'analyze\')">
 				<d4c-analyze context="ctx" sync-to-url="true"></d4c-analyze>
@@ -1317,12 +1319,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="analyze"></d4c-embed-control>
+					embed-type="analyze"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabImage() {
+	function buildTabImage($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Images" icon="picture-o" translate="title" slug="images" do-not-register="!ctx.dataset.hasFeature(\'image\')">
 				<d4c-media-gallery context="ctx" d4c-auto-resize d4c-widget-tooltip></d4c-media-gallery>
@@ -1330,12 +1333,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="media-gallery"></d4c-embed-control>
+					embed-type="media-gallery"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabCalendar() {
+	function buildTabCalendar($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Calendar" icon="calendar" translate="title" slug="calendar" do-not-register="!ctx.dataset.hasFeature(\'calendar\')">
   				<d4c-calendar context="ctx" sync-to-url="true"></d4c-calendar>
@@ -1343,12 +1347,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="calendar"></d4c-embed-control>
+					embed-type="calendar"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabCustomView() {
+	function buildTabCustomView($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true"
 					title="\{\{ ctx.dataset.extra_metas.visualization.custom_view_title || DefaultCustomViewConfig.title \}\}"
@@ -1361,12 +1366,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="custom"></d4c-embed-control>
+					embed-type="custom"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabWordCloud() {
+	function buildTabWordCloud($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Word Cloud" icon="cloud" translate="title" slug="wordcloud" do-not-register="!ctx.dataset.hasFeature(\'wordcloud\')">
 				<d4c-wordcloud context="ctx" sync-to-url="true"></d4c-wordcloud>
@@ -1374,12 +1380,13 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="wordcloud"></d4c-embed-control>
+					embed-type="wordcloud"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabTimeline() {
+	function buildTabTimeline($loggedIn) {
 		return '
 			<d4c-pane pane-auto-unload="true" title="Frise chronologique" icon="history" translate="title" slug="timeline" do-not-register="!ctx.dataset.hasFeature(\'timeline\')">
   				<d4c-timeline context="ctx" sync-to-url="true"></d4c-timeline>
@@ -1387,7 +1394,8 @@ class VisualisationController extends ControllerBase {
 				<d4c-embed-control context="ctx"
 					force-embed-dataset-card="false"
 					anonymous-access="true"
-					embed-type="timeline"></d4c-embed-control>
+					embed-type="timeline"
+					logged-in="' . $loggedIn . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}

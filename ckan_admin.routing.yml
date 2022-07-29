@@ -1049,3 +1049,20 @@ ckan_admin.api.removeResource:
     _auth: [ 'basic_auth' ]
   requirements:
     _user_is_logged_in: 'TRUE'
+    
+ckan_admin.visualizations:
+  path: '/d4c/api/v1/visualizations'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callGlobalVisualizations'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+    
+ckan_admin.datasets.visualization:
+  path: '/d4c/api/v1/visualization'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callVisualizations'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  methods: [POST, DELETE]

@@ -8689,4 +8689,151 @@ class Api
 
 	/* END SECURITY PART WITH ROLES AND ORGANIZATION */
 
+	function callVisualizations() {
+		$userId = \Drupal::currentUser()->id();
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		if (!$isConnected) {
+			$response = new Response();
+			$response->setStatusCode(503);
+			$response->headers->set('Content-Type', 'application/json');
+
+			return $response;
+		}
+
+		$method = $_SERVER['REQUEST_METHOD'];
+
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+
+		$result = array();
+
+		$table = "d4c_dataset_visualization";
+
+		switch ($method) {
+		case 'POST':
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+
+			$datasetid = $data->datasetId;
+			$type = $data->embedType;
+			$name = $data->visualizationName;
+			$shareUrl = $data->shareUrl;
+			$iframe = $data->iframe;
+			$widget = $data->widget;
+
+			$query = \Drupal::database()->insert($table);
+			$query->fields([
+				'dataset_id',
+				'user_id',
+				'creation_date',
+				'type',
+				'name',
+				'share_url',
+				'iframe',
+				'widget'
+			]);
+			$query->values([
+				$datasetid,
+				$userId,
+				'now',
+				$type,
+				$name,
+				$shareUrl,
+				$iframe,
+				$widget,
+			]);
+			$query->execute();
+
+			$result = array();
+			$result["status"] = "success";
+			echo json_encode($result);
+
+			break;
+		case 'DELETE':
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+
+			$visualizationId = $data->visualizationId;
+
+			if ($visualizationId == "") {
+				$response = new Response();
+				$response->setStatusCode(500);
+				$response->headers->set('Content-Type', 'application/json');
+
+				return $response;
+			}
+
+			$query = \Drupal::database()->delete($table);
+			$query->condition('id', $visualizationId);
+
+			$query->execute();
+			echo json_encode(array("status" => "success"));
+			break;
+		}
+
+		return $response;
+	}
+
+	function callGlobalVisualizations() {
+		echo $this->getVisualizations(null);
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
+
+	function getVisualizations($datasetId) {
+		$table = "d4c_dataset_visualization";
+		$query = \Drupal::database()->select($table, 'visualization');
+
+		$query->fields('visualization', [
+			'id',
+			'dataset_id',
+			'user_id',
+			'creation_date',
+			'type',
+			'name',
+			'share_url',
+			'iframe',
+			'widget'
+		]);
+
+		if (isset($datasetId)) {
+			$query->condition('dataset_id', $datasetId);
+		}
+		// $query->condition('user_id', $userId);
+
+		$data = array();
+
+		$prep = $query->execute();
+		while ($enregistrement = $prep->fetch()) {
+			$recDatasetId = $enregistrement->dataset_id;
+			// $recType = $enregistrement->type;
+
+			$dataset = $this->findDataset($recDatasetId);
+			$organization = $dataset['organization']['name'];
+
+			$enregistrement->organization = $organization;
+			$enregistrement->datasetName = $dataset['title'];
+
+			$data[] = $enregistrement;
+
+			//Not working for now
+			// // Create an array entry for each organization
+			// if (!array_key_exists($organization, $data)) {
+			// 	$data[$organization] = array();
+			// }
+
+			// // Create an array entry for each type
+			// if (!array_key_exists($recType, $data[$organization])) {
+			// 	$data[$organization][$recType] = array();
+			// }
+
+			// array_push($data[$organization][$recType], $enregistrement);
+		}
+
+		$result = array();
+		$result["result"] = $data;
+		$result["status"] = "success";
+		return json_encode($result);
+	}
 }
