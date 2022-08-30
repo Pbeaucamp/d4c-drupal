@@ -187,54 +187,58 @@ class ResourceManager {
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
 
+			// There is a hard cap for cell at 32767
+			// It ends up truncating JSON value (for exemple)
+			// We disable it for now and we'll replace it with another method if needed
+
 			//if files > 50MB we don't do the treatments.
-			if ($transformFile && $filesize < 50000000) {
-				$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-				if ($encoding) {
-					Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
-					$reader->setInputEncoding($encoding);
-				}
-				$spreadsheet = $reader->load(self::ROOT . $filePath);
-				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+			// if ($transformFile && $filesize < 50000000) {
+			// 	$reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+			// 	if ($encoding) {
+			// 		Logger::logMessage("Setting encoding to " . $encoding . "\r\n");
+			// 		$reader->setInputEncoding($encoding);
+			// 	}
+			// 	$spreadsheet = $reader->load(self::ROOT . $filePath);
+			// 	$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+			// 	$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
 
-				//We have an issue with number format. This line transform coordinate and it's not good. We comment it for now
-				//Maybe we have to do the same for XLS, XLSX
-				//$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+			// 	//We have an issue with number format. This line transform coordinate and it's not good. We comment it for now
+			// 	//Maybe we have to do the same for XLS, XLSX
+			// 	//$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 
-				$existingCols = array();
+			// 	$existingCols = array();
 
-				// TODO: We should save real column from the file and put it in the dictionnary
+			// 	// TODO: We should save real column from the file and put it in the dictionnary
 					
-				if($generateColumns) {
-					$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
-				}
+			// 	if($generateColumns) {
+			// 		$spreadsheet->getActiveSheet()->insertNewRowBefore(1, 1);
+			// 	}
 
-				$nbColumns = $this->lettersToNumber($highestColumn);
-				for($i=1; $i<= $nbColumns; $i++) {
-					if ($generateColumns) {
-						$label = 'colonne_' . $i;
-					}
-					else {
-						$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
-					}
+			// 	$nbColumns = $this->lettersToNumber($highestColumn);
+			// 	for($i=1; $i<= $nbColumns; $i++) {
+			// 		if ($generateColumns) {
+			// 			$label = 'colonne_' . $i;
+			// 		}
+			// 		else {
+			// 			$label = $spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->getValue();
+			// 		}
 
-					$label = $this->nettoyage($label);
-					if(in_array($label, $existingCols)) {
-						$label = $label . $i;
-					}
-					$existingCols[] = $label;
+			// 		$label = $this->nettoyage($label);
+			// 		if(in_array($label, $existingCols)) {
+			// 			$label = $label . $i;
+			// 		}
+			// 		$existingCols[] = $label;
 					
-					$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
-				}
+			// 		$spreadsheet->getActiveSheet()->getCell($this->numberToLetters($i) . '1')->setValue($label);
+			// 	}
 					
-				$writer = new Csv($spreadsheet);
-				if ($generateColumns) {
-					$filePath = str_ireplace('.csv', '_gencol.csv', $filePath);
-					$resourceUrl = $this->protocol . $host . $this->port . $filePath;
-				}
-				$writer->save(self::ROOT . $filePath);
-			}
+			// 	$writer = new Csv($spreadsheet);
+			// 	if ($generateColumns) {
+			// 		$filePath = str_ireplace('.csv', '_gencol.csv', $filePath);
+			// 		$resourceUrl = $this->protocol . $host . $this->port . $filePath;
+			// 	}
+			// 	$writer->save(self::ROOT . $filePath);
+			// }
 
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
@@ -838,15 +842,25 @@ class ResourceManager {
 		$files = $this->getDirContents($directoryPath);
 
 		$isShape = false;
+		$isGtfs = false;
 		$color_array = [];
 		foreach($files as $key=>$file) {
-			if (strpos($file, 'routes.txt') !== false) {
+			//Checking if one the required GTFS files exist
+			if (strpos($file, 'agency.txt') !== false || strpos($file, 'stops.txt') !== false
+				|| strpos($file, 'trips.txt') !== false|| strpos($file, 'stop_times.txt') !== false) {
+					$isGtfs = true;
+			}
+			// Getting route color if defined
+			else if (strpos($file, 'routes.txt') !== false) {
+				$isGtfs = true;
+
 				$key_rout_id="";
 				$key_color_route ="";
+
 				$array = explode("\n", file_get_contents($file));
 				foreach ($array as $key => $value) {
 					$line = explode(',', $value);
-					if($key == 0 ){
+					if ($key == 0 ) {
 						$key_rout_id = array_search('route_id', $line);
 						$key_color_route = array_search('route_color', $line);
 					}
@@ -890,9 +904,13 @@ class ResourceManager {
 					Logger::logMessage("Ignoring '" . $file . "' because it is a folder");
 					continue;
 				}
-				else if (strpos($file, 'shapes.txt') !== false) {
-					Logger::logMessage("Found shapes.txt -> Managing GTFS");
-					$resourceUrl = $this->convertTextFileToCsv($file, "csv", $color_array);
+				else if ($isGtfs && $this->endsWith($file, '.txt')) {
+					Logger::logMessage("Found GTFS txt file converting to CSV");
+
+					$isShapeFile = strpos($file, 'shapes.txt') !== false;
+					$resourceUrl = $this->convertTextFileToCsv($file, $isShapeFile, "csv", $color_array);
+
+					Logger::logMessage("New file to manage " . $resourceUrl);
 				}
 				else if ($fromPackage && (strpos($file, 'metadata.json') !== false) || strpos($file, "csv_gen") !== false) {
 					Logger::logMessage("Ignoring '" . $file . "' because it is autogenerated by D4C");
@@ -945,34 +963,31 @@ class ResourceManager {
 	}
 
 	//convert text file to csv
-	function convertTextFileToCsv($filepath, $new_extension, $color_array) {
+	function convertTextFileToCsv($filepath, $isShapeFile, $new_extension, $color_array) {
 
 		// get content of text file
 		$filepathContent = file_get_contents($filepath);
 
-		// check if file contains the comma and replace it by semicolon  
-		if (strpos(file_get_contents($filepath), ',') !== false) {
-			/*$commaReplace = str_replace(",",";",$filepathContent);*/
-			$pathinfo = pathinfo($filepath);
-			$pathinfo["extension"] = $new_extension;
+		$pathinfo = pathinfo($filepath);
+		$pathinfo["extension"] = $new_extension;
 
-			$pathfiles = explode("/", $filepath);
-			$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"]. "." .$new_extension; 
-			$newfile="";
-			foreach ($pathfiles as $key => $value) {
+		$pathfiles = explode("/", $filepath);
+		$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"] . "." . $new_extension; 
 
-				if($key == 0) {
-					$newfile= $value;
-				}
-				else {
-					$newfile .="/".$value;
-				}
-				
+		$newfile = "";
+		foreach ($pathfiles as $key => $value) {
+			if ($key == 0) {
+				$newfile = $value;
 			}
-			//create a new csv files contains the same content of text file
-			file_put_contents($newfile, $filepathContent);
+			else {
+				$newfile .= "/" . $value;
+			}
+		}
 
-			$delimiter = "\t"; //your column separator
+		//create a new csv files contains the same content of text file
+		file_put_contents($newfile, $filepathContent);
+
+		if ($isShapeFile) {
 			$csv_data = array();
 			$row = 1;
 			if (($handle = fopen($newfile, 'r')) !== FALSE) {
@@ -982,111 +997,98 @@ class ResourceManager {
 				}
 				fclose($handle);
 			}
-
+	
 			$extra_columns = array('coordinate' => null, 'geoshape' => null, 'route_color' => null);
+
 			$latIndex = "";
 			$lngIndex = "";
 			$shapeIdIndex = "";
-			$coordinatesGeojson=[];
-			$coordinatearray = [];
-			$Routes=[];
-
+			$Routes = [];
+	
 			foreach ($csv_data as $i => $data) {
 				foreach ($data as $key => $value) {
 					if($value == "shape_pt_lat") {
 						$latIndex = $key;
 					}
+					
 					if($value == "shape_pt_lon") {
 						$lngIndex = $key;
 					}
+					
 					if($value == "shape_id") {
 						$shapeIdIndex = $key;
 					}
-					}
-					if($i!=0) {
-						if($i+1 < sizeof($csv_data)) {
+				}
+					
+				if ($i!=0) {
+					if($i+1 < sizeof($csv_data)) {
 						$data2 = $csv_data[$i+1];
-						if($data[$shapeIdIndex] != $data2[$shapeIdIndex] ) {
+						if ($data[$shapeIdIndex] != $data2[$shapeIdIndex] ) {
 							array_push($Routes, $i);
 						}
-						
 					}
-
-					}
-					
-
+				}
 			}
 			$routesvalue=[];
-
+	
 			array_unshift($color_array,"");
 			unset($color_array[0]);
 			foreach ($Routes as $key => $value) {
-				
 				if($key == 0) {
 					$firstindex = 1;
-				}else {
+				}
+				else {
 					$firstindex = $Routes[$key -1 ] + 1;
 				}
-
-				$array1=[];
+	
 				$array2 =array();
 				$array3=[];
-			
-
-					for ($i=$firstindex; $i <=$value ; $i++) { 
-
-						$array2 =array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
-						$array3[] = $array2;
+				for ($i=$firstindex; $i <=$value ; $i++) {
+					$array2 =array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+					$array3[] = $array2;
 				}
-
 				
-					$routesvalue[$key+1] = json_encode(array('type' => "LineString",'coordinates' => $array3));
-
+				$routesvalue[$key+1] = json_encode(array('type' => "LineString",'coordinates' => $array3));
 			}
-
+	
 			foreach ($csv_data as $i => $data) {
-				
-				/*$geo_shape = str_replace(",",";",$routesvalue[$i]);*/
-				
 				if ($i == 0) {
 					$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
 					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
-				} else {
-
-						if (array_key_exists($i,$routesvalue)) {
-							$geo_shape = $routesvalue[$i];
-							if($color_array[$i]["color_route"] != null) {
-								$color = $color_array[$i]["color_route"];
-							} else {
-								$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
-								 
-								 $keycolor = array_search($random_color, array_column($color_array, 'color_route'));
-								 if($keycolor ==false){
-								 	$color = $random_color;
-								 }
-							}
-							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);
-									
-						} 
+				}
+				else {
+					if (array_key_exists($i,$routesvalue)) {
+						$geo_shape = $routesvalue[$i];
+						if ($color_array[$i]["color_route"] != null) {
+							$color = $color_array[$i]["color_route"];
+						}
 						else {
-							$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
+							$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+							$keycolor = array_search($random_color, array_column($color_array, 'color_route'));
+							if($keycolor ==false) {
+								$color = $random_color;
+							}
 						}
 						
-						$csv_data[$i] = $data = array_merge($data, $extra_columns);
+						$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);			
+					} 
+					else {
+						$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
+					}
+					$csv_data[$i] = $data = array_merge($data, $extra_columns);
 				}
-
-
 			}
-
+	
 			if (($handle = fopen($newfile, 'w')) !== FALSE) {
 				foreach ($csv_data as $data) {
 					fputcsv($handle, $data, ",");
 				}
 				fclose($handle);
 			}
-			$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->procotol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
-			return $newfile;
 		}
+
+		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
+		return $newfile;
 	}
 
 	function getDirContents($dir, &$results = array()) {
