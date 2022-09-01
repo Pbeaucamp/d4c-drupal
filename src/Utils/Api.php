@@ -570,7 +570,7 @@ class Api
 					curl_close($curl);
 					$result = json_decode($result, true);
 
-					Logger::logMessage("Result : " . json_encode($result));
+					// Logger::logMessage("Result : " . json_encode($result));
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);

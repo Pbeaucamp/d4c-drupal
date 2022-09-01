@@ -6,6 +6,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\Tools;
+use Drupal\data_bfc\Utils\UserManager;
+use Drupal\data_bfc\Utils\VanillaApiManager;
 use \Parsedown;
 
 /**
@@ -486,7 +488,11 @@ class VisualisationController extends ControllerBase {
 
 		$keywordsPart = $this->buildKeywords($keywords);
 
-		$ratingPart = $this->buildRating($loggedIn, $datasetId);
+		//Deactivated for now because the development is not finish
+		// $ratingPart = $this->buildRating($loggedIn, $datasetId);
+		$ratingPart = null;
+
+		$kpiPart = $this->buildKPI($loggedIn, $datasetId, $dataset, $selectedResourceId);
 
 		$rgpdPart = $this->buildRgpd($isRgpd, $rgpdNonConnected);
 
@@ -503,6 +509,7 @@ class VisualisationController extends ControllerBase {
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
+						' . ($kpiPart != null ? $this->buildCard('Indicateurs', $kpiPart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
@@ -1203,6 +1210,43 @@ class VisualisationController extends ControllerBase {
 
 	function buildRating($loggedIn, $datasetId) {
 		return '<d4c-dataset-rating context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $datasetId . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-rating>';
+	}
+
+	function buildKPI($loggedIn, $datasetId, $dataset, $selectedResourceId) {
+		//We check if the module data_bfc exist and is enabled
+
+		$moduleHandler = \Drupal::service('module_handler');
+		if ($moduleHandler->moduleExists('data_bfc')) {
+
+			$apiManager = new VanillaApiManager();
+			$kpis = $apiManager->getKpis($datasetId);
+
+			Logger::logMessage("TRM - Integration " . json_encode($kpis));
+
+			$newKPIPart = '';
+			$userManager = new UserManager();
+			if ($loggedIn && ($userManager->isConnectedUserAdmin() || $userManager->isConnectedUserRO())) {
+
+				//Getting current resourceId
+				if ($selectedResourceId == null) {
+					$resources = $dataset["metas"]["resources"];
+					if (sizeof($resources) > 0 ) {
+						$selectedResourceId = $this->getLastDataResource($resources);
+					}
+				}
+
+				$newKPIPart = '<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" class="use-ajax" data-dialog-type="modal" ><button class="btn btn-primary">Créer un indicateur</button></a>';
+			}
+
+			return '<div class="row">
+						' . $newKPIPart . '
+						<div class="col-sm-7">
+							<p>' . json_encode($kpis) . '</p>
+						</div>
+					</div>';
+		}
+
+		return null;
 	}
 
 	function getLastDataResource($resources) {
