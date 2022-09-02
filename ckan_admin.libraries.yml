@@ -3,6 +3,12 @@ routing:
   js:
       js/routing.js: {}
 
+tools:
+  version: VERSION
+  dependencies:    
+    - core/jquery #Just to be safe
+    - core/drupal.dialog.ajax #Required for dialogs
+
 visu.angular:
   version: VERSION
   css:

@@ -1214,14 +1214,11 @@ class VisualisationController extends ControllerBase {
 
 	function buildKPI($loggedIn, $datasetId, $dataset, $selectedResourceId) {
 		//We check if the module data_bfc exist and is enabled
-
 		$moduleHandler = \Drupal::service('module_handler');
 		if ($moduleHandler->moduleExists('data_bfc')) {
 
 			$apiManager = new VanillaApiManager();
 			$kpis = $apiManager->getKpis($datasetId);
-
-			Logger::logMessage("TRM - Integration " . json_encode($kpis));
 
 			$newKPIPart = '';
 			$userManager = new UserManager();
@@ -1235,15 +1232,40 @@ class VisualisationController extends ControllerBase {
 					}
 				}
 
-				$newKPIPart = '<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" class="use-ajax" data-dialog-type="modal" ><button class="btn btn-primary">Créer un indicateur</button></a>';
+				$newKPIPart = '
+					<div class="row">
+						<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" target="_self"><button class="btn btn-primary">Créer un indicateur</button></a>
+					</div>
+				';
 			}
 
-			return '<div class="row">
-						' . $newKPIPart . '
-						<div class="col-sm-7">
-							<p>' . json_encode($kpis) . '</p>
+			$kpiPart = '';
+			if (isset($kpis)) {
+				foreach ($kpis as $kpi) {
+					$kpiPart .= '
+						<div>
+							<div class="col-sm-9 download-item">
+								<i class="fa fa-gauge-high inline download-img" fa-4x></i>
+								<div class="inline">
+									<div class="download-text">' . $kpi['nameService'] . '</div>
+								</div>
+							</div>
+							<div class="col-sm-3">
+								<a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
+							</div>
 						</div>
-					</div>';
+					';
+				}
+			}
+
+			return '
+				<div>
+					' . $newKPIPart . '
+					<div class="row">
+						' . $kpiPart . '
+					</div>
+				</div>
+			';
 		}
 
 		return null;
