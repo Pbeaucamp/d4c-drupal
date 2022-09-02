@@ -1218,7 +1218,9 @@ class VisualisationController extends ControllerBase {
 		if ($moduleHandler->moduleExists('data_bfc')) {
 
 			$apiManager = new VanillaApiManager();
-			$kpis = $apiManager->getKpis($datasetId);
+			$kpiInfos = $apiManager->getKpis($datasetId);
+			$kpis = $kpiInfos['result'];
+			$kpiUserUrl = $kpiInfos['kpiUser'];
 
 			$newKPIPart = '';
 			$userManager = new UserManager();
@@ -1242,6 +1244,9 @@ class VisualisationController extends ControllerBase {
 			$kpiPart = '';
 			if (isset($kpis)) {
 				foreach ($kpis as $kpi) {
+
+					Logger::logMessage("TRM - Test " . json_encode($kpiUserUrl));
+
 					$kpiPart .= '
 						<div>
 							<div class="col-sm-9 download-item">
@@ -1252,6 +1257,7 @@ class VisualisationController extends ControllerBase {
 							</div>
 							<div class="col-sm-3">
 								<a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
+								<a href="' . $kpiUserUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir VanillaKpiUser"></i></a>
 							</div>
 						</div>
 					';

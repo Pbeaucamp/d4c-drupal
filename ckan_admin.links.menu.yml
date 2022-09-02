@@ -1,6 +1,6 @@
 hello.demo:
-  title: 'Explorer les données'
-  description: 'Recherche jeux de données'
+  title: 'Explorer les connaissances'
+  description: 'Recherche des connaissances'
   parent: main
   menu_name: main
   route_name: ckan_admin.portail
