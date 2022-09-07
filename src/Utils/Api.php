@@ -7938,6 +7938,9 @@ class Api
 		$datasetId = $_POST['dataset_id'];
 
 		try {
+			// Cleaning dataset_id if we search by name
+			$ressourceManager = new ResourceManager();
+			$datasetId = $ressourceManager->defineDatasetName($datasetId);
 			$dataset = $this->findDataset($datasetId);
 
 			$result["result"] = $dataset;
@@ -8026,7 +8029,6 @@ class Api
 	public function callManageDataset()
 	{
 		Logger::logMessage("Create or update dataset by API");
-
 		// Taking too much time, we now load only admin users
 		// $users = \Drupal\user\Entity\User::loadMultiple();
 
@@ -8049,6 +8051,10 @@ class Api
 		// Define Dataset name
 		if (!isset($datasetName)) {
 			$datasetName = $resourceManager->defineDatasetName($title);
+		}
+		else {
+			//Cleaning datasetName
+			$datasetName = $resourceManager->defineDatasetName($datasetName);
 		}
 
 		// Define security
@@ -8781,7 +8787,9 @@ class Api
 		return $response;
 	}
 
-	function getVisualizations($datasetId) {
+	function getVisualizations($datasetId, $queryName, $type) {
+		Logger::logMessage("getVisualizations with datasetId = $datasetId and query = $queryName and type = $type");
+
 		$table = "d4c_dataset_visualization";
 		$query = \Drupal::database()->select($table, 'visualization');
 
@@ -8800,7 +8808,14 @@ class Api
 		if (isset($datasetId)) {
 			$query->condition('dataset_id', $datasetId);
 		}
-		// $query->condition('user_id', $userId);
+		if (isset($query)) {
+			$query->condition('name', '%' . db_like($queryName) . '%', 'LIKE');
+		}
+		if (isset($type)) {
+			Logger::logMessage("TRM - Type = $type");
+
+			$query->condition('type', $type);
+		}
 
 		$data = array();
 
