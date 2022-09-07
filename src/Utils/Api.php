@@ -7963,6 +7963,8 @@ class Api
 
 	public function findDataset($datasetId)
 	{
+		Logger::logMessage("findDataset with id = $datasetId");
+
 		$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 
 		$curl = curl_init($callUrl);

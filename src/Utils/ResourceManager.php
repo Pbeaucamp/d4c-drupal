@@ -1362,7 +1362,7 @@ class ResourceManager {
 		if(strlen($label) > 95) {
 			$label = substr($label, 0, 95);
 		}
-		return $this->nettoyage($label);
+		return $this->nettoyage($label, 'utf-8', true);
 	}
 
 	/**
@@ -2144,7 +2144,7 @@ class ResourceManager {
 		}
 	}
 	
-    function nettoyage( $str, $charset='utf-8') {
+    function nettoyage( $str, $charset='utf-8', $isDatasetName = false) {
 		if (!mb_detect_encoding($str, 'UTF-8', true)) {
 			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
 		}
@@ -2165,7 +2165,7 @@ class ResourceManager {
 		$str = str_replace("?", "", $str);
 		$str = str_replace("`", "_", $str);
 		$str = str_replace("'", "_", $str);
-		$str = str_replace("-", "_", $str);
+		// $str = str_replace("-", "_", $str);
 		$str = str_replace(" ", "_", $str);
 		$str = str_replace(",", "", $str);
 		$str = str_replace("%", "", $str);
@@ -2191,8 +2191,11 @@ class ResourceManager {
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );
 		$str = preg_replace( '#&[^;]+;#', '', $str );
-		$str = str_replace("-", "_", $str);
 		$str = str_replace("°", "", $str);
+
+		if (!$isDatasetName) {
+			$str = str_replace("-", "_", $str);
+		}
 
 		//We set the value to 63 characters as it is the limit of the database
 		$str = substr($str, 0, 62);

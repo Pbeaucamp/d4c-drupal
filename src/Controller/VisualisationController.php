@@ -1256,7 +1256,7 @@ class VisualisationController extends ControllerBase {
 								</div>
 							</div>
 							<div class="col-sm-3">
-								<a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
+								<a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" data-backdrop="static" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
 								<a href="' . $kpiUserUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir VanillaKpiUser"></i></a>
 							</div>
 						</div>
