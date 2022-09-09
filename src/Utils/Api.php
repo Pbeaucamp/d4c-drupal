@@ -887,7 +887,6 @@ class Api
 	{
 		$query_params = $this->proper_parse_str($params);
 
-		$orgs;
 		//error_log($params);
 		if ($query_params["sort"] != null) {
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
@@ -902,6 +901,8 @@ class Api
 			// We include private datasets
 			$query_params["include_private"] = true;
 
+			$applySecurity = false;
+
 			// If the user is an admin, we do not filter by organisation
 			if (!in_array("administrator", $current_user->getRoles())) {
 				//We include all public datasets
@@ -912,10 +913,39 @@ class Api
 					$query_params["fq"] .= " AND " . "(organization:(*) AND private:(false))";
 				}
 
-				//We include private datasets from allowed organisations for the user
-				$allowedOrganizations = $this->getAllOrganisations(false, false, true);
+				$applySecurity = true;
+				if ($this->isObservatory()) {
+					$allowedOrganizations = $this->getObservatoryOrganisations();
+				}
+				else {
+					//We include private datasets from allowed organisations for the user
+					$allowedOrganizations = $this->getAllOrganisations(false, false, true);
+				}
+			}
+			else if ($this->isObservatory()) {
+				$applySecurity = true;
+				$allowedOrganizations = $this->getObservatoryOrganisations();
+			}
+
+			if ($applySecurity) {
 				foreach ($allowedOrganizations as $org) {
-					$query_params["fq"] .= " OR " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+					if ($query_params["fq"] == null) {
+						$query_params["fq"] .= "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+					}
+					else {
+						$query_params["fq"] .= " OR " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+					}
+				}
+			}
+		}
+		else if ($this->isObservatory()) {
+			$allowedOrganizations = $this->getObservatoryOrganisations();
+			foreach ($allowedOrganizations as $org) {
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] .= "(organization:(" . $org . "))";
+				}
+				else {
+					$query_params["fq"] .= " OR " . "(organization:(" . $org . "))";
 				}
 			}
 		}
@@ -6577,7 +6607,26 @@ class Api
 		$orgs = json_decode($orgs, true);
 		$orgs = $orgs["result"];
 
-		if ($applySecurity) {
+		if ($this->isObservatory()) {
+			$allowedOrganizations = $this->getObservatoryOrganisations();
+			if (!$allFields && !$include_extra) {
+				foreach ($orgs as $org) {
+					if (!$this->isOrganizationAllowed($org, $allowedOrganizations)) {
+						if (($key = array_search($org, $orgs)) !== false) {
+							unset($orgs[$key]);
+						}
+					}
+				}
+			}
+			else {
+				foreach ($orgs as $valueKey => $org) {
+					if (!$this->isOrganizationAllowed($org["name"], $allowedOrganizations)) {
+						unset($orgs[$valueKey]);
+					}
+				}
+			}
+		}
+		else if ($applySecurity) {
 			$allowedOrganizations = $this->getUserOrganisations();
 			if (!$allFields && !$include_extra) {
 				foreach ($orgs as $org) {
@@ -6596,6 +6645,9 @@ class Api
 				}
 			}
 		}
+
+		Logger::logMessage("TRM - Found orgs " . json_encode($orgs));
+
 		return $orgs;
 	}
 
@@ -8609,6 +8661,19 @@ class Api
 
 
 	/* SECURITY PART WITH ROLES AND ORGANIZATION */
+
+	function isObservatory() {
+		$isObservatory = $this->config->client->client_is_observatory;
+		return $isObservatory == true;
+	}
+
+	function getObservatoryOrganisations() {
+		$organizationName = $this->config->client->client_organisation;
+
+		$allowedOrganizations = array();
+		$allowedOrganizations[] = strtolower($organizationName);
+		return $allowedOrganizations;
+	}
 
 	function getUserOrganisations()
 	{

@@ -1,0 +1,21 @@
+<div class="interior-article-container">
+<div id="swagger-ui">&nbsp;</div>
+</div>
+<link href="https://unpkg.com/swagger-ui-dist@3.12.1/swagger-ui.css" rel="stylesheet" type="text/css" /><script src="https://unpkg.com/swagger-ui-dist@3.12.1/swagger-ui-standalone-preset.js"></script><script src="https://unpkg.com/swagger-ui-dist@3.12.1/swagger-ui-bundle.js"></script><script>
+
+    window.onload = function() {
+        // Build a system
+        const ui = SwaggerUIBundle({
+            url: "/modules/ckan_admin/openapi_data4citizen.yaml",
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [
+                SwaggerUIBundle.presets.apis,
+            ],
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+        })
+        window.ui = ui
+    }
+</script>

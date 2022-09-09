@@ -1,0 +1,234 @@
+openapi: 3.0.1
+info:
+  title: Data4Citizen API
+  description: ""
+  contact:
+    email: d4c@bpm-conseil.com
+  version: 1.0.0
+servers:
+- url: https://databfc-gravitee-gateway.data4citizen.com/data4citizenapi
+tags:
+- name: datasets
+  description: Action sur les jeux de données
+- name: records
+  description: Action sur les enregistrements
+paths:
+  /api/datasets/2.0/search/:
+    get:
+      tags:
+      - datasets
+      summary: Recherche des paquets satisfaisant à un critère de recherche donné.
+
+        Cette action accepte les paramètres de requête de recherche solr (détails ci-dessous) et renvoie un dictionnaire de résultats, y compris des jeux de données dictionnés qui correspondent aux critères de recherche, un compte de recherche et également des informations sur les facettes.
+
+        Dans le cas d'une utilisation sans paramètre de recherche, tous les Datasets sont restituées.
+      operationId: data4citizen.api.datasets.search
+      parameters:
+      - name: q
+        in: query
+        description: Requête Solr
+        required: false
+        schema:
+          type: string
+      - name: fq
+        in: query
+        description: Tout filtre à appliquer
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: Critère de tri (champ ou -champ)
+        required: false
+        schema:
+          type: string
+      - name: rows
+        in: query
+        description: Nombre de lignes de résultat
+        required: false
+        schema:
+          type: integer
+          default: 10
+      - name: start
+        in: query
+        description: Index du premier résultat renvoyé (utilisé pour la pagination)
+        required: false
+        schema:
+          type: integer
+          default: 0
+      - name: facet
+        in: query
+        description: Recherche à facette
+        required: false
+        schema:
+          type: boolean
+      - name: facet.mincount
+        in: query
+        description: Le nombre minimum de facettes devant être incluses dans le résultat
+        required: false
+        schema:
+          type: integer
+          default: 10
+      - name: facet.limit
+        in: query
+        description: Le nombre maximum de valeurs retournées par les facettes
+        required: false
+        schema:
+          type: integer
+          default: 10
+      - name: facet.field
+        in: query
+        description: Nom des facettes à activer dans les résultats
+        required: false
+        schema:
+          type: string
+      - name: include_drafts
+        in: query
+        description: si Oui, les jeux de données à l'état de brouillon seront inclus dans les résultats. Un utilisateur verra seulement ses propres brouillons, et un administrateur les verra tous. Optionnel. Non par défaut
+        required: false
+        schema:
+          type: boolean
+      - name: include_private
+        in: query
+        description: si Oui, les datasets privés seront inclus dans les résultats. Un utilisateur verra seulement les jeux de données de son Organisation, et un administrateur les verra tous. Optionnel. Non par défaut.
+        required: false
+        schema:
+          type: boolean
+      responses:
+        405:
+          description: Invalid input
+          content: {}
+      security:
+      - api_key: []
+  /api/datasets/2.0/DATASETID/:
+    get:
+      tags:
+      - datasets
+      summary: Renvoie les jeux de données (packages) d'un groupe.
+      operationId: data4citizen.api.datasets.display
+      parameters:
+      - name: id
+        in: query
+        description: l'identifiant ou le nom du groupe
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: le nombre maximal de jeux de données à renvoyer (facultatif)
+        required: false
+        schema:
+          type: integer
+          default: 10
+      responses:
+        405:
+          description: Invalid input
+          content: {}
+      security:
+      - api_key: []
+  /api/records/2.0/search/:
+    get:
+      tags:
+      - records
+      summary: Rechercher une ressource DataStore.
+
+        L'action datastore_search vous permet de rechercher des données dans une ressource. Les ressources DataStore appartenant à une ressource CKAN privée ne peuvent être lues par vous que si vous avez accès à la ressource CKAN et envoyez l'autorisation appropriée.
+      operationId: data4citizen.api.records.search
+      parameters:
+      - name: resource_id
+        in: query
+        description: id ou alias de la ressource à rechercher
+        required: false
+        schema:
+          type: string
+      - name: filters
+        in: query
+        description: 'matching conditions to select, e.g {“key1”: “a”, “key2”: “b”}'
+        required: false
+        schema:
+          type: string
+      - name: q
+        in: query
+        description: 'full text query. If it’s a string, it’ll search on all fields on each row. If it’s a dictionary as {“key1”: “a”, “key2”: “b”}, it’ll search on each specific field'
+        required: false
+        schema:
+          type: string
+      - name: distinct
+        in: query
+        description: 'renvoie uniquement des lignes distinctes (facultatif, par défaut: Non)'
+        required: false
+        schema:
+          type: boolean
+      - name: plain
+        in: query
+        description: 'treat as plain text query (optional, default: true)'
+        required: false
+        schema:
+          type: boolean
+      - name: language
+        in: query
+        description: langue de la requête de texte intégral
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: nombre maximal de lignes à renvoyer
+        required: false
+        schema:
+          type: integer
+          default: 10
+      - name: offset
+        in: query
+        description: index du premier résultat
+        required: false
+        schema:
+          type: integer
+          default: 10
+      - name: fields
+        in: query
+        description: champs à retourner
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: 'comma separated field names with ordering e.g.: “fieldname1, fieldname2 desc”'
+        required: false
+        schema:
+          type: string
+      - name: include_total
+        in: query
+        description: 'True to return total matching record count (optional, default: true)'
+        required: false
+        schema:
+          type: boolean
+      - name: records_format
+        in: query
+        description: 'Le format du résultat: ‘objects’ (par défaut, correspond au json) {fieldname1: value1, ...} , ‘lists’ [value1, value2, ...], ‘csv’, ‘tsv’'
+        required: false
+        schema:
+          type: string
+      responses:
+        405:
+          description: Invalid input
+          content: {}
+      security:
+      - api_key: []
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: x-gravitee-api-key
+      in: header

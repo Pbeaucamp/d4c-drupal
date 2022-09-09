@@ -30,7 +30,9 @@ return (object) array(
         'check_rgpd' => getenv('CLIENT_CHECK_RGPD'),
 		'protocol' => getenv('CLIENT_PROTOCOL'),
 		'host' => getenv('CLIENT_HOST'),
-		'port' => getenv('CLIENT_PORT')
+		'port' => getenv('CLIENT_PORT'),
+		'client_is_observatory' => getenv('CLIENT_IS_OBSERVATORY'),
+		'client_organisation' => getenv('CLIENT_ORGANISATION')
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',
