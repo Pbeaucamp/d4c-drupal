@@ -6646,8 +6646,6 @@ class Api
 			}
 		}
 
-		Logger::logMessage("TRM - Found orgs " . json_encode($orgs));
-
 		return $orgs;
 	}
 
