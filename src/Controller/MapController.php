@@ -2,6 +2,7 @@
 namespace Drupal\ckan_admin\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\Api;
@@ -130,37 +131,20 @@ class MapController extends ControllerBase {
 		return $response;*/
 	}
 	
-	public function manage(Request $request) {
-		
+	public function manage(Request $request) {		
 		$uri = \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]);
-		$port = $request->getPort();
+		$id = uniqid();
+
+		$location = $uri . 'carte/+' . $id . '/edit/';
+		// header($location);
 		
-		/*if(\Drupal::currentUser()->isAuthenticated()){
-			$idUser = \Drupal::currentUser()->id();
-			
-			$api = new API();
-			$maps = $api->getMaps($idUser,"");
-			//echo json_encode($maps);
-			
-			if(count($maps) == 0){
-				$id = uniqid();
-				header('Location: '.$uri.'carte/+'.$id.'/edit/');
-			} else {
-				$last = $maps[count($maps)-1];
-				$id = $last->id;
-				header('Location: '.$uri.'/'.$id.'/edit/');
-			}
-    	} else {*/
-			$id = uniqid();
-			header('Location: '.$uri.'carte/+'.$id.'/edit/');
-		/*}*/
+		// $response = new Response();
+		// $response->headers->set('Content-Type', 'text/html');
 		
-		//header('Location: '.$uri."/+627081d6c3704a3d/edit/");
-		$response = new Response();
-		//$response->setContent(render($element));
-		$response->headers->set('Content-Type', 'text/html');
-		
-		return $response;
+		// return $response;
+		$response = new RedirectResponse($location);
+		$response->send();
+		return;
 	}
 
 }
