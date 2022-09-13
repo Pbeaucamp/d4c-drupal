@@ -187,6 +187,67 @@ class ResourceManager {
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
 
+			// We try to detect the delimiter and we return false if it is not found
+			$csvFile = self::ROOT . $filePath;
+
+			$delimiter = $this->detectDelimiter($csvFile);
+			Logger::logMessage("Found delimiter " . $delimiter);
+			if ($delimiter != false) {
+				$existingCols = array();
+
+				//Cleaning column name to insert in CKAN and D4C
+				if (($handle = fopen($csvFile, "r")) !== FALSE) {
+
+					$tmpFile = '/tmp/test.csv';
+					$fp = fopen($tmpFile, 'w');
+
+					$firstRow = true;
+					$referenceNumberColumn = -1;
+					while (($data = fgetcsv($handle, 2000, $delimiter)) !== FALSE) {
+						$num = count($data);
+
+						//We don't write the line if there is only one column and the reference number of column is greater than 1
+						if ($num <= 1 && $referenceNumberColumn > 1) {
+							Logger::logMessage("Skipping line with content '" . json_encode($data) . "'");
+							continue;
+						}
+
+						if ($firstRow) {
+							$referenceNumberColumn = $num;
+
+							for ($c=0; $c < $num; $c++) {
+								$label = $data[$c];
+
+								Logger::logMessage("Found column name " . $label);
+	
+								$label = $this->cleanColumnName($label);
+
+								Logger::logMessage("TRM - Clean name " . $label);
+								if(in_array($label, $existingCols)) {
+									$label = $label . "_" . $c;
+								}
+								$existingCols[] = $label;
+							}
+	
+							fputcsv($fp, $existingCols);
+						}
+						else {
+							fputcsv($fp, $data);
+						}
+						$firstRow = false;
+					}
+					fclose($handle);
+					fclose($fp);
+
+					//We need to replace the file at the end
+					rename($tmpFile, $csvFile);
+				}
+			}
+			else {
+				Logger::logMessage("Delimiter has not been found.");
+			}
+
+
 			// There is a hard cap for cell at 32767
 			// It ends up truncating JSON value (for exemple)
 			// We disable it for now and we'll replace it with another method if needed
@@ -411,6 +472,27 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	/**
+	* @param string $csvFile Path to the CSV file
+	* @return string Delimiter
+	*/
+	public function detectDelimiter($csvFile) {
+		Logger::logMessage("Detecting delimiter...");
+
+		$delimiters = [";" => 0, "," => 0, "\t" => 0, "|" => 0];
+
+		$handle = fopen($csvFile, "r");
+		$firstLine = fgets($handle);
+		fclose($handle); 
+		foreach ($delimiters as $delimiter => &$count) {
+			$count = count(str_getcsv($firstLine, $delimiter));
+		}
+
+		if ( array_sum( $delimiters ) <= count( $delimiters ) ) return false;
+
+		return array_search(max($delimiters), $delimiters);
 	}
 
 	function cleanFileName($fileName) {
@@ -1362,7 +1444,7 @@ class ResourceManager {
 		if(strlen($label) > 95) {
 			$label = substr($label, 0, 95);
 		}
-		return $this->nettoyage($label, 'utf-8', true);
+		return $this->cleanColumnName($label, true);
 	}
 
 	/**
@@ -1939,7 +2021,7 @@ class ResourceManager {
 					$cols[] = $key;
 					
 					$label = $this->clearGeoProperties($key, $index);
-					$label = $this->nettoyage($label);
+					$label = $this->cleanColumnName($label);
 
 					$colNames[] = $label;
 					$index++;
@@ -2144,7 +2226,7 @@ class ResourceManager {
 		}
 	}
 	
-    function nettoyage( $str, $charset='utf-8', $isDatasetName = false) {
+    function cleanColumnName($str, $isDatasetName = false) {
 		if (!mb_detect_encoding($str, 'UTF-8', true)) {
 			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
 		}
@@ -2187,6 +2269,7 @@ class ResourceManager {
 		$str = str_replace("|", "_", $str);
 		$str = str_replace("[", "", $str);
 		$str = str_replace("]", "", $str);
+		$str = str_replace("\"", "", $str);
 		$str = strtolower($str);
 		$str = preg_replace( '#&([A-za-z])(?:acute|cedil|caron|circ|grave|orn|ring|slash|th|tilde|uml);#', '\1', $str );
 		$str = preg_replace( '#&([A-za-z]{2})(?:lig);#', '\1', $str );

@@ -739,7 +739,7 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
-		Logger::logMessage("Call search " . $callUrl);
+		// Logger::logMessage("Call search " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -933,7 +933,7 @@ class Api
 						$query_params["fq"] .= "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
 					}
 					else {
-						$query_params["fq"] .= " OR " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
 					}
 				}
 			}
@@ -945,10 +945,12 @@ class Api
 					$query_params["fq"] .= "(organization:(" . $org . "))";
 				}
 				else {
-					$query_params["fq"] .= " OR " . "(organization:(" . $org . "))";
+					$query_params["fq"] .= " AND " . "(organization:(" . $org . "))";
 				}
 			}
 		}
+
+		Logger::logMessage("TRM - Query parameters " . $query_params["fq"]);
 		
 		$coordinateParam = null;
 		if (array_key_exists('coordReq', $query_params)) {
@@ -8662,7 +8664,7 @@ class Api
 
 	function isObservatory() {
 		$isObservatory = $this->config->client->client_is_observatory;
-		return $isObservatory == true;
+		return $isObservatory == "true";
 	}
 
 	function getObservatoryOrganisations() {
@@ -8852,7 +8854,7 @@ class Api
 		return $response;
 	}
 
-	function getVisualizations($datasetId, $queryName, $type) {
+	function getVisualizations($datasetId, $queryName = null, $type = null) {
 		Logger::logMessage("getVisualizations with datasetId = $datasetId and query = $queryName and type = $type");
 
 		$table = "d4c_dataset_visualization";
@@ -8873,12 +8875,10 @@ class Api
 		if (isset($datasetId)) {
 			$query->condition('dataset_id', $datasetId);
 		}
-		if (isset($query)) {
+		if (isset($queryName)) {
 			$query->condition('name', '%' . db_like($queryName) . '%', 'LIKE');
 		}
 		if (isset($type)) {
-			Logger::logMessage("TRM - Type = $type");
-
 			$query->condition('type', $type);
 		}
 
