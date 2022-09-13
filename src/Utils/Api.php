@@ -4343,21 +4343,6 @@ class Api
 		return "(" . $maxLat . "," . $long . "),(" . $lat . "," . $maxLong . "),(" . $minLat . "," . $long . "),(" . $lat . "," . $minLong . ")";
 	}
 
-	public function getOrganization($params)
-	{
-		$callUrl =  $this->urlCkan . "api/action/organization_show?" . $params;
-
-		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getStoreOptions());
-		$result = curl_exec($curl);
-		curl_close($curl);
-		//echo $result . "\r\n";
-
-		$result = json_decode($result, true);
-		unset($result["help"]);
-		return $result;
-	}
-
 	public function orgaShow($params)
 	{
 		$result = $this->getOrganization($params);
@@ -8915,5 +8900,58 @@ class Api
 		$result["result"] = $data;
 		$result["status"] = "success";
 		return json_encode($result);
+	}
+
+	// Part organizations
+	function manageOrg($orgId, $orgTitle, $description, $extras, $updateOrg) {
+		if ($updateOrg) {
+			$context =[
+				'id' => $orgId,
+				'name' => $orgId,
+				'title' => $orgTitle,
+				'description' => $description,
+				// 'state'=>'active',
+				'extras' => $extras,
+				// 'packages' => array(),
+				// 'users' => array()
+			];
+
+            $callUrlUpdate = $this->urlCkan . "/api/action/organization_patch";
+            $result = $this->updateRequest($callUrlUpdate, $context, "POST");
+
+            $result = json_decode($result, true);
+		}
+		else {
+			$context =[
+				'name' => $orgId,
+				'title' => $orgTitle,
+				'description' => $description,
+				'state'=>'active',
+				'extras' => $extras,
+				'packages' => array(),
+				'users' => array()
+			];
+
+            $callUrlCreate = $this->urlCkan . "/api/action/organization_create";
+            $result = $this->updateRequest($callUrlCreate, $context, "POST");
+
+            $result = json_decode($result, true);
+		}
+
+		return $result;
+	}
+
+	public function getOrganization($params) {
+		$callUrl =  $this->urlCkan . "api/action/organization_show?" . $params;
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+		//echo $result . "\r\n";
+
+		$result = json_decode($result, true);
+		unset($result["help"]);
+		return $result;
 	}
 }
