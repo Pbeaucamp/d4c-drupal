@@ -1245,8 +1245,6 @@ class VisualisationController extends ControllerBase {
 			if (isset($kpis)) {
 				foreach ($kpis as $kpi) {
 
-					Logger::logMessage("TRM - Test " . json_encode($kpiUserUrl));
-
 					$kpiPart .= '
 						<div>
 							<div class="col-sm-9 download-item">
@@ -1775,7 +1773,7 @@ class VisualisationController extends ControllerBase {
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
-				<details class="gris" open>
+				<details open>
 					<summary>Administration</summary>
 					<div>
 						' . $buttonEditor . '
@@ -1785,11 +1783,13 @@ class VisualisationController extends ControllerBase {
 						</a>
 					</div>
 				</details>
-				<table id="edit_table" class="display" style="display: none" width="100%">
-					<thead>
-						' . $tableHeader . '
-					</thead>
-				</table>
+				<div style="width: 100%;">
+					<table id="edit_table" class="display" style="display: none; width: 100%">
+						<thead>
+							' . $tableHeader . '
+						</thead>
+					</table>
+				</div>
 			</d4c-pane>
 		';
 	}
@@ -1837,6 +1837,7 @@ class VisualisationController extends ControllerBase {
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-visu.js"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/popularDataset.js"></script>
 			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/DataTables/datatables.min.js"></script>
+			<script type="text/javascript" src="'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/lib/DataTables/Plugins/ellipsis.js"></script>
 
 			<script>
 				//$("head").append("<link href=\"'. $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
