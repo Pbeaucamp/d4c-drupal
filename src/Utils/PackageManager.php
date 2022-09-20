@@ -36,21 +36,22 @@ class PackageManager {
 
         $theme = "";
         $vignette = "";
-    	foreach ($contentdataset["result"]["extras"] as $key => $value) {
-    		if($value["key"] == "theme") {
-    			$theme = $value["value"];
-    			break;
-    		}
-    	}
+		//Disable for now
+    	// foreach ($contentdataset["result"]["extras"] as $key => $value) {
+    	// 	if($value["key"] == "theme") {
+    	// 		$theme = $value["value"];
+    	// 		break;
+    	// 	}
+    	// }
     	
-    	$themes = $api->getPackageTheme();
-    	$themes = json_decode($themes->getContent(),true);
+    	// $themes = $api->getPackageTheme();
+    	// $themes = json_decode($themes->getContent(),true);
     
-    	foreach ($themes as $key => $value) {
-    		if($value["title"] == $theme ) {
-    			$vignette = $protocol . $host .$value["url"];
-    		}
-    	}
+    	// foreach ($themes as $key => $value) {
+    	// 	if($value["title"] == $theme ) {
+    	// 		$vignette = $protocol . $host .$value["url"];
+    	// 	}
+    	// }
 
 		$dataset = $api->getPackageShow2($id,"");
 		if ($vignette != "" ) {
@@ -59,9 +60,9 @@ class PackageManager {
 			$res["name"] = $theme;
 			$res["format"] =  pathinfo($vignette, PATHINFO_EXTENSION);
 			$res["url"] = $vignette;
-		}
 
-		$contentdataset["result"]["resources"][] = $res;
+			$contentdataset["result"]["resources"][] = $res;
+		}
 		return $contentdataset["result"]["resources"];
     }
 
@@ -157,7 +158,7 @@ class PackageManager {
 						$resourceName = $resourceName . "." . $format;
 					}
 					$resourcePath = $zipFolder . "/" . $resourceName;
-					Logger::logMessage("Adding resource to package '" . $resourcePath . "'");
+					Logger::logMessage("Adding resource to package '" . $resourcePath . "' from '" . $value["url"] . "'");
 
 					$ch = curl_init();
 					curl_setopt($ch, CURLOPT_URL, $value["url"]);
@@ -203,9 +204,13 @@ class PackageManager {
 			}
      
 			// close and save archive
-			$zip->close(); 
-
-			$response = new Response(json_encode(array('filename' => $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id . ".zip")));
+			$res = $zip->close();
+			if ($res === TRUE) {
+				$response = new Response(json_encode(array('filename' => $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id . ".zip")));
+			}
+			else {
+				Logger::logMessage("Zip save result " . json_encode($res));
+			}
 		}
 
 		return $response;
