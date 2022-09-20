@@ -1015,17 +1015,17 @@ class Api
 			}
 		}
 
-		//If the dataset has been flagged rgpd, we only show if the user is connected
-		$isConnected = \Drupal::currentUser()->isAuthenticated();
-		if ($this->config->client->check_rgpd && !$isConnected) {
-			//Disable for now
-			// if ($query_params["fq"] == null) {
-			// 	$query_params["fq"] = "-data_rgpd:(1)";
-			// }
-			// else {
-			// 	$query_params["fq"] .= " AND -data_rgpd:(1)";
-			// }
-		}
+		// If the dataset has been flagged rgpd, we only show if the user is connected
+		// $isConnected = \Drupal::currentUser()->isAuthenticated();
+		// if ($this->config->client->check_rgpd && !$isConnected) {
+		// 	Disable for now
+		// 	if ($query_params["fq"] == null) {
+		// 		$query_params["fq"] = "-data_rgpd:(1)";
+		// 	}
+		// 	else {
+		// 		$query_params["fq"] .= " AND -data_rgpd:(1)";
+		// 	}
+		// }
 
 		$url2 = http_build_query($query_params);
 
@@ -2890,8 +2890,6 @@ class Api
 
 		$params = $this->retrieveParameters($params);
 
-		Logger::logMessage("TRM - callDatastoreApiGeoClusterOld with params: " . $nbOfTries);
-
 		$patternRefine = '/refine./i';
 		$patternDisj = '/disjunctive./i';
 		/*$patternBbox = '/geofilter.bbox/i';*/
@@ -3110,7 +3108,7 @@ class Api
 		$callUrl =  "http://192.168.2.223:1337/cluster?".$query;
 		//$callUrl =  "https://anfr2.data4citizen.com:1337/cluster?".$query;*/
 
-		Logger::logMessage("TRM - Calling cluster");
+		// Logger::logMessage("TRM - Calling cluster");
 
 		$callUrl = $this->config->cluster->url . "cluster?" . $query;
 
@@ -3120,7 +3118,7 @@ class Api
 		$dataset = curl_exec($curl);
 		curl_close($curl);
 
-		Logger::logMessage("TRM - Cluster called");
+		// Logger::logMessage("TRM - Cluster called");
 
 		//echo $dataset . "\r\n";
 		$dataset = json_decode($dataset, true);
@@ -4062,6 +4060,8 @@ class Api
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
+
+		Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
 
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);

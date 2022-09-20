@@ -20,19 +20,42 @@ class portailController extends ControllerBase {
 		$config = include(__DIR__ . "/../../config.php");
 
 		$title = 'Connaissances';
-		$producteurTitle = 'Producteurs';
-		$visualisations = '<h3> Visualisations</h3>
-			<ul id="list-visu" class="list-group"></ul>';
-		$themes = '<h3>Thèmes</h3>
+		$visualisations = '
+			<h3> Visualisations</h3>
+			<ul id="list-visu" class="list-group"></ul>
+		';
+		$themes = '
+			<h3>Thèmes</h3>
 			<ul id="list-theme" class="list-group">
 				<input id="input-theme" type="hidden" class="hidden-filter">
-			</ul>';
-		if ($config->client->nutch === true) {
+			</ul>
+		';
+
+		$producteursPart = '';
+		$typesPart = '';
+		if ($config->client->client_is_observatory && $config->client->client_is_observatory == "true") {
+			$producteursPart = '';
+			$typesPart = '
+				<h3>Type</h3>
+				<ul id="list-type" class="list-group"></ul>
+			';
+		}
+		else if ($config->client->nutch === true) {
 			$title = 'pages de sites';
-			$producteurTitle = 'Origine des sites';
 			$visualisations = '';
 			$themes = '';
-		} 
+
+			$producteursPart = '
+				<h3>Origine des sites</h3>
+				<ul id="list-producteur" class="list-group"></ul>
+			';
+		}
+		else {
+			$producteursPart = '
+				<h3>Producteurs</h3>
+				<ul id="list-producteur" class="list-group"></ul>
+			';
+		}
 
 		$element = array(
 				'example one' => [
@@ -128,10 +151,11 @@ class portailController extends ControllerBase {
 								</form> 
 
 								' . $visualisations . '
+								' . $producteursPart . '
+								' . $typesPart . '
 
-								<h3>' . $producteurTitle . '</h3>
-								<ul id="list-producteur" class="list-group"></ul>
 								<input id="input-producteur" type="hidden" class="hidden-filter">
+								<input id="input-types" type="hidden" class="hidden-filter">
 								<input id="input-map-coordinate" type="hidden" class="hidden-filter">
 								<input id="input-format" type="hidden" class="hidden-filter">
 								<!--<h3>Echelle territoriale</h3>
