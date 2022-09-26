@@ -8839,7 +8839,7 @@ class Api
 		return $response;
 	}
 
-	function getVisualizations($datasetId, $queryName = null, $type = null) {
+	function getVisualizations($datasetId, $queryName = null, $type = null, $currentUserId = null) {
 		Logger::logMessage("getVisualizations with datasetId = $datasetId and query = $queryName and type = $type");
 
 		$table = "d4c_dataset_visualization";
@@ -8865,6 +8865,9 @@ class Api
 		}
 		if (isset($type)) {
 			$query->condition('type', $type);
+		}
+		if (isset($currentUserId)) {
+			$query->condition('user_id', $currentUserId);
 		}
 
 		$data = array();
