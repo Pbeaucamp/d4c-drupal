@@ -168,6 +168,10 @@ class typeColumnsForm extends HelpFormBase {
 					['@name' => $this->t('Editable'),
 					':action' => 'checkAll("-can_edit","checkboxCanEdit")'])
 				),
+				"mapDisplay" => array('data' => new FormattableMarkup('<div class="headerCheckbox"><input id="checkboxMapDisplay" type="checkbox" onclick=":action" style="border-radius: 10px; font-size: 11px; margin: 3px 6px;">@name</input></div>',
+					['@name' => $this->t('Afficher sur la carte'),
+					':action' => 'checkAll("-map_display","checkboxMapDisplay")'])
+				),
 				"poids" => $this->t('Poids'),
 
 				//$this->t("image_url"),
@@ -290,6 +294,10 @@ class typeColumnsForm extends HelpFormBase {
 			$form['table'][$i]['can_edit'] = array(
 				'#type' => 'textfield',
 				'#size' => 15,
+			); 
+		
+			$form['table'][$i]['map_display'] = array(
+				'#type' => 'checkbox',
 			); 
 
 			//Poids
@@ -418,7 +426,7 @@ class typeColumnsForm extends HelpFormBase {
 
 		// Couleur des points sur la carte en fonction d'un champ
 		$form['T2'] = array(
-			'#markup' => '<h2 class="title">'.t('Configuration des couleurs des points sur la carte par champ').'</h2>',
+			'#markup' => '<h2 class="title">'.t('Configuration de la carte').'</h2>',
 		);
 		
 		$form['colorfield'] = array(
@@ -686,6 +694,13 @@ class typeColumnsForm extends HelpFormBase {
                     $notes = $notes.'<!--can_edit-->,';
                 }
             }
+
+            if ($table_data[$i][map_display]) {
+               $mapDisplay = $table_data[$i][map_display];
+                if ($mapDisplay == 1) {
+                    $notes=  $notes.'<!--map_display-->,'; 
+                }
+            }
 			
 			$notes = substr($notes, 0, -1);
 			$fields[result][fields][$i][info][notes] = $notes;  
@@ -709,8 +724,6 @@ class typeColumnsForm extends HelpFormBase {
 				$oldDataset = $d;
 			}
 		}
-
-		Logger::logMessage("TRM - Old dataset " . json_encode($oldDataset));
 
 		$tooltip = array();
 		$tooltip["type"] = $form_state->getValue('type');
@@ -741,18 +754,18 @@ class typeColumnsForm extends HelpFormBase {
 		//Couleur des points
 		$selectedFieldColor = $form_state->getValue('selected_field');
 
-		Logger::logMessage("Selected Field Color " . $selectedFieldColor . "\r\n");
+		Logger::logMessage("Selected Field Color " . $selectedFieldColor);
 
 		$found = false;
 		foreach($extras as &$e){
 			if($e["key"] == "FieldColor"){
 				if (!($selectedFieldColor == '' || $selectedFieldColor == '----')) {
-					Logger::logMessage("Setting field color " . $selectedFieldColor . "\r\n");
+					Logger::logMessage("Setting field color " . $selectedFieldColor);
 
 					$e["value"] = $selectedFieldColor;
 				}
 				else {
-					Logger::logMessage("Clearing field color \r\n");
+					Logger::logMessage("Clearing field color");
 
 					$e["value"] = '';
 				}
@@ -761,14 +774,11 @@ class typeColumnsForm extends HelpFormBase {
 			}
 		}
 		if(!$found && !($selectedFieldColor == '' || $selectedFieldColor == '----')) {
-			Logger::logMessage("Setting field color " . $selectedFieldColor . "\r\n");
+			Logger::logMessage("Setting field color " . $selectedFieldColor);
 			
 			$extras[count($extras)]['key'] = 'FieldColor';
 			$extras[(count($extras) - 1)]['value'] = $selectedFieldColor;
 		}
-
-
-		
 
 		//Predefined filters
 		$predefinedFilters = $form_state->getValue('predefined_filter');
@@ -779,12 +789,12 @@ class typeColumnsForm extends HelpFormBase {
 		foreach($extras as &$e){
 			if ($e["key"] == "PredefinedFilters"){
 				if (!($predefinedFilters == '')) {
-					Logger::logMessage("Setting predefined filters " . $predefinedFilters . "\r\n");
+					Logger::logMessage("Setting predefined filters " . $predefinedFilters);
 
 					$e["value"] = $predefinedFilters;
 				}
 				else {
-					Logger::logMessage("Clearing predefined filters \r\n");
+					Logger::logMessage("Clearing predefined filters");
 
 					$e["value"] = '';
 				}

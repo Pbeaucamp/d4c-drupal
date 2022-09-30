@@ -1624,6 +1624,9 @@ class Api
 				if (preg_match("/<!--.*can_edit.*-->/i", $description)) {
 					$annotations[] = array("name" => "can_edit");
 				}
+				if (preg_match("/<!--.*map_display.*-->/i", $description)) {
+					$annotations[] = array("name" => "mapDisplay");
+				}
 
 				$descriptionLabel = $description;
 				preg_match_all('/(?<=<!--description\?)([^>]*)-->/', $descriptionLabel, $matches);
@@ -1823,7 +1826,7 @@ class Api
 		$fieldCoordinates = '';
 		$fieldGeometries = '';
 
-		$reqQfilter;
+		$reqQfilter = null;
 		/*foreach ($fields as $value) {
 			if(preg_match("/id|num|code|siren/i",$value['name'])){
 				$fieldId = $value['name'];
@@ -1846,9 +1849,6 @@ class Api
 		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
-			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
-			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
-			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];*/
 			if (!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
 				$fieldCoordinates = $value['name'];
 				$coordinatesAlreadyDefined = true;
@@ -2598,6 +2598,12 @@ class Api
 				// $visu['map_marker_color']['type'] = "choropleth";
 				// $visu['map_marker_color']['field'] = $value["value"];
 				// $visu['map_marker_color']['ranges'] = $ranges;
+			}
+			if ($value["key"] == "field_label" && $value["value"] != '') {
+
+				$visu['map_marker_label'] = array();
+				$visu['map_marker_label']['type'] = "field";
+				$visu['map_marker_label']['field'] = $value["value"];
 			}
 			if ($value["key"] == "PredefinedFilters" && $value["value"] != '') {
 				$filters = explode(",", $value["value"]);
@@ -3359,20 +3365,26 @@ class Api
 		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id']);
+		$fields = $this->getAllFields($query_params['resource_id'], true);
 
 		$fieldGeometries = "";
 		$fieldColor = "";
-		foreach ($fields as $value) {
-			/*if($value['id'] == "geo_shape") $fieldGeometries = $value['id'];
-			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
-			if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
-			if ($value['name'] == "route_color") $fieldColor = $value['name'] . ",";
-		}
+		
+		$fieldsMapDisplay = array();
+		$fieldsMapDisplayQuery = "";
 
-		//$result = $this->getRecordsDownload($params . "&format=json");
-		//echo $result;
-		//$result = json_decode($result, true);
+		foreach ($fields as $value) {
+			if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
+			if ($value['name'] == "route_color") $fieldColor = $value['name'] . ", ";
+			
+			$description = $value['description'];
+			if (preg_match("/<!--.*map_display.*-->/i", $description)) {
+				$field = $value['name'];
+
+				$fieldsMapDisplay[] = $field;
+				$fieldsMapDisplayQuery .= $field . ", " ;
+			}
+		}
 
 		if (array_key_exists("rows", $query_params)) {
 			$limit = " limit " . $query_params['rows'];
@@ -3381,7 +3393,7 @@ class Api
 		$where = $this->getSQLWhereRecordsDownload($params);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
-		$sql = "Select  " . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
+		$sql = "Select  " . $fieldsMapDisplayQuery . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
 		Logger::logMessage("Geopreview query : " . $req['sql']);
@@ -3398,56 +3410,16 @@ class Api
 
 		$data_array = array();
 		foreach ($result["result"]["records"] as $value) {
-
-			// $res = array();
-			// foreach ($value as $key => $val) {
-			// 	if ($key == 'geo') {
-			// 		Logger::logMessage("Found value : " . $val);
-			// 		Logger::logMessage("Encode value : " . json_decode($val) . "\r\n");
-
-			// 		$error = '';
-			// 		switch (json_last_error()) {
-			// 			case JSON_ERROR_NONE:
-			// 				$error = ' - No errors';
-			// 			break;
-			// 			case JSON_ERROR_DEPTH:
-			// 				$error = ' - Maximum stack depth exceeded';
-			// 			break;
-			// 			case JSON_ERROR_STATE_MISMATCH:
-			// 				$error = ' - Underflow or the modes mismatch';
-			// 			break;
-			// 			case JSON_ERROR_CTRL_CHAR:
-			// 				$error = ' - Unexpected control character found';
-			// 			break;
-			// 			case JSON_ERROR_SYNTAX:
-			// 				$error = ' - Syntax error, malformed JSON';
-			// 			break;
-			// 			case JSON_ERROR_UTF8:
-			// 				$error = ' - Malformed UTF-8 characters, possibly incorrectly encoded';
-			// 			break;
-			// 			default:
-			// 				$error = ' - Unknown error';
-			// 			break;
-			// 		}
-
-			// 		Logger::logMessage("Error : " . $error . "\r\n");
-			// 		$res['geo_digest'] = md5($val); //3566411980376893035
-			// 		// try{
-			// 		// 	Logger::logMessage("Found geo : " . $val);
-
-			// 		// 	$res['geometry'] = json_decode($val, true); 
-			// 		// } catch(Exception $e){
-			// 		// 	Logger::logMessage("Found geo with cast error : " . $val);
-
-			// 			$res['geometry'] = $val; 
-			// 		// }
-			// 	}
-			// }
-
 			$res = array();
-			//echo json_encode( $value );
 			$res['geo_digest'] = md5($value["geo"]); //3566411980376893035
 			$res['route_color'] = $value["route_color"];
+
+			$mapDisplay = array();
+			foreach ($fieldsMapDisplay as $field) {
+				$mapDisplay[] = $value[$field];
+			}
+			$res['map_display'] = $mapDisplay;
+
 			try {
 				// Logger::logMessage("Found geo  : " . $value["geo"]);
 				$res['geometry'] = json_decode($value["geo"], true);
@@ -3455,7 +3427,6 @@ class Api
 				// Logger::logMessage("Found geo with cast error : " . $value["geo"]);
 				$res['geometry'] = $value["geo"];
 			}
-
 
 			$data_array[] = $res;
 		}
@@ -3466,10 +3437,7 @@ class Api
 		return $response;
 	}
 
-
-
-	public function getMapTooltip($hasCustomHtml, $html)
-	{
+	public function getMapTooltip($hasCustomHtml, $html) {
 		$res = "<div class=\"tooltipcustom\">";
 		if ($hasCustomHtml) {
 			$res = $html;

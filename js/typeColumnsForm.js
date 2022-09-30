@@ -147,6 +147,7 @@ function addDataInTable(data) {
 		let descr_for_timeLine = '<input data-drupal-selector="edit-table-' + i + '-descr_for_timeLine" type="checkbox" id="edit-table-' + i + '-descr_for_timeLine" name="table[' + i + '][descr_for_timeLine]" value="1" class="form-checkbox" >';
 		let date_timeLine = '<input data-drupal-selector="edit-table-' + i + '-date_timeline" type="checkbox" id="edit-table-' + i + '-date_timeline" name="table[' + i + '][date_timeline]" value="1" class="form-checkbox">';
 		let can_edit = '<input data-drupal-selector="edit-table-' + i + '-can_edit" type="checkbox" id="edit-table-' + i + '-can_edit" name="table[' + i + '][can_edit]" value="1" class="form-checkbox">';
+		let map_display = '<input data-drupal-selector="edit-table-' + i + '-map_display" type="checkbox" id="edit-table-' + i + '-map_display" name="table[' + i + '][map_display]" value="1" class="form-checkbox">';
 
 		let init_div = '<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-intitulé form-item-table-' + i + '-intitulé form-no-label">' + init + '</div>';
 		let facet_div = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + i + '-facet form-item-table-' + i + '-facet form-no-label">' + facet + '</div>';
@@ -169,6 +170,7 @@ function addDataInTable(data) {
 		let poids_div = '<div class="js-form-item form-item js-form-type-textfield form-type-textfield js-form-item-table-' + i + '-poids form-item-table-' + i + '-poids form-no-label">' + poids + '</div>';
 		let date_timeLine_div = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + i + '-date_timeline form-item-table-' + i + '-date_timeline form-no-label">' + date_timeLine + '</div>';
 		let can_edit_div = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + i + '-can_edit form-item-table-' + i + '-can_edit form-no-label">' + can_edit + '</div>';
+		let map_display_div = '<div class="js-form-item form-item js-form-type-checkbox form-type-checkbox js-form-item-table-' + i + '-map_display form-item-table-' + i + '-map_display form-no-label">' + map_display + '</div>';
 
 		$('#edit-table > thead > tr > th').first().css('position', 'sticky');
 		$('#edit-table > thead > tr > th').first().css('position', '-webkit-sticky');
@@ -177,7 +179,7 @@ function addDataInTable(data) {
 		$('#edit-table > thead > tr > th').first().css('max-width', '100px');
 		$('#edit-table > thead > tr > th').first().css('left', '0px');
 		$('#edit-table > thead > tr > th').first().css('background-color', 'white');
-		$('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + '<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">' + data.result.fields[i].id + '</td>' + '<td>' + init_div + '</td>' + '<td>' + intit_facet + '</td>' + '<td>' + facet_div + '</td>' + '<td>' + disjunctive_div + '</td>' + '<td>' + table_div + '</td>' +/*'<td>'+tooltip_div+'</td>'+*/'<td>' + sortable_div + '</td>' + '<td>' + exportapi_div + '</td>' + '<td>' + hideColumnsApi_div + '</td>' + '<td>' + date_div + '</td>' + '<td>' + startdate_div + '</td>' + '<td>' + enddate_div + '</td>' + '<td>' + images_div + '</td>' + '<td>' + wordcount_div + '</td>' + '<td>' + wordcountNumber_div + '</td>' + '<td>' + dateTime_div + '</td>' + '<td>' + description + '</td>' + '<td>' + title_for_timeLine_div + '</td>' + '<td>' + descr_for_timeLine_div + '</td>' + '<td>' + date_timeLine_div + '</td>' + '<td>' + can_edit_div + '</td>' + '<td>' + poids_div + '</td>' + '</tr>');
+		$('#edit-table > tbody:last-child').append('<tr data-drupal-selector="edit-table-' + i + '" class="odd">' + '<td title="' + data.result.fields[i].id + '" style="overflow:hidden;white-space:nowrap;text-overflow: ellipsis;background-color: white;position: sticky;position: -webkit-sticky;width: 100px;min-width: 100px;max-width: 100px;left: 0px;">' + data.result.fields[i].id + '</td>' + '<td>' + init_div + '</td>' + '<td>' + intit_facet + '</td>' + '<td>' + facet_div + '</td>' + '<td>' + disjunctive_div + '</td>' + '<td>' + table_div + '</td>' +/*'<td>'+tooltip_div+'</td>'+*/'<td>' + sortable_div + '</td>' + '<td>' + exportapi_div + '</td>' + '<td>' + hideColumnsApi_div + '</td>' + '<td>' + date_div + '</td>' + '<td>' + startdate_div + '</td>' + '<td>' + enddate_div + '</td>' + '<td>' + images_div + '</td>' + '<td>' + wordcount_div + '</td>' + '<td>' + wordcountNumber_div + '</td>' + '<td>' + dateTime_div + '</td>' + '<td>' + description + '</td>' + '<td>' + title_for_timeLine_div + '</td>' + '<td>' + descr_for_timeLine_div + '</td>' + '<td>' + date_timeLine_div + '</td>' + '<td>' + can_edit_div + '</td>' + '<td>' + map_display_div + '</td>' + '<td>' + poids_div + '</td>' + '</tr>');
 
 		if (data.result.fields[i].info.notes) {
 
@@ -264,6 +266,10 @@ function addDataInTable(data) {
 
 				if (notes[j] == '<!--can_edit-->') {
 					$('#edit-table-' + i + '-can_edit').attr('checked', 'checked');
+				}
+
+				if (notes[j] == '<!--map_display-->') {
+					$('#edit-table-' + i + '-map_display').attr('checked', 'checked');
 				}
 			}
 		}
@@ -450,6 +456,7 @@ function loadTooltip(idDataset, dataFields) {
 						$("#edit-selected-field").val("");
 					}
 
+					// Predefined filters
 					let predefinedFilterFound = false;
 					for (let i = 1; i < result.metas.extras.length; i++) {
 						if (result.metas.extras[i].key == 'PredefinedFilters') {
@@ -543,7 +550,7 @@ function baba() {
 }
 
 function uncheckAllHeader() {
-	var headers = ['checkboxFacet', 'checkboxFacetM', 'checkboxTableau', 'checkboxTri', 'checkboxDatePonctuel', 'checkboxDateDebut', 'checkboxDateFin', 'checkboxImages', 'checkboxNuageDeMot', 'checkboxNuageDeMotNombre', 'checkboxDateEtHeure', 'checkboxLibelleFriseChrono', 'checkboxDescriptionFriseChrono', 'checkboxDateFriseChrono', 'checkboxCanEdit'];
+	var headers = ['checkboxFacet', 'checkboxFacetM', 'checkboxTableau', 'checkboxTri', 'checkboxDatePonctuel', 'checkboxDateDebut', 'checkboxDateFin', 'checkboxImages', 'checkboxNuageDeMot', 'checkboxNuageDeMotNombre', 'checkboxDateEtHeure', 'checkboxLibelleFriseChrono', 'checkboxDescriptionFriseChrono', 'checkboxDateFriseChrono', 'checkboxCanEdit', 'checkboxMapDisplay'];
 
 	for (let j = 0; j < headers.length; j++) {
 		document.getElementById(headers[j]).checked = false;
