@@ -74,7 +74,7 @@ ckan_admin.GeolocForm:
   path: '/admin/config/data4citizen/geolocForm'
   defaults:
     _form: 'Drupal\ckan_admin\Form\GeolocForm'
-    _title: 'Options cartographique sur les jeux de données'
+    _title: 'Options cartographique sur les connaissances'
   requirements:
     _permission: 'access map'
 
@@ -692,7 +692,7 @@ ckan_admin.datasets_dashboard:
   path: '/admin/config/data4citizen/datasetsManagement'
   defaults:
     _form: 'Drupal\ckan_admin\Form\DatasetsBoardForm'
-    _title: 'Tableau de contrôle des jeux de données'
+    _title: 'Tableau de contrôle des connaissances'
   requirements:
     _permission: 'access dataset_board'
     
