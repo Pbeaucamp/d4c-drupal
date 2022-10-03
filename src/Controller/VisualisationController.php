@@ -1298,7 +1298,7 @@ class VisualisationController extends ControllerBase {
 			$messageRgpd = "Ce jeu de données nécessite d'être connectée pour être consulté car il contient des données RGPD.";
 		}
 		else {
-			$messageRgpd = "Les données de ce jeu de données ont des données RGPD. Les actions sur le jeu de données sont enregistrées.";
+			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur le jeu de données sont enregistrées.";
 		}
 
 		return '
