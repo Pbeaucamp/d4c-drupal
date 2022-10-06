@@ -72,6 +72,12 @@ class Api
 		$this->urlDatapusher = $this->config->ckan->datapusher_url;
 		$this->isSpecial = $this->config->client->name == 'cda2';
 		$this->isPostgis = $this->config->client->name == 'cda2';
+
+		// Testing if map_tiles file exist and copy from model if not
+		$mapTilesExist = file_exists(__DIR__ . "/../../map_tiles.json");
+		if (!$mapTilesExist) {
+			copy(__DIR__ . "/../../map_tiles_model.json", __DIR__ . "/../../map_tiles.json");
+		}
 	}
 
 	public function getStoreOptions($applySecurity = true)
@@ -5210,35 +5216,42 @@ class Api
 		}
 	}
 
-	public function getMapLayers($type = null)
-	{
-		$jsonTiles = json_encode($this->config->map_tiles);
+	function getMapLayersFromFile() {
+		return json_decode(file_get_contents(__DIR__ . "/../../map_tiles.json"), true);
+	}
+
+	function saveMapLayersFromFile($mapLayers) {
+		file_put_contents(__DIR__ . "/../../map_tiles.json", json_encode($mapLayers, JSON_PRETTY_PRINT));
+	}
+
+	public function getMapLayers($type = null) {
+		$mapLayers = $this->getMapLayersFromFile();
+		$mapTiles = $mapLayers['map_tiles'];
 
 		$data_array = array();
-		$tiles = json_decode($jsonTiles, true);
-
 		if ($type != null) {
-			foreach ($tiles as $tile) {
+			foreach ($mapTiles as $tile) {
 				if ($tile["type"] == $type) {
 					$data_array["layers"][] = $tile;
 				}
 			}
-		} else {
-			$data_array["layers"] = $tiles;
+		}
+		else {
+			$data_array["layers"] = $mapTiles;
 		}
 
 		$default_bbox = $this->config->client->default_bounding_box;
 		if ($default_bbox != null && $default_bbox != "") {
 			$data_array["default_bbox"] = $default_bbox;
-		} else {
+		}
+		else {
 			$data_array["default_bbox"] = null;
 		}
 
 		return $data_array;
 	}
 
-	public function callMapLayers($params)
-	{
+	public function callMapLayers($params) {
 		$type = null;
 		$query_params = $this->proper_parse_str($params);
 		if (array_key_exists('type', $query_params)) {
@@ -5246,34 +5259,23 @@ class Api
 		}
 		$data_array = $this->getMapLayers($type);
 
-		// echo json_encode($data_array);
-
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		$response->setContent(json_encode($data_array));
 		return $response;
 	}
 
-	public function addMapLayer($params)
-	{
+	public function addMapLayer($params) {
 		if (is_array($params)) {
 			$tile = $params;
-		} else {
+		}
+		else {
 			$tile = $this->proper_parse_str($params);
 		}
 
-		/*$tile = array();
-		$tile["name"] = $query_params["name"];
-		$tile["label"] = $query_params["label"];
-		$tile["url"] = $query_params["url"];
-		$tile["minZoom"] = $query_params["minZoom"];
-		$tile["maxZoom"] = $query_params["maxZoom"];
-		$tile["type"] = $query_params["type"];
-		$tile["key"] = $query_params["key"];*/
-
-		//TODO: Rework this with new config file
-		$this->config->map_tiles[] = $tile;
-		// $res = file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		$mapLayers = $this->getMapLayersFromFile();
+		$mapLayers['map_tiles'][] = $tile;
+		$this->saveMapLayersFromFile($mapLayers);
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
@@ -5281,18 +5283,22 @@ class Api
 		return $response;
 	}
 
-	public function updateMapLayer($params)
-	{
-
+	public function updateMapLayer($params) {
 		if (is_array($params)) {
 			$tile = $params;
-		} else {
+		}
+		else {
 			$tile = json_decode($_POST["json"], true);
 		}
+
 		$content2 = $_POST["json"];
+
 		error_log(json_encode($content2));
+
+		$mapLayers = $this->getMapLayersFromFile();
+
 		$exists = false;
-		foreach ($this->config->map_tiles as &$layer) {
+		foreach ($mapLayers['map_tiles'] as &$layer) {
 			if ($layer->name == $tile["name"]) {
 				$layer = $tile;
 				$exists = true;
@@ -5300,35 +5306,30 @@ class Api
 			}
 		}
 		if (!$exists) {
-			$this->config->map_tiles[] = $tile;
+			$mapLayers->map_tiles[] = $tile;
 		}
 
-		//TODO: Rework this with new config file
-		// file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		$this->saveMapLayersFromFile($mapLayers);
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 
 		return $response;
 	}
 
-	public function deleteMapLayer($idLayer)
-	{ //id directement
-		/*if(is_array($params)){
-			$tile = $params;
-		} else {
-			$tile = $this->proper_parse_str($params);
-		}*/
-		error_log(json_encode($this->config->map_tiles));
+	public function deleteMapLayer($idLayer) {
+		$mapLayers = $this->getMapLayersFromFile();
+
 		$arr = array();
-		foreach ($this->config->map_tiles as $layer) {
+		foreach ($mapLayers['map_tiles'] as $layer) {
 			if ($layer->name != $idLayer) {
 				$arr[] = $layer;
-				//break;
 			}
 		}
-		$this->config->map_tiles = $arr;
-		//TODO: Rework this with new config file
-		// file_put_contents(__DIR__ . "/../../config.json", json_encode($this->config, JSON_PRETTY_PRINT));
+		$mapLayers['map_tiles'] = $arr;
+		
+		$this->saveMapLayersFromFile($mapLayers);
+
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 

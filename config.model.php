@@ -38,21 +38,6 @@ return (object) array(
 		'enabled' => false,
 		'csw_server_path' => '/home/user-client/csw-server',
 		'csw_model' => 'csw_server_model'
-	),
-	'map_tiles' => array(
-		(object) array(
-            'name' => 'osm',
-            'label' => 'OpenStreetMap',
-            'provider' => 'osm',
-            'url' => '',
-            'minZoom' => 1,
-            'maxZoom' => 19,
-            'type' => 'tile',
-            'key' => '',
-            'attribution' => '',
-			'mapId' => '',
-			'layers' => ''
-		)
 	)
 );
 
