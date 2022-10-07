@@ -271,7 +271,7 @@ class VisualisationController extends ControllerBase {
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected);
+		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -410,30 +410,50 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected) {
+	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
+		$data4citizenType = $this->exportExtras($metadataExtras, 'data4citizen-type');
 
 		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
 		if (!$rgpdNonConnected) {
-			$tabTable = $this->buildTabTable($loggedIn);
-			$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location);
-			$tabAnalyze = $this->buildTabAnalyze($loggedIn);
-			$tabImage = $this->buildTabImage($loggedIn);
-			$tabCalendar = $this->buildTabCalendar($loggedIn);
-			$tabCustomView = $this->buildTabCustomView($loggedIn);
-			$tabWordCloud = $this->buildTabWordCloud($loggedIn);
-			$tabTimeline = $this->buildTabTimeline($loggedIn);
-			$tabExport = $this->buildTabExport($dataset, $metadataExtras);
-			$tabAPI = $this->buildTabAPI($dataset);
-			$tabReuses = $this->buildTabReuses($loggedIn, $name);
-			if ($loggedIn) {
-				$tabAdmin = $this->buildTabAdmin($dataset, $name);
+
+			if ($data4citizenType == 'visualization') {
+				$tabVisualization = $this->buildTabVisualization($api, $metadataExtras);
+			}
+			else {
+				$tabTable = $this->buildTabTable($loggedIn);
+				$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location);
+				$tabAnalyze = $this->buildTabAnalyze($loggedIn);
+				$tabImage = $this->buildTabImage($loggedIn);
+				$tabCalendar = $this->buildTabCalendar($loggedIn);
+				$tabCustomView = $this->buildTabCustomView($loggedIn);
+				$tabWordCloud = $this->buildTabWordCloud($loggedIn);
+				$tabTimeline = $this->buildTabTimeline($loggedIn);
+				$tabExport = $this->buildTabExport($dataset, $metadataExtras);
+				$tabAPI = $this->buildTabAPI($dataset);
+				$tabReuses = $this->buildTabReuses($loggedIn, $name);
+
+				$isAdmin = $api->isConnectedUserAdmin();
+				$isUserRO = false;
+				
+				//Checking if the module data_bfc exist and if the user is RO
+				$moduleHandler = \Drupal::service('module_handler');
+				if ($moduleHandler->moduleExists('data_bfc')) {
+
+					$userManager = new UserManager();
+					$isUserRO = $userManager->isConnectedUserRO();
+				}
+
+				if ($isAdmin || $isUserRO) {
+					$tabAdmin = $this->buildTabAdmin($dataset, $name);
+				}
 			}
 		}
 
 		return '
 			<d4c-tabs sync-to-url="true" sync-to-url-mode="path" name="main" default-tab="' . $tab . '">
 				' . $tabInformation . '
+				' . $tabVisualization . '
 				' . $tabTable . '
 				' . $tabMap . '
 				' . $tabAnalyze . '
@@ -1565,7 +1585,7 @@ class VisualisationController extends ControllerBase {
 			return $a['displayValue'] <=> $b['displayValue'];
 		});
 
-		Logger::logMessage("TRM - Available formats: " . json_encode($formats));
+		// Logger::logMessage("TRM - Available formats: " . json_encode($formats));
 
 		return $formats;
 	}
@@ -1761,6 +1781,14 @@ class VisualisationController extends ControllerBase {
 					$tableHeader .= '<th>' . $value["name"] . '</th>';
 				}
 			}
+
+			if (!$displayEditor) {
+				// If no column has been mark as editable, we put all of them
+				foreach($fields as $key=>$value) {
+					$displayEditor = true;
+					$tableHeader .= '<th>' . $value["name"] . '</th>';
+				}
+			}
 		}
 
 		$tableHeader .= '</tr>';
@@ -1771,16 +1799,20 @@ class VisualisationController extends ControllerBase {
 				<span>Editer le jeu de données</span>
 			</a>' : '';
 
+		$displayValidate = false;
+		$buttonValidateData = $displayValidate ? '
+			<a id="btn-validate-data" ng-click="validateData()">
+				<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
+				<span>Valider les données</span>
+			</a>' : '';
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
 				<details open>
 					<summary>Administration</summary>
 					<div>
 						' . $buttonEditor . '
-						<a id="btn-validate-data" ng-click="validateData()">
-							<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
-							<span>Valider les données</span>
-						</a>
+						' . $buttonValidateData . '
 					</div>
 				</details>
 				<div style="width: 100%;">
@@ -1895,16 +1927,30 @@ class VisualisationController extends ControllerBase {
 	function isNullOrEmptyString($str){
 		return (!isset($str) || trim($str) === '');
 	}
-	// 	if ($decodeHtml) {
-	// 		$value = $this->decodeHtml($value);
-	// 	}
 
-	// 	return $value;
-	// }
+	/* Other types of dataset */
+	function buildTabVisualization($api, $metadataExtras) {
+		$visualizationId = $this->exportExtras($metadataExtras, 'data4citizen-visualization-id');
+		$visualizations = $api->getVisualizations($visualizationId, null, null, null, null, true);
+		$result = json_decode($visualizations, true);
+		$result = $result['result'];
 
-	// function decodeHtml($value) {
-	// 	$value = html_entity_decode($value);
-	// 	return $value;
-	// }
+		$visualizationPart = '';
+		if (isset($result) && sizeof($result) > 0) {
+			$visualization = $result[0];
+			$iframeUrl = $visualization['share_url'];
+
+			$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+		}
+		else {
+			$visualizationPart = 'La visualisation n\'est pas disponible';
+		}
+
+		return '
+			<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
+				' . $visualizationPart . '
+			</d4c-pane>
+		';
+	}
 }
 

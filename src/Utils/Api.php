@@ -8802,13 +8802,13 @@ class Api
 	}
 
 	function callGlobalVisualizations() {
-		echo $this->getVisualizations(null);
+		echo $this->getVisualizations();
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
 
-	function getVisualizations($datasetId, $queryName = null, $type = null, $currentUserId = null) {
+	function getVisualizations($visualizationId = null, $datasetId = null, $queryName = null, $type = null, $currentUserId = null, $lightWeight = false) {
 		Logger::logMessage("getVisualizations with datasetId = $datasetId and query = $queryName and type = $type");
 
 		$table = "d4c_dataset_visualization";
@@ -8826,6 +8826,10 @@ class Api
 			'widget'
 		]);
 
+
+		if (isset($visualizationId)) {
+			$query->condition('id', $visualizationId);
+		}
 		if (isset($datasetId)) {
 			$query->condition('dataset_id', $datasetId);
 		}
@@ -8843,14 +8847,17 @@ class Api
 
 		$prep = $query->execute();
 		while ($enregistrement = $prep->fetch()) {
-			$recDatasetId = $enregistrement->dataset_id;
-			// $recType = $enregistrement->type;
 
-			$dataset = $this->findDataset($recDatasetId);
-			$organization = $dataset['organization']['name'];
-
-			$enregistrement->organization = $organization;
-			$enregistrement->datasetName = $dataset['title'];
+			if (!$lightWeight) {
+				$recDatasetId = $enregistrement->dataset_id;
+				// $recType = $enregistrement->type;
+	
+				$dataset = $this->findDataset($recDatasetId);
+				$organization = $dataset['organization']['name'];
+	
+				$enregistrement->organization = $organization;
+				$enregistrement->datasetName = $dataset['title'];
+			}
 
 			$data[] = $enregistrement;
 
@@ -8925,5 +8932,10 @@ class Api
 		$result = json_decode($result, true);
 		unset($result["help"]);
 		return $result;
+	}
+
+	function isConnectedUserAdmin() {
+		$current_user = \Drupal::currentUser();
+		return in_array("administrator", $current_user->getRoles());
 	}
 }
