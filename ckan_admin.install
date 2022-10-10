@@ -525,3 +525,14 @@ function ckan_admin_update_8708(&$sandbox) {
   $schema = Database::getConnection()->schema();
   $schema->createTable('d4c_dataset_visualization', $spec);
 }
+
+function ckan_admin_update_8709(&$sandbox) {
+    $spec = array(
+      'type' => 'varchar',
+      'description' => "Publish dataset ID",
+      'length' => 512
+    ); 
+    $schema = Database::getConnection()->schema();
+    $schema->addField('d4c_dataset_visualization', 'publish_dataset_id', $spec);
+    return $schema;
+}

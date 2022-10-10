@@ -1063,6 +1063,7 @@ ckan_admin.datasets.visualization:
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callVisualizations'
     _title: ''
+    visualizationId: ''
   requirements:
     _permission: 'access content'
-  methods: [POST, DELETE]
+  methods: [POST, PUT, DELETE]

@@ -1930,27 +1930,31 @@ class VisualisationController extends ControllerBase {
 
 	/* Other types of dataset */
 	function buildTabVisualization($api, $metadataExtras) {
-		$visualizationId = $this->exportExtras($metadataExtras, 'data4citizen-visualization-id');
-		$visualizations = $api->getVisualizations($visualizationId, null, null, null, null, true);
-		$result = json_decode($visualizations, true);
-		$result = $result['result'];
+		$type = $this->exportExtras($metadataExtras, 'data4citizen-type');
+		$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
 
-		$visualizationPart = '';
-		if (isset($result) && sizeof($result) > 0) {
-			$visualization = $result[0];
-			$iframeUrl = $visualization['share_url'];
+		if ($type == 'visualization') {
+			$visualization = $api->getVisualization($entityId);
 
-			$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+			$visualizationPart = '';
+			if (isset($visualization)) {
+				$iframeUrl = $visualization['share_url'];
+	
+				$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+			}
+			else {
+				$visualizationPart = 'La visualisation n\'est pas disponible';
+			}
+	
+			return '
+				<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
+					' . $visualizationPart . '
+				</d4c-pane>
+			';
 		}
 		else {
-			$visualizationPart = 'La visualisation n\'est pas disponible';
+			return '';
 		}
-
-		return '
-			<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
-				' . $visualizationPart . '
-			</d4c-pane>
-		';
 	}
 }
 

@@ -1592,7 +1592,7 @@ class ResourceManager {
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null) {
+			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1618,6 +1618,8 @@ class ResourceManager {
 		$hasMentionLegales = false;
 		$hasDisplayVersionning = false;
 		$hasDataRgpd = false;
+		$hasData4citizenType = false;
+		$hasEntityId = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1757,6 +1759,16 @@ class ResourceManager {
 					$hasDataRgpd  = true;
 					$extras[$index]['value'] = $dataRgpd;
 				}
+	
+				if ($extras[$index]['key'] == 'data4citizen-type') {
+					$hasData4citizenType  = true;
+					$extras[$index]['value'] = $data4citizenType;
+				}
+	
+				if ($extras[$index]['key'] == 'data4citizen-entity-id') {
+					$hasEntityId  = true;
+					$extras[$index]['value'] = $entityId;
+				}
 			}
 		}
 
@@ -1873,6 +1885,16 @@ class ResourceManager {
 		if ($hasDataRgpd == false) {
 			$extras[count($extras)]['key'] = 'data_rgpd';
 			$extras[(count($extras) - 1)]['value'] = $dataRgpd;
+		}
+
+		if ($hasData4citizenType == false) {
+			$extras[count($extras)]['key'] = 'data4citizen-type';
+			$extras[(count($extras) - 1)]['value'] = $data4citizenType;
+		}
+
+		if ($hasEntityId == false) {
+			$extras[count($extras)]['key'] = 'data4citizen-entity-id';
+			$extras[(count($extras) - 1)]['value'] = $entityId;
 		}
 
 		return $extras;

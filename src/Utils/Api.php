@@ -8716,7 +8716,7 @@ class Api
 
 	/* END SECURITY PART WITH ROLES AND ORGANIZATION */
 
-	function callVisualizations() {
+	function callVisualizations($visualizationId) {
 		$userId = \Drupal::currentUser()->id();
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 		if (!$isConnected) {
@@ -8776,6 +8776,24 @@ class Api
 			echo json_encode($result);
 
 			break;
+		case 'PUT':
+			if ($visualizationId == "") {
+				$response = new Response();
+				$response->setStatusCode(500);
+				$response->headers->set('Content-Type', 'application/json');
+
+				return $response;
+			}
+
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+
+			$publishDatasetId = $data->publish_dataset_id;
+			$this->updateVisualization($visualizationId, $publishDatasetId);
+
+			$response->setStatusCode(200);
+
+			break;
 		case 'DELETE':
 			$request_body = file_get_contents('php://input');
 			$data = json_decode($request_body);
@@ -8790,8 +8808,15 @@ class Api
 				return $response;
 			}
 
+			$visualization = $this->getVisualization($visualizationId);
+			$publishDatasetId = $visualization['publish_dataset_id'];
+
 			$query = \Drupal::database()->delete($table);
 			$query->condition('id', $visualizationId);
+
+			if (isset($publishDatasetId)) {
+				$this->deleteDataset($publishDatasetId);
+			}
 
 			$query->execute();
 			echo json_encode(array("status" => "success"));
@@ -8801,11 +8826,34 @@ class Api
 		return $response;
 	}
 
+	function updateVisualization($visualizationId, $publishDatasetId) {
+		$table = "d4c_dataset_visualization";
+
+		$query = \Drupal::database()->update($table);
+		$query->fields([
+			'publish_dataset_id' => $publishDatasetId
+		]);
+		$query->condition('id', $visualizationId);
+		$query->execute();
+	}
+
 	function callGlobalVisualizations() {
 		echo $this->getVisualizations();
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
+	}
+
+	function getVisualization($visualizationId) {
+		$visualizations = $this->getVisualizations($visualizationId, null, null, null, null, true);
+		$result = json_decode($visualizations, true);
+		$result = $result['result'];
+
+		if (isset($result) && sizeof($result) > 0) {
+			return $result[0];
+		}
+
+		return null;
 	}
 
 	function getVisualizations($visualizationId = null, $datasetId = null, $queryName = null, $type = null, $currentUserId = null, $lightWeight = false) {
@@ -8823,7 +8871,8 @@ class Api
 			'name',
 			'share_url',
 			'iframe',
-			'widget'
+			'widget',
+			'publish_dataset_id'
 		]);
 
 
@@ -8850,13 +8899,27 @@ class Api
 
 			if (!$lightWeight) {
 				$recDatasetId = $enregistrement->dataset_id;
-				// $recType = $enregistrement->type;
-	
+
 				$dataset = $this->findDataset($recDatasetId);
 				$organization = $dataset['organization']['name'];
 	
 				$enregistrement->organization = $organization;
 				$enregistrement->datasetName = $dataset['title'];
+
+				
+				$publishDatasetId = $enregistrement->publish_dataset_id;
+				if (isset($publishDatasetId)) {
+					$visualizationId = $enregistrement->id;
+					$publishDataset = $this->findDataset($publishDatasetId);
+
+					if (!isset($publishDataset) || $publishDataset['state'] == 'deleted') {
+						Logger::logMessage("The dataset with ID '$publishDatasetId' does not exist anymore. We remove the link with the visualization.");
+						$this->updateVisualization($visualizationId, null);
+					}
+					else {
+						$enregistrement->hasIntegration = true;
+					}
+				}
 			}
 
 			$data[] = $enregistrement;
