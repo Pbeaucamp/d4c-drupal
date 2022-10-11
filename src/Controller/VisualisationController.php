@@ -1239,20 +1239,35 @@ class VisualisationController extends ControllerBase {
 
 			$apiManager = new VanillaApiManager();
 			$kpiInfos = $apiManager->getKpis($datasetId);
+
+			// If there is an error, we do not display the create indicator part
+			if ($kpiInfos['status'] == 'error') {
+				return '
+					<div>
+						<p>Il y a une erreur dans la récupération des indicateurs (' . $kpiInfos['message'] . ')
+					</div>
+				';
+			}
+
 			$kpis = $kpiInfos['result'];
 			$kpiUserUrl = $kpiInfos['kpiUser'];
+			
+			//Getting current resourceId
+			if ($selectedResourceId == null) {
+				$resources = $dataset["metas"]["resources"];
+				if (sizeof($resources) > 0 ) {
+					$selectedResourceId = $this->getLastDataResource($resources);
+				}
+			}
+
+			$selectedResource = $this->getDataResource($resources, $selectedResourceId);
+			if ($selectedResource == null || $selectedResource["datastore_active"] != true) {
+				return null;
+			}
 
 			$newKPIPart = '';
 			$userManager = new UserManager();
 			if ($loggedIn && ($userManager->isConnectedUserAdmin() || $userManager->isConnectedUserRO())) {
-
-				//Getting current resourceId
-				if ($selectedResourceId == null) {
-					$resources = $dataset["metas"]["resources"];
-					if (sizeof($resources) > 0 ) {
-						$selectedResourceId = $this->getLastDataResource($resources);
-					}
-				}
 
 				$newKPIPart = '
 					<div class="row">
@@ -1307,6 +1322,16 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		return $lastResource;
+	}
+
+	function getDataResource($resources, $selectedResourceId) {
+		foreach($resources as $key=>$value) {
+			$resourceId = $value["id"];
+			if ($selectedResourceId == $resourceId) {
+				return $value;
+			}
+		}
+		return null;
 	}
 
 	function buildRgpd($isRgpd, $rgpdNonConnected) {

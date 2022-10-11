@@ -916,11 +916,9 @@ class editMetaDataForm extends HelpFormBase {
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
-					Logger::logMessage("TRM - Managing resource");
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
 
 					// Manage other resources
-					Logger::logMessage("TRM - " . count($table_data));
 					for ($i = 1; $i <= count($table_data); $i++) {
 						$datasetName = $table_data[$i][name];
 						$resourceDescription = $table_data[$i][description];
@@ -933,14 +931,11 @@ class editMetaDataForm extends HelpFormBase {
 						$generateColumns = strpos($oldname, '_gencol.csv') !== false;
 						$unzipZip = false;
 
-						Logger::logMessage("TRM - Found " . json_encode($table_data[$i]));
-
 						if ($needToBeDelete == 1) {
 							$resourceManager->deleteResource($resourceId);
 							\Drupal::messenger()->addMessage("La ressource '" . $datasetName ."' a été mis supprimé.");
 						}
 						else if ($needUpdate == 1 && $resourceUrl != "") {
-							Logger::logMessage("TRM - Need update " . $needUpdate);
 							$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, true, $resourceDescription, $encoding, $validata, $unzipZip);
 						}
 					}

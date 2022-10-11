@@ -961,6 +961,13 @@ ckan_admin.unsubscribeDataset:
   requirements:
     _permission: 'access content'
 
+ckan_admin.api:
+  path: '/d4c/api'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\ApiController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
 
 # Part Datatable
 ckan_admin.api.datatable.manage:

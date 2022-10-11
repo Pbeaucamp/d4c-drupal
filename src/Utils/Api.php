@@ -8639,6 +8639,10 @@ class Api
 			return $allowedOrganizations;
 		}
 
+		if ($this->isObservatory()) {
+			$allowedOrganizations = $this->getObservatoryOrganisations();
+		}
+
 		foreach ($current_user->getRoles() as $role) {
 			if (strpos($role, 'admin_') !== false) {
 				$loadedRole = \Drupal::entityTypeManager()->getStorage('user_role')->load($role);
