@@ -217,12 +217,11 @@ class ResourceManager {
 
 							for ($c=0; $c < $num; $c++) {
 								$label = $data[$c];
-
-								Logger::logMessage("Found column name " . $label);
 	
 								$label = $this->cleanColumnName($label);
-
-								Logger::logMessage("TRM - Clean name " . $label);
+								if ($label == '') {
+									$label = 'unknown';
+								}
 								if(in_array($label, $existingCols)) {
 									$label = $label . "_" . $c;
 								}
@@ -314,8 +313,7 @@ class ResourceManager {
 				$xls_file = self::ROOT . $filePath;
 				
 				$reader = new Xlsx();
-			
-				if(explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
+				if (explode(".", $fileName)[1]  === 'xls' ||explode(".", $fileName)[1] === 'XLS') {
 					$reader = new Xls();
 				}
 				$reader->setReadDataOnly(true);
@@ -325,24 +323,38 @@ class ResourceManager {
 				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
 				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
 				$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+				
+				// We upload the excel file and we convert it to insert data if we can
+				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true);
+				$results = array_merge($results, $result);
+
 				$writer = new Csv($spreadsheet);
 
-					
-				$csvpath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), self::ROOT . $filePath);
-				$resourceUrl = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $resourceUrl);
-				$fileName = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $fileName);
-				$filePath = str_replace(array('.xlsx', '.xls', '.XLSX', '.XLS'), array('.csv', '.csv', '.csv', '.csv'), $filePath);
+				$arrayXls = array('.xlsx', '.xls', '.XLSX', '.XLS');
+
+				$originalRootFilePath = self::ROOT . $filePath;
+				$originalResourceUrl = $resourceUrl;
+				$originalFileName = $fileName;
+				$originalFilePath = $filePath;
 
 				foreach($loadedSheetNames as $sheetIndex => $loadedSheetName) {
-					$writer->setSheetIndex($sheetIndex);
-					Logger::logMessage("Saving CSV for sheet at index " . $sheetIndex . " with path '" . $csvpath . "'");
-					$writer->save($csvpath);
-					break;
-				}
+					$csvExtension = $sheetIndex . '.csv';
+					$arrayCsvWithIndex = array($csvExtension, $csvExtension, $csvExtension, $csvExtension);
+	
+					$csvpath = str_replace($arrayXls, $arrayCsvWithIndex, $originalRootFilePath);
+					$resourceUrl = str_replace($arrayXls, $arrayCsvWithIndex, $originalResourceUrl);
+					$fileName = str_replace($arrayXls, $arrayCsvWithIndex, $originalFileName);
+					$filePath = str_replace($arrayXls, $arrayCsvWithIndex, $originalFilePath);
 
-				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage, true, $customName);
-				$results = array_merge($results, $result);
+					Logger::logMessage("Saving CSV for sheet at index " . $sheetIndex . " with path '" . $csvpath . "'");
+
+					$writer->setSheetIndex($sheetIndex);
+					$writer->save($csvpath);
+
+					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
+					$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage, true, $customName);
+					$results = array_merge($results, $result);
+				}
 			}
 			else {
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
@@ -1235,7 +1247,7 @@ class ResourceManager {
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
 			$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 			
-			if ($type == 'csv' || $type == 'xls' || $type == 'xlsx') {
+			if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {
 				// We monitore the datapusher
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
 				$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
@@ -1294,7 +1306,7 @@ class ResourceManager {
 				$resourceId = $return->result->id;
 				$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 				
-				if ($type == 'csv' || $type == 'xls' || $type == 'xlsx') {
+				if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {
 					// We monitore the datapusher
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
 					
