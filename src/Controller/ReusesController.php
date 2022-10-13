@@ -160,7 +160,6 @@ class ReusesController extends ControllerBase {
 			
 			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.custom.min.css\" rel=\"stylesheet\">");
 			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/style.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/'.$config->client->css_file.'\" rel=\"stylesheet\">");
 			$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.theme.min.css\">");
     		$("head").append("<link rel=\"stylesheet\" type=\"text/css\" href=\"'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/jquery-ui-1.12.1.custom/jquery-ui.min.css\">");
 			setTimeout(function(){$("#reuses").masonry({

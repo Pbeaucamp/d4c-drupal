@@ -4702,7 +4702,6 @@ class Api
 			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/d4cui.css\" rel=\"stylesheet\">");
 			//$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/bootstrap.min.css\" rel=\"stylesheet\">");
 			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/visualisation.css\" rel=\"stylesheet\">");
-			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/' . $this->config->client->css_file . '\" rel=\"stylesheet\">");
 			$("head").append("<base href=\"/\">");	
 			$("head").append("<link href=\"' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/css/font-awesome.min.css\" rel=\"stylesheet\">");
 	</script>
