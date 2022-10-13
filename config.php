@@ -32,7 +32,8 @@ return (object) array(
 		'host' => getenv('CLIENT_HOST'),
 		'port' => getenv('CLIENT_PORT'),
 		'client_is_observatory' => getenv('CLIENT_IS_OBSERVATORY'),
-		'client_organisation' => getenv('CLIENT_ORGANISATION')
+		'client_organisation' => getenv('CLIENT_ORGANISATION'),
+		'drupal_root' => getenv('DRUPAL_ROOT'),
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',

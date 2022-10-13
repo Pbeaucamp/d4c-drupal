@@ -7031,7 +7031,7 @@ class Api
 					}
 
 					//on ecrit le fichier
-					$uploaddir = DRUPAL_ROOT . '/sites/default/files/reuses/';
+					$uploaddir = $this->config->drupal_root . '/sites/default/files/reuses/';
 					if (!file_exists($uploaddir)) {
 						mkdir($uploaddir, 0777, true);
 					}
@@ -8284,7 +8284,7 @@ class Api
 			$fileName = $resourceManager->nettoyage2($resourceName) . "." . $resourceFormat;
 		}
 
-		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
+		$uploaddir = $this->config->drupal_root . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . $fileName;
 
 		$encodingUrl = str_replace(' ', '%20', $resourceUrl);
@@ -8382,7 +8382,7 @@ class Api
 			return $data_array;
 		}
 
-		$uploaddir = DRUPAL_ROOT . '/sites/default/files/dataset/';
+		$uploaddir = $this->config->drupal_root . '/sites/default/files/dataset/';
 		$uploadfile = $uploaddir . basename($_FILES['upload_file']['name']);
 
 		if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadfile)) {
