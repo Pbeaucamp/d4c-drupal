@@ -545,7 +545,7 @@ class External {
 		$fileName = 'req_'.$typeSource."_".$idDataset;
 		$filePath = $fileName. "_" . uniqid().'.csv';
 
-		$rootCsv = $this->config->drupal_root . '/sites/default/files/dataset/' . $filePath;
+		$rootCsv = $this->config->client->drupal_root . '/sites/default/files/dataset/' . $filePath;
 		//error_log($rootCsv);
 		file_put_contents($rootCsv, $result);
 		

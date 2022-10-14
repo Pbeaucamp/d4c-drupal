@@ -772,7 +772,7 @@ class joinDatasetsForm extends HelpFormBase
 	}
 
 	function join2csv($url1, $url2, $nameFile, $columns_data, $columns_data2) {
-		$filePath = $this->config->drupal_root . '/sites/default/files/dataset/' . $nameFile . '.csv';
+		$filePath = $this->config->client->drupal_root . '/sites/default/files/dataset/' . $nameFile . '.csv';
 
 		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';
 		$this->host = $this->config->client->host;
