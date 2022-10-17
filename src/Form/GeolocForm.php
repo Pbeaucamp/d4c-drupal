@@ -9,6 +9,7 @@ namespace Drupal\ckan_admin\Form;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\ckan_admin\Utils\GeolocHelper;
+use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 
 /**
@@ -36,30 +37,12 @@ class GeolocForm extends HelpFormBase
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 
-		$cle = $this->config->ckan->api_key;
-		$optionst = array(
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_HTTPHEADER => array(
-				'Content-type:application/json',
-				'Content-Length: ' . strlen($jsonData),
-				'Authorization:  ' . $cle
-			)
-		);
-
-
-		$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=true";
-		$curlOrg = curl_init($callUrlOrg);
-
-		curl_setopt_array($curlOrg, $optionst);
-		$orgs = curl_exec($curlOrg);
-		curl_close($curlOrg);
-		$orgs = json_decode($orgs, true);
+        $api = new Api;
+		$orgs = $api->getAllOrganisations(true, false, true);
 
 		$organizationList = array();
-
-		for ($i = 0; $i < count($orgs[result]); $i++) {
-			$organizationList[$orgs[result][$i][name]] = $orgs[result][$i][display_name];
+        foreach ($orgs as &$value) {
+            $organizationList[$value[name]] = $value[display_name];
 		}
 
 		$form['text_message1'] = [

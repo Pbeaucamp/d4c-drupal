@@ -78,13 +78,13 @@ class DatasetDatapusherForm extends HelpFormBase {
 					'statutDatastore' => array('data' => array('#markup' => $dpStatus)),
 					'logDatastore' => array('data' => new FormattableMarkup('<input type="button" onclick=":action" class="button" style="border-radius: 10px;font-size: 11px;padding: 4px 5px;" value=":name" data-id=":id" data-log=":infos"/>', 
 						[':action' => "openLogPopup(event)", 
-						':name' => $this->t('Visualiser'),
+						':name' => $this->t('Logs d\'insertion'),
 						':infos' => $datapusherResult,
 						':id' => $title])
 					),
 					'downloadInDatastore' => array('data' => new FormattableMarkup('<input type="button" onclick=":action" class="button" style="border-radius: 10px;font-size: 11px;padding: 4px 5px;" value=":name" data-id=":id"/>', 
 						[':action' => "pushToDatastore(event)", 
-						':name' => $this->t('Télécharger vers le DataStore'),
+						':name' => $this->t('Relancer l\'intégration dans le Datastore'),
 						':id' => $id])
 					),
 				];
@@ -112,7 +112,7 @@ class DatasetDatapusherForm extends HelpFormBase {
 		
 		$form['calculateVisualisation'] = array(
 			'#type' => 'button',
-			'#value' => t('Générer la visualisation '),
+			'#value' => t('Régénérer la visualisation'),
 			'#ajax' => [
 				'callback' => [$this, 'calculateVisu'],
 				'event' => 'click',

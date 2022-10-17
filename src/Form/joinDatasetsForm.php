@@ -42,30 +42,12 @@ class joinDatasetsForm extends HelpFormBase
 		$form['#attached']['library'][] = 'ckan_admin/joinDatasetsForm.form';
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
+
 		$api = new Api;
-
-		$cle = $this->config->ckan->api_key;
-		$optionst = array(
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_HTTPHEADER => array(
-				'Content-type:application/json',
-				// 'Content-Length: ' . strlen($jsonData),
-				'Authorization:  ' . $cle,
-			),
-		);
-		//if ($form_state->getTriggeringElement()["#name"] == ''){
-		$callUrlOrg = $this->urlCkan . "api/action/organization_list?all_fields=true";
-		$curlOrg = curl_init($callUrlOrg);
-
-		curl_setopt_array($curlOrg, $optionst);
-		$orgs = curl_exec($curlOrg);
-		curl_close($curlOrg);
-		$orgs = json_decode($orgs, true);
-
+		$orgs = $api->getAllOrganisations(true, false, true);
+		
 		$this->organizationList = array();
-
-		foreach ($orgs[result] as $value) {
+        foreach ($orgs as &$value) {
 			$this->organizationList[$value[id]] = $value[display_name];
 		}
 
@@ -77,17 +59,9 @@ class joinDatasetsForm extends HelpFormBase
 
 		///////////////////////////////license_list////
 
-		$callUrllic = $this->urlCkan . "api/action/license_list";
-		$curllic = curl_init($callUrllic);
-
-		curl_setopt_array($curllic, $optionst);
-		$lic = curl_exec($curllic);
-
-		curl_close($curllic);
-		$lic = json_decode($lic, true);
+		$lic = $api->getLicenses();
 
 		$licList = array();
-
 		foreach ($lic[result] as $value) {
 			$licList[$value[id]] = $value[title];
 		}
