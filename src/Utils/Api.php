@@ -4,25 +4,19 @@ namespace Drupal\ckan_admin\Utils;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+
+use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+
 use Drupal\ckan_admin\Utils\Export;
-use ZipArchive;
-use Drupal\file\Entity\File;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xls;
-use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
-use \PhpOffice\PhpSpreadsheet\Writer\Csv;
-use Box\Spout\Writer\WriterFactory;
-use Box\Spout\Common\Type;
-use Box\Spout\Reader\ReaderFactory;
-use Box\Spout\Writer\Style\StyleBuilder;
-use Box\Spout\Writer\Style\CellAlignment;
-use SplFileObject;
-use finfo;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\NutchApi;
 
-
+use finfo;
+use SplFileObject;
+use ZipArchive;
 
 ini_set('memory_limit', '4G'); // or you could use 1G
 ini_set('max_execution_time', 200);
@@ -2282,28 +2276,12 @@ class Api
 
 				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 
-				// $spreadsheet = new Spreadsheet();
-				// $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+				$reader = ReaderEntityFactory::createCSVReader();
+				// $reader->setFieldDelimiter(';');
+				// $reader->setFieldEnclosure('"');
+				// $reader->setEndOfLineCharacter("\r");
 
-				// /* Set CSV parsing options */
-				// $reader->setDelimiter(';');
-				// $reader->setEnclosure('"');
-				// $reader->setSheetIndex(0);
-
-				// /* Load a CSV file and save as a XLS */
-				// $spreadsheet = $reader->load($pathInput);
-				// $writer = new Xls($spreadsheet);
-				// $writer->save($pathOutput);
-				// $spreadsheet->disconnectWorksheets();
-
-				// unset($spreadsheet);
-
-				$reader = ReaderFactory::create(Type::CSV);
-				$reader->setFieldDelimiter(';');
-				$reader->setFieldEnclosure('"');
-				$reader->setEndOfLineCharacter("\r");
-
-				$writer = WriterFactory::create(Type::XLSX);
+				$writer = WriterEntityFactory::createXLSXWriter();
 
 				$reader->open($pathInput);
 				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
@@ -2312,7 +2290,7 @@ class Api
 					foreach ($sheet->getRowIterator() as $row) {
 						$writer->addRow($row);
 					}
-				} //$writer->addRows($multipleRows); // add multiple rows at a time
+				}
 
 				$reader->close();
 				$writer->close();
@@ -6869,12 +6847,12 @@ class Api
 
 			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
 
-			$reader = ReaderFactory::create(Type::CSV);
-			$reader->setFieldDelimiter(';');
-			$reader->setFieldEnclosure('"');
-			$reader->setEndOfLineCharacter("\n");
+			$reader = ReaderEntityFactory::createCSVReader();
+			// $reader->setFieldDelimiter(';');
+			// $reader->setFieldEnclosure('"');
+			// $reader->setEndOfLineCharacter("\n");
 
-			$writer = WriterFactory::create(Type::XLSX);
+			$writer = WriterEntityFactory::createXLSXWriter();
 
 			$style = (new StyleBuilder())
 				//->setFontBold()
@@ -6888,8 +6866,8 @@ class Api
 
 			foreach ($reader->getSheetIterator() as $sheet) {
 				foreach ($sheet->getRowIterator() as $row) {
-					//$row->setStyle($style);
-					$writer->addRowWithStyle($row, $style);
+					$row->setStyle($style);
+					$writer->addRow($row);
 				}
 			} //$writer->addRows($multipleRows); // add multiple rows at a time
 
