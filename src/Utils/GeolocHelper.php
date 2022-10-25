@@ -43,7 +43,7 @@ class GeolocHelper {
         $pathUserClient = '/home/user-client';
         $pathUserClientData = $pathUserClient . '/data';
         $geolocJar = 'bpm.geoloc.creator_1.0.0.jar';
-        $nodeUrl = 'https://localhost:1337/';
+        $nodeUrl = $this->config->cluster->url;
         $nodePath = '/home/user-client/data/clusters';
         $minimumScore = '10';
         $pathTempFile = '/home/user-client/data/temp';
