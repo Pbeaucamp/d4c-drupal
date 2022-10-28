@@ -192,10 +192,13 @@ leaflet:
     #/sites/default/files/api/portail_d4c/lib/leaflet-draw/leaflet.draw.js: {}
     /sites/default/files/api/portail_d4c/lib/leaflet-control-geocoder/Control.Geocoder.js: {}
     /sites/default/files/api/portail_d4c/lib/leaflet-proj4js/GpPluginLeaflet.js: {}
+    /sites/default/files/api/portail_d4c/lib/leaflet-markercluster/leaflet.markercluster.js: {}
   css:
     base:
       /sites/default/files/api/portail_d4c/lib/leaflet/leaflet.css: {}
       /sites/default/files/api/portail_d4c/lib/leaflet-control-geocoder/Control.Geocoder.css: {}
+      /sites/default/files/api/portail_d4c/lib/leaflet-markercluster/MarkerCluster.css: {}
+      /sites/default/files/api/portail_d4c/lib/leaflet-markercluster/MarkerCluster.Default.css: {}
   dependencies:
     - core/jquery
     
