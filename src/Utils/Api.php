@@ -540,6 +540,7 @@ class Api
 								} else if (is_array($value)) {
 									$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 								} else {
+									$value = urldecode($value);
 									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 								}
 							}
@@ -1036,28 +1037,25 @@ class Api
 		return $result;
 	}
 
-	public function callPackageSearch($params)
-	{
-		$arrFac;
-		$arrFacSearch;
+	public function callPackageSearch($params) {
 		$arr = array();
-		//$hasFacetFeature = false;
+
 		$result = $this->getExtendedPackageSearch($params);
 
 		$hasFacetFeature = array_key_exists("features", $result["result"]["facets"]);
 		$hasFacetThemes = array_key_exists("themes", $result["result"]["facets"]);
 
-		unset($result["help"]); //echo count($result["result"]["results"]);
+		unset($result["help"]);
 		foreach ($result["result"]["results"] as &$dataset) {
 			$dataset["metas"] = array();
 			$dataset["metas"]["records_count"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "records_count";
-			}))["value"] ?: 0;
+					return $f["key"] == "records_count";
+				}))["value"] ?: 0;
 			$dataset["metas"]["records_count"] = floatval($dataset["metas"]["records_count"]);
 
 			$dataset["metas"]["features"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "features";
-			}))["value"] ?: null;
+					return $f["key"] == "features";
+				}))["value"] ?: null;
 			$dataset["metas"]["features"] = explode(",", $dataset["metas"]["features"]);
 			if ($hasFacetFeature) {
 				$arr[] = $dataset["metas"]["features"];
@@ -1067,17 +1065,17 @@ class Api
 			}
 
 			$dataset["metas"]["custom_view"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "custom_view";
-			}))["value"] ?: null;
+					return $f["key"] == "custom_view";
+				}))["value"] ?: null;
 			$dataset["metas"]["custom_view"] = json_decode($dataset["metas"]["custom_view"], true);
 
 			$dataset["metadata_imported"] = $dataset["metadata_modified"];
 			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "date_moissonnage_last_modification";
-			}))["value"] ?: $dataset["metadata_modified"];
+					return $f["key"] == "date_moissonnage_last_modification";
+				}))["value"] ?: $dataset["metadata_modified"];
 			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "date_moissonnage_creation";
-			}))["value"] ?: $dataset["metadata_created"];
+					return $f["key"] == "date_moissonnage_creation";
+				}))["value"] ?: $dataset["metadata_created"];
 
 			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
@@ -1085,7 +1083,6 @@ class Api
 		}
 
 		if ($hasFacetFeature) {
-
 			$arr = array();
 			foreach ($result["result"]["facets"]["features"] as $key => $count) {
 				for ($i = 0; $i < $count; $i++) {
@@ -1206,6 +1203,8 @@ class Api
 		if (!is_null($params)) {
 			$callUrl .= "?" . $params;
 		}
+
+		// Logger::logMessage("TRM - Call URL : " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -3953,7 +3952,7 @@ class Api
 				}/* else if($key == "geo_digest"){
 					$where .= "md5(".$fieldGeometries.") = '". $value . "' and ";
 				}*/ else {
-					$ftype == null;
+					$ftype = null;
 					foreach ($fields as $field) {
 						if ($field["name"] == $key) {
 							$ftype = $field["type"];
@@ -3965,6 +3964,7 @@ class Api
 					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -6529,7 +6529,7 @@ class Api
 		return $response;
 	}
 
-	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE, $applySecurity = false)
+	function getAllOrganisations($allFields = TRUE, $include_extra = FALSE, $applySecurity = true)
 	{
 		$callUrlOrg =  $this->urlCkan . "api/action/organization_list?all_fields=" . ($allFields ? 'true' : 'false') . "&include_extras=" . ($include_extra ? 'true' : 'false');
 
@@ -6540,7 +6540,7 @@ class Api
 		$orgs = json_decode($orgs, true);
 		$orgs = $orgs["result"];
 
-		if ($this->isObservatory()) {
+		if ($this->isObservatory() && $applySecurity) {
 			$allowedOrganizations = $this->getObservatoryOrganisations();
 			if (!$allFields && !$include_extra) {
 				foreach ($orgs as $org) {
