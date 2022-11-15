@@ -5065,7 +5065,7 @@ class Api
 				break;
 			case 'GET':  //if idMap => getMap, if not => listMap
 				$res = $this->getMaps($idUser, $idmap);
-				$data_array;
+				$data_array = array();
 				if ($idmap != '' && $idmap != null) { //echo json_encode($res);
 					$data_array = $res[0]->map_json;
 					echo $data_array;
@@ -5076,14 +5076,6 @@ class Api
 					}
 					echo json_encode($data_array);
 				}
-
-				/*if(count($res) == 1){//echo json_encode($res[0]);
-					$res = $res[0]->json;
-					echo $res;
-				} else {
-					echo json_encode($res);
-				}*/
-
 				break;
 			case 'DELETE':  //delete existing map, get idMap
 				if ($idmap == "") {
@@ -5119,7 +5111,9 @@ class Api
 			'map_json'
 		]);
 
-		$query->condition('map_id_user', $idUser);
+		if ($idUser != "" && $idUser != null) {
+			$query->condition('map_id_user', $idUser);
+		}
 		if ($idMap != "" && $idMap != null) {
 			$query->condition('map_name', $idMap);
 		}

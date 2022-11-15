@@ -103,14 +103,30 @@ ckan_admin.carte:
   requirements:
     _permission: 'access content'
 
-ckan_admin.cartemap:
-  path: '/carte/show'
+ckan_admin.carte.preview:
+  path: '/carte/{idmap}'
   defaults:
-    _controller: '\Drupal\ckan_admin\Controller\PortailController::myPage'
-    tab: 'table'
+    _controller: '\Drupal\ckan_admin\Controller\MapViewer::myPage'
     _title: ''
   requirements:
     _permission: 'access content'
+
+ckan_admin.carte.edit:
+  path: '/carte/{idmap}/edit'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\MapController::myPage'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+# ckan_admin.cartemap:
+#   path: '/carte/show'
+#   defaults:
+#     _controller: '\Drupal\ckan_admin\Controller\PortailController::myPage'
+#     tab: 'table'
+#     _title: ''
+#   requirements:
+#     _permission: 'access content'
 
 ckan_admin.api3:
   path: '/d4c/api/records/2.0/search/{params}'
@@ -553,14 +569,6 @@ ckan_admin.mapbuilder:
   requirements:
     _permission: 'access content'
   methods: [GET, HEAD, POST, PUT, DELETE]
-
-ckan_admin.carte.edit:
-  path: '/carte/{idmap}/edit'
-  defaults:
-    _controller: '\Drupal\ckan_admin\Controller\MapController::myPage'
-    _title: ''
-  requirements:
-    _permission: 'access content'
 
 ckan_admin.is.connected:
   path: '/d4c/api/signup/is_logged_in'
