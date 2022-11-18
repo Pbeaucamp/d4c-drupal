@@ -5,6 +5,7 @@ namespace Drupal\ckan_admin\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 
+use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
 
 abstract class MetadataForm extends FormBase {
@@ -56,7 +57,12 @@ abstract class MetadataForm extends FormBase {
 	}
 
 	public function getMetadata(FormStateInterface $form_state) {
-		//TODO
-		return null;
+		$description = $this->getDescription($form_state);
+		
+		$metadata = array();
+		$metadata[] = new MetadataDefinition('description', $description);
+		// For now we set the dataset to private. TODO: make it configurable
+		$metadata[] = new MetadataDefinition('dataset-private', 'true');
+		return $metadata;
 	}
 }
