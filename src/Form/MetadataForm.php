@@ -23,6 +23,16 @@ abstract class MetadataForm extends FormBase {
 			'#tree' => TRUE,
 		];
 
+		// Add helper text for users
+		$form['integration']['help'] = [
+			'#type' => 'markup',
+			'#markup' => $this->t('Les métadonnées sont des informations sur les connaissances. Elles sont utilisées pour décrire les connaissances et les rendre plus facilement accessibles. Elles sont également utilisées pour décrire les connaissances lors de leur publication sur l\'observatoire.'),
+			// Add style to make the text bigger and a padding
+			'#attributes' => [
+				'style' => 'font-size: 1.2em; padding: 1em;',
+			],
+		];
+
 		$form['integration']['dataset_name'] = [
 			'#type' => 'textfield',
 			'#title' => $this->t('Nom de la connaissance'),
