@@ -1394,6 +1394,7 @@ class Api
 					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -2010,6 +2011,7 @@ class Api
 					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -3186,6 +3188,7 @@ class Api
 					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -4533,6 +4536,7 @@ class Api
 					} else if (is_array($value)) {
 						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
