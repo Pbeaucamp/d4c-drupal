@@ -150,7 +150,7 @@ class DatasetsBoardForm extends HelpFormBase {
 					[':link' => $this->config->client->routing_prefix . "/admin/config/data4citizen/editMetaDataForm?id=".$row["id"], 
 					'@name' => $this->t('Editer')])
 				),
-				'view' => array('data' => new FormattableMarkup('<a data-toggle="modal" data-target="#myModal" href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
+				'view' => array('data' => new FormattableMarkup('<a href=":link" class="button" style="border-radius: 10px;font-size: 11px;" target="_blank">@name</a>', 
 					[':link' => $viewLink, 
 					'@name' => ($row["private"] ? $this->t('Prévisualiser') : $this->t('Visualiser'))])
 				),

@@ -538,7 +538,9 @@ class Api
 								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 									$where .= $key . "=" . $value . " and ";
 								} else if (is_array($value)) {
-									$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+									$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+									$value = urldecode($value);
+									$where .= $key . " in (" . $value . ") and ";
 								} else {
 									$value = urldecode($value);
 									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -1392,8 +1394,11 @@ class Api
 					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -2008,8 +2013,11 @@ class Api
 					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -3184,8 +3192,11 @@ class Api
 					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
@@ -3962,7 +3973,9 @@ class Api
 					if (($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -4531,8 +4544,11 @@ class Api
 					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value))) . ") and ";
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
 					} else {
+						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
 					}
 				}
