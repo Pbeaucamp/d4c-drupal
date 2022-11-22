@@ -24,7 +24,7 @@ class DatasetsBoardForm extends HelpFormBase {
 	 * {@inheritdoc}
 	 */
 	public function getFormId() {
-		return 'datasetsManagement';
+		return 'DatasetsBoardForm';
 	}
 
 	/**
