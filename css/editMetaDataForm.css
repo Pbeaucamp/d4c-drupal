@@ -39,3 +39,8 @@
 	height: 30px;
 	background-color: green;
   }
+
+  .form-item-bbox-east-long, .form-item-bbox-north-lat, .form-item-bbox-south-lat, .form-item-bbox-west-long {
+	display: inline-block;
+	width: 200px;
+  }

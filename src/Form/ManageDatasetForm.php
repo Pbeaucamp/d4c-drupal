@@ -212,6 +212,15 @@ class ManageDatasetForm extends FormBase
 			// 		$datasetId = null;
 			// 	}
 			// }
+			// Define an array with all the metadata
+			$newExtras = array();
+			$newExtras['themes'] = $themes;
+			$newExtras['dateDataset'] = $dateDataset;
+			$newExtras['security'] = $security;
+			$newExtras['mention_legales'] = $mention_legales;
+			$newExtras['data4citizenType'] = $data4citizenType;
+			$newExtras['entityId'] = $entityId;
+
 			if (isset($selectedDatasetId)) {
 				$datasetToUpdate = $api->findDataset($selectedDatasetId);
 
@@ -219,8 +228,7 @@ class ManageDatasetForm extends FormBase
 
 				//Update extras
 				$extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+				$extras = $resourceManager->defineExtras($extras, $newExtras);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -228,8 +236,7 @@ class ManageDatasetForm extends FormBase
 			}
 			else {
 				// We build extras
-				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+				$extras = $resourceManager->defineExtras(null, $newExtras);
 
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, 
 					$extras, $source);

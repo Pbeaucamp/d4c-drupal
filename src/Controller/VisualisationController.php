@@ -1766,7 +1766,7 @@ class VisualisationController extends ControllerBase {
 				' . $apiGeo . '
 			
 				<h3>API Data4Citizen</h3>
-				<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
+				<d4c-dataset-api-console context="ctx" service-url="' . $this->config->gravitee->url . '" service-header-key="' . $this->config->gravitee->header_key . '" service-api-key="' . $this->config->gravitee->api_key . '"></d4c-dataset-api-console>
 			</d4c-pane>
 		';
 	}

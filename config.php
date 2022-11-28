@@ -39,6 +39,7 @@ $clientOrganisation = getenv('CLIENT_ORGANISATION') ?: $config->client->organisa
 $clientRoot = getenv('CLIENT_ROOT') ?: $config->client->root;
 
 $graviteeUrl = getenv('GRAVITEE_URL') ?: $config->gravitee->url;
+$graviteeHeaderKey = getenv('GRAVITEE_HEADER_KEY') ?: $config->gravitee->header_key;
 $graviteeApiKey = getenv('GRAVITEE_API_KEY') ?: $config->gravitee->api_key;
 
 $cswEnabled = getenv('CSW_ENABLED') ?: $config->csw->enabled;
@@ -126,6 +127,7 @@ return (object) array(
 	),
 	'gravitee' => array(
 		'url' => $graviteeUrl,
+		'header_key' => $graviteeHeaderKey,
 		'api_key' => $graviteeApiKey
 	),
     'csw' => array(

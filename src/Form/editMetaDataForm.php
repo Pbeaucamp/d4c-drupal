@@ -257,6 +257,72 @@ class editMetaDataForm extends HelpFormBase {
             '#maxlength' => 300
         );
 
+        // Mail contact
+        $form['contact_mail'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Mail de contact :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Territory
+        $form['territory'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('Territoire :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Bounding box east long
+        $form['bbox_east_long'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('BB Lon Est :'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Bounding box north lat
+        $form['bbox_north_lat'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('BB Lat Nord :'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Bounding south lat
+        $form['bbox_south_lat'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('BB Lat Sud :'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Bounding west long
+        $form['bbox_west_long'] = array(
+            '#markup' => '',
+            '#type' => 'textfield',
+            '#title' => $this->t('BB Lon Ouest :'),
+            '#required' => FALSE,
+            '#maxlength' => 300
+        );
+
+        // Mention legales 
+        $form['spatial'] = array(
+            '#markup' => '',
+            '#type' => 'textarea',
+            '#title' => $this->t('Spatial :'),
+            '#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
+            '#resizable' => true
+        );
+
         // Mention legales 
         $form['mention_legales'] = array(
             '#markup' => '',
@@ -780,6 +846,20 @@ class editMetaDataForm extends HelpFormBase {
         $source = $form_state->getValue('source');
         //donnees source
         $donnees_source = $form_state->getValue('donnes_source');
+		//Mail contact
+		$contactMail = $form_state->getValue('contact_mail');
+		//Territory
+		$territory = $form_state->getValue('territory');
+		//BB East long
+		$bbox_east_longb = $form_state->getValue('bbox_east_long');
+		//BB North lat
+		$bbox_north_lat = $form_state->getValue('bbox_north_lat');
+		//BB South lat
+		$bbox_south_lat = $form_state->getValue('bbox_south_lat');
+		//BB West long
+		$bbox_west_long = $form_state->getValue('bbox_west_long');
+		//Spatial
+		$spatial = $form_state->getValue('spatial');
         //mentions legales
         $mention_legales = $form_state->getValue('mention_legales');
 		
@@ -871,12 +951,40 @@ class editMetaDataForm extends HelpFormBase {
 				}
 			}
 			else {
+				// Define an array with all the metadata
+				$newExtras = array();
+				$newExtras['picto'] = $imgPicto;
+				$newExtras['imgBackground'] = $imgBackground;
+				$newExtras['removeBackground'] = $removeBackground;
+				$newExtras['linkDatasets'] = $linkDatasets;
+				$newExtras['themes'] = $theme;
+				$newExtras['selectedTypeMap'] = $selectedTypeMap;
+				$newExtras['selectedOverlays'] = $selectedOverlays;
+				$newExtras['dont_visualize_tab'] = $dont_visualize_tab;
+				$newExtras['widgets'] = $widgets;
+				$newExtras['visu'] = $visu;
+				$newExtras['dateDataset'] = $dateDataset;
+				$newExtras['disableFieldsEmpty'] = $disableFieldsEmpty;
+				$newExtras['analyseDefault'] = $analyseDefault;
+				$newExtras['security'] = $security;
+				$newExtras['producer'] = $producer;
+				// $newExtras['source'] = $source;
+				$newExtras['donnees_source'] = $donnees_source;
+				$newExtras['mention_legales'] = $mention_legales;
+				$newExtras['frequence'] = $frequence;
+				$newExtras['displayVersionning'] = $displayVersionning;
+				$newExtras['dataRgpd'] = $dataRgpd;
+				$newExtras['territory'] = $territory;
+				$newExtras['contactMail'] = $contactMail;
+				$newExtras['bbox_east_longb'] = $bbox_east_longb;
+				$newExtras['bbox_north_lat'] = $bbox_north_lat;
+				$newExtras['bbox_south_lat'] = $bbox_south_lat;
+				$newExtras['bbox_west_long'] = $bbox_west_long;
+				$newExtras['spatial'] = $spatial;
+
 				if ($datasetId == 'new') {
 					// We build extras
-					$extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
-						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, null, $donnees_source, $mention_legales, $frequence, $displayVersionning,
-						$dataRgpd);
+					$extras = $resourceManager->defineExtras(null, $newExtras);
 
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
@@ -907,10 +1015,8 @@ class editMetaDataForm extends HelpFormBase {
 
 					//Update extras
 					$extras = $datasetToUpdate[extras];
-					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
-						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
-						$dataRgpd);
+
+					$extras = $resourceManager->defineExtras($extras, $newExtras);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");

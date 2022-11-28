@@ -17,6 +17,8 @@ use Drupal\ckan_admin\Utils\NutchApi;
 use finfo;
 use SplFileObject;
 use ZipArchive;
+use SimpleXMLElement;
+
 
 ini_set('memory_limit', '4G'); // or you could use 1G
 ini_set('max_execution_time', 200);
@@ -680,6 +682,8 @@ class Api
 
 	public function callPackageShow($params)
 	{
+		$params = $this->retrieveParameters($params);
+
 		$result = $this->getPackageShow($params);
 		unset($result["help"]);
 		foreach ($result["result"]["resources"] as $j => $value) {
@@ -2552,8 +2556,9 @@ class Api
 			if ($value["key"] == "tooltip") {
 				$val = json_decode($value["value"], true);
 				if ($val["type"] == "html") {
+					$mapTooltip = $this->getMapTooltip(true, $val["value"]);
 					$visu['map_tooltip_html_enabled'] = true;
-					$visu['map_tooltip_html'] = $this->getMapTooltip(true, $val["value"]);
+					$visu['map_tooltip_html'] = $mapTooltip;
 				} else {
 					$visu['map_tooltip_html_enabled'] = false;
 					$visu['map_tooltip_fields'] =  explode(",", $val["value"]["fields"]);
@@ -7357,7 +7362,9 @@ class Api
 
 		$query_params = $this->proper_parse_str($params);
 		$response = new Response();
-		$response->headers->set('Content-Type', 'application/json; charset=utf-8');
+		$contentType = ($query_params['format'] == 'xml') ? 'application/xml' : 'application/json; charset=utf-8';
+		$limit = (isset($query_params['limit'])) ? $query_params['limit'] : 1000;
+		$response->headers->set('Content-Type', $contentType);
 		if ($query_params["service"] != "getData") {
 			echo "Ce service n'est pas supporté";
 			$response->setStatusCode(404);
@@ -7366,7 +7373,7 @@ class Api
 			$db = $query_params["db"];
 			$dataset = $query_params["table"];
 			$format = $query_params["format"];
-			$limit = $query_params["limit"];
+			// $limit = $query_params["limit"];
 			$offset = $query_params["offset"];
 			$start = "";
 			$rows = "";
@@ -7416,7 +7423,34 @@ class Api
 			$opendata["answer"] = $answer;
 			$result["opendata"] = $opendata;
 
-			echo json_encode($result);
+			if ($query_params['format'] == 'xml'){
+
+
+                $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><opendata/>');
+
+                $status="";
+                $attributs = array();
+
+                array_walk_recursive($result, function ($value, $key) use ($xml) {
+                    // Conformation de l'enveloppe à la façon de l'ancienne API La Rochelle avril 2020
+                    global $status, $answer, $data, $row, $attributs, $nextRowAttribut;
+                    if(!in_array($key,$attributs)){$attributs[]=$key;}
+                    else if(!isset($nextRowAttribut)){$nextRowAttribut=$key;$row = $data->addChild("row");}
+                    else if($key==$nextRowAttribut){$row = $data->addChild("row");}
+                    if($key=="request"){$xml->addChild($key, htmlspecialchars($value));$answer = $xml->addChild("answer");}
+                    else if($key=="code"){$status.="code=".$value;}
+                    else if($key=="resume" || $key=="texte"){$row->addChild($key, str_replace("nbsp","#160",$value));}
+                    else if($key=="message"){$status.=" message=\"".$value."\""; $answer->addChild("status", $status);$data = $answer->addChild("data");$row = $data->addChild("row");}
+                    else if($key!="total_count"){$row->addChild($key, $value);}
+               });
+
+               echo $xml->asXML();
+
+            }
+			else{
+                  echo json_encode($result);
+            }
+
 		}
 
 
@@ -8087,10 +8121,6 @@ class Api
 			$extras[count($extras)]['key'] = 'edition_security';
 			$extras[(count($extras) - 1)]['value'] = json_encode($security);
 		}
-
-		// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
-		// 	null, null, null, null, null, 
-		// 	null, null, null, $security);
 
 		$generatedTaskId = uniqid();
 		try {

@@ -1601,10 +1601,41 @@ class ResourceManager {
 		return array("roles" => array("administrator"), "users" => $userlist);
 	}
 	
-	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
-			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null) {
+	/**
+	 * We put every extras in an array to be able to add more later
+	 */
+	function defineExtras($extras, $newExtras) {
+		$picto = $newExtras['picto'];
+		$imgBackground = $newExtras['imgBackground'];
+		$removeBackground = $newExtras['removeBackground'];
+		$linkDatasets = $newExtras['linkDatasets'];
+		$themes = $newExtras['themes'];
+		$selectedTypeMap = $newExtras['selectedTypeMap'];
+		$selectedOverlays = $newExtras['selectedOverlays'];
+		$dont_visualize_tab = $newExtras['dont_visualize_tab'];
+		$widgets = $newExtras['widgets'];
+		$visu = $newExtras['visu'];
+		$dateDataset = $newExtras['dateDataset'];
+		$disableFieldsEmpty = $newExtras['disableFieldsEmpty'];
+		$analyseDefault = $newExtras['analyseDefault'];
+		$security = $newExtras['security'];
+		$producer = $newExtras['producer'];
+		$source = $newExtras['source'];
+		$donnees_source = $newExtras['donnees_source'];
+		$mention_legales = $newExtras['mention_legales'];
+		$frequence = $newExtras['frequence'];
+		$displayVersionning = $newExtras['displayVersionning'];
+		$dataRgpd = $newExtras['dataRgpd'];
+		$data4citizenType = $newExtras['data4citizenType'];
+		$entityId = $newExtras['entityId'];
+		$territory = $newExtras['territory'];
+		$contactMail = $newExtras['contactMail'];
+		$bbox_east_longb = $newExtras['bbox_east_longb'];
+		$bbox_north_lat = $newExtras['bbox_north_lat'];
+		$bbox_south_lat = $newExtras['bbox_south_lat'];
+		$bbox_west_long = $newExtras['bbox_west_long'];
+		$spatial = $newExtras['spatial'];
+
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1632,6 +1663,14 @@ class ResourceManager {
 		$hasDataRgpd = false;
 		$hasData4citizenType = false;
 		$hasEntityId = false;
+		$hasTerritory = false;
+		$hasContactMail = false;
+		$hasBboxEastLongb = false;
+		$hasBboxNorthLat = false;
+		$hasBboxSouthLat = false;
+		$hasBboxWestLong = false;
+		$hasSpatial = false;
+
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1781,6 +1820,41 @@ class ResourceManager {
 					$hasEntityId  = true;
 					$extras[$index]['value'] = $entityId;
 				}
+
+				if ($extras[$index]['key'] == 'territory') {
+					$hasTerritory = true;
+					$extras[$index]['value'] = $territory;
+				}
+
+				if ($extras[$index]['key'] == 'contact_mail') {
+					$hasContactMail = true;
+					$extras[$index]['value'] = $contactMail;
+				}
+
+				if ($extras[$index]['key'] == 'bbox-east-long') {
+					$hasBboxEastLongb = true;
+					$extras[$index]['value'] = $bbox_east_longb;
+				}
+
+				if ($extras[$index]['key'] == 'bbox-north-lat') {
+					$hasBboxNorthLat = true;
+					$extras[$index]['value'] = $bbox_north_lat;
+				}
+
+				if ($extras[$index]['key'] == 'bbox-south-lat') {
+					$hasBboxSouthLat = true;
+					$extras[$index]['value'] = $bbox_south_lat;
+				}
+
+				if ($extras[$index]['key'] == 'bbox-west-long') {
+					$hasBboxWestLong = true;
+					$extras[$index]['value'] = $bbox_west_long;
+				}
+
+				if ($extras[$index]['key'] == 'spatial') {
+					$hasSpatial = true;
+					$extras[$index]['value'] = $spatial;
+				}
 			}
 		}
 
@@ -1907,6 +1981,41 @@ class ResourceManager {
 		if ($hasEntityId == false) {
 			$extras[count($extras)]['key'] = 'data4citizen-entity-id';
 			$extras[(count($extras) - 1)]['value'] = $entityId;
+		}
+
+		if ($hasTerritory == false) {
+			$extras[count($extras)]['key'] = 'territory';
+			$extras[(count($extras) - 1)]['value'] = $territory;
+		}
+
+		if ($hasContactMail == false) {
+			$extras[count($extras)]['key'] = 'contact_mail';
+			$extras[(count($extras) - 1)]['value'] = $contactMail;
+		}
+
+		if ($hasBboxEastLongb == false) {
+			$extras[count($extras)]['key'] = 'bbox-east-long';
+			$extras[(count($extras) - 1)]['value'] = $bbox_east_longb;
+		}
+
+		if ($hasBboxNorthLat == false) {
+			$extras[count($extras)]['key'] = 'bbox-north-lat';
+			$extras[(count($extras) - 1)]['value'] = $bbox_north_lat;
+		}
+
+		if ($hasBboxSouthLat == false) {
+			$extras[count($extras)]['key'] = 'bbox-south-lat';
+			$extras[(count($extras) - 1)]['value'] = $bbox_south_lat;
+		}
+
+		if ($hasBboxWestLong == false) {
+			$extras[count($extras)]['key'] = 'bbox-west-long';
+			$extras[(count($extras) - 1)]['value'] = $bbox_west_long;
+		}
+
+		if ($hasSpatial == false) {
+			$extras[count($extras)]['key'] = 'spatial';
+			$extras[(count($extras) - 1)]['value'] = $spatial;
 		}
 
 		return $extras;
