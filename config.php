@@ -36,7 +36,7 @@ $clientHost = getenv('CLIENT_HOST') ?: $config->client->host;
 $clientPort = getenv('CLIENT_PORT') ?: $config->client->port;
 $clientIsObservatory = getenv('CLIENT_IS_OBSERVATORY') ?: $config->client->is_observatory;
 $clientOrganisation = getenv('CLIENT_ORGANISATION') ?: $config->client->organisation;
-$clientRoot = getenv('CLIENT_ROOT') ?: $config->client->root;
+$clientRoot = getenv('DRUPAL_ROOT') ?: $config->client->root;
 
 $graviteeUrl = getenv('GRAVITEE_URL') ?: $config->gravitee->url;
 $graviteeHeaderKey = getenv('GRAVITEE_HEADER_KEY') ?: $config->gravitee->header_key;
