@@ -38,9 +38,9 @@ class ChartController extends ControllerBase {
 
 	public function myPage(Request $request) {
 		$config = include(__DIR__ . "/../../config.php");
-		$api = new Api();
-		
-				
+
+		$loggedIn = \Drupal::currentUser()->isAuthenticated();
+	
 		$element = array(
 			'example one' => [
 					'#type' => 'inline_template',
@@ -58,7 +58,8 @@ class ChartController extends ControllerBase {
 									 parameters="chartContext.dataChart"></div>
 								<d4c-embed-control embed-type="chartbuilder"
 												   widget-code="widgetCode.code"
-												   anonymous-access="true"></d4c-embed-control>
+												   anonymous-access="true"
+												   logged-in="' . $loggedIn . '"></d4c-embed-control>
 							</div>
 							 <d4c-notification-handler></d4c-notification-handler>
 						</div>

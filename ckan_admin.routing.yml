@@ -111,6 +111,14 @@ ckan_admin.carte.preview:
   requirements:
     _permission: 'access content'
 
+ckan_admin.menu.chart.frame:
+  path: '/carte/frame/{idmap}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\MapViewer::myFrame'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
 ckan_admin.carte.edit:
   path: '/carte/{idmap}/edit'
   defaults:

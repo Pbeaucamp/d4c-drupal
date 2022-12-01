@@ -952,8 +952,6 @@ class Api
 				}
 			}
 		}
-
-		Logger::logMessage("TRM - Query parameters " . $query_params["fq"]);
 		
 		$coordinateParam = null;
 		if (array_key_exists('coordReq', $query_params)) {
@@ -4026,7 +4024,7 @@ class Api
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 
-		Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
+		// Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
 
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
@@ -5007,8 +5005,7 @@ class Api
 		return $response;
 	}
 
-	public function mapBuilder($idmap)
-	{
+	public function mapBuilder($idmap) {
 		$method = $_SERVER['REQUEST_METHOD'];
 		$table = "d4c_maps";
 		$idUser = null;
@@ -5031,28 +5028,38 @@ class Api
 				//$data = json_decode(file_get_contents('php://input'), true);  
 				$data = file_get_contents('php://input');
 				$data = json_decode($data, true);
+
+				$title = $data["title"];
 				$name = str_replace(" ", "-", strtolower($data["title"]));
+
 				$res = $this->getMaps($idUser, $name);
 				if (count($res) > 0) {
 					$name .= (count($res) + 1);
 				}
 				$data["persist_id"] = $name;
+
+				$shareUrl = $data["directLink"];
+				$iframe = $data["embedCode"];
+				$widget = $data["widgetCode"];
+
 				$data = json_encode($data);
+
 				$query = \Drupal::database()->insert($table);
 				$query->fields([
-					'map_id',
 					'map_id_user',
 					'map_name',
 					'map_json'
 				]);
 				$query->values([
-					0,
 					$idUser,
 					$name,
 					$data
 				]);
 
 				$query->execute();
+
+				// Build and add a visualisation link to the map
+				$this->insertVisualization($name, $idUser, 'cartograph', $title, $shareUrl, $iframe, $widget);
 
 				$response->setStatusCode(200);
 				echo $data;
@@ -5067,6 +5074,8 @@ class Api
 				}
 				//$data = json_decode(file_get_contents('php://input'), true);  
 				$data = file_get_contents('php://input');
+				
+				$mapData = json_decode($data, true);
 
 				$query = \Drupal::database()->update($table);
 				$query->fields([
@@ -5075,6 +5084,9 @@ class Api
 				$query->condition('map_name', $idmap);
 				$query->condition('map_id_user', $idUser);
 				$query->execute();
+
+				// Build and add a visualisation link to the map
+				$this->updateVisualization(null, $idmap, null, $mapData['title'], $mapData['directLink'], $mapData['embedCode'], $mapData['widgetCode']);
 
 				$response->setStatusCode(200);
 
@@ -8739,29 +8751,8 @@ class Api
 			$shareUrl = $data->shareUrl;
 			$iframe = $data->iframe;
 			$widget = $data->widget;
-
-			$query = \Drupal::database()->insert($table);
-			$query->fields([
-				'dataset_id',
-				'user_id',
-				'creation_date',
-				'type',
-				'name',
-				'share_url',
-				'iframe',
-				'widget'
-			]);
-			$query->values([
-				$datasetid,
-				$userId,
-				'now',
-				$type,
-				$name,
-				$shareUrl,
-				$iframe,
-				$widget,
-			]);
-			$query->execute();
+			
+			$this->insertVisualization($datasetid, $userId, $type, $name, $shareUrl, $iframe, $widget);
 
 			$result = array();
 			$result["status"] = "success";
@@ -8781,7 +8772,7 @@ class Api
 			$data = json_decode($request_body);
 
 			$publishDatasetId = $data->publish_dataset_id;
-			$this->updateVisualization($visualizationId, $publishDatasetId);
+			$this->updateVisualization($visualizationId, null, $publishDatasetId);
 
 			$response->setStatusCode(200);
 
@@ -8818,14 +8809,61 @@ class Api
 		return $response;
 	}
 
-	function updateVisualization($visualizationId, $publishDatasetId) {
+	function insertVisualization($datasetId, $userId, $type, $name, $shareUrl, $iframe, $widget) {
 		$table = "d4c_dataset_visualization";
 
-		$query = \Drupal::database()->update($table);
+		$query = \Drupal::database()->insert($table);
 		$query->fields([
-			'publish_dataset_id' => $publishDatasetId
+			'dataset_id',
+			'user_id',
+			'creation_date',
+			'type',
+			'name',
+			'share_url',
+			'iframe',
+			'widget'
 		]);
-		$query->condition('id', $visualizationId);
+		$query->values([
+			$datasetId,
+			$userId,
+			'now',
+			$type,
+			$name,
+			$shareUrl,
+			$iframe,
+			$widget,
+		]);
+		$query->execute();
+	}
+
+	function updateVisualization($visualizationId, $itemId, $publishDatasetId = null, $name = null, $shareUrl = null, $iframe = null, $widget = null) {
+		$table = "d4c_dataset_visualization";
+
+		$data = array();
+		if (isset($publishDatasetId)) {
+			$data['publish_dataset_id'] = $publishDatasetId;
+		}
+		if (isset($name)) {
+			$data['name'] = $name;
+		}
+		if (isset($shareUrl)) {
+			$data['share_url'] = $shareUrl;
+		}
+		if (isset($iframe)) {
+			$data['iframe'] = $iframe;
+		}
+		if (isset($widget)) {
+			$data['widget'] = $widget;
+		}
+
+		$query = \Drupal::database()->update($table);
+		$query->fields($data);
+		if (isset($itemId)) {
+			$query->condition('dataset_id', $itemId);
+		}
+		else {
+			$query->condition('id', $visualizationId);
+		}
 		$query->execute();
 	}
 
@@ -8848,9 +8886,10 @@ class Api
 		return null;
 	}
 
-	function getVisualizations($visualizationId = null, $datasetId = null, $queryName = null, $type = null, $currentUserId = null, $lightWeight = false) {
-		Logger::logMessage("getVisualizations with datasetId = $datasetId and query = $queryName and type = $type");
+	function getVisualizations($visualizationId = null, $itemId = null, $queryName = null, $type = null, $currentUserId = null, $lightWeight = false) {
+		Logger::logMessage("getVisualizations with itemId = $itemId and query = $queryName and type = $type");
 
+		// Getting all the visualizations
 		$table = "d4c_dataset_visualization";
 		$query = \Drupal::database()->select($table, 'visualization');
 
@@ -8871,8 +8910,8 @@ class Api
 		if (isset($visualizationId)) {
 			$query->condition('id', $visualizationId);
 		}
-		if (isset($datasetId)) {
-			$query->condition('dataset_id', $datasetId);
+		if (isset($itemId)) {
+			$query->condition('dataset_id', $itemId);
 		}
 		if (isset($queryName)) {
 			$query->condition('name', '%' . db_like($queryName) . '%', 'LIKE');
@@ -8892,11 +8931,14 @@ class Api
 			if (!$lightWeight) {
 				$recDatasetId = $enregistrement->dataset_id;
 
-				$dataset = $this->findDataset($recDatasetId);
-				$organization = $dataset['organization']['name'];
-	
-				$enregistrement->organization = $organization;
-				$enregistrement->datasetName = $dataset['title'];
+				// If it is a map, we don't need the dataset
+				if ($enregistrement->type != 'cartograph') {
+					$dataset = $this->findDataset($recDatasetId);
+					$organization = $dataset['organization']['name'];
+		
+					$enregistrement->organization = $organization;
+					$enregistrement->datasetName = $dataset['title'];
+				}
 
 				
 				$publishDatasetId = $enregistrement->publish_dataset_id;

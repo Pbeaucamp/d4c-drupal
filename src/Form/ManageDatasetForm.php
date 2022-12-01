@@ -238,7 +238,7 @@ class ManageDatasetForm extends FormBase
 			}
 
 			if ($type == 'visualization') {
-				$api->updateVisualization($entityId, $datasetId);
+				$api->updateVisualization($entityId, null, $datasetId);
 				
 				$form_state->setRedirect('data_bfc.ro_visualizations');
 				return;
