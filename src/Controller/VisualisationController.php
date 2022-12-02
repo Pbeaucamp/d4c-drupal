@@ -1250,7 +1250,6 @@ class VisualisationController extends ControllerBase {
 			}
 
 			$kpis = $kpiInfos['result'];
-			$kpiUserUrl = $kpiInfos['kpiUser'];
 			
 			//Getting current resourceId
 			if ($selectedResourceId == null) {
@@ -1265,21 +1264,21 @@ class VisualisationController extends ControllerBase {
 				return null;
 			}
 
-			$newKPIPart = '';
-			$userManager = new UserManager();
-			if ($loggedIn && ($userManager->isConnectedUserAdmin() || $userManager->isConnectedUserRO())) {
+			// We disable this part for now
+			// $newKPIPart = '';
+			// $userManager = new UserManager();
+			// if ($loggedIn && ($userManager->isConnectedUserAdmin() || $userManager->isConnectedUserRO())) {
 
-				$newKPIPart = '
-					<div class="row">
-						<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" target="_self"><button class="btn btn-primary">Créer un indicateur</button></a>
-					</div>
-				';
-			}
+			// 	$newKPIPart = '
+			// 		<div class="row">
+			// 			<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" target="_self"><button class="btn btn-primary">Créer un indicateur</button></a>
+			// 		</div>
+			// 	';
+			// }
 
 			$kpiPart = '';
 			if (isset($kpis)) {
 				foreach ($kpis as $kpi) {
-
 					$kpiPart .= '
 						<div>
 							<div class="col-sm-9 download-item">
@@ -1289,8 +1288,9 @@ class VisualisationController extends ControllerBase {
 								</div>
 							</div>
 							<div class="col-sm-3">
-								<a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" data-backdrop="static" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
-								<a href="' . $kpiUserUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir VanillaKpiUser"></i></a>
+								' .
+								// <a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" data-backdrop="static" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
+								'<a href="{{ path(\'ckan_admin.visualisation\', { \'id\': \'' . $kpi['targetDatasetName'] . '\'}) }}" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
 							</div>
 						</div>
 					';
@@ -1299,7 +1299,6 @@ class VisualisationController extends ControllerBase {
 
 			return '
 				<div>
-					' . $newKPIPart . '
 					<div class="row">
 						' . $kpiPart . '
 					</div>
