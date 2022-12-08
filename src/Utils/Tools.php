@@ -77,4 +77,43 @@ class Tools {
     //     return getQueryString(params);
     // }
 
+
+    static function arrayToCSV($array, $filename = "export.csv", $delimiter = ",") {
+		$config = include(__DIR__ . "/../../config.php");
+		$protocol = isset($config->client->protocol) ? $config->client->protocol . '://' : 'https://';
+
+		$file = $_SERVER['DOCUMENT_ROOT'] . $config->routing_prefix . "/sites/default/files/" . $filename;
+
+        // open the "output" stream
+        // see http://www.php.net/manual/en/wrappers.php.php#refsect2-wrappers.php-unknown-unknown-unknown-descriptioq
+        $f = fopen($file, 'w');
+
+        foreach ($array as $line) {
+            fputcsv($f, $line, $delimiter);
+        }
+
+        fclose($f);
+        return $protocol . $_SERVER['HTTP_HOST'] . $routing_prefix . "/sites/default/files/" . $filename;
+    }
+
+    static function sendMail($email, $subject, $content) {
+        // Send email in php drupal
+        $mailManager = \Drupal::service('plugin.manager.mail');
+        $module = 'data_bfc';
+
+        $email = 'sebastien.vigroux@bpm-conseil.com';
+
+        $key = 'send_mail';
+        $to = $email;
+        $params['message'] = $content;
+        $langcode = \Drupal::currentUser()->getPreferredLangcode();
+        $send = true;
+
+        $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
+        if ($result['result'] !== true) {
+            Logger::logMessage('Unable to send email. Subject: ' . $subject . ' - Content: ' . $content . ' - Email: ' . $email);
+        } else {
+            Logger::logMessage('Email sent. Subject: ' . $subject . ' - Content: ' . $content . ' - Email: ' . $email);
+        }
+    }
 }
