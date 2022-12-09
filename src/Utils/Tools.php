@@ -99,21 +99,18 @@ class Tools {
     static function sendMail($email, $subject, $content) {
         // Send email in php drupal
         $mailManager = \Drupal::service('plugin.manager.mail');
-        $module = 'data_bfc';
 
         $email = 'sebastien.vigroux@bpm-conseil.com';
 
-        $key = 'send_mail';
-        $to = $email;
-        $params['message'] = $content;
+        $params['subject'] = $subject;
+        $params['body'] = [$content];
         $langcode = \Drupal::currentUser()->getPreferredLangcode();
-        $send = true;
 
-        $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
-        if ($result['result'] !== true) {
-            Logger::logMessage('Unable to send email. Subject: ' . $subject . ' - Content: ' . $content . ' - Email: ' . $email);
-        } else {
-            Logger::logMessage('Email sent. Subject: ' . $subject . ' - Content: ' . $content . ' - Email: ' . $email);
+        if ($mailManager->mail('data_bfc', 'smtp-mail', $email, $langcode, $params)) {
+            Logger::logMessage("A e-mail has been sent to '" . $email . "' via SMTP. You may want to check the log for any error messages.");
+        }
+        else {
+            Logger::logMessage("There was a problem sending a mail to '" . $email . "'.");
         }
     }
 }

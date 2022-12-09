@@ -742,7 +742,7 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
-		// Logger::logMessage("Call search " . $callUrl);
+		Logger::logMessage("TRM - Call search " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -907,7 +907,7 @@ class Api
 			$applySecurity = false;
 
 			// If the user is an admin, we do not filter by organisation
-			if (!in_array("administrator", $current_user->getRoles())) {
+			if (!in_array("administrator", $current_user->getRoles()) && !in_array("ro", $current_user->getRoles())) {
 				//We include all public datasets
 				if ($query_params["fq"] == null) {
 					$query_params["fq"] = "(organization:(*) AND private:(false))";
@@ -933,7 +933,7 @@ class Api
 			if ($applySecurity) {
 				foreach ($allowedOrganizations as $org) {
 					if ($query_params["fq"] == null) {
-						$query_params["fq"] .= "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+						$query_params["fq"] == "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
 					}
 					else {
 						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
