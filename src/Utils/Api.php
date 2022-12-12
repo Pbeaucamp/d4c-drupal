@@ -933,7 +933,7 @@ class Api
 			if ($applySecurity) {
 				foreach ($allowedOrganizations as $org) {
 					if ($query_params["fq"] == null) {
-						$query_params["fq"] == "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+						$query_params["fq"] = "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
 					}
 					else {
 						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
@@ -952,6 +952,8 @@ class Api
 				}
 			}
 		}
+
+		// Logger::logMessage("TRM - Query params " . json_encode($query_params["fq"]));
 		
 		$coordinateParam = null;
 		if (array_key_exists('coordReq', $query_params)) {
