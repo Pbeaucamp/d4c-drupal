@@ -111,7 +111,7 @@ ckan_admin.carte.preview:
   requirements:
     _permission: 'access content'
 
-ckan_admin.menu.chart.frame:
+ckan_admin.carte.frame:
   path: '/carte/frame/{idmap}'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\MapViewer::myFrame'
