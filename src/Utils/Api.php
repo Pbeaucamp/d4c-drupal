@@ -13,7 +13,7 @@ use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\NutchApi;
-
+use Drupal\data_bfc\Utils\KeycloakManager;
 use finfo;
 use SplFileObject;
 use ZipArchive;
@@ -72,6 +72,15 @@ class Api
 		if (!$mapTilesExist) {
 			copy(__DIR__ . "/../../map_tiles_model.json", __DIR__ . "/../../map_tiles.json");
 		}
+
+		//Checking if the module data_bfc exist and if the user is RO
+		$moduleHandler = \Drupal::service('module_handler');
+		if ($moduleHandler->moduleExists('data_bfc')) {
+
+			$userManager = new KeycloakManager();
+			$userManager->manageKeycloakRuleMappings();
+		}
+
 	}
 
 	public function getStoreOptions($applySecurity = true)
