@@ -67,12 +67,6 @@ class Api
 		$this->isSpecial = $this->config->client->name == 'cda2';
 		$this->isPostgis = $this->config->client->name == 'cda2';
 
-		// Testing if map_tiles file exist and copy from model if not
-		$mapTilesExist = file_exists(__DIR__ . "/../../map_tiles.json");
-		if (!$mapTilesExist) {
-			copy(__DIR__ . "/../../map_tiles_model.json", __DIR__ . "/../../map_tiles.json");
-		}
-
 		//Checking if the module data_bfc exist and if the user is RO
 		$moduleHandler = \Drupal::service('module_handler');
 		if ($moduleHandler->moduleExists('data_bfc')) {
@@ -5237,11 +5231,19 @@ class Api
 	}
 
 	function getMapLayersFromFile() {
-		return json_decode(file_get_contents(__DIR__ . "/../../map_tiles.json"), true);
+		$publicPath = \Drupal::service('file_system')->realpath(file_default_scheme() . '://');
+		
+		// Testing if map_tiles file exist and copy from model if not
+		$mapTilesExist = file_exists($publicPath . "/map_tiles.json");
+		if (!$mapTilesExist) {
+			copy(__DIR__ . "/../../map_tiles_model.json", $publicPath . "/map_tiles.json");
+		}
+		return json_decode(file_get_contents($publicPath . "/map_tiles.json"), true);
 	}
 
 	function saveMapLayersFromFile($mapLayers) {
-		file_put_contents(__DIR__ . "/../../map_tiles.json", json_encode($mapLayers, JSON_PRETTY_PRINT));
+		$publicPath = \Drupal::service('file_system')->realpath(file_default_scheme() . '://');
+		file_put_contents($publicPath . "/map_tiles.json", json_encode($mapLayers, JSON_PRETTY_PRINT));
 	}
 
 	public function getMapLayers($type = null) {
@@ -5311,15 +5313,11 @@ class Api
 			$tile = json_decode($_POST["json"], true);
 		}
 
-		$content2 = $_POST["json"];
-
-		error_log(json_encode($content2));
-
 		$mapLayers = $this->getMapLayersFromFile();
 
 		$exists = false;
 		foreach ($mapLayers['map_tiles'] as &$layer) {
-			if ($layer->name == $tile["name"]) {
+			if ($layer['name'] == $tile["name"]) {
 				$layer = $tile;
 				$exists = true;
 				break;
@@ -5342,13 +5340,15 @@ class Api
 
 		$arr = array();
 		foreach ($mapLayers['map_tiles'] as $layer) {
-			if ($layer->name != $idLayer) {
+			if ($layer['name'] != $idLayer) {
 				$arr[] = $layer;
 			}
 		}
-		$mapLayers['map_tiles'] = $arr;
-		
-		$this->saveMapLayersFromFile($mapLayers);
+
+		$newLayers = array();
+		$newLayers['map_tiles'] = $arr;
+
+		$this->saveMapLayersFromFile($newLayers);
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
