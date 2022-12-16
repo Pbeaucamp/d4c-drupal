@@ -751,7 +751,7 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
-		Logger::logMessage("TRM - Call search " . $callUrl);
+		// Logger::logMessage("TRM - Call search " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -1755,18 +1755,24 @@ class Api
 		curl_close($curl);
 		$result = json_decode($result, true);
 
+		$fields = $result['result']['fields'];
+
 		$res = array();
 		$allFields = array();
+		
+		// Sort fields by poids if not null
+		$sort = array();
 
-		// sort array by poids
-		$fieldArray = array();
-		foreach ($result['result']['fields'] as $key => $row) {
-
-			$fieldArray[$key] = $row["info"]["poids"];
+		$fieldsSize = count($fields);
+		$index = $fieldsSize;
+		foreach ($fields as $key => $value) {
+			$sort['poids'][$key] = isset($value['info']['poids']) && $value['info']['poids'] != "" ? ($value['info']['poids'] + $fieldsSize) : $index;
+			$index--;
 		}
-		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
-		foreach ($result['result']['fields'] as $value) {
+		array_multisort($sort['poids'], SORT_DESC, $fields);
+
+		foreach ($fields as $value) {
 			$description = $value['info']['notes'];
 			if (preg_match("/<!--\s*table\s*-->/i", $description)) {
 				$res[] =  $value['id'];
@@ -3825,6 +3831,7 @@ class Api
 
 	public function getDatastoreRecord_v2($params)
 	{
+
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
@@ -3837,6 +3844,8 @@ class Api
 		$reqQfilter;
 
 		$params = $this->retrieveParameters($params);
+
+		Logger::logMessage("getDatastoreRecord_v2 with params: " . json_encode($params));
 
 		$query_params = $this->proper_parse_str($params);
 		$data_array = array();
@@ -4022,6 +4031,8 @@ class Api
 			$orderby = substr($orderby, 0, -1);
 		}
 
+		// Logger::logMessage ("TRM - Query params fields : " . $query_params['fields']);
+
 		$req = array();
 		// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
 		if ($query_params['fields'] != null) {
@@ -4031,18 +4042,17 @@ class Api
 		}
 		$req['sql'] = $sql;
 
-		//echo $sql;
+		// Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $sql);
+
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 
 		// Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
 
-		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 		curl_close($curl);
-		//echo $result . "\r\n";
 
 		$result = json_decode($result, true);
 

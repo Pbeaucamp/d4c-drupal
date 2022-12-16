@@ -6,11 +6,12 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\Entity\DateFormat;
 
+use Drupal\ckan_admin\Form\MetadataForm;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\Logger;
 
-class ManageDatasetForm extends FormBase
+class ManageDatasetForm extends MetadataForm
 {
 
 	public function getFormId()
@@ -21,119 +22,33 @@ class ManageDatasetForm extends FormBase
 	public function buildForm(array $form, FormStateInterface $form_state)
 	{
 		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
+		$type = \Drupal::request()->query->get('data4citizen-type');
 
-        $api = new Api;
-
-		if ($selectedDatasetId) {
-			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
-			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null, true, true);
-			$selectedDataset = $selectedDataset['metas'];
-
-			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
-
-			$extras = $selectedDataset['extras'];
-			$mentionLegales = '';
-			foreach ($extras as $value) {
-				if ($value['key'] == 'mention_legales') {
-					$mentionLegales = $value['value'];
-				}
-			}
-		}
-
-		$licences = $api->getLicenses();
-		$themes = $api->getThemes(true, true);
-		
-		
-        $licenceOptions = array();
-		$selectedLicence = '';
-        foreach ($licences[result] as &$value) {
-            $licenceOptions[$value[id]] = $value[title];
-
-			if ($selectedDataset && $selectedDataset['license'] == $value[title]) {
-				$selectedLicence = $value[id];
-			}
-        }
-			
-		$themeOptions = array();
-		// $selectedThemes = '';
-		foreach($themes as &$value){
-			$themeOptions[$value["title"]] = $value["label"];
-
-			// if ($selectedDataset && $selectedDataset['license'] == $value[title]) {
-			// 	$selectedLicence = $value[id];
-			// }
+		$includeSchemas = true;
+		if ($type == 'visualization') {
+			$includeSchemas = false;
 		}
 
 		$form['text']['#markup'] = t('<h1>Création d\'une connaissance</h1>');
+
+		$form = parent::buildMetadataForm($form, $form_state, $selectedDatasetId, $includeSchemas);
 		
         $form['progress-modal'] = array(
 			'#markup' => '<div id="progress" class="progress-modal" display="none">
 			</div>',
 		);
 
-		$form['dataset_title'] = [
-			'#type' => 'textfield',
-			'#title' => $this->t('Nom de la connaissance'),
-			'#required' => TRUE,
-			'#maxlength' => 300,
-			'#default_value' => $selectedDataset != null ? $selectedDataset['title'] : '',
-		];
-
-		$form['dataset_description'] = [
-			'#type' => 'textarea',
-			'#title' => $this->t('Description'),
-            '#resizable' => true,
-			'#default_value' => $selectedDataset != null ? $selectedDataset['description'] : '',
-		];
-
-
-		//TODO: Not working for now
-		$date = date('d/m/Y');
-		$form['dataset_date'] = [
-			'#type' => 'date',
-			'#title' => $this->t('Date de la connaissance'),
-            '#date_date_format' => 'd/m/Y',
-			'#default_value' => $date,
-		];
-
-		$form['dataset_mention_legales'] = [
-			'#type' => 'textarea',
-			'#title' => $this->t('Mentions et droits'),
-            '#resizable' => true,
-			'#default_value' => $selectedDataset != null ? $mentionLegales : '',
-		];
-
-		$form['dataset_tags'] = [
-			'#type' => 'textfield',
-			'#title' => $this->t('Mots-clés (séparer par des virgules, les seuls symboles autorisés sont -"_")'),
-			'#required' => FALSE,
-			'#maxlength' => 300,
-			'#default_value' => $tags,
-		];
-		
-		$form['dataset_licence'] = array(
-            '#type' => 'select',
-            '#title' => t('*Licence :'),
-            '#options' => $licenceOptions,
-            '#empty_option' => t('----'),
-			'#required' => TRUE,
-			'#default_value' => $selectedDataset != null ? $selectedLicence : '',
-        );
-
-		$form['dataset_private'] = array(
-            '#type' => 'select',
-            '#title' => t('*Visibilité :'),
-            '#options' => array('Publique', 'Privée'),
-			'#required' => TRUE,
-			'#default_value' => $selectedDataset != null && $selectedDataset['private'] == 1 ? 1 : 0,
-        );
-
-		//Not working for now
-        $form['dataset_themes'] = array(
-			'#title' => t('Thèmes disponibles'),
-			'#type' => 'checkboxes',
-			'#options' => $themeOptions,
-		);
+		//TODO: Manage resources (files, links, etc.) with architect
+		if (!isset($selectedDatasetId)) {
+			$form['import_users_file'] = [
+				'#type' => 'managed_file',
+				'#title' => $this->t('Fichier à déposer'),
+				'#upload_location' => 'temporary://datasets',
+				'#upload_validators' => [
+					'file_validate_extensions' => array('jpg jpeg gif png txt doc xls pdf ppt pps odt ods odp csv json xls xlsx geojson zip gml'),
+				],
+			];
+		}
 
 		// Group submit handlers in an actions element with a key of "actions" so
 		// that it gets styled correctly, and so that other modules may add actions

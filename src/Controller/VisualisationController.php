@@ -1264,18 +1264,6 @@ class VisualisationController extends ControllerBase {
 				return null;
 			}
 
-			// We disable this part for now
-			// $newKPIPart = '';
-			// $userManager = new UserManager();
-			// if ($loggedIn && ($userManager->isConnectedUserAdmin() || $userManager->isConnectedUserRO())) {
-
-			// 	$newKPIPart = '
-			// 		<div class="row">
-			// 			<a href="{{ path(\'data_bfc.ro_kpi_create\', { \'datasetId\': \'' . $datasetId . '\', \'resourceId\': \'' . $selectedResourceId . '\' }) }}" target="_self"><button class="btn btn-primary">Créer un indicateur</button></a>
-			// 		</div>
-			// 	';
-			// }
-
 			$kpiPart = '';
 			if (isset($kpis)) {
 				foreach ($kpis as $kpi) {
