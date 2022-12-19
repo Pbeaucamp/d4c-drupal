@@ -230,5 +230,6 @@ abstract class MetadataForm extends FormBase {
 				$schemas[] = $key;
 			}
 		}
+		return $schemas;
 	}
 }
