@@ -34,13 +34,13 @@ abstract class MetadataForm extends FormBase {
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
 
-			$extras = $selectedDataset['extras'];
-			$mentionLegales = '';
-			foreach ($extras as $value) {
-				if ($value['key'] == 'mention_legales') {
-					$mentionLegales = $value['value'];
-				}
-			}
+			// $extras = $selectedDataset['extras'];
+			// $mentionLegales = '';
+			// foreach ($extras as $value) {
+			// 	if ($value['key'] == 'mention_legales') {
+			// 		$mentionLegales = $value['value'];
+			// 	}
+			// }
 		}
 
 		$licences = $api->getLicenses();
@@ -207,8 +207,36 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue('dataset_name');
 	}
 
+	public function getDatasetLicence(FormStateInterface $form_state) {
+		return $form_state->getValue('dataset_licence');
+	}
+
+	public function getDatasetIsPrivate(FormStateInterface $form_state) {
+		return $form_state->getValue('dataset_private') == '1';
+	}
+
 	public function getDescription(FormStateInterface $form_state) {
 		return $form_state->getValue(['integration_option','dataset_description']);
+	}
+
+	public function getTags(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_tags']);
+	}
+
+	public function getEncoding(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_encoding']);
+	}
+
+	public function getDatasetDate(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_date']);
+	}
+
+	public function getDatasetDepositDate(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_deposit_date']);
+	}
+
+	public function getDatasetOrganisation(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_organisation']);
 	}
 
 	public function getMetadata(FormStateInterface $form_state) {

@@ -5004,20 +5004,22 @@ class Api
 		return $response;
 	}
 
-	public function callALternativeExport($datasetid, $resourceid)
-	{
+	public function callALternativeExport($datasetid, $resourceid) {
 		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceid;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleOptions());
 		$res = curl_exec($curl);
-		echo $res . "\r\n";
 		curl_close($curl);
+		// echo $res . "\r\n";
+
 		$res = json_decode($res, true);
 
 		header('Location: ' . $res["result"]["url"]);
-		$response = new Response();
-		$response->headers->set('Content-Type', 'application/json');
-		return $response;
+		die;
+		
+		// $response = new Response();
+		// $response->headers->set('Content-Type', 'application/json');
+		// return $response;
 	}
 
 	public function mapBuilder($idmap) {
@@ -8385,19 +8387,22 @@ class Api
 		}
 
 		$finfo = new finfo(FILEINFO_MIME_TYPE);
-		Logger::logMessage("Found format : " . $finfo->file($_FILES['upload_file']['tmp_name']));
-		if (false === $ext = array_search(
-			$finfo->file($_FILES['upload_file']['tmp_name']),
+		$tmpFile = $finfo->file($_FILES['upload_file']['tmp_name']);
+
+		Logger::logMessage("Found format : '" . $tmpFile . "'");
+		$fileFormatSearch = array_search(
+			$tmpFile,
 			array(
 				'zip' => 'application/zip',
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
 				'text' => 'text/plain',
 				'xml' => 'text/xml',
-				'xml' => 'application/json',
+				'json' => 'application/json',
 			),
 			true
-		)) {
+		);
+		if (false === $fileFormatSearch) {
 			Logger::logMessage("Invalid file format.");
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Invalid file format.';

@@ -454,9 +454,9 @@ class ResourceManager {
 			
 			$rootCsv = self::ROOT . $this->getRoutingPrefix(false) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 
-			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv, $datasetFolder);
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
 
+			$csvGenerated = $this->manageGeoFiles($type, $resourceUrl, $filePath, $rootCsv, $datasetFolder);
 			if ($csvGenerated) {
 				$resourceUrl = $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 				
@@ -468,12 +468,13 @@ class ResourceManager {
 					//We create the clusters
 					$results[] = $this->createClusters($datasetId, $resourceId, ',', 'UTF-8', 'geo_point_2d', ',', $fileName);
 				}
-
-				return $results;
 			}
 
-			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', "Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
-			throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
+			return $results;
+
+			// Don't throw an error if the file is null
+			// $this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', "Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
+			// throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 		}
 		else {
 			// We upload the file as resource
@@ -1991,14 +1992,19 @@ class ResourceManager {
 		if ($isFromPath) {
 			Logger::logMessage("Creating CSV from GeoJson with path : " . $json);
 
-			$types = JsonMachine::fromFile($json, '/type');
-			$type = iterator_to_array($types)['type'];
-
-			if ($type != "FeatureCollection") {
-				return "";
+			try {
+				$types = JsonMachine::fromFile($json, '/type');
+				$type = iterator_to_array($types)['type'];
+	
+				if ($type != "FeatureCollection") {
+					return "";
+				}
+	
+				$jsonItems = JsonMachine::fromFile($json, '/features');
+			} catch (\Exception $e) {
+				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
+				return null;
 			}
-
-			$jsonItems = JsonMachine::fromFile($json, '/features');
 		}
 		else {
 			Logger::logMessage("Creating CSV from GeoJson from String");
