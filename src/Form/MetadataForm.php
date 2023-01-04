@@ -4,10 +4,12 @@ namespace Drupal\ckan_admin\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
 
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Schedule;
 
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
@@ -17,9 +19,11 @@ abstract class MetadataForm extends FormBase {
 		return 'MetadataForm';
 	}
 
-	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDatasetId = null, $includeSchemas = false) {
+	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDatasetId = null, $includeSchemas = false, $includeScheduler = false) {
 		$config = include(__DIR__ . "/../../config.php");
 		$organization = $config->client->client_organisation;
+
+		$hasDataBfc = \Drupal::moduleHandler()->moduleExists('data_bfc');
 
 		// Get drupal username
 		$account = \Drupal::currentUser();
@@ -155,8 +159,8 @@ abstract class MetadataForm extends FormBase {
 			'#default_value' => 'UTF-8'
 		];
 
-		// Check if data_bfc module exist
-		if (\Drupal::moduleHandler()->moduleExists('data_bfc')) {
+		// Check if we need to include schemas
+		if ($includeSchemas && $hasDataBfc) {
 			$vanillaManager = new VanillaApiManager();
 			try {
 				$schemas = $vanillaManager->getValidationSchemas();
@@ -173,6 +177,49 @@ abstract class MetadataForm extends FormBase {
 			  '#type' => 'checkboxes',
 			  '#title' => $this->t('Schémas de validation'),
 			  '#options' => $schemasOptions
+			];
+		}
+
+		// Check if we need to include scheduler
+		if ($includeScheduler && $hasDataBfc) {
+
+			$form['scheduler'] = [
+				'#type' => 'details',
+				'#title' => $this->t('Planification'),
+				'#open' => false,
+				'#tree' => TRUE,
+			];
+
+			// Add date and time field
+			$form['scheduler']['scheduler_date'] = [
+				'#type' => 'datetime',
+				'#title' => $this->t('Date de lancement'),
+				'#default_value' => DrupalDateTime::createFromTimestamp(time()),
+				'#attributes' => [
+					'step' => 60,
+				]
+			];
+
+			// Add a list box for the period (YEAR, MONTH, WEEK, DAY, HOUR)
+			$form['scheduler']['scheduler_period'] = [
+				'#type' => 'select',
+				'#title' => $this->t('Période'),
+				'#options' => [
+					'HOUR' => $this->t('Toutes les X heures'),
+					'DAY' => $this->t('Tous les X jours'),
+					'WEEK' => $this->t('Toutes les X semaines'),
+					'MONTH' => $this->t('Tous les X mois'),
+					'YEAR' => $this->t('Toutes les X années'),
+				],
+				'#default_value' => 'DAY',
+			];
+			
+
+			// Add numeric field for interval
+			$form['scheduler']['scheduler_interval'] = [
+				'#type' => 'number',
+				'#title' => $this->t('Intervalle'),
+				'#default_value' => 1,
 			];
 		}
 
@@ -259,5 +306,17 @@ abstract class MetadataForm extends FormBase {
 			}
 		}
 		return $schemas;
+	}
+
+	public function getSchedule(FormStateInterface $form_state) {
+		$schedulerDate = $form_state->getValue(['scheduler','scheduler_date']);
+		$schedulerPeriod = $form_state->getValue(['scheduler','scheduler_period']);
+		$schedulerInterval = $form_state->getValue(['scheduler','scheduler_interval']);
+
+		Logger::logMessage("schedulerDate = " . $schedulerDate);
+		Logger::logMessage("schedulerPeriod = " . $schedulerPeriod);
+		Logger::logMessage("schedulerInterval = " . $schedulerInterval);
+
+		return new Schedule($schedulerDate, $schedulerPeriod, $schedulerInterval);
 	}
 }
