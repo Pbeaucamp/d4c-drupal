@@ -47,6 +47,14 @@ class Schedule implements JsonSerializable {
     }
     
     public function jsonSerialize() {
-        return get_object_vars($this);
+        $array = array();
+        $array['period'] = $this->period;
+        $array['interval'] = $this->interval;
+        // Format date in string as ISO 8601 format
+        $array['beginDate'] = $this->beginDate->format(\DateTime::ISO8601);
+        if ($this->stopDate != null) {
+            $array['stopDate'] = $this->stopDate->format(\DateTime::ISO8601);
+        }
+        return $array;
     }
 }

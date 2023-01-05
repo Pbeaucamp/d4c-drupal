@@ -100,7 +100,7 @@ class MapTilesForm extends HelpFormBase {
 			'#type' => 'textfield',
 			'#title' => $this->t('URL:'),
 			'#description' => t('url du serveur.'),
-			'#maxlength' => 255,
+			'#maxlength' => 1024,
 			'#states' => array(
 				"visible" => array(
 					array("#edit-lstprovider" => array("value" => "custom")),

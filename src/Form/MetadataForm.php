@@ -195,9 +195,10 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'datetime',
 				'#title' => $this->t('Date de lancement'),
 				'#default_value' => DrupalDateTime::createFromTimestamp(time()),
-				'#attributes' => [
-					'step' => 60,
-				]
+				'#date_format' => 'd/m/Y H:i:s',
+				// '#attributes' => [
+				// 	'step' => 60,
+				// ]
 			];
 
 			// Add a list box for the period (YEAR, MONTH, WEEK, DAY, HOUR)
@@ -312,11 +313,8 @@ abstract class MetadataForm extends FormBase {
 		$schedulerDate = $form_state->getValue(['scheduler','scheduler_date']);
 		$schedulerPeriod = $form_state->getValue(['scheduler','scheduler_period']);
 		$schedulerInterval = $form_state->getValue(['scheduler','scheduler_interval']);
+		$schedulerInterval = (int) $schedulerInterval;
 
-		Logger::logMessage("schedulerDate = " . $schedulerDate);
-		Logger::logMessage("schedulerPeriod = " . $schedulerPeriod);
-		Logger::logMessage("schedulerInterval = " . $schedulerInterval);
-
-		return new Schedule($schedulerDate, $schedulerPeriod, $schedulerInterval);
+		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate);
 	}
 }
