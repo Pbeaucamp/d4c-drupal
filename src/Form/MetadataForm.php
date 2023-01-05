@@ -10,6 +10,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\Schedule;
+use Drupal\ckan_admin\Utils\ResourceManager;
 
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
@@ -316,5 +317,81 @@ abstract class MetadataForm extends FormBase {
 		$schedulerInterval = (int) $schedulerInterval;
 
 		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate);
+	}
+
+	public function createOrUpdateDatasetId($form_state, $organization, $selectedDatasetId, $type, $entityId = null) {
+		$userId = "*" . \Drupal::currentUser()->id() . "*";
+
+		$api = new Api;
+		$users = $api->getAdministrators();
+		$resourceManager = new ResourceManager;
+        
+        $title = $this->getDatasetName($form_state);
+        $description = $this->getDescription($form_state);
+        $dateDataset = $this->getDatasetDate($form_state);
+        $tags = $this->getTags($form_state);
+        $licence = $this->getDatasetLicence($form_state);
+        $isPrivate = $this->getDatasetIsPrivate($form_state);
+
+		// Not used for now
+		$mention_legales = "";
+        // $mention_legales = $form_state->getValue('dataset_mention_legales');
+		$themes = "";
+		// if ($form_state->getValue('selected_themes') != NULL) {
+		// 	$selectedThemes = array_keys(array_filter($form_state->getValue('selected_themes')));
+		// 	$themes = json_encode($selectedThemes);
+		// }
+		$source = "";
+
+		$datasetName = $resourceManager->defineDatasetName($title);
+		$tags = $resourceManager->defineTags($tags);
+		$security = $resourceManager->defineSecurity($userId, $users);
+
+		try {
+			$generatedTaskId = uniqid();
+			if (isset($selectedDatasetId)) {
+				$datasetToUpdate = $api->findDataset($selectedDatasetId);
+
+				$datasetName = $datasetToUpdate[name];
+
+				//Update extras
+				$extras = $datasetToUpdate[extras];
+				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
+					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+
+				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
+					$licence, $organization, $isPrivate, $tags, $extras, null);
+				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mise à jour.");
+			}
+			else {
+				// We build extras
+				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
+					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+
+				Logger::logMessage("Create dataset " . $datasetName);
+				Logger::logMessage(" with extras " . json_encode($extras));
+				Logger::logMessage(" and tags " . json_encode($tags));
+				Logger::logMessage(" and security " . json_encode($security));
+				Logger::logMessage(" and isPrivate " . $isPrivate);
+				Logger::logMessage(" and licence " . $licence);
+				Logger::logMessage(" and organization " . $organization);
+				Logger::logMessage(" and description " . $description);
+				Logger::logMessage(" and title " . $title);
+				Logger::logMessage(" and datasetName " . $datasetName);
+				Logger::logMessage(" and generatedTaskId " . $generatedTaskId);
+				Logger::logMessage(" and source " . $source);
+
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
+
+				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
+			}
+
+			return $datasetId;
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');
+		}
+
+		return null;
 	}
 }
