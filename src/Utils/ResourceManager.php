@@ -1605,7 +1605,8 @@ class ResourceManager {
 	function defineExtras($extras, $picto, $imgBackground, $removeBackground, $linkDatasets, $themes, $themeLabel,
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
-			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null) {
+			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null,
+			$dateDeposit = null, $uploader = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1633,6 +1634,8 @@ class ResourceManager {
 		$hasDataRgpd = false;
 		$hasData4citizenType = false;
 		$hasEntityId = false;
+		$hasDateDeposit = false;
+		$hasUsername = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1782,6 +1785,16 @@ class ResourceManager {
 					$hasEntityId  = true;
 					$extras[$index]['value'] = $entityId;
 				}
+				
+				if ($extras[$index]['key'] == 'date_deposit') {
+					$hasDateDeposit = true;
+					$extras[$index]['value'] = $dateDeposit;
+				}
+
+				if ($extras[$index]['key'] == 'uploader') {
+					$hasUsername = true;
+					$extras[$index]['value'] = $uploader;
+				}
 			}
 		}
 
@@ -1908,6 +1921,16 @@ class ResourceManager {
 		if ($hasEntityId == false) {
 			$extras[count($extras)]['key'] = 'data4citizen-entity-id';
 			$extras[(count($extras) - 1)]['value'] = $entityId;
+		}
+
+		if ($hasDateDeposit == false) {
+			$extras[count($extras)]['key'] = 'date_deposit';
+			$extras[(count($extras) - 1)]['value'] = $dateDeposit;
+		}
+
+		if ($hasUsername == false) {
+			$extras[count($extras)]['key'] = 'uploader';
+			$extras[(count($extras) - 1)]['value'] = $uploader;
 		}
 
 		return $extras;

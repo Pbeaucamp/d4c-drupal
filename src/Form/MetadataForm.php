@@ -46,6 +46,16 @@ abstract class MetadataForm extends FormBase {
 			// 		$mentionLegales = $value['value'];
 			// 	}
 			// }
+
+			$dateDataset = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "date_dataset";
+			});
+			$dateDataset = array_values($dateDataset)[0]["value"];
+
+			$dateDeposit = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "date_deposit";
+			});
+			$dateDeposit = array_values($dateDeposit)[0]["value"];
 		}
 
 		$licences = $api->getLicenses();
@@ -106,7 +116,7 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_contributor'] = [
 			'#type' => 'textfield',
 			'#title' => $this->t('Contributeur'),
-			'#default_value' => $selectedDataset != null ? $selectedDataset['author'] : '',
+			'#default_value' => $selectedDataset != null ? $selectedDataset['producer'] : '',
 		];
 
 		$form['integration_option']['dataset_description'] = [
@@ -119,14 +129,14 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_date'] = [
 			'#type' => 'date',
 			'#title' => $this->t('Date de création'),
-			'#default_value' => date('Y-m-d'),
+			'#default_value' => isset($dateDataset) ? $dateDataset : date('Y-m-d'),
 		];
 
 		// Add date field and set default value to today
 		$form['integration_option']['dataset_deposit_date'] = [
 			'#type' => 'date',
 			'#title' => $this->t('Date de versement'),
-			'#default_value' => date('Y-m-d'),
+			'#default_value' => isset($dateDeposit) ? $dateDeposit : date('Y-m-d'),
 		];
 
 		// Add field organisation
@@ -288,6 +298,14 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_organisation']);
 	}
 
+	public function getDatasetContributor(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_contributor']);
+	}
+
+	public function getDatasetUsername(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_user']);
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -340,6 +358,9 @@ abstract class MetadataForm extends FormBase {
         $tags = $this->getTags($form_state);
         $licence = $this->getDatasetLicence($form_state);
         $isPrivate = $this->getDatasetIsPrivate($form_state);
+		$contributor = $this->getDatasetContributor($form_state);
+		$dateDeposit = $this->getDatasetDepositDate($form_state);
+		$username = $this->getDatasetUsername($form_state);
 
 		// Not used for now
 		$mention_legales = "";
@@ -364,7 +385,7 @@ abstract class MetadataForm extends FormBase {
 				//Update extras
 				$extras = $datasetToUpdate[extras];
 				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -373,7 +394,7 @@ abstract class MetadataForm extends FormBase {
 			else {
 				// We build extras
 				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));
