@@ -252,7 +252,7 @@ abstract class MetadataForm extends FormBase {
 		parent::validateForm($form, $form_state);
 	}
 
-	public function getDatasetName(FormStateInterface $form_state) {
+	public function getDatasetTitle(FormStateInterface $form_state) {
 		return $form_state->getValue('dataset_name');
 	}
 
@@ -319,6 +319,13 @@ abstract class MetadataForm extends FormBase {
 		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate);
 	}
 
+	public function getDatasetName($form_state) {
+        $title = $this->getDatasetTitle($form_state);
+
+		$resourceManager = new ResourceManager;
+		return $resourceManager->defineDatasetName($title);
+	}
+
 	public function createOrUpdateDatasetId($form_state, $organization, $selectedDatasetId, $type, $entityId = null) {
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
 
@@ -326,7 +333,8 @@ abstract class MetadataForm extends FormBase {
 		$users = $api->getAdministrators();
 		$resourceManager = new ResourceManager;
         
-        $title = $this->getDatasetName($form_state);
+		$datasetName = $this->getDatasetName($form_state);
+        $title = $this->getDatasetTitle($form_state);
         $description = $this->getDescription($form_state);
         $dateDataset = $this->getDatasetDate($form_state);
         $tags = $this->getTags($form_state);
@@ -343,7 +351,6 @@ abstract class MetadataForm extends FormBase {
 		// }
 		$source = "";
 
-		$datasetName = $resourceManager->defineDatasetName($title);
 		$tags = $resourceManager->defineTags($tags);
 		$security = $resourceManager->defineSecurity($userId, $users);
 
