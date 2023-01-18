@@ -35,6 +35,9 @@ abstract class MetadataForm extends FormBase {
 		if ($selectedDatasetId) {
 			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
 			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null, true, true);
+
+			// Logger::logMessage("TRM - Selected dataset : " . json_encode($selectedDataset));
+
 			$selectedDataset = $selectedDataset['metas'];
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
@@ -465,5 +468,18 @@ abstract class MetadataForm extends FormBase {
 		}
 
 		return null;
+	}
+
+	function deleteDataset(array &$form, FormStateInterface $form_state) {
+		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
+
+		if ($selectedDatasetId) {
+			$resourceManager = new ResourceManager();
+			if ($resourceManager->deleteDataset($selectedDatasetId)) {
+				\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+
+				$form_state->setRedirect('ckan_admin.portail');
+			}
+		}
 	}
 }

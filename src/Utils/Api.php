@@ -2438,7 +2438,7 @@ class Api
 		return $this->callPackageShow2($datasetid, $params);
 	}
 
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $includeAllowedPrivate = false)
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $includeAllowedPrivate = false, $useApiKey = true)
 	{
 		$result = '';
 
@@ -2448,7 +2448,7 @@ class Api
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
 
 			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions(true));
+			curl_setopt_array($curl, $this->getStoreOptions($useApiKey));
 			$result = curl_exec($curl);
 			curl_close($curl);
 			//echo $callUrl. "\r\n";
