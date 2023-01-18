@@ -63,11 +63,11 @@ abstract class MetadataForm extends FormBase {
 		
         $licenceOptions = array();
 		$selectedLicence = '';
-        foreach ($licences[result] as &$value) {
-            $licenceOptions[$value[id]] = $value[title];
+        foreach ($licences['result'] as &$value) {
+            $licenceOptions[$value['id']] = $value['title'];
 
-			if ($selectedDataset && $selectedDataset['license'] == $value[title]) {
-				$selectedLicence = $value[id];
+			if ($selectedDataset && $selectedDataset['license'] == $value['title']) {
+				$selectedLicence = $value['id'];
 			}
         }
 

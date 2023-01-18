@@ -490,6 +490,9 @@ class VisualisationController extends ControllerBase {
 		//INFORMATIONS GÉOGRAPHIQUES
 		$informationsGeo = $this->buildInformationsGeo($metadataExtras);
 
+		//DATA VALIDATION
+		$dataValidation = $this->buildDataValidation($metadataExtras);
+
 		//SYNTHÈSE
 		$synthese = $this->buildSynthese($metadataExtras, $themes, $keywords);
 
@@ -526,6 +529,7 @@ class VisualisationController extends ControllerBase {
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
+						' . ($dataValidation != null ? $this->buildCard('Contrôle des données', $dataValidation) : '') . '
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
@@ -1076,6 +1080,43 @@ class VisualisationController extends ControllerBase {
 					<p><strong>Echelle:</strong> ' . ($equivalentScale != null ? '1/' . $equivalentScale : 'non renseignée') . '</p>
 					<p><strong>Résolution:</strong> ' . ($resolution != null ? $resolution : 'non renseignée') . '</p>
 				</div>
+			</div>
+		';
+	}
+
+	function buildDataValidation($metadataExtras) {
+		$dataValidation = $this->exportExtras($metadataExtras, 'data_validation');
+		$dataValidation = json_decode($dataValidation);
+
+		$dateValidation = $dataValidation->validationDate;
+
+		$schemaResult = '';
+		foreach ($dataValidation->schemaValidationResults as $schemaValidation) {
+
+			$columnsWithError = implode(', ', $schemaValidation->columnsWithError);
+			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
+
+			$schemaResult .= '
+				<div class="row">
+					<div class="col-sm-7">
+						<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
+						<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
+						<span><strong>Nombre d\'erreurs:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
+						<span><strong>Colonnes en erreurs:</strong> ' . $columnsWithError . '</span><br/>
+						<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+					</div>
+				</div>
+			';
+		}
+		
+		return '
+			<div class="row">
+				<div class="my-3">
+					<i class="fa fa-calendar-check"></i>
+					<span class="ms-2" translate>Contrôlé le </span>
+					<span>\{\{\'' . $dateValidation . '\' | formatMeta:\'date\' \}\}</span>
+				</div>
+				' . $schemaResult . '
 			</div>
 		';
 	}
