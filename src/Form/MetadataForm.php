@@ -201,15 +201,27 @@ abstract class MetadataForm extends FormBase {
 				'#tree' => TRUE,
 			];
 
+			// Add checkbox to activate planifiction or not
+			$form['scheduler']['scheduler_active'] = [
+				'#type' => 'checkbox',
+				'#name' => 'scheduler_active',
+				'#title' => $this->t('Activer la planification'),
+				'#default_value' => true,
+			];
+
 			// Add date and time field
 			$form['scheduler']['scheduler_date'] = [
 				'#type' => 'datetime',
 				'#title' => $this->t('Date de lancement'),
 				'#default_value' => DrupalDateTime::createFromTimestamp(time()),
 				'#date_format' => 'd/m/Y H:i:s',
-				// '#attributes' => [
-				// 	'step' => 60,
-				// ]
+				// Not working for now https://www.drupal.org/project/drupal/issues/2419131#comment-13328255
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 
 			// Add a list box for the period (YEAR, MONTH, WEEK, DAY, HOUR)
@@ -224,6 +236,12 @@ abstract class MetadataForm extends FormBase {
 					'YEAR' => $this->t('Toutes les X années'),
 				],
 				'#default_value' => 'DAY',
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 			
 
@@ -232,6 +250,25 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'number',
 				'#title' => $this->t('Intervalle'),
 				'#default_value' => 1,
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
+			];
+
+			// Add date field and set default value to today
+			$form['scheduler']['scheduler_date_end'] = [
+				'#type' => 'date',
+				'#title' => $this->t('Date de fin de planification'),
+				'#date_format' => 'Y-m-d',
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 		}
 
@@ -329,12 +366,19 @@ abstract class MetadataForm extends FormBase {
 	}
 
 	public function getSchedule(FormStateInterface $form_state) {
+		// Check if planification is active
+		$schedulerActive = $form_state->getValue('scheduler_active');
+		if ($schedulerActive == '0') {
+			return null;
+		}
+
 		$schedulerDate = $form_state->getValue(['scheduler','scheduler_date']);
 		$schedulerPeriod = $form_state->getValue(['scheduler','scheduler_period']);
 		$schedulerInterval = $form_state->getValue(['scheduler','scheduler_interval']);
 		$schedulerInterval = (int) $schedulerInterval;
+		$schedulerDateFin = $form_state->getValue(['scheduler','scheduler_date_end']);
 
-		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate);
+		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate, $schedulerDateFin);
 	}
 
 	public function getDatasetName($form_state) {
