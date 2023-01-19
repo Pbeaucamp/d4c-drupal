@@ -2457,6 +2457,12 @@ class Api
 			$result = $datasetid;
 		}
 
+		// We filter deleted datasets
+		if ($result['result']['state'] == 'deleted') {
+			Logger::logMessage("Dataset " . $datasetid . " is deleted.");
+			return array();
+		}
+
 		if ($applySecurity) {
 			$datasetOrganization = $result['result']['organization']['name'];
 			$allowedOrganizations = $this->getUserOrganisations();
