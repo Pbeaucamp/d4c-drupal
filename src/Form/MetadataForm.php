@@ -35,6 +35,9 @@ abstract class MetadataForm extends FormBase {
 		if ($selectedDatasetId) {
 			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
 			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null, true, true);
+
+			// Logger::logMessage("TRM - Selected dataset : " . json_encode($selectedDataset));
+
 			$selectedDataset = $selectedDataset['metas'];
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
@@ -46,6 +49,16 @@ abstract class MetadataForm extends FormBase {
 			// 		$mentionLegales = $value['value'];
 			// 	}
 			// }
+
+			$dateDataset = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "date_dataset";
+			});
+			$dateDataset = array_values($dateDataset)[0]["value"];
+
+			$dateDeposit = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "date_deposit";
+			});
+			$dateDeposit = array_values($dateDeposit)[0]["value"];
 		}
 
 		$licences = $api->getLicenses();
@@ -53,11 +66,11 @@ abstract class MetadataForm extends FormBase {
 		
         $licenceOptions = array();
 		$selectedLicence = '';
-        foreach ($licences[result] as &$value) {
-            $licenceOptions[$value[id]] = $value[title];
+        foreach ($licences['result'] as &$value) {
+            $licenceOptions[$value['id']] = $value['title'];
 
-			if ($selectedDataset && $selectedDataset['license'] == $value[title]) {
-				$selectedLicence = $value[id];
+			if ($selectedDataset && $selectedDataset['license'] == $value['title']) {
+				$selectedLicence = $value['id'];
 			}
         }
 
@@ -106,7 +119,7 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_contributor'] = [
 			'#type' => 'textfield',
 			'#title' => $this->t('Contributeur'),
-			'#default_value' => $selectedDataset != null ? $selectedDataset['author'] : '',
+			'#default_value' => $selectedDataset != null ? $selectedDataset['producer'] : '',
 		];
 
 		$form['integration_option']['dataset_description'] = [
@@ -119,14 +132,14 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_date'] = [
 			'#type' => 'date',
 			'#title' => $this->t('Date de création'),
-			'#default_value' => date('Y-m-d'),
+			'#default_value' => isset($dateDataset) ? $dateDataset : date('Y-m-d'),
 		];
 
 		// Add date field and set default value to today
 		$form['integration_option']['dataset_deposit_date'] = [
 			'#type' => 'date',
 			'#title' => $this->t('Date de versement'),
-			'#default_value' => date('Y-m-d'),
+			'#default_value' => isset($dateDeposit) ? $dateDeposit : date('Y-m-d'),
 		];
 
 		// Add field organisation
@@ -191,15 +204,27 @@ abstract class MetadataForm extends FormBase {
 				'#tree' => TRUE,
 			];
 
+			// Add checkbox to activate planifiction or not
+			$form['scheduler']['scheduler_active'] = [
+				'#type' => 'checkbox',
+				'#name' => 'scheduler_active',
+				'#title' => $this->t('Activer la planification'),
+				'#default_value' => true,
+			];
+
 			// Add date and time field
 			$form['scheduler']['scheduler_date'] = [
 				'#type' => 'datetime',
 				'#title' => $this->t('Date de lancement'),
 				'#default_value' => DrupalDateTime::createFromTimestamp(time()),
 				'#date_format' => 'd/m/Y H:i:s',
-				// '#attributes' => [
-				// 	'step' => 60,
-				// ]
+				// Not working for now https://www.drupal.org/project/drupal/issues/2419131#comment-13328255
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 
 			// Add a list box for the period (YEAR, MONTH, WEEK, DAY, HOUR)
@@ -214,6 +239,12 @@ abstract class MetadataForm extends FormBase {
 					'YEAR' => $this->t('Toutes les X années'),
 				],
 				'#default_value' => 'DAY',
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 			
 
@@ -222,6 +253,25 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'number',
 				'#title' => $this->t('Intervalle'),
 				'#default_value' => 1,
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
+			];
+
+			// Add date field and set default value to today
+			$form['scheduler']['scheduler_date_end'] = [
+				'#type' => 'date',
+				'#title' => $this->t('Date de fin de planification'),
+				'#date_format' => 'Y-m-d',
+				// '#states' => array(
+				// 	// Hide the settings when the cancel notify checkbox is disabled.
+				// 	'disabled' => array(
+				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
+				// 	),
+				// ),
 			];
 		}
 
@@ -252,7 +302,7 @@ abstract class MetadataForm extends FormBase {
 		parent::validateForm($form, $form_state);
 	}
 
-	public function getDatasetName(FormStateInterface $form_state) {
+	public function getDatasetTitle(FormStateInterface $form_state) {
 		return $form_state->getValue('dataset_name');
 	}
 
@@ -288,6 +338,14 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_organisation']);
 	}
 
+	public function getDatasetContributor(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_contributor']);
+	}
+
+	public function getDatasetUsername(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_user']);
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -311,12 +369,26 @@ abstract class MetadataForm extends FormBase {
 	}
 
 	public function getSchedule(FormStateInterface $form_state) {
+		// Check if planification is active
+		$schedulerActive = $form_state->getValue('scheduler_active');
+		if ($schedulerActive == '0') {
+			return null;
+		}
+
 		$schedulerDate = $form_state->getValue(['scheduler','scheduler_date']);
 		$schedulerPeriod = $form_state->getValue(['scheduler','scheduler_period']);
 		$schedulerInterval = $form_state->getValue(['scheduler','scheduler_interval']);
 		$schedulerInterval = (int) $schedulerInterval;
+		$schedulerDateFin = $form_state->getValue(['scheduler','scheduler_date_end']);
 
-		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate);
+		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate, $schedulerDateFin);
+	}
+
+	public function getDatasetName($form_state) {
+        $title = $this->getDatasetTitle($form_state);
+
+		$resourceManager = new ResourceManager;
+		return $resourceManager->defineDatasetName($title);
 	}
 
 	public function createOrUpdateDatasetId($form_state, $organization, $selectedDatasetId, $type, $entityId = null) {
@@ -326,12 +398,16 @@ abstract class MetadataForm extends FormBase {
 		$users = $api->getAdministrators();
 		$resourceManager = new ResourceManager;
         
-        $title = $this->getDatasetName($form_state);
+		$datasetName = $this->getDatasetName($form_state);
+        $title = $this->getDatasetTitle($form_state);
         $description = $this->getDescription($form_state);
         $dateDataset = $this->getDatasetDate($form_state);
         $tags = $this->getTags($form_state);
         $licence = $this->getDatasetLicence($form_state);
         $isPrivate = $this->getDatasetIsPrivate($form_state);
+		$contributor = $this->getDatasetContributor($form_state);
+		$dateDeposit = $this->getDatasetDepositDate($form_state);
+		$username = $this->getDatasetUsername($form_state);
 
 		// Not used for now
 		$mention_legales = "";
@@ -343,7 +419,6 @@ abstract class MetadataForm extends FormBase {
 		// }
 		$source = "";
 
-		$datasetName = $resourceManager->defineDatasetName($title);
 		$tags = $resourceManager->defineTags($tags);
 		$security = $resourceManager->defineSecurity($userId, $users);
 
@@ -357,7 +432,7 @@ abstract class MetadataForm extends FormBase {
 				//Update extras
 				$extras = $datasetToUpdate[extras];
 				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -366,7 +441,7 @@ abstract class MetadataForm extends FormBase {
 			else {
 				// We build extras
 				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
-					null, null, $security, null, null, null, $mention_legales, null, null, null, $type, $entityId);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));
@@ -393,5 +468,18 @@ abstract class MetadataForm extends FormBase {
 		}
 
 		return null;
+	}
+
+	function deleteDataset(array &$form, FormStateInterface $form_state) {
+		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
+
+		if ($selectedDatasetId) {
+			$resourceManager = new ResourceManager();
+			if ($resourceManager->deleteDataset($selectedDatasetId)) {
+				\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+
+				$form_state->setRedirect('ckan_admin.portail');
+			}
+		}
 	}
 }

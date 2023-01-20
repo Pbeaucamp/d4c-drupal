@@ -53,7 +53,7 @@ class Schedule implements JsonSerializable {
         // Format date in string as ISO 8601 format
         $array['beginDate'] = $this->beginDate->format(\DateTime::ISO8601);
         if ($this->stopDate != null) {
-            $array['stopDate'] = $this->stopDate->format(\DateTime::ISO8601);
+            $array['stopDate'] = $this->stopDate;
         }
         return $array;
     }
