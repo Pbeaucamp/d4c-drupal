@@ -127,6 +127,42 @@ class ResourceManager {
 		}
 	}
 
+	/** WIP - Not used for now - We do specific action for specific key */
+	// function updateDatasetMetadata($datasetId, $keyToUpdate, $valueToUpdate) {
+	// 	$api = new Api;
+	// 	$result = $api->getPackageShow("id=" . $datasetId);
+
+	// 	$keyExists = false;
+	// 	$index = 0;
+	// 	for ($i = 0; $i < count($result['result']['extras']); $i++) {
+	// 		if ($result['result']['extras'][$i]['key'] == $keyToUpdate) {
+	// 			$keyExists = true;
+	// 			$index = $i;
+	// 			break;
+	// 		}
+	// 	}
+
+	// 	// Correspond to the resources informations (number of lines, size of the file, etc.) - $valueToUpdate is an array with the resourceId as key
+	// 	if ($keyToUpdate == 'resources_infos') {
+	// 		if ($keyExists) {
+	// 			$resourcesInfos = json_decode($result['result']['extras'][$index]['value'], true);
+	// 			foreach ($valueToUpdate as $resourceId => $resourceInfos) {
+	// 				$resourcesInfos[$resourceId] = $resourceInfos;
+	// 			}
+	// 			$result['result']['extras'][$index]['value'] = json_encode($resourcesInfos);
+	// 		} else {
+	// 			$data = array(
+	// 				"key" => $keyToUpdate,
+	// 				"value" => json_encode($valueToUpdate)
+	// 			);
+	// 			array_push($result['result']['extras'], $data);
+	// 		}
+	// 	}
+		
+    //     $callUrl = $this->urlCkan . "api/action/package_update";
+	// 	return $api->updateRequest($callUrl, $result, "POST");
+	// }
+
 	function manageFile($file) {
 		Logger::logMessage("Managing file from FORM POST");
 
@@ -139,6 +175,17 @@ class ResourceManager {
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
 		return $resourceUrl;
+	}
+
+	function getFilePath($resourceUrl) {
+		$fileName = parse_url($resourceUrl);
+		$filePath = $fileName[path];
+
+		// Remove first slash if exists
+		if (substr($filePath, 0, 1) == "/") {
+			$filePath = substr($filePath, 1);
+		}
+		return self::ROOT . $filePath;
 	}
 
 	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, $customName = null, $moveFileToDatasetFolder = true) {
@@ -1302,9 +1349,9 @@ class ResourceManager {
 			$return = json_decode($return);
 			
 			if ($return->success == true) {
-			
-				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
 				$resourceId = $return->result->id;
+
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
 				$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 				
 				if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {

@@ -939,6 +939,8 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildSynthese($metadataExtras, $themes, $keywords) {
+		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
+		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
 		$isOpenData = $this->isOpenData($keywords);
 		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
@@ -946,6 +948,24 @@ class VisualisationController extends ControllerBase {
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
 
 		$synthese = '';
+		if (isset($recordsCount)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Nombre de lignes : <b>' . floatval($recordsCount) . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($datasetSize)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Taille du jeu de données : <b>' . $datasetSize . ' mo</b></span>
+				</div>
+			';
+		}
+
 		if ($isOpenData) {
 			$synthese .= '
 				<div class="my-3">

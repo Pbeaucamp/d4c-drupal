@@ -3497,7 +3497,7 @@ class Api
 		$data_array["attachments"] = "";
 		$data_array["alternative_exports"] = "";
 		$data_array["features"] = array("timeserie", "analyse", "geo");
-		$resourceCSV;
+		$resourceCSV = null;
 
 		foreach ($result['result']['resources'] as $value) {
 			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
@@ -6654,29 +6654,22 @@ class Api
 
 	function calculateVisualisations($id, $blockDateModification = FALSE)
 	{
-		//error_log($id);
-
-		Logger::logMessage("Calculate visualisation for " . $id . "\r\n");
+		Logger::logMessage("Calculate visualisation for " . $id);
 
 		$features = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud", timeline]
 		$records_count = 0;
+		$fileSize = 0;
+
 		$fields = array();
 
-		//if($dataset == null){
 		$dataset = $this->getPackageShow("id=" . $id);
 		$dataset = $dataset["result"];
 
-
-		//Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
-		//}
-		//$id = $dataset["id"];
-
-		//if(!$hasFields){
-		$resourcesid = null;
+		$resource = null;
 		$hasWMS = false;
 		foreach ($dataset['resources'] as $value) {
 			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
-				$resourcesid = $value['id'];
+				$resource = $value;
 			}
 
 			//Checking if we have a WMS resource to add the feature geo
@@ -6684,22 +6677,27 @@ class Api
 				$hasWMS = true;
 			}
 		}
-		if ($resourcesid != null) {
-			$fields = $this->getAllFields($resourcesid, TRUE);
-			$records_result = $this->getDatastoreApi("resource_id=" . $resourcesid . "&limit=0");
+		if ($resource != null) {
+			$resourcesId = $resource["id"];
+			$resourcesUrl = $resource["url"];
+
+			$fields = $this->getAllFields($resourcesId, TRUE);
+			$records_result = $this->getDatastoreApi("resource_id=" . $resourcesId . "&limit=0");
 			$records_count = str_pad($records_result["result"]["total"], 10, "0", STR_PAD_LEFT);
 
+			// Checking file size if found
+			$resourceManager = new ResourceManager;
+			$filePath = $resourceManager->getFilePath($resourcesUrl);
+			// Check if file exist and get size in mo
+			if (file_exists($filePath)) {
+				$fileSize = round(filesize($filePath) / 1048576, 2);
+			}
 
-			Logger::logMessage("Found ressource with id " . $resourcesid . " with record count = " . $records_count . "\r\n");
+			Logger::logMessage("Found ressource with id " . $resourcesId . " with record count = " . $records_count . " and file size " . $fileSize . "mo at file path " . $filePath);
 		}
-		//}
-
-
-
-		//$features[] = "analyze"; //tab chart
 
 		if (count($fields) > 0) {
-			Logger::logMessage("Search features" . "\r\n");
+			Logger::logMessage("Search features");
 
 			$colStart = null;
 			$colEnd = null;
@@ -6781,22 +6779,30 @@ class Api
 		$foundCount = false;
 		$foundCV = false;
 		$foundLM = false;
+		$foundSize = false;
 		foreach ($extras as &$e) {
 			if ($e["key"] == "records_count") {
 				$e["value"] = $records_count;
 				$foundCount = true;
-			} else if ($e["key"] == "features") {
+			}
+			else if ($e["key"] == "features") {
 				$e["value"] = implode(",", $features);
 				$foundFeat = true;
-			} else if ($e["key"] == "custom_view" && $customView != null) {
+			}
+			else if ($e["key"] == "custom_view" && $customView != null) {
 				$cv = array();
 				$cv["title"] = $customView->cv_title;
 				$cv["slug"] = $customView->cv_name;
 				$cv["icon"] = $customView->cv_icon;
 				$e["value"] = json_encode($cv);
 				$foundCV = true;
-			} else if ($e["key"] == "date_moissonnage_last_modification") {
+			}
+			else if ($e["key"] == "date_moissonnage_last_modification") {
 				$foundLM = true;
+			}
+			else if ($e["key"] == "dataset_size") {
+				$e["value"] = $fileSize;
+				$foundSize = true;
 			}
 		}
 		if (!$foundCount) {
@@ -6819,6 +6825,10 @@ class Api
 			$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
 			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
+		if (!$foundSize) {
+			$extras[count($extras)]['key'] = 'dataset_size';
+			$extras[(count($extras) - 1)]['value'] = $fileSize;
+		}
 		$dataset["extras"] = $extras;
 		//error_log(json_encode($fields));
 		//error_log(json_encode($dataset['extras']));
@@ -6826,8 +6836,7 @@ class Api
 			$dataset["modified_date_forced"] = true;
 		}
 
-
-		Logger::logMessage("Update package" . "\r\n");
+		Logger::logMessage("Update package");
 
 		$callUrl = $this->urlCkan . "api/action/package_update";
 		$this->updateRequest($callUrl, $dataset, "POST");
