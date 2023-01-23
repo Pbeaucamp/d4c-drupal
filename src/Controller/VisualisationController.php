@@ -1117,7 +1117,7 @@ class VisualisationController extends ControllerBase {
 			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
 
 			$schemaResult .= '
-				<div class="row">
+				<div class="row schema-data-validation">
 					<div class="col-sm-7">
 						<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
 						<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>

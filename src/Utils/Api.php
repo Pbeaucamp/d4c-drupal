@@ -1968,6 +1968,7 @@ class Api
 
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
+		unset($query_params["resourceId"]);
 		$where = "";
 		$limit  = "";
 		if (!empty($filters_init)) {
