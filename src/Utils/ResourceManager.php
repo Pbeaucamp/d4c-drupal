@@ -43,7 +43,7 @@ class ResourceManager {
 	}
 
 	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
-		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
+		Logger::logMessage("Create new dataset with name '" . $datasetName . "' and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
 
 		//We update the description if empty or equals to default.description
@@ -85,7 +85,7 @@ class ResourceManager {
 	}
 
 	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
-		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId);
+		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
 		
 		$datasetToUpdate[title] = $title;
@@ -101,6 +101,7 @@ class ResourceManager {
 		$api = new Api;
         $callUrl = $this->urlCkan . "api/action/package_update";
 		$result = $api->updateRequest($callUrl, $datasetToUpdate, "POST");
+
 		$result = json_decode($result);
 		if ($result->success == true) {
 			$currentOrganization = $datasetToUpdate[organization][id];
@@ -1653,7 +1654,7 @@ class ResourceManager {
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
 			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null,
-			$dateDeposit = null, $uploader = null) {
+			$dateDeposit = null, $uploader = null, $datasetModel = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1683,6 +1684,7 @@ class ResourceManager {
 		$hasEntityId = false;
 		$hasDateDeposit = false;
 		$hasUsername = false;
+		$hasDatasetModel = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1842,6 +1844,11 @@ class ResourceManager {
 					$hasUsername = true;
 					$extras[$index]['value'] = $uploader;
 				}
+
+				if ($extras[$index]['key'] == 'dataset-model') {
+					$hasDatasetModel = true;
+					$extras[$index]['value'] = $datasetModel;
+				}
 			}
 		}
 
@@ -1978,6 +1985,11 @@ class ResourceManager {
 		if ($hasUsername == false) {
 			$extras[count($extras)]['key'] = 'uploader';
 			$extras[(count($extras) - 1)]['value'] = $uploader;
+		}
+
+		if ($hasDatasetModel == false && isset($datasetModel)) {
+			$extras[count($extras)]['key'] = 'dataset-model';
+			$extras[(count($extras) - 1)]['value'] = $datasetModel;
 		}
 
 		return $extras;

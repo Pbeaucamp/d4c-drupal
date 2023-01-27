@@ -4742,7 +4742,7 @@ class Api
 
 		$datasetId = "";
 		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
-			$resourceCSV;
+			$resourceCSV = null;
 			$datasetId = $query_params['dataset'];
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
 			$curl = curl_init($callUrl);
@@ -4754,7 +4754,6 @@ class Api
 			foreach ($package['result']['resources'] as $value) {
 				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 					$resourceCSV = $value['id'];
-					break;
 				}
 			}
 			unset($query_params['dataset']);

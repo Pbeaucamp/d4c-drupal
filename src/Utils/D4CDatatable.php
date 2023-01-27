@@ -56,7 +56,7 @@ class D4CDatatable {
 		$query_params = $api->proper_parse_str($params);
 
 		// $datasetId = $query_params['datasetId'];
-		$resourceId = $query_params['resourceId'];
+		$resourceId = $query_params['resource_id'];
 		$fields = urldecode($query_params['fields']);
 		// Split fields by comma
 		$fields = explode(",", $fields);

@@ -50,7 +50,7 @@ class VisualisationController extends ControllerBase {
 
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
-		$resourceId = $request->query->get('resourceId');
+		$resourceId = $request->query->get('resource_id');
 		$location = $request->query->get('location');
 		return $this->myPage2($id, $tab, $resourceId, $location);
 	}
@@ -438,14 +438,15 @@ class VisualisationController extends ControllerBase {
 				
 				//Checking if the module data_bfc exist and if the user is RO
 				$moduleHandler = \Drupal::service('module_handler');
-				if ($moduleHandler->moduleExists('data_bfc')) {
+				$hasDataBfc = $moduleHandler->moduleExists('data_bfc');
 
+				if ($hasDataBfc) {
 					$userManager = new UserManager();
 					$isUserRO = $userManager->isConnectedUserRO();
 				}
 
 				if ($isAdmin || $isUserRO) {
-					$tabAdmin = $this->buildTabAdmin($dataset, $name);
+					$tabAdmin = $this->buildTabAdmin($hasDataBfc, $dataset, $name, $metadataExtras);
 				}
 			}
 		}
@@ -1116,17 +1117,32 @@ class VisualisationController extends ControllerBase {
 			$columnsWithError = implode(', ', $schemaValidation->columnsWithError);
 			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
 
-			$schemaResult .= '
-				<div class="row schema-data-validation">
-					<div class="col-sm-7">
-						<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
-						<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
-						<span><strong>Nombre d\'erreurs:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
-						<span><strong>Colonnes en erreurs:</strong> ' . $columnsWithError . '</span><br/>
-						<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+			if ($schemaValidation->schema == 'rgpd_schema') {
+				$schemaResult .= '
+					<div class="row schema-data-validation">
+						<div class="col-sm-7">
+							<span><strong>Schema:</strong> RGPD</span><br/>
+							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
+							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
+							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
+							<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+						</div>
 					</div>
-				</div>
-			';
+				';
+			}
+			else {
+				$schemaResult .= '
+					<div class="row schema-data-validation">
+						<div class="col-sm-7">
+							<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
+							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
+							<span><strong>Nombre d\'erreurs:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
+							<span><strong>Colonnes en erreurs:</strong> ' . $columnsWithError . '</span><br/>
+							<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+						</div>
+					</div>
+				';
+			}
 		}
 		
 		return '
@@ -1607,7 +1623,6 @@ class VisualisationController extends ControllerBase {
 		}
 
 		$url = $serviceUrlWithoutParams . '?' . $queryString;
-		Logger::logMessage("TRM - Service URL: " . $url);
 
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
@@ -1831,13 +1846,36 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAdmin($dataset, $name) {
+	function buildTabAdmin($hasDataBfc, $dataset, $name, $metadataExtras) {
+		$datasetId = $dataset["metas"]["id"];
+		$datasetType = $this->exportExtras($metadataExtras, 'data4citizen-type');
 		$fields = $dataset["fields"];
 
-		$tableHeader = '<tr>';
+		$buttonEditMetadata = '';
+		$buttonEditor = '';
+		$buttonValidateData = '';
 
-		$displayEditor = false;
-		if (sizeof($fields) > 0 ) {
+		// Part edit metadata
+		$editDatasetUrl = "{{ path('ckan_admin.editMetaDataForm', { 'id': '$datasetId'}) }}";
+		if ($hasDataBfc) {
+			if ($datasetType == 'kpi') {
+				$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_kpi_manage', { 'dataset-id': '$datasetId'}) }}";
+			}
+			else {
+				$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType'}) }}";
+			}
+		}
+
+		$buttonEditMetadata = '
+			<a id="btn-edit-data" href="' . $editDatasetUrl . '" target="_self">
+				<img alt="Editer les métadonnées" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+				<span>Editer les métadonnées</span>
+			</a>';
+
+		// Part edit data
+		$tableHeader = '<tr>';
+		if (sizeof($fields) > 0 && $datasetType != 'kpi') {
+			$displayEditor = false;
 			foreach($fields as $key=>$value) {
 				$canEdit = false;
 				if (sizeof($value["annotations"]) > 0 ) {
@@ -1862,28 +1900,45 @@ class VisualisationController extends ControllerBase {
 					$tableHeader .= '<th>' . $value["name"] . '</th>';
 				}
 			}
-		}
 
+			if ($displayEditor) {
+				$buttonEditor = '
+					<a id="btn-edit-data" ng-click="editData()">
+						<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+						<span>Editer le jeu de données</span>
+					</a>';
+			}
+		}
 		$tableHeader .= '</tr>';
 
-		$buttonEditor = $displayEditor ? '
-			<a id="btn-edit-data" ng-click="editData()">
-				<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-				<span>Editer le jeu de données</span>
-			</a>' : '';
+		// Part validate data
+		if ($hasDataBfc) {
+			$contractId = $this->exportExtras($metadataExtras, 'vanilla_contract');
 
-		$displayValidate = false;
-		$buttonValidateData = $displayValidate ? '
-			<a id="btn-validate-data" ng-click="validateData()">
-				<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
-				<span>Valider les données</span>
-			</a>' : '';
+			if (isset($contractId)) {
+				$vanillaManager = new VanillaApiManager();
+				try {
+					$integration = $vanillaManager->getIntegrationByContractId($contractId);
+	
+					if (isset($integration['validationSchemas']) && sizeof($integration['validationSchemas']) > 0) {
+						$buttonValidateData = '
+							<a id="btn-validate-data" ng-click="validateData(' . $contractId . ')">
+								<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
+								<span>Valider les données</span>
+							</a>';
+					}
+				} catch (\Exception $e) {
+					Logger::logMessage("Error while getting integration by contract id: " . $e->getMessage());
+				}
+			}
+		}
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
 				<details open>
 					<summary>Administration</summary>
 					<div>
+						' . $buttonEditMetadata . '
 						' . $buttonEditor . '
 						' . $buttonValidateData . '
 					</div>

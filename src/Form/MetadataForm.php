@@ -20,7 +20,36 @@ abstract class MetadataForm extends FormBase {
 		return 'MetadataForm';
 	}
 
-	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDatasetId = null, $includeSchemas = false, $includeScheduler = false) {
+	public function loadDataset($datasetId) {
+		$api = new Api();
+		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, true) : null;
+	}
+
+	public function getDatasetIntegration($dataset) {
+		$hasDataBfc = \Drupal::moduleHandler()->moduleExists('data_bfc');
+		if ($hasDataBfc) {
+			$contractId = array_filter($dataset['metas']["extras"], function ($f) {
+				return $f["key"] == "vanilla_contract";
+			});
+			$contractId = array_values($contractId)[0]["value"];
+
+			if (isset($contractId)) {
+				$vanillaManager = new VanillaApiManager();
+				return $vanillaManager->getIntegrationByContractId($contractId);
+			}
+		}
+
+		return null;
+	}
+
+	public function getDatasetModel($dataset) {
+		$datasetModel = array_filter($dataset['metas']["extras"], function ($f) {
+			return $f["key"] == "dataset-model";
+		});
+		return array_values($datasetModel)[0]["value"];
+	}
+
+	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false) {
 		$config = include(__DIR__ . "/../../config.php");
 		$organization = $config->client->client_organisation;
 
@@ -32,12 +61,10 @@ abstract class MetadataForm extends FormBase {
 
         $api = new Api;
 
-		if ($selectedDatasetId) {
-			Logger::logMessage("Selected dataset id " . $selectedDatasetId);
-			$selectedDataset = $api->getPackageShow2($selectedDatasetId, null, true, true);
+		if (isset($selectedDataset)) {
+			Logger::logMessage("Selected dataset " . $selectedDataset['metas']['id']);
 
-			// Logger::logMessage("TRM - Selected dataset : " . json_encode($selectedDataset));
-
+			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
@@ -140,6 +167,7 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'date',
 			'#title' => $this->t('Date de versement'),
 			'#default_value' => isset($dateDeposit) ? $dateDeposit : date('Y-m-d'),
+			'#invisible' => true
 		];
 
 		// Add field organisation
@@ -182,6 +210,8 @@ abstract class MetadataForm extends FormBase {
 				$schemas = array();
 			}
 
+			$selectedSchemas = $integration['validationSchemas'];
+
 			$schemasOptions = array();
 			foreach ($schemas as $schema) {
 				$schemasOptions[$schema] = $schema;
@@ -190,12 +220,15 @@ abstract class MetadataForm extends FormBase {
 			$form['integration_option']['schemas'] = [
 			  '#type' => 'checkboxes',
 			  '#title' => $this->t('Schémas de validation'),
-			  '#options' => $schemasOptions
+			  '#options' => $schemasOptions,
+			  '#default_value' => $selectedSchemas,
 			];
 		}
 
 		// Check if we need to include scheduler
 		if ($includeScheduler && $hasDataBfc) {
+
+			$schedule = $integration['schedule'];
 
 			$form['scheduler'] = [
 				'#type' => 'details',
@@ -209,14 +242,14 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'checkbox',
 				'#name' => 'scheduler_active',
 				'#title' => $this->t('Activer la planification'),
-				'#default_value' => true,
+				'#default_value' => isset($schedule) ? $schedule['on'] : true,
 			];
 
 			// Add date and time field
 			$form['scheduler']['scheduler_date'] = [
 				'#type' => 'datetime',
 				'#title' => $this->t('Date de lancement'),
-				'#default_value' => DrupalDateTime::createFromTimestamp(time()),
+				'#default_value' => isset($schedule) ? new DrupalDateTime(date('Y-m-d H:i:s', strtotime($schedule['beginDate']))) : DrupalDateTime::createFromTimestamp(time()),
 				'#date_format' => 'd/m/Y H:i:s',
 				// Not working for now https://www.drupal.org/project/drupal/issues/2419131#comment-13328255
 				// '#states' => array(
@@ -238,7 +271,7 @@ abstract class MetadataForm extends FormBase {
 					'MONTH' => $this->t('Tous les X mois'),
 					'YEAR' => $this->t('Toutes les X années'),
 				],
-				'#default_value' => 'DAY',
+				'#default_value' => isset($schedule) ? $schedule['period'] : 'DAY',
 				// '#states' => array(
 				// 	// Hide the settings when the cancel notify checkbox is disabled.
 				// 	'disabled' => array(
@@ -252,7 +285,7 @@ abstract class MetadataForm extends FormBase {
 			$form['scheduler']['scheduler_interval'] = [
 				'#type' => 'number',
 				'#title' => $this->t('Intervalle'),
-				'#default_value' => 1,
+				'#default_value' => isset($schedule) ? $schedule['interval'] : 1,
 				// '#states' => array(
 				// 	// Hide the settings when the cancel notify checkbox is disabled.
 				// 	'disabled' => array(
@@ -266,6 +299,7 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'date',
 				'#title' => $this->t('Date de fin de planification'),
 				'#date_format' => 'Y-m-d',
+				'#default_value' => isset($schedule) && isset($schedule['stopDate']) ? date('Y-m-d', strtotime($schedule['stopDate'])) : null,
 				// '#states' => array(
 				// 	// Hide the settings when the cancel notify checkbox is disabled.
 				// 	'disabled' => array(
@@ -391,7 +425,7 @@ abstract class MetadataForm extends FormBase {
 		return $resourceManager->defineDatasetName($title);
 	}
 
-	public function createOrUpdateDatasetId($form_state, $organization, $selectedDatasetId, $type, $entityId = null) {
+	public function createOrUpdateDatasetId($form_state, $organization, $selectedDatasetId, $type, $entityId = null, $datasetModel = null) {
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
 
 		$api = new Api;
@@ -432,7 +466,7 @@ abstract class MetadataForm extends FormBase {
 				//Update extras
 				$extras = $datasetToUpdate[extras];
 				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
-					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -441,7 +475,7 @@ abstract class MetadataForm extends FormBase {
 			else {
 				// We build extras
 				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
-					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username);
+					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));
