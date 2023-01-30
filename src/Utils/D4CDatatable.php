@@ -15,11 +15,13 @@ use
 	DataTables\Editor\ValidateOptions;
 
 use Symfony\Component\HttpFoundation\Response;
+use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 
 
 class D4CDatatable {
 
+	private $config;
 	protected $db;
 
 	public function __construct() {
@@ -61,6 +63,9 @@ class D4CDatatable {
 		// Split fields by comma
 		$fields = explode(",", $fields);
 
+		$api = new Api;
+		$fieldsDefinition = $api->getAllFields($resourceId);		
+
 		$tableName = $resourceId;
 		$columnKey = '_id';
 
@@ -68,7 +73,19 @@ class D4CDatatable {
 		$editorFields = array();
 		// Go through array of fields
 		foreach ($fields as $field) {
-			$editorFields[] = Field::inst($field);
+			$fieldDefinition = array_filter($fieldsDefinition, function($item) use ($field) {
+				return $item['name'] == $field;
+			});
+			$fieldDefinition = array_values($fieldDefinition);
+			$fieldType = $fieldDefinition[0]['type'];
+
+			// If numeric, we need to set the value as null if empty
+			if ($fieldType == 'double') {
+				$editorFields[] = Field::inst($field)->setFormatter( Format::ifEmpty( null ) );
+			}
+			else {
+				$editorFields[] = Field::inst($field);
+			}
 		}
 
 		//TODO : Gestion des valeurs NULL et des types date !

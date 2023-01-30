@@ -1552,6 +1552,17 @@ class Api
 		curl_close($curl);
 		$result = json_decode($result, true);
 
+		// We check if there is no sortable fields, we put all fields to sortable
+		$allFieldsSortable = true;
+		if ($full) {
+			foreach ($result['result']['fields'] as $value) {
+				$description = $value['info']['notes'];
+				if (preg_match("/<!--.*sortable.*-->/i", $description)) {
+					$allFieldsSortable = false;
+					break;
+				}
+			}
+		}
 
 		$geoPointnb = 0;
 
@@ -1584,7 +1595,7 @@ class Api
 				if (preg_match("/<!--.*disjunctive.*-->/i", $description)) {
 					$annotations[] = array("name" => "disjunctive");
 				}
-				if (preg_match("/<!--.*sortable.*-->/i", $description)) {
+				if ($allFieldsSortable || preg_match("/<!--.*sortable.*-->/i", $description)) {
 					$annotations[] = array("name" => "sortable");
 				}
 				if (preg_match("/<!--.*startDate.*-->/i", $description)) {
