@@ -71,7 +71,7 @@ class VisualisationController extends ControllerBase {
 		
 		$pageId = $id;
 
-		$dataset = $api->getPackageShow2($id, "", true, false, $resourceId, true);
+		$dataset = $api->getPackageShow2($id, "", true, true, $resourceId, true);
 		if (!isset($dataset["metas"]["id"])) {
 			//Dataset is not found we set a 404 page
 			$imports = $this->buildImports($id, null, null, null, null, null, null, null);

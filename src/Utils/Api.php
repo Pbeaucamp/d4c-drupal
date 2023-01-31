@@ -77,13 +77,13 @@ class Api
 
 	}
 
-	public function getStoreOptions($applySecurity = true)
+	public function getStoreOptions($useCkanApiKey = true)
 	{
 		$headr = array();
 		$headr[] = 'Content-length: 0';
 		$headr[] = 'Content-type: application/json';
 		//$headr[] = 'Authorization: 995efb3c-9349-43d7-965c-d7ce567b323a';
-		if ($applySecurity) {
+		if ($useCkanApiKey) {
 			$headr[] = 'Authorization: ' . $this->config->ckan->api_key;
 		}
 		$options = array(
@@ -97,11 +97,16 @@ class Api
 		return $options;
 	}
 
-	public function getSimpleOptions()
+	public function getSimpleOptions($useCkanApiKey = false)
 	{
+		$headr = array();
+		if ($useCkanApiKey) {
+			$headr[] = 'Authorization: ' . $this->config->ckan->api_key;
+		}
 		$options = array(
 			CURLOPT_POST => true,
 			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_HTTPHEADER     => $headr,
 			CURLOPT_SSL_VERIFYPEER => false,
 			CURLOPT_SSL_VERIFYHOST =>  0,
 			CURLOPT_POSTFIELDS => array()
@@ -683,7 +688,7 @@ class Api
 
 	public function callPackageShow($params)
 	{
-		$result = $this->getPackageShow($params);
+		$result = $this->getPackageShow($params, true, true);
 		unset($result["help"]);
 		foreach ($result["result"]["resources"] as $j => $value) {
 			unset($result["result"]["resources"][$j]["url"]);
@@ -707,7 +712,7 @@ class Api
 
 	public function callPackageShowForSearch($params)
 	{
-		$result = $this->getPackageShow($params);
+		$result = $this->getPackageShow($params, true, true);
 		unset($result["help"]);
 
 		echo json_encode($result);
@@ -717,14 +722,22 @@ class Api
 		return $response;
 	}
 
-	public function getPackageShow($params)
-	{
+	public function getPackageShow($params, $useCkanApiKey = true, $checkDatasetSecurity = false, $applySecurity = true, $includeAllowedPrivate = true) {
 		$callUrl =  $this->urlCkan . "api/action/package_show?" . $params;
 		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getStoreOptions());
+		curl_setopt_array($curl, $this->getStoreOptions($useCkanApiKey));
 		$result = curl_exec($curl);
 		curl_close($curl);
 		$result = json_decode($result, true);
+
+		$datasetId = $result['result']['id'];
+		$datasetOrganization = $result['result']['organization']['name'];
+		$isPrivate = $result['result']['private'];
+		$deletedStatus = $result['result']['state'];
+		if ($checkDatasetSecurity && !$this->isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate)) {
+			return null;
+		}
+
 		return $result;
 	}
 
@@ -2257,8 +2270,7 @@ class Api
 
 			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
 		} else {
-			$resource = $this->getResource($query_params['resource_id']);
-			$resource = json_decode($resource, true);
+			$resource = $this->getResource($query_params['resource_id'], true);
 			$resourceName = $resource['result']['name'];
 			//We remove the format if present
 			$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
@@ -2450,46 +2462,13 @@ class Api
 		return $this->callPackageShow2($datasetid, $params);
 	}
 
-	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $includeAllowedPrivate = false, $useApiKey = true)
-	{
-		$result = '';
+	public function getPackageShow2($datasetid, $params, $callCkan = true, $applySecurity = false, $selectedResourceId = null, $includeAllowedPrivate = false, $useApiKey = true) {
 
-		if ($callCkan) {
-			// $query_params = $this->proper_parse_str($params);
-			//$callUrl =  $this->urlCkan . "api/action/package_show?" . $params . "&id=" . $datasetid;
-			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
+		$result = $this->getPackageShow("id=" . $datasetid, $useApiKey, true, $applySecurity, $includeAllowedPrivate);
 
-			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions($useApiKey));
-			$result = curl_exec($curl);
-			curl_close($curl);
-			//echo $callUrl. "\r\n";
-			$result = json_decode($result, true);
-		} else {
-			$result = $datasetid;
-		}
-
-		// We filter deleted datasets
-		if ($result['result']['state'] == 'deleted') {
-			Logger::logMessage("Dataset " . $datasetid . " is deleted.");
+		// Dataset is not allowed
+		if (!isset($result)) {
 			return array();
-		}
-
-		if ($applySecurity) {
-			$datasetOrganization = $result['result']['organization']['name'];
-			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowed($datasetOrganization, $allowedOrganizations)) {
-				return array();
-			}
-		}
-
-		if ($callCkan && $includeAllowedPrivate && $result['result']['private'] == true) {
-			Logger::logMessage("Dataset " . $datasetid . " is private. Checking if user is allowed to see it.");
-			$datasetOrganization = $result['result']['organization']['name'];
-			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowed($datasetOrganization, $allowedOrganizations)) {
-				return array();
-			}
 		}
 
 		$resourcesid = "";
@@ -3878,15 +3857,17 @@ class Api
 
 		$datasetId = "";
 		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
-			$resourceCSV;
+			$resourceCSV = null;
 			$datasetId = $query_params['dataset'];
-			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
-			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $this->getStoreOptions());
-			$package = curl_exec($curl);
-			//echo $package . "\r\n";
-			curl_close($curl);
-			$package = json_decode($package, true);
+
+			$package = $this->getPackageShow("id=" . $datasetId, true, true);
+			// Dataset is not found or not allowed
+			if (!isset($package)) {
+				$data_array["status"] = "error";
+				$data_array["message"] = "Le dataset avec l'ID '$datasetId' n'existe pas ou n'est pas disponible.";
+				return $data_array;
+			}
+
 			foreach ($package['result']['resources'] as $value) {
 				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 					$resourceCSV = $value['id'];
@@ -3895,6 +3876,16 @@ class Api
 			}
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
+		}
+		else {
+			$resourceId = $query_params['resource_id'];
+			$resource = $this->getResource($resourceId, true);
+			// Dataset is not found or not allowed
+			if (!isset($resource)) {
+				$data_array["status"] = "error";
+				$data_array["message"] = "La resource avec l'ID '$resourceId' n'existe pas ou n'est pas disponible.";
+				return $data_array;
+			}
 		}
 
 		$fields = $this->getAllFields($query_params['resource_id'], TRUE);
@@ -5022,21 +5013,9 @@ class Api
 	}
 
 	public function callALternativeExport($datasetid, $resourceid) {
-		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceid;
-		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getSimpleOptions());
-		$res = curl_exec($curl);
-		curl_close($curl);
-		// echo $res . "\r\n";
-
-		$res = json_decode($res, true);
-
+		$res = $this->getResource($resourceid, true);
 		header('Location: ' . $res["result"]["url"]);
 		die;
-		
-		// $response = new Response();
-		// $response->headers->set('Content-Type', 'application/json');
-		// return $response;
 	}
 
 	public function mapBuilder($idmap) {
@@ -5161,7 +5140,7 @@ class Api
 
 	public function getMaps($idUser, $idMap)
 	{
-		Logger::logMessage("Getting maps for user : " . $idUser . "\r\n");
+		Logger::logMessage("Getting maps for user : " . $idUser . " with map id : " . $idMap . "");
 
 		$table = "d4c_maps";
 		$query = \Drupal::database()->select($table, 'map');
@@ -5744,11 +5723,6 @@ class Api
 			}
 
 			array_push($result, $dataset);
-
-			//resource_show
-
-
-
 		}
 
 
@@ -5763,23 +5737,7 @@ class Api
 
 	function getResourceById($params)
 	{
-
-		$this->config = include(__DIR__ . "/../../config.php");
-		$this->urlCkan = $this->config->ckan->url;
-
-		$cle = $this->config->ckan->api_key;
-		$optionst = array(
-			CURLOPT_RETURNTRANSFER => true,
-			CURLOPT_CUSTOMREQUEST => "POST",
-			CURLOPT_HTTPHEADER => array(
-				'Content-type:application/json',
-				'Content-Length: ' . strlen($jsonData),
-				'Authorization:  ' . $cle,
-			),
-		);
-
-		$res = $this->getResource($params);
-		$res = json_decode($res);
+		$res = $this->getResource($params, true);
 
 		$response = new Response();
 		$response->setContent(json_encode($res->result->url));
@@ -5787,14 +5745,23 @@ class Api
 		return $response;
 	}
 
-	function getResource($resourceId)
+	function getResource($resourceId, $applySecurity = false)
 	{
 		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceId;
 		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getSimpleOptions());
+		curl_setopt_array($curl, $this->getSimpleOptions($applySecurity));
 		$result = curl_exec($curl);
 		curl_close($curl);
-		return $result;
+		$resource = json_decode($result, true);
+
+		// Checking if the user can see the dataset which contains the resource
+		if ($applySecurity) {
+			$datasetId = $resource['result']['package_id'];
+			$dataset = $this->getPackageShow("id=" . $datasetId, true, true, true, true);
+			return isset($dataset) ? $resource : null;
+		}
+
+		return $resource;
 	}
 
 
@@ -8746,7 +8713,43 @@ class Api
 		return false;
 	}
 
-	function isDatasetAllowed($organization, $allowedOrganizations)
+	function isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate) {
+		if ($deletedStatus == 'deleted') {
+			Logger::logMessage("Dataset " . $datasetId . " is deleted.");
+			return false;
+		}
+
+		if ($applySecurity) {
+			$datasetOrganization = $datasetOrganization;
+			$allowedOrganizations = $this->getUserOrganisations();
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+				return false;
+			}
+		}
+
+		if ($includeAllowedPrivate && $isPrivate) {
+			Logger::logMessage("Dataset " . $datasetId . " is private. Checking if user is allowed to see it.");
+
+			// Check connected user is allowed to see this private dataset
+			// User must be ad or ro to see private datasets
+			$current_user = \Drupal::currentUser();
+			
+			// If the user is an admin, we do not filter by organisation
+			if (!isset($current_user) || (!in_array("administrator", $current_user->getRoles()) && !in_array("ro", $current_user->getRoles()))) {
+				return false;
+			}
+
+			$datasetOrganization = $datasetOrganization;
+			$allowedOrganizations = $this->getUserOrganisations();
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	function isDatasetAllowedForOrganization($organization, $allowedOrganizations)
 	{
 		foreach ($allowedOrganizations as $org) {
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
