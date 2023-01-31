@@ -177,6 +177,7 @@ class portailController extends ControllerBase {
 									<li class="list-item" data-cat="csv"><i class="fa fa-file" aria-hidden="true"></i>CSV <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="xls"><i class="fa fa-file" aria-hidden="true"></i>XLS <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="json"><i class="fa fa-file" aria-hidden="true"></i>JSON <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
+									<li class="list-item" data-cat="zip"><i class="fa fa-file" aria-hidden="true"></i>DONNEES <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 								</ul>
 
         					</div>

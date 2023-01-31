@@ -888,7 +888,7 @@ ckan_admin.calculValueFiltre:
 ckan_admin.exportdataset:
   path: '/d4c/package/exportdataset/{id}'
   defaults:
-    _controller: '\Drupal\ckan_admin\Utils\PackageManager::createPackageZip'
+    _controller: '\Drupal\ckan_admin\Utils\PackageManager::createDatasetPackageZip'
     _title: ''
   requirements:
     _permission: 'access content'

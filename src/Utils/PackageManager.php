@@ -29,29 +29,11 @@ class PackageManager {
     // Get dataset resources by id 
     public function getResources($id) {
     	$api = new Api();
-    	$host = \Drupal::request()->getHost();
-		$protocol = \Drupal::request()->getScheme()."://";
     	$dataset = $api->getDataSetById($id);
         $contentdataset = json_decode($dataset->getContent(),true);
 
         $theme = "";
         $vignette = "";
-		//Disable for now
-    	// foreach ($contentdataset["result"]["extras"] as $key => $value) {
-    	// 	if($value["key"] == "theme") {
-    	// 		$theme = $value["value"];
-    	// 		break;
-    	// 	}
-    	// }
-    	
-    	// $themes = $api->getPackageTheme();
-    	// $themes = json_decode($themes->getContent(),true);
-    
-    	// foreach ($themes as $key => $value) {
-    	// 	if($value["title"] == $theme ) {
-    	// 		$vignette = $protocol . $host .$value["url"];
-    	// 	}
-    	// }
 
 		$dataset = $api->getPackageShow2($id,"");
 		if ($vignette != "" ) {
@@ -65,6 +47,143 @@ class PackageManager {
 		}
 		return $contentdataset["result"]["resources"];
     }
+
+	public function createPackageZip($datasets) {
+		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
+
+		$prefix = date("YmdHis") . "_package";
+		$filename = $prefix . ".zip";
+		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $prefix;
+		$zipFile = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
+
+		Logger::logMessage("Building package with name '" . $filename . "' in folder '" . $zipFolder . "'");
+		// search dataset data by id in array of all datasets 
+		if (!file_exists($zipFolder)) {
+		    mkdir($zipFolder, 0777, true);
+		}
+
+		/*****       create datasetinfo json file   *****/
+		$zip = new ZipArchive();
+
+		Logger::logMessage("Checking if zip exist '" . $zipFile . "'");
+		if (file_exists($zipFile)) {
+			unlink ($zipFile); 
+		}
+	
+		if ($zip->open($zipFile, ZipArchive::CREATE)!==TRUE) {
+			exit("Impossible d'ouvrir le fichier <$filename>");
+		}
+
+		foreach ($datasets as $dataset) {
+			$datasetId = $dataset["id"];
+			$this->addDatasetToPackage($zip, $datasetId);
+		}
+
+		// close and save archive
+		$res = $zip->close();
+		if ($res === TRUE) {
+			return new Response(json_encode(array('filename' => $zipFile)));
+		}
+		else {
+			Logger::logMessage("Zip save result " . json_encode($res));
+			return new Response(json_encode(array('error' => "Impossible de créer le fichier zip ($res)")));
+		}
+	}
+
+	public function createDatasetPackageZip($id) {
+		if (isset($_GET['xml']) && $_GET['xml'] == "true") {
+			$result = $this->generateMEditXML($id);
+			$response = new Response(json_encode(array('filename' => $result[1])));
+		}
+		else {
+			$datasets = array();
+			$datasets[] = array("id" => $id);
+			$response = $this->createPackageZip($datasets);
+		}
+
+		return $response;
+	}
+
+	private function addDatasetToPackage($zip, $datasetId){
+		Logger::logMessage("Packaging dataset with ID = '" . $datasetId . "'");
+
+		$api = new Api();
+		$dataset = $api->getPackageShow2($datasetId, "", true, true, null, true);
+
+		$datasetresources = $this->getResources($datasetId);
+		foreach ($datasetresources as $key => $value) {
+			Logger::logMessage("Managing resource  '" . json_encode($value) . "'");
+
+			$format = $value["format"];
+			if ($format == "SHP" || $format == "shp" || $format == "Shapefile") {
+				$format = "zip";
+			}
+			$resourceName = $value["name"] . "." . $format;
+			$resourceUrl = $value["url"];
+
+			if ($value["url_type"] == "vignette") {
+				//TODO : Vignette
+				// $resourceName = "ressources/" . $value["name"] . "." . $value["format"];
+				// $resourcePath = $zipFolder . "/" . $resourceName;
+
+				// Logger::logMessage("Adding vignette to package '" . $resourcePath . "'");
+				// file_put_contents($resourcePath, file_get_contents($value["url"]));
+			}
+			else {
+				Logger::logMessage("Adding resource to package from '$resourceUrl'");
+
+				$url = $value["url"];
+				$file = fopen($url, 'r');
+				$zip->addStream($resourceUrl, $resourceName);
+				$zip->close();
+				fclose($file);
+
+				// $resourceName = "ressources/" . $value["name"];
+				// if (!$this->endsWith($resourceName, "." . $format) && $format != null && !empty($format)) {
+				// 	$resourceName = $resourceName . "." . $format;
+				// }
+				// $resourcePath = $zipFolder . "/" . $resourceName;
+				// Logger::logMessage("Adding resource to package '" . $resourcePath . "' from '" . $value["url"] . "'");
+
+				// $ch = curl_init();
+				// curl_setopt($ch, CURLOPT_URL, $value["url"]);
+				// $fp = fopen($resourcePath, "w");
+				// curl_setopt($ch, CURLOPT_FILE, $fp);
+				// curl_exec ($ch);
+				// curl_close ($ch);
+				// fclose($fp);
+
+
+				//Retrieve CSV dictionnary
+				if ($format == 'CSV') {
+					Logger::logMessage("Found dictionnary for resource '$resourceName'");
+
+					$result = $api->getAllFieldsForTableParam($value['id']);
+					$fields = $result["result"]["fields"];
+				}
+			}
+		}
+
+		Logger::logMessage("Creating metadata.json with dataset informations");
+
+		$fieldsWithoutId = array();
+		foreach ($fields as $field) {
+			if ($field["id"] != "_id") {
+				$fieldsWithoutId[] = $field;
+			}
+		}
+		$dataset['dictionnary'] = $fieldsWithoutId;
+
+		$zip->addFromString("metadata.json", json_encode($dataset));
+	}
+
+	function endsWith( $haystack, $needle ) {
+		$length = strlen( $needle );
+		if( !$length ) {
+			return true;
+		}
+		return strcasecmp(substr( $haystack, -$length ), $needle) == 0;
+	}
 
 	public function generateMEditXML($id) {
 		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
@@ -91,140 +210,7 @@ class PackageManager {
 		return $result;
 	}
 
-	public function createPackageZip($id){
-		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
-		$filename = $id . ".zip";
-
-		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id;
-		$zipFile = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
-		Logger::logMessage("TRM - Document ROOT " . $documentRoot . " and package " . $zipFolder);
-
-		// search dataset data by id in array of all datasets 
-        if (!file_exists($zipFolder)) {
-		    mkdir($zipFolder, 0777, true);
-		}
-
-		if (!file_exists($zipFolder . "/ressources")) {
-		    mkdir($zipFolder . "/ressources", 0777, true);
-		}
-
-		//$_GET['xml'] = "true";
-		if (isset($_GET['xml']) && $_GET['xml'] == "true") {
-			$result = $this->generateMEditXML($id);
-			$response = new Response(json_encode(array('filename' => $result[1])));
-		}
-		else {
-			$api = new Api();
-
-			Logger::logMessage("Packaging dataset with ID = '" . $id . "'");
-			$dataset = $api->getPackageShow2($id, "");
-
-			/*****       create datasetinfo json file   *****/
-			$zip = new ZipArchive();
-
-			$zipPath = $zipFile;
-
-			Logger::logMessage("Checking if zip exist '" . $zipPath . "'");
-			if (file_exists($zipPath)) {
-				unlink ($zipPath); 
-			}
-		
-			if ($zip->open($zipPath, ZipArchive::CREATE)!==TRUE) {
-				exit("Impossible d'ouvrir le fichier <$filename>\n");
-			}
-
-			/*****       create dataset resources json file   *****/
-			// get dataset resources 
-			$datasetresources = $this->getResources($id);
-			foreach ($datasetresources as $key => $value) {
-				Logger::logMessage("Managing resource  '" . json_encode($value) . "'");
-
-				if ($value["url_type"] == "vignette") {
-					$resourceName = "ressources/" . $value["name"] . "." . $value["format"];
-					$resourcePath = $zipFolder . "/" . $resourceName;
-
-					Logger::logMessage("Adding vignette to package '" . $resourcePath . "'");
-					file_put_contents($resourcePath, file_get_contents($value["url"]));
-				}
-				else {
-
-					$format = $value["format"];
-					if ($format == "SHP" || $format == "shp" || $format == "Shapefile") {
-						$value["format"] = "zip";
-					}
-
-					$resourceName = "ressources/" . $value["name"];
-					if (!$this->endsWith($resourceName, "." . $format) && $format != null && !empty($format)) {
-						$resourceName = $resourceName . "." . $format;
-					}
-					$resourcePath = $zipFolder . "/" . $resourceName;
-					Logger::logMessage("Adding resource to package '" . $resourcePath . "' from '" . $value["url"] . "'");
-
-					$ch = curl_init();
-					curl_setopt($ch, CURLOPT_URL, $value["url"]);
-					$fp = fopen($resourcePath, "w");
-					curl_setopt($ch, CURLOPT_FILE, $fp);
-					curl_exec ($ch);
-					curl_close ($ch);
-					fclose($fp);
-
-
-					//Retrieve CSV dictionnary
-					if ($format == 'CSV') {
-						Logger::logMessage("Found dictionnary for resource '" . $resourcePath . "'");
-	
-						$result = $api->getAllFieldsForTableParam($value['id']);
-						$fields = $result["result"]["fields"];
-					}
-				}
-
-				Logger::logMessage("Adding resource to zip");
-				$zip->addFile($resourcePath, $resourceName);
-			}
-
-			Logger::logMessage("Creating metadata.json '" . $zipFolder . "/metadata.json" . "'");
-
-			$fieldsWithoutId = array();
-			foreach ($fields as $field) {
-				if ($field["id"] != "_id") {
-					$fieldsWithoutId[] = $field;
-				}
-			}
-			$dataset['dictionnary'] = $fieldsWithoutId;
-
-			//save json file in root directory
-			$fp = fopen($zipFolder . "/metadata.json","w");
-			if(! ($fp == false)) {
-				fwrite($fp, json_encode($dataset));
-				fclose($fp);
-
-				Logger::logMessage("Adding metadata.json to zip");
-				// add datasetinfo json to zip
-				$zip->addFile($zipFolder . "/metadata.json", "metadata.json");
-			}
-     
-			// close and save archive
-			$res = $zip->close();
-			if ($res === TRUE) {
-				$response = new Response(json_encode(array('filename' => $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $id . ".zip")));
-			}
-			else {
-				Logger::logMessage("Zip save result " . json_encode($res));
-			}
-		}
-
-		return $response;
-	}
-
-	function endsWith( $haystack, $needle ) {
-		$length = strlen( $needle );
-		if( !$length ) {
-			return true;
-		}
-		return strcasecmp(substr( $haystack, -$length ), $needle) == 0;
-	}
-
-    public function createXMLFile($contentdataset, $zipFolder, $xmlFile) {
+    private function createXMLFile($contentdataset, $zipFolder, $xmlFile) {
     	$api = new API();
     	$dataset = $api->getPackageShow2($contentdataset["result"]["id"],"");
 
