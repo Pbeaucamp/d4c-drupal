@@ -5,6 +5,7 @@ use Symfony\Component\HttpFoundation\Response;
 use ZipArchive;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\PropertiesHelper;
 
 ini_set('memory_limit', '2048M'); // or you could use 1G
 ini_set('max_execution_time', 200);
@@ -49,22 +50,25 @@ class PackageManager {
     }
 
 	public function createPackageZip($datasets) {
+		if (count($datasets) == 0) {
+			return json_encode(array('status' => 'error', 'code' => 0, 'message' => "Pas de connaissances à télécharger"));
+		}
+
+		if (!$this->checkPackageSize($datasets)) {
+			return json_encode(array('status' => 'error', 'code' => 1, 'message' => "La limite de téléchargement de données a été atteinte. Veuillez affiner votre sélection."));
+		}
+
 		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
 
 		$prefix = date("YmdHis") . "_package";
 		$filename = $prefix . ".zip";
-		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $prefix;
-		$zipFile = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
+		$zipPath = $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
+		$zipFile = $documentRoot . $zipPath;
 
-		Logger::logMessage("Building package with name '" . $filename . "' in folder '" . $zipFolder . "'");
+		Logger::logMessage("Building package with name '" . $filename . "'");
 		// search dataset data by id in array of all datasets 
-		if (!file_exists($zipFolder)) {
-		    mkdir($zipFolder, 0777, true);
-		}
 
-		/*****       create datasetinfo json file   *****/
 		$zip = new ZipArchive();
-
 		Logger::logMessage("Checking if zip exist '" . $zipFile . "'");
 		if (file_exists($zipFile)) {
 			unlink ($zipFile); 
@@ -75,40 +79,66 @@ class PackageManager {
 		}
 
 		foreach ($datasets as $dataset) {
-			$datasetId = $dataset["id"];
-			$this->addDatasetToPackage($zip, $datasetId);
+			$this->addDatasetToPackage($zip, $dataset);
 		}
 
 		// close and save archive
 		$res = $zip->close();
 		if ($res === TRUE) {
-			return new Response(json_encode(array('filename' => $zipFile)));
+			return json_encode(array('filename' => $zipPath));
 		}
 		else {
 			Logger::logMessage("Zip save result " . json_encode($res));
-			return new Response(json_encode(array('error' => "Impossible de créer le fichier zip ($res)")));
+			return json_encode(array('status' => 'error', 'message' => "Impossible de créer le fichier zip ($res)"));
 		}
+	}
+
+	private function checkPackageSize($datasets) {
+		$propertiesHelper = new PropertiesHelper();
+		$packageSize = $propertiesHelper->getProperty("package_download_limit");
+		if ($packageSize == null || $packageSize == -1) {
+			return true;
+		}
+
+		$size = 0;
+		foreach ($datasets as $dataset) {
+			$datasetSize = DatasetHelper::extractMetadata($dataset['extras'], 'dataset_size');
+			if ($datasetSize != null) {
+				$size += $datasetSize;
+			}
+		}
+
+		Logger::logMessage("Package size is " . $size . " and limit is " . $packageSize . "");
+		
+		return $size < $packageSize;
 	}
 
 	public function createDatasetPackageZip($id) {
 		if (isset($_GET['xml']) && $_GET['xml'] == "true") {
 			$result = $this->generateMEditXML($id);
-			$response = new Response(json_encode(array('filename' => $result[1])));
+			$result = json_encode(array('filename' => $result[1]));
 		}
 		else {
+			$api = new Api();
+			$dataset = $api->getPackageShow2($id, "", true, true, null, true);
+
 			$datasets = array();
-			$datasets[] = array("id" => $id);
-			$response = $this->createPackageZip($datasets);
+			$datasets[] = $dataset;
+
+			$result = $this->createPackageZip($datasets);
 		}
 
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
 
-	private function addDatasetToPackage($zip, $datasetId){
+	private function addDatasetToPackage($zip, $dataset) {
+		$datasetId = $dataset["id"];
+
 		Logger::logMessage("Packaging dataset with ID = '" . $datasetId . "'");
 
 		$api = new Api();
-		$dataset = $api->getPackageShow2($datasetId, "", true, true, null, true);
 
 		$datasetresources = $this->getResources($datasetId);
 		foreach ($datasetresources as $key => $value) {
@@ -133,26 +163,9 @@ class PackageManager {
 				Logger::logMessage("Adding resource to package from '$resourceUrl'");
 
 				$url = $value["url"];
-				$file = fopen($url, 'r');
-				$zip->addStream($resourceUrl, $resourceName);
-				$zip->close();
-				fclose($file);
 
-				// $resourceName = "ressources/" . $value["name"];
-				// if (!$this->endsWith($resourceName, "." . $format) && $format != null && !empty($format)) {
-				// 	$resourceName = $resourceName . "." . $format;
-				// }
-				// $resourcePath = $zipFolder . "/" . $resourceName;
-				// Logger::logMessage("Adding resource to package '" . $resourcePath . "' from '" . $value["url"] . "'");
-
-				// $ch = curl_init();
-				// curl_setopt($ch, CURLOPT_URL, $value["url"]);
-				// $fp = fopen($resourcePath, "w");
-				// curl_setopt($ch, CURLOPT_FILE, $fp);
-				// curl_exec ($ch);
-				// curl_close ($ch);
-				// fclose($fp);
-
+				$fileContents = file_get_contents($url);
+				$zip->addFromString($datasetId . "/resources/" . $resourceName, $fileContents);
 
 				//Retrieve CSV dictionnary
 				if ($format == 'CSV') {
@@ -174,7 +187,7 @@ class PackageManager {
 		}
 		$dataset['dictionnary'] = $fieldsWithoutId;
 
-		$zip->addFromString("metadata.json", json_encode($dataset));
+		$zip->addFromString($datasetId . "/metadata.json", json_encode($dataset));
 	}
 
 	function endsWith( $haystack, $needle ) {

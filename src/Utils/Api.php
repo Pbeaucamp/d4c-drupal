@@ -6839,91 +6839,101 @@ class Api
 
 		$result = $this->getExtendedPackageSearch($params);
 
-		foreach ($result["result"]["results"] as &$dataset) {
-			$dataset["metadata_imported"] = $dataset["metadata_modified"];
-			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "date_moissonnage_last_modification";
-			}))["value"] ?: $dataset["metadata_modified"];
-			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
-				return $f["key"] == "date_moissonnage_creation";
-			}))["value"] ?: $dataset["metadata_created"];
+		if ($format == "zip") {
+			$packageManager = new PackageManager();
+			$zipFile = $packageManager->createPackageZip($result["result"]["results"]);
 
-			foreach ($dataset["resources"] as $j => $value) {
-				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
-			}
+			echo $zipFile;
+			$response = new Response();
+			return $response;
 		}
-
-		$result = $result["result"]["results"];
-
-		if ($format == "csv") {
-			header('Content-Type:text/csv');
-			header('Content-Disposition:attachment; filename=datasets.csv');
-		} else if ($format == "xls") {
-			header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-			//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
-			header('Content-Disposition:attachment; filename=datasets.xlsx');
-		} else if ($format == "json") {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename=datasets.json');
-		} else {
-			header('Content-Type:application/json');
-			header('Content-Disposition:attachment; filename=datasets.json');
-		}
-
-		if ($format == "json") {
-			echo json_encode($result);
-		} else if ($format == "csv") {
-			echo Export::getCSVfromJson($result);
-		} else if ($format == "xls") {
-			$csv = Export::getCSVfromJson($result);
-			//We create a tmp file in which we write the result and an output file to convert
-			$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-			$fileInput = fopen($pathInput, 'w');
-			fwrite($fileInput, $csv);
-			fclose($fileInput);
-
-			//We rename the file because PhpSpreadsheet does not support conversion without
-			rename($pathInput, $pathInput .= '.csv');
-
-			$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
-
-			$reader = ReaderEntityFactory::createCSVReader();
-			// $reader->setFieldDelimiter(';');
-			// $reader->setFieldEnclosure('"');
-			// $reader->setEndOfLineCharacter("\n");
-
-			$writer = WriterEntityFactory::createXLSXWriter();
-
-			$style = (new StyleBuilder())
-				//->setFontBold()
-				->setFontSize(11)
-				->setFontName('Calibri')
-				->setShouldWrapText(false)
-				->build();
-
-			$reader->open($pathInput);
-			$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
-
-			foreach ($reader->getSheetIterator() as $sheet) {
-				foreach ($sheet->getRowIterator() as $row) {
-					$row->setStyle($style);
-					$writer->addRow($row);
+		else {
+			foreach ($result["result"]["results"] as &$dataset) {
+				$dataset["metadata_imported"] = $dataset["metadata_modified"];
+				$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
+					return $f["key"] == "date_moissonnage_last_modification";
+				}))["value"] ?: $dataset["metadata_modified"];
+				$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
+					return $f["key"] == "date_moissonnage_creation";
+				}))["value"] ?: $dataset["metadata_created"];
+	
+				foreach ($dataset["resources"] as $j => $value) {
+					unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 				}
-			} //$writer->addRows($multipleRows); // add multiple rows at a time
-
-			$reader->close();
-			$writer->close();
-
-			unlink($fileInput);
-
-			header('Content-Length: ' . filesize($pathOutput));
-			readfile($pathOutput);
-		} else {
-			echo json_encode($result);
+			}
+	
+			$result = $result["result"]["results"];
+	
+			if ($format == "csv") {
+				header('Content-Type:text/csv');
+				header('Content-Disposition:attachment; filename=datasets.csv');
+			} else if ($format == "xls") {
+				header('Content-Type:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+				//header('Content-Disposition:attachment; filename='.$query_params['resource_id'].'.xls');
+				header('Content-Disposition:attachment; filename=datasets.xlsx');
+			} else if ($format == "json") {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename=datasets.json');
+			} else {
+				header('Content-Type:application/json');
+				header('Content-Disposition:attachment; filename=datasets.json');
+			}
+	
+			if ($format == "json") {
+				echo json_encode($result);
+			} else if ($format == "csv") {
+				echo Export::getCSVfromJson($result);
+			} else if ($format == "xls") {
+				$csv = Export::getCSVfromJson($result);
+				//We create a tmp file in which we write the result and an output file to convert
+				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
+				$fileInput = fopen($pathInput, 'w');
+				fwrite($fileInput, $csv);
+				fclose($fileInput);
+	
+				//We rename the file because PhpSpreadsheet does not support conversion without
+				rename($pathInput, $pathInput .= '.csv');
+	
+				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+	
+				$reader = ReaderEntityFactory::createCSVReader();
+				// $reader->setFieldDelimiter(';');
+				// $reader->setFieldEnclosure('"');
+				// $reader->setEndOfLineCharacter("\n");
+	
+				$writer = WriterEntityFactory::createXLSXWriter();
+	
+				$style = (new StyleBuilder())
+					//->setFontBold()
+					->setFontSize(11)
+					->setFontName('Calibri')
+					->setShouldWrapText(false)
+					->build();
+	
+				$reader->open($pathInput);
+				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
+	
+				foreach ($reader->getSheetIterator() as $sheet) {
+					foreach ($sheet->getRowIterator() as $row) {
+						$row->setStyle($style);
+						$writer->addRow($row);
+					}
+				} //$writer->addRows($multipleRows); // add multiple rows at a time
+	
+				$reader->close();
+				$writer->close();
+	
+				unlink($fileInput);
+	
+				header('Content-Length: ' . filesize($pathOutput));
+				readfile($pathOutput);
+			} else {
+				echo json_encode($result);
+			}
+	
+			$response = new Response();
+			return $response;
 		}
-
-		$response = new Response();
-		return $response;
 	}
 
 	function callCalculateVisualisations($id)
