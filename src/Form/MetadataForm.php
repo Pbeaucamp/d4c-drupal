@@ -516,4 +516,8 @@ abstract class MetadataForm extends FormBase {
 			}
 		}
 	}
+
+	function redirectToDataset($form_state, $datasetId) {
+		$form_state->setRedirect('ckan_admin.visualisation', ['id' => $datasetId]);
+	}
 }

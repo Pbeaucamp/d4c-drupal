@@ -1936,7 +1936,7 @@ class VisualisationController extends ControllerBase {
 
 			$hubId = $this->exportExtras($metadataExtras, 'vanilla-hub-id');
 			if (isset($hubId)) {
-				$integrationUrl = "{{ path('data_bfc.ro_integration', { 'dataset-id': '$datasetId', 'vanillaHubId': '$hubId' }) }}";
+				$integrationUrl = "{{ path('data_bfc.ro_integration', { 'datasetId': '$datasetId', 'vanillaHubId': '$hubId' }) }}";
 				$buttonIntegrateData = '
 					<a id="btn-integrate-data" href="' . $integrationUrl . '" target="_self">
 						<img alt="Intégrer les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
