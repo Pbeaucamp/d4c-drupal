@@ -758,7 +758,7 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
-		// Logger::logMessage("TRM - Call search " . $callUrl);
+		Logger::logMessage("TRM - Call search " . $callUrl);
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
@@ -905,6 +905,8 @@ class Api
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/)
 	{
 		$query_params = $this->proper_parse_str($params);
+
+		// Logger::logMessage("TRM - Query params : " . json_encode($query_params));
 
 		//error_log($params);
 		if ($query_params["sort"] != null) {
@@ -1449,7 +1451,7 @@ class Api
 			$req['sql'] = $sql;
 		}
 
-		Logger::logMessage("Query : " . $req['sql']);
+		// Logger::logMessage("Query : " . $req['sql']);
 
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -1457,7 +1459,7 @@ class Api
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 
-		Logger::logMessage("Result query coordinate : " . $result);
+		// Logger::logMessage("Result query coordinate : " . $result);
 
 		curl_close($curl);
 		$result = json_decode($result, true);
@@ -3396,7 +3398,7 @@ class Api
 		$sql = "Select  " . $fieldsMapDisplayQuery . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
-		Logger::logMessage("Geopreview query : " . $req['sql']);
+		// Logger::logMessage("Geopreview query : " . $req['sql']);
 
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;

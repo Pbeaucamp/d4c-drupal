@@ -1849,11 +1849,13 @@ class VisualisationController extends ControllerBase {
 	function buildTabAdmin($hasDataBfc, $dataset, $name, $metadataExtras) {
 		$datasetId = $dataset["metas"]["id"];
 		$datasetType = $this->exportExtras($metadataExtras, 'data4citizen-type');
+
 		$fields = $dataset["fields"];
 
 		$buttonEditMetadata = '';
 		$buttonEditor = '';
 		$buttonValidateData = '';
+		$buttonIntegrateData = '';
 
 		// Part edit metadata
 		$editDatasetUrl = "{{ path('ckan_admin.editMetaDataForm', { 'id': '$datasetId'}) }}";
@@ -1931,6 +1933,16 @@ class VisualisationController extends ControllerBase {
 					Logger::logMessage("Error while getting integration by contract id: " . $e->getMessage());
 				}
 			}
+
+			$hubId = $this->exportExtras($metadataExtras, 'vanilla-hub-id');
+			if (isset($hubId)) {
+				$integrationUrl = "{{ path('data_bfc.ro_integration', { 'dataset-id': '$datasetId', 'vanillaHubId': '$hubId' }) }}";
+				$buttonIntegrateData = '
+					<a id="btn-integrate-data" href="' . $integrationUrl . '" target="_self">
+						<img alt="Intégrer les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
+						<span>Intégrer les données</span>
+					</a>';
+			}
 		}
 
 		return '
@@ -1941,6 +1953,7 @@ class VisualisationController extends ControllerBase {
 						' . $buttonEditMetadata . '
 						' . $buttonEditor . '
 						' . $buttonValidateData . '
+						' . $buttonIntegrateData . '
 					</div>
 				</details>
 				<div style="width: 100%;">
