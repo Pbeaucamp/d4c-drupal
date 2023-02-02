@@ -758,8 +758,6 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
-		Logger::logMessage("TRM - Call search " . $callUrl);
-
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
@@ -6755,6 +6753,7 @@ class Api
 		}
 
 		$extras = $dataset["extras"];
+
 		$foundFeat = false;
 		$foundCount = false;
 		$foundCV = false;
@@ -6817,7 +6816,6 @@ class Api
 		}
 
 		Logger::logMessage("Update package");
-
 		$callUrl = $this->urlCkan . "api/action/package_update";
 		$this->updateRequest($callUrl, $dataset, "POST");
 	}
@@ -8066,7 +8064,6 @@ class Api
 		Logger::logMessage("Create or update dataset by API");
 		// Taking too much time, we now load only admin users
 		// $users = \Drupal\user\Entity\User::loadMultiple();
-
 		$users = $this->getAdministrators();
 
 		$resourceManager = new ResourceManager;
@@ -8107,48 +8104,72 @@ class Api
 			}
 		}
 
-		Logger::logMessage("Extras: " . print_r($extras, true));
-
 		$tags = $resourceManager->defineTags(json_decode($tagsAsJson, true));
 
 		//We disable defining extras for now and use the one in the dataset
 		if ($extras == null) {
 			$extras = array();
 		}
-		if ($extras != null && count($extras) > 0) {
-			for ($index = 0; $index < count($extras); $index++) {
-				if ($extras[$index]['key'] == 'edition_security') {
-					$hasSecurity = true;
-				}
-			}
-		}
-
-		if ($hasSecurity == false) {
-			$extras[count($extras)]['key'] = 'edition_security';
-			$extras[(count($extras) - 1)]['value'] = json_encode($security);
-		}
-
-		// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
-		// 	null, null, null, null, null, 
-		// 	null, null, null, $security);
 
 		$generatedTaskId = uniqid();
 		try {
 			if (!$datasetId) {
+				if ($extras != null && count($extras) > 0) {
+					for ($index = 0; $index < count($extras); $index++) {
+						if ($extras[$index]['key'] == 'edition_security') {
+							$hasSecurity = true;
+							break;
+						}
+					}
+				}
+		
+				if ($hasSecurity == false) {
+					$extras[count($extras)]['key'] = 'edition_security';
+					$extras[(count($extras) - 1)]['value'] = json_encode($security);
+				}
+				
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
-			} else {
+			}
+			else {
 				$datasetToUpdate = $this->findDataset($datasetId);
 
 				$datasetName = $datasetToUpdate[name];
 
-				//Update extras
-				//TODO: We have to compare extras or we just replace ?
-				// $extras = $datasetToUpdate[extras];
-				// $extras = $resourceManager->defineExtras($extras, null, null, null, null, null, null,
-				// 	null, null, null, null, null, 
-				// 	null, null, null, $security);
+				$existingMetadata = $datasetToUpdate[extras];
 
-				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
+				$keyAlreadyAdd = array();
+
+				$updatedExtras = array();
+				foreach ($existingMetadata as $meta) {
+					$key = $meta['key'];
+					$value = $meta['value'];
+
+					$keyAlreadyAdd[] = $key;
+					$updatedExtras[count($updatedExtras)]['key'] = $key;
+
+					// Checking if value exist in extras
+					$extraValue = array_filter($extras, function ($f) use ($key) {
+						return $f["key"] == $key;
+					});
+
+					$value = isset($extraValue) && count($extraValue) > 0 ? array_values($extraValue)[0]["value"] : $value;
+					$updatedExtras[(count($updatedExtras) - 1)]['value'] = $value;
+				}
+
+				foreach ($extras as $meta) {
+					$key = $meta['key'];
+					$value = $meta['value'];
+
+					// Check if key not in $keyAlreadyAdd or continue
+					if (in_array($key, $keyAlreadyAdd)) {
+						continue;
+					}
+
+					$updatedExtras[count($updatedExtras)]['key'] = $key;
+					$updatedExtras[(count($updatedExtras) - 1)]['value'] = $value;
+				}
+
+				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $updatedExtras);
 			}
 
 			$result["result"] = $datasetId;
