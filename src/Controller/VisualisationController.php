@@ -320,6 +320,7 @@ class VisualisationController extends ControllerBase {
 							'<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
 								' . $tabs . '
 								' . $disqus . '
+								<span ng-if="loading"><d4c-spinner></d4c-spinner></span>
 							</div>
 						</div>
 					</main>
@@ -446,7 +447,7 @@ class VisualisationController extends ControllerBase {
 				}
 
 				if ($isAdmin || $isUserRO) {
-					$tabAdmin = $this->buildTabAdmin($hasDataBfc, $dataset, $name, $metadataExtras);
+					$tabAdmin = $this->buildTabAdmin($hasDataBfc, $dataset, $selectedResourceId, $metadataExtras);
 				}
 			}
 		}
@@ -1892,9 +1893,16 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAdmin($hasDataBfc, $dataset, $name, $metadataExtras) {
+	function buildTabAdmin($hasDataBfc, $dataset, $selectedResourceId, $metadataExtras) {
 		$datasetId = $dataset["metas"]["id"];
 		$datasetType = $this->exportExtras($metadataExtras, 'data4citizen-type');
+		//Getting current resourceId
+		if ($selectedResourceId == null) {
+			$resources = $dataset["metas"]["resources"];
+			if (sizeof($resources) > 0 ) {
+				$selectedResourceId = $this->getLastDataResource($resources);
+			}
+		}
 
 		$fields = $dataset["fields"];
 
@@ -1970,7 +1978,7 @@ class VisualisationController extends ControllerBase {
 	
 					if (isset($integration['validationSchemas']) && sizeof($integration['validationSchemas']) > 0) {
 						$buttonValidateData = '
-							<a id="btn-validate-data" ng-click="validateData(' . $contractId . ')">
+							<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\')">
 								<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
 								<span>Valider les données</span>
 							</a>';
