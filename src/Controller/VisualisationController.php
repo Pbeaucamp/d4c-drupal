@@ -495,7 +495,7 @@ class VisualisationController extends ControllerBase {
 		$dataValidation = $this->buildDataValidation($metadataExtras);
 
 		//SYNTHÈSE
-		$synthese = $this->buildSynthese($metadataExtras, $themes, $keywords);
+		$synthese = $this->buildSynthese($dataset, $metadataExtras, $themes, $keywords);
 
 		//CONTACTS
 		$contacts = $this->buildContacts($metadataExtras);
@@ -945,7 +945,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildSynthese($metadataExtras, $themes, $keywords) {
+	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
 		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
 		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
 		$isOpenData = $this->isOpenData($keywords);
@@ -953,6 +953,10 @@ class VisualisationController extends ControllerBase {
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
+		$dateDeposit = $this->exportExtras($metadataExtras, 'date_deposit');
+		$modificationDate = $dataset["metas"]['metadata_modified'];
+		$producer = $this->exportExtras($metadataExtras, 'producer');
+		$organization = $dataset["metas"]["organization"]["title"];
 
 		$synthese = '';
 		if (isset($recordsCount)) {
@@ -998,6 +1002,7 @@ class VisualisationController extends ControllerBase {
 			</div>
 		';
 
+		// Manage creation or deposit date
 		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
 		$displayDate = null;
 		$datasetDates = json_decode($datasetDates, true);
@@ -1010,12 +1015,25 @@ class VisualisationController extends ControllerBase {
 				$displayDate = $date['value'];
 			}
 		}
+
+		$displayDate = $displayDate == null ? $dateDeposit : $displayDate;
 		if ($displayDate != null) {
 			$synthese .= '
 				<div class="my-3">
-					<i class="fa fa-pencil"></i>
+					<i class="fa fa-calendar"></i>
 					<span class="ms-2" translate>Publié le </span>
 					<span>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</span>
+				</div>
+			';
+		}
+
+		// Manage modification date
+		if ($modificationDate != null && $modificationDate != '') {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-calendar-o"></i>
+					<span class="ms-2" translate>Modifié le </span>
+					<span>\{\{\'' . $modificationDate . '\' | formatMeta:\'date\' \}\}</span>
 				</div>
 			';
 		}
@@ -1025,6 +1043,24 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-globe"></i>
 					<span class="ms-2">Donnée géographique</span>
+				</div>
+			';
+		}
+
+		if (isset($producer) && $producer != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-building"></i>
+					<span class="ms-2">Contributeur : <b>' . $producer . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($organization) && $organization != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-building"></i>
+					<span class="ms-2">Propriétaire : <b>' . $organization . '</b></span>
 				</div>
 			';
 		}
@@ -1113,6 +1149,10 @@ class VisualisationController extends ControllerBase {
 
 	function buildDataValidation($metadataExtras) {
 		$dataValidation = $this->exportExtras($metadataExtras, 'data_validation');
+		if (!isset($dataValidation) || $dataValidation == '') {
+			return null;
+		}
+
 		$dataValidation = json_decode($dataValidation);
 
 		$dateValidation = $dataValidation->validationDate;

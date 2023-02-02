@@ -87,6 +87,16 @@ abstract class MetadataForm extends FormBase {
 				return $f["key"] == "date_deposit";
 			});
 			$dateDeposit = array_values($dateDeposit)[0]["value"];
+
+			$dataRgpd = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "data_rgpd";
+			});
+			$dataRgpd = array_values($dataRgpd)[0]["value"] == '1';
+
+			$dataValidation = array_filter($selectedDataset["extras"], function ($f) {
+				return $f["key"] == "data_validation";
+			});
+			$dataValidation = array_values($dataValidation)[0]["value"];
 		}
 
 		$licences = $api->getLicenses();
@@ -168,7 +178,7 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'date',
 			'#title' => $this->t('Date de versement'),
 			'#default_value' => isset($dateDeposit) ? $dateDeposit : date('Y-m-d'),
-			'#invisible' => true
+			'#access' => false,
 		];
 
 		// Add field organisation
@@ -217,6 +227,13 @@ abstract class MetadataForm extends FormBase {
 			'#title' => $this->t('Supprimer la vignette'),
 		);
 
+		// Add checkbox rgpd
+		$form['integration_option']['dataset_rgpd'] = [
+			'#type' => 'checkbox',
+			'#title' => $this->t('Contient des données RGPD'),
+			'#default_value' => $selectedDataset != null ? $dataRgpd : 0,
+		];
+
 		// Check if we need to include schemas
 		if ($includeSchemas && $hasDataBfc) {
 			$vanillaManager = new VanillaApiManager();
@@ -239,6 +256,14 @@ abstract class MetadataForm extends FormBase {
 			  '#options' => $schemasOptions,
 			  '#default_value' => $selectedSchemas,
 			];
+
+			if (isset($dataValidation) && $dataValidation != null) {
+				$form['integration_option']['dataset_data_validation'] = [
+					'#type' => 'textarea',
+					'#title' => $this->t('Données de contrôle'),
+					'#default_value' => $dataValidation,
+				];
+			}
 		}
 
 		// Check if we need to include scheduler
@@ -405,6 +430,14 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_vignette_deletion']);
 	}
 
+	public function getDatasetRgpd(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_rgpd']);
+	}
+
+	public function getDataValidation(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_data_validation']);
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -467,6 +500,8 @@ abstract class MetadataForm extends FormBase {
 		$contributor = $this->getDatasetContributor($form_state);
 		$dateDeposit = $this->getDatasetDepositDate($form_state);
 		$username = $this->getDatasetUsername($form_state);
+		$dataRgpd = $this->getDatasetRgpd($form_state);
+		$dataValidation = $this->getDataValidation($form_state);
 
 		// Not used for now
 		$mention_legales = "";
@@ -495,8 +530,9 @@ abstract class MetadataForm extends FormBase {
 
 				//Update extras
 				$extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, null, $dateDataset, 
-					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
+				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
+					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
+					$dateDeposit, $username, $datasetModel, $dataValidation);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -504,8 +540,9 @@ abstract class MetadataForm extends FormBase {
 			}
 			else {
 				// We build extras
-				$extras = $resourceManager->defineExtras(null, null, $datasetVignetteFile, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, null,  $dateDataset, 
-					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
+				$extras = $resourceManager->defineExtras(null, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, 
+					null,  $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
+					$dateDeposit, $username, $datasetModel, $dataValidation);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));

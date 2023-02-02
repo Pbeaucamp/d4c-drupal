@@ -1654,7 +1654,7 @@ class ResourceManager {
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
 			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null,
-			$dateDeposit = null, $uploader = null, $datasetModel = null) {
+			$dateDeposit = null, $uploader = null, $datasetModel = null, $dataValidation = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1685,6 +1685,7 @@ class ResourceManager {
 		$hasDateDeposit = false;
 		$hasUsername = false;
 		$hasDatasetModel = false;
+		$hasDataValidation = false;
 		
 		if ($extras != null && count($extras) > 0) {
 	
@@ -1849,6 +1850,11 @@ class ResourceManager {
 					$hasDatasetModel = true;
 					$extras[$index]['value'] = $datasetModel;
 				}
+
+				if ($extras[$index]['key'] == 'data_validation') {
+					$hasDataValidation = true;
+					$extras[$index]['value'] = $dataValidation;
+				}
 			}
 		}
 
@@ -1990,6 +1996,11 @@ class ResourceManager {
 		if ($hasDatasetModel == false && isset($datasetModel)) {
 			$extras[count($extras)]['key'] = 'dataset-model';
 			$extras[(count($extras) - 1)]['value'] = $datasetModel;
+		}
+
+		if ($hasDataValidation == false) {
+			$extras[count($extras)]['key'] = 'data_validation';
+			$extras[(count($extras) - 1)]['value'] = $dataValidation;
 		}
 
 		return $extras;
