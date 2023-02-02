@@ -5,13 +5,14 @@ namespace Drupal\ckan_admin\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
-use Drupal\file\Entity\File;
+
 
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\Schedule;
 use Drupal\ckan_admin\Utils\ResourceManager;
+use Drupal\ckan_admin\Utils\DatasetHelper;
 
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
@@ -70,33 +71,13 @@ abstract class MetadataForm extends FormBase {
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
 
-			// $extras = $selectedDataset['extras'];
-			// $mentionLegales = '';
-			// foreach ($extras as $value) {
-			// 	if ($value['key'] == 'mention_legales') {
-			// 		$mentionLegales = $value['value'];
-			// 	}
-			// }
-
-			$dateDataset = array_filter($selectedDataset["extras"], function ($f) {
-				return $f["key"] == "date_dataset";
-			});
-			$dateDataset = array_values($dateDataset)[0]["value"];
-
-			$dateDeposit = array_filter($selectedDataset["extras"], function ($f) {
-				return $f["key"] == "date_deposit";
-			});
-			$dateDeposit = array_values($dateDeposit)[0]["value"];
-
-			$dataRgpd = array_filter($selectedDataset["extras"], function ($f) {
-				return $f["key"] == "data_rgpd";
-			});
-			$dataRgpd = array_values($dataRgpd)[0]["value"] == '1';
-
-			$dataValidation = array_filter($selectedDataset["extras"], function ($f) {
-				return $f["key"] == "data_validation";
-			});
-			$dataValidation = array_values($dataValidation)[0]["value"];
+			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
+			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
+			$vignette = DatasetHelper::extractMetadata($selectedDataset["extras"], "img_backgr");
+			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
+			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
+			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
+			$selectedThemes = json_decode($selectedThemes, true);
 		}
 
 		$licences = $api->getLicenses();
@@ -111,6 +92,13 @@ abstract class MetadataForm extends FormBase {
 				$selectedLicence = $value['id'];
 			}
         }
+
+		
+		$themes = $api->getThemes(true, true);
+		$themesOptions = array();
+		foreach($themes as &$value){
+			$themesOptions[$value["title"]] = $value["label"];
+		}
 
 		// Add helper text for users
 		// $form['integration']['help'] = [
@@ -222,10 +210,12 @@ abstract class MetadataForm extends FormBase {
             '#size' => 22,
         );
 		
-		$form['integration_option']['dataset_vignette_deletion'] = array(
-			'#type' => 'checkbox',
-			'#title' => $this->t('Supprimer la vignette'),
-		);
+		if (isset($vignette) && $vignette != '') {
+			$form['integration_option']['dataset_vignette_deletion'] = array(
+				'#type' => 'checkbox',
+				'#title' => $this->t('Supprimer la vignette'),
+			);
+		}
 
 		// Add checkbox rgpd
 		$form['integration_option']['dataset_rgpd'] = [
@@ -265,6 +255,13 @@ abstract class MetadataForm extends FormBase {
 				];
 			}
 		}
+
+		$form['integration_option']['dataset_themes'] = [
+			'#type' => 'checkboxes',
+			'#title' => $this->t('Thèmes'),
+			'#options' => $themesOptions,
+			'#default_value' => isset($selectedThemes) ? $selectedThemes : array(),
+		];
 
 		// Check if we need to include scheduler
 		if ($includeScheduler && $hasDataBfc) {
@@ -438,6 +435,18 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_data_validation']);
 	}
 
+	public function getThemes(FormStateInterface $form_state) {
+		$themesOptions = $form_state->getValue(['integration_option','dataset_themes']);
+		
+		$themes = array();
+		foreach ($themesOptions as $key => $value) {
+			if (strcmp($key, $value) == 0) {
+				$themes[] = $key;
+			}
+		}
+		return json_encode($themes);
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -502,18 +511,12 @@ abstract class MetadataForm extends FormBase {
 		$username = $this->getDatasetUsername($form_state);
 		$dataRgpd = $this->getDatasetRgpd($form_state);
 		$dataValidation = $this->getDataValidation($form_state);
+		$themes = $this->getThemes($form_state);
 
 		// Not used for now
 		$mention_legales = "";
         // $mention_legales = $form_state->getValue('dataset_mention_legales');
-		$themes = "";
-		// if ($form_state->getValue('selected_themes') != NULL) {
-		// 	$selectedThemes = array_keys(array_filter($form_state->getValue('selected_themes')));
-		// 	$themes = json_encode($selectedThemes);
-		// }
 		$source = "";
-
-		// Manage vignette
 
 		$datasetVignette = $this->getDatasetVignette($form_state, $resourceManager);
 		$datasetVignetteDeletion = $this->getDatasetVignetteDeletion($form_state);
