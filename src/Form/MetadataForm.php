@@ -5,6 +5,7 @@ namespace Drupal\ckan_admin\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\file\Entity\File;
 
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\MetadataDefinition;
@@ -201,6 +202,21 @@ abstract class MetadataForm extends FormBase {
 			'#default_value' => 'UTF-8'
 		];
 
+		$form['integration_option']['dataset_vignette'] = array(
+            '#type' => 'managed_file',
+            '#title' => t("Vignette de la connaissance"),
+            '#upload_location' => 'public://datasets',
+            '#upload_validators' => array(
+                'file_validate_extensions' => array('jpeg png jpg svg gif WebP PNG JPG JPEG SVG GIF'),
+            ),
+            '#size' => 22,
+        );
+		
+		$form['integration_option']['dataset_vignette_deletion'] = array(
+			'#type' => 'checkbox',
+			'#title' => $this->t('Supprimer la vignette'),
+		);
+
 		// Check if we need to include schemas
 		if ($includeSchemas && $hasDataBfc) {
 			$vanillaManager = new VanillaApiManager();
@@ -380,6 +396,15 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_user']);
 	}
 
+	public function getDatasetVignette(FormStateInterface $form_state, ResourceManager $resourceManager) {
+		$datasetVignette = $form_state->getValue(['integration_option','dataset_vignette'], 0);
+		return $resourceManager->defineBackground($datasetVignette);
+	}
+
+	public function getDatasetVignetteDeletion(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','dataset_vignette_deletion']);
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -453,6 +478,11 @@ abstract class MetadataForm extends FormBase {
 		// }
 		$source = "";
 
+		// Manage vignette
+
+		$datasetVignette = $this->getDatasetVignette($form_state, $resourceManager);
+		$datasetVignetteDeletion = $this->getDatasetVignetteDeletion($form_state);
+
 		$tags = $resourceManager->defineTags($tags);
 		$security = $resourceManager->defineSecurity($userId, $users);
 
@@ -465,7 +495,7 @@ abstract class MetadataForm extends FormBase {
 
 				//Update extras
 				$extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras($extras, null, null, null, null, $themes, "", null, null, null, null, null, $dateDataset, 
+				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, null, $dateDataset, 
 					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
@@ -474,7 +504,7 @@ abstract class MetadataForm extends FormBase {
 			}
 			else {
 				// We build extras
-				$extras = $resourceManager->defineExtras(null, null, null, null, null, $themes, "", null, null, null, null, null,  $dateDataset, 
+				$extras = $resourceManager->defineExtras(null, null, $datasetVignetteFile, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, null,  $dateDataset, 
 					null, null, $security, $contributor, null, null, $mention_legales, null, null, null, $type, $entityId, $dateDeposit, $username, $datasetModel);
 
 				Logger::logMessage("Create dataset " . $datasetName);

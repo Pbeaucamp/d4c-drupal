@@ -149,31 +149,17 @@ class PackageManager {
 				$format = "zip";
 			}
 			$resourceName = $value["name"] . "." . $format;
-			$resourceUrl = $value["url"];
+			$url = $value["url"];
 
-			if ($value["url_type"] == "vignette") {
-				//TODO : Vignette
-				// $resourceName = "ressources/" . $value["name"] . "." . $value["format"];
-				// $resourcePath = $zipFolder . "/" . $resourceName;
+			$fileContents = file_get_contents($url);
+			$zip->addFromString($datasetId . "/resources/" . $resourceName, $fileContents);
 
-				// Logger::logMessage("Adding vignette to package '" . $resourcePath . "'");
-				// file_put_contents($resourcePath, file_get_contents($value["url"]));
-			}
-			else {
-				Logger::logMessage("Adding resource to package from '$resourceUrl'");
+			//Retrieve CSV dictionnary
+			if ($format == 'CSV') {
+				Logger::logMessage("Found dictionnary for resource '$resourceName'");
 
-				$url = $value["url"];
-
-				$fileContents = file_get_contents($url);
-				$zip->addFromString($datasetId . "/resources/" . $resourceName, $fileContents);
-
-				//Retrieve CSV dictionnary
-				if ($format == 'CSV') {
-					Logger::logMessage("Found dictionnary for resource '$resourceName'");
-
-					$result = $api->getAllFieldsForTableParam($value['id']);
-					$fields = $result["result"]["fields"];
-				}
+				$result = $api->getAllFieldsForTableParam($value['id']);
+				$fields = $result["result"]["fields"];
 			}
 		}
 
@@ -188,6 +174,17 @@ class PackageManager {
 		$dataset['dictionnary'] = $fieldsWithoutId;
 
 		$zip->addFromString($datasetId . "/metadata.json", json_encode($dataset));
+
+		// Checking if the dataset has a thumbnail
+		$vignette = array_filter($dataset["extras"], function ($f) {
+			return $f["key"] == "img_backgr";
+		});
+		$vignette = array_values($vignette)[0]["value"];
+		if (isset($vignette) && $vignette != "") {
+			$filename = basename($vignette);
+			$fileContents = file_get_contents($vignette);
+			$zip->addFromString($datasetId . "/" . $filename, $fileContents);
+		}
 	}
 
 	function endsWith( $haystack, $needle ) {

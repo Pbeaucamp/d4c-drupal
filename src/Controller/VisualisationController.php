@@ -809,7 +809,13 @@ class VisualisationController extends ControllerBase {
 		// $: image = getImage($storeMdjs);
 		
 		$image = $this->exportExtras($metadataExtras, 'graphic-preview-file');
-		return $image != null ? $image : '';
+		if ($image != null) {
+			return $image;
+		}
+		else {
+			$image = $this->exportExtras($metadataExtras, 'img_backgr');
+			return $image != null ? $image : '';
+		}
 	}
 
 	function buildWidget($metadataExtras) {

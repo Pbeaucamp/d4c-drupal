@@ -25,7 +25,7 @@ class ResourceManager {
 		$this->urlCkan = $this->config->ckan->url;
 		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';
 		$this->host = $this->config->client->host;
-		$this->port = isset($this->config->client->port) ? ':' . $this->config->client->port : '';
+		$this->port = isset($this->config->client->port) && $this->config->client->port != '' ? ':' . $this->config->client->port : '';
 	}
 
 	function getRoutingPrefix($includePreSlash) {
@@ -1541,7 +1541,7 @@ class ResourceManager {
 			$url_t = parse_url($file->createFileUrl(FALSE));
 			$url_pict = $url_t["path"];
 
-			return $url_pict;
+			return $this->protocol . $this->host . $this->port . $url_pict;
 		}
 		return null;
 	}
