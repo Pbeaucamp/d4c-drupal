@@ -8,6 +8,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\D4CMetadata;
 use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\Schedule;
@@ -53,6 +54,8 @@ abstract class MetadataForm extends FormBase {
 
 	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false) {
 		$config = include(__DIR__ . "/../../config.php");
+		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
+
 		$organization = $config->client->client_organisation;
 
 		$hasDataBfc = \Drupal::moduleHandler()->moduleExists('data_bfc');
@@ -78,10 +81,50 @@ abstract class MetadataForm extends FormBase {
 			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
 			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
 			$selectedThemes = json_decode($selectedThemes, true);
+
+			// Inspire
+			$frequence = DatasetHelper::extractMetadata($selectedDataset["extras"], "frequency-of-update");
+			$extentName = DatasetHelper::extractMetadata($selectedDataset["extras"], "extent-name");
+			$extentBegin = DatasetHelper::extractMetadata($selectedDataset["extras"], "extent-begin");
+			$extentEnd = DatasetHelper::extractMetadata($selectedDataset["extras"], "extent-end");
+
+			$responsibleOrganization = DatasetHelper::extractMetadata($selectedDataset["extras"], "responsible-organisation-1");
+			if (isset($responsibleOrganization)) {
+				$responsibleOrganization = json_decode($responsibleOrganization, true);
+				$organisationRole = $responsibleOrganization['organisation-role'];
+				$organisationName = $responsibleOrganization['organisation-name'];
+		
+				$contactEmail = $responsibleOrganization['contact-info']['email'];
+				$individualName = $responsibleOrganization['contact-info']['individual-name'];
+				$function = $responsibleOrganization['contact-info']['position-name'];
+				$phone = $responsibleOrganization['contact-info']['phone'];
+				$address = $responsibleOrganization['contact-info']['address'];
+				$postalCode = $responsibleOrganization['contact-info']['postal-code'];
+				$city = $responsibleOrganization['contact-info']['city'];
+				$country = $responsibleOrganization['contact-info']['country'];
+			}
+
+			$lineage = DatasetHelper::extractMetadata($selectedDataset["extras"], "lineage");
+
+			$accessConstraints = DatasetHelper::extractMetadata($selectedDataset["extras"], "access_constraints");
+			$mentionLegales = DatasetHelper::extractMetadata($selectedDataset["extras"], "mention_legales");
+			$useConstraints = DatasetHelper::extractMetadata($selectedDataset["extras"], "use-constraints-1");
+			$useConstraints = json_decode($useConstraints);
+
+			$extent = DatasetHelper::extractMetadata($selectedDataset["extras"], "extent");
+			$inspireTheme = DatasetHelper::extractMetadata($selectedDataset["extras"], "inspire-theme");
+			$useLimitation = DatasetHelper::extractMetadata($selectedDataset["extras"], "use-limitation");
+			
+			$equivalentScale = DatasetHelper::extractMetadata($selectedDataset["extras"], "equivalent-scale");
+			if ($equivalentScale != null) {
+				$equivalentScale = $this->cleanSimpleJson($equivalentScale);
+			}
+			$referenceSystem = DatasetHelper::extractMetadata($selectedDataset["extras"], "reference-system");
+			$spatialResolution = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-resolution-units");
+			$representationType = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-representation-type");
 		}
 
 		$licences = $api->getLicenses();
-		
 		
         $licenceOptions = array();
 		$selectedLicence = '';
@@ -92,7 +135,6 @@ abstract class MetadataForm extends FormBase {
 				$selectedLicence = $value['id'];
 			}
         }
-
 		
 		$themes = $api->getThemes(true, true);
 		$themesOptions = array();
@@ -348,19 +390,294 @@ abstract class MetadataForm extends FormBase {
 		}
 
 		// Add section for inspire metadata
-		$form['integration_option']['inspire_option'] = [
+		$form['inspire_option'] = [
 			'#type' => 'details',
 			'#title' => $this->t('METADONNEES INSPIRE'),
 			'#open' => false,
 			'#tree' => TRUE,
 		];
 
-		// Add markup to explain that the section is not implemented yet
-		$form['integration_option']['inspire_option']['inspire_not_implemented'] = [
-			'#markup' => '<p>La section "METADONNEES INSPIRE" est en cours de développement.</p>',
+		$form['inspire_option']['dataMaintenanceFrequency'] = [
+			'#type' => 'select',
+			'#title' => $this->t('Fréquence de mise à jour'),
+			'#options' => $this->getListValues($locale, "MD_MaintenanceFrequencyCode", true),
+			'#default_value' => isset($frequence) ? $frequence : '',
+		];
+		
+		// Emprise temporelle du jeu de données with description field and two date fields
+		$form['inspire_option']['temporal_extent_description'] = [
+			'#type' => 'textfield',
+			'#title' => $this->t('Emprise temporelle du jeu de données'),
+			'#default_value' => isset($extentName) ? $extentName : '',
 		];
 
+		$form['inspire_option']['temporal_extent_start'] = [
+			'#type' => 'date',
+			'#title' => $this->t('Début'),
+			'#date_format' => 'Y-m-d',
+			'#default_value' => isset($extentBegin) ? date('Y-m-d', strtotime($extentBegin)) : null,
+		];
+
+		$form['inspire_option']['temporal_extent_end'] = [
+			'#type' => 'date',
+			'#title' => $this->t('Fin'),
+			'#date_format' => 'Y-m-d',
+			'#default_value' => isset($extentEnd) ? date('Y-m-d', strtotime($extentEnd)) : null,
+		];
+
+		// Add form title
+		$form['inspire_option']['contact'] = [
+			'#type' => 'details',
+			'#title' => $this->t('Point de contact'),
+			'#open' => false,
+			'#tree' => FALSE,
+		];
+
+		// Add role field
+		$form['inspire_option']['contact']['role'] = [
+			'#type' => 'select',
+			'#name' => 'role',
+			'#title' => $this->t('Rôle'),
+			'#options' => $this->getListValues($locale, "CI_RoleCode", true),
+			'#default_value' => isset($organisationRole) ? $organisationRole : '',
+		];
+
+		// Add organisation name field
+		$form['inspire_option']['contact']['organisationName'] = [
+			'#type' => 'textfield',
+			'#name' => 'organisationName',
+			'#title' => $this->t('Organisme'),
+			'#default_value' => isset($organisationName) ? $organisationName : '',
+		];
+
+		// Add email field
+		$form['inspire_option']['contact']['email'] = [
+			'#type' => 'textfield',
+			'#name' => 'email',
+			'#title' => $this->t('Email'),
+			'#default_value' => isset($contactEmail) ? $contactEmail : '',
+		];
+
+		// Add individual name field
+		$form['inspire_option']['contact']['individualName'] = [
+			'#type' => 'textfield',
+			'#name' => 'individualName',
+			'#title' => $this->t('Nom et prénom'),
+			'#default_value' => isset($individualName) ? $individualName : '',
+		];
+
+		// Add position name field
+		$form['inspire_option']['contact']['positionName'] = [
+			'#type' => 'textfield',
+			'#name' => 'positionName',
+			'#title' => $this->t('Fonction'),
+			'#default_value' => isset($function) ? $function : '',
+		];
+
+		// Add phone voices field
+		$form['inspire_option']['contact']['phoneVoices'] = [
+			'#type' => 'textfield',
+			'#name' => 'phoneVoices',
+			'#title' => $this->t('Téléphone'),
+			'#default_value' => isset($phone) ? $phone : '',
+		];
+
+		// Add address field
+		$form['inspire_option']['contact']['address'] = [
+			'#type' => 'textfield',
+			'#name' => 'address',
+			'#title' => $this->t('Adresse'),
+			'#default_value' => isset($address) ? $address : '',
+		];
+
+		// Add postal code field
+		$form['inspire_option']['contact']['postalCode'] = [
+			'#type' => 'textfield',
+			'#name' => 'postalCode',
+			'#title' => $this->t('Code postal'),
+			'#default_value' => isset($postalCode) ? $postalCode : '',
+		];
+
+		// Add city field
+		$form['inspire_option']['contact']['city'] = [
+			'#type' => 'textfield',
+			'#name' => 'city',
+			'#title' => $this->t('Ville'),
+			'#default_value' => isset($city) ? $city : '',
+		];
+
+		// Add country text field
+		$form['inspire_option']['contact']['country'] = [
+			'#type' => 'textfield',
+			'#name' => 'country',
+			'#title' => $this->t('Pays'),
+			'#default_value' => isset($country) ? $country : '',
+		];
+
+		$form['inspire_option']['technicaldescription'] = array(
+			'#type' => 'details',
+			'#title' => $this->t('Description techniques'),
+			'#open' => false,
+			'#tree' => FALSE,
+		);
+
+		//Emprise du jeu de données - Nom : extentName (epci)
+		$form['inspire_option']['technicaldescription']['extentName'] = array(
+			'#type' => 'textfield',
+			'#name' => 'extentName',
+			'#title' => t('Nom'),
+			'#description' => t('Nom de l\'emprise du jeu de données (epci)'),
+			'#default_value' => isset($extent) ? $extent : '',
+		);
+
+		//Qualité des données : statement (CharacterString long)
+		$form['inspire_option']['technicaldescription']['statement'] = array(
+			'#type' => 'textarea',
+			'#name' => 'statement',
+			'#title' => t('Qualité des données'),
+			'#default_value' => isset($lineage) ? $lineage : '',
+		);
+
+		//Limites techniques d'usage : useLimitation (CharacterString)
+		$form['inspire_option']['technicaldescription']['use_limitation'] = array(
+			'#type' => 'textarea',
+			'#name' => 'use_limitation',
+			'#title' => t('Limites techniques d\'usage'),
+			'#default_value' => isset($useLimitation) ? $useLimitation : '',
+		);
+
+		// Checkbox for geographic data
+		$form['inspire_option']['technicaldescription']['geographic_data'] = array(
+			'#type' => 'checkbox',
+			'#name' => 'geographic_data',
+			'#title' => t('Données géographiques'),
+		);
+
+		//Theme inspire
+		$form['inspire_option']['technicaldescription']['theme_inspire'] = array(
+			'#type' => 'select',
+			'#name' => 'theme_inspire',
+			'#title' => t('Thème inspire'),
+			'#options' => $this->getListValues($locale, "MD_InspireTopicCategoryCode", true),
+			'#default_value' => isset($inspireTheme) ? $inspireTheme : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'invisible' => array(
+					':input[name="geographic_data"]' => array('checked' => FALSE),
+				),
+			),
+		);
+
+		//Type de données
+		$form['inspire_option']['technicaldescription']['data_type'] = array(
+			'#type' => 'select',
+			'#name' => 'data_type',
+			'#title' => t('Type de données'),
+			'#options' => $this->getListValues($locale, "MD_SpatialRepresentationTypeCode", true),
+			'#default_value' => isset($representationType) ? $representationType  : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Système de projection
+		$form['inspire_option']['technicaldescription']['projection'] = array(
+			'#type' => 'select',
+			'#name' => 'projection',
+			'#title' => t('Système de projection'),
+			'#options' => $this->getListValues($locale, "MD_ReferenceSystemCode", true),
+			'#default_value' => isset($referenceSystem) ? $referenceSystem : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Résolution spatiale
+		$form['inspire_option']['technicaldescription']['spatial_resolution'] = array(
+			'#type' => 'textfield',
+			'#name' => 'spatial_resolution',
+			'#title' => t('Résolution spatiale : Echelle optimale d\'utilisation'),
+			'#default_value' => isset($equivalentScale) ? $equivalentScale : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Résolution spatiale
+		$form['inspire_option']['technicaldescription']['spatial_resolution_distance'] = array(
+			'#type' => 'textfield',
+			'#name' => 'spatial_resolution_distance',
+			'#title' => t('Résolution (mètre/pixel)'),
+			'#default_value' => isset($spatialResolution) ? $spatialResolution : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Section Licence et droits d'usage :
+		$form['inspire_option']['licence'] = array(
+			'#type' => 'details',
+			'#title' => $this->t('Licence et droits d\'usage'),
+			'#open' => false,
+			'#tree' => FALSE,
+		);
+
+		$form['inspire_option']['licence']['data_legal_access_constraints'] = array(
+			'#type' => 'select',
+			'#name' => 'data_legal_access_constraints',
+			'#title' => t('Contraintes légales d\'accès'),
+			'#options' => $this->getListValues($locale, "MD_RestrictionCode", true),
+			'#default_value' => isset($accessConstraints) ? $accessConstraints : '',
+		);
+
+		$form['inspire_option']['licence']['data_legal_use_constraints'] = array(
+			'#type' => 'select',
+			'#name' => 'data_legal_use_constraints',
+			'#title' => t('Contraintes légales d\'usage'),
+			'#options' => $this->getListValues($locale, "MD_RestrictionCode", true),
+			'#default_value' => isset($useConstraints) ? $useConstraints : '',
+		);
+
+		$form['inspire_option']['licence']['data_legal_use_limitations'] = array(
+			'#type' => 'textfield',
+			'#name' => 'data_legal_use_limitations',
+			'#title' => t('Mentions et conditions légales d\'utilisation'),
+			'#default_value' => isset($mentionLegales) ? $mentionLegales : '',
+		);
+
 		return $form;
+	}
+
+	function cleanSimpleJson($value, $decodeHtml = false) {
+		$value = str_replace('{', '', $value);
+		$value = str_replace('}', '', $value);
+		$value = str_replace('"', '', $value);
+		return $value != '' ? $value : null;
+	}
+
+	private function getListValues($locale, $listId, $addEmptyValue) {
+		$frequencyCodes = $locale["codelists"][$listId];
+
+		$codes = [];
+		if ($addEmptyValue) {
+			$codes[""] = "";
+		}
+		foreach ($frequencyCodes as $code) {
+			$codes[$code["id"]] = $code["value"];
+		}
+		return $codes;
 	}
 
 	/**
@@ -447,6 +764,111 @@ abstract class MetadataForm extends FormBase {
 		return json_encode($themes);
 	}
 
+	public function getInspireMetadata(FormStateInterface $form_state) {
+		$inspireMetadata = array();
+
+		$frequence = $form_state->getValue(['inspire_option','dataMaintenanceFrequency']);
+
+		$extentName = $form_state->getValue(['inspire_option','temporal_extent_description']);
+		$extentBegin = $form_state->getValue(['inspire_option','temporal_extent_start']);
+		$extentEnd = $form_state->getValue(['inspire_option','temporal_extent_end']);
+
+		$organisationRole = $form_state->getValue(['role']);
+		$organisationName = $form_state->getValue(['organisationName']);
+		$contactEmail = $form_state->getValue(['email']);
+		$individualName = $form_state->getValue(['individualName']);
+		$function = $form_state->getValue(['positionName']);
+		$phone = $form_state->getValue(['phoneVoices']);
+		$address = $form_state->getValue(['address']);
+		$postalCode = $form_state->getValue(['postalCode']);
+		$city = $form_state->getValue(['city']);
+		$country = $form_state->getValue(['country']);
+
+		$extent = $form_state->getValue(['extentName']);
+		$lineage = $form_state->getValue(['statement']);
+		$useLimitation = $form_state->getValue(['use_limitation']);
+		
+		$inspireTheme = $form_state->getValue(['theme_inspire']);
+		$representationType = $form_state->getValue(['data_type']);
+		$referenceSystem = $form_state->getValue(['projection']);
+		$equivalentScale = $form_state->getValue(['spatial_resolution']);
+		$spatialResolution = $form_state->getValue(['spatial_resolution_distance']);
+
+		$accessConstraints = $form_state->getValue(['data_legal_access_constraints']);
+		$useConstraints = $form_state->getValue(['data_legal_use_constraints']);
+		$mentionLegales = $form_state->getValue(['data_legal_use_limitations']);
+
+		if (isset($frequence)) {
+			$inspireMetadata[] = new D4CMetadata("frequency-of-update", $frequence);
+		}
+
+		if (isset($extentName)) {
+			$inspireMetadata[] = new D4CMetadata("extent-name", $extentName);
+		}
+		if (isset($extentBegin)) {
+			$inspireMetadata[] = new D4CMetadata("extent-begin", $extentBegin);
+		}
+		if (isset($extentEnd)) {
+			$inspireMetadata[] = new D4CMetadata("extent-end", $extentEnd);
+		}
+		if (isset($organisationRole) || isset($organisationName) || isset($contactEmail) || isset($individualName) || isset($function) 
+				|| isset($phone) || isset($address) || isset($postalCode) || isset($city) || isset($country)) {
+			
+			$inspireMetadata[] = new D4CMetadata("responsible-organisation-1", json_encode(array(
+				"organisation-role" => isset($organisationRole) ? $organisationRole : "",
+				"organisation-name" => isset($organisationName) ? $organisationName : "",
+				"contact-info" => array(
+					"email" => isset($contactEmail) ? $contactEmail : "",
+					"individual-name" => isset($individualName) ? $individualName : "",
+					"position-name" => isset($function) ? $function : "",
+					"phone" => isset($phone) ? $phone : "",
+					"address" => isset($address) ? $address : "",
+					"postal-code" => isset($postalCode) ? $postalCode : "",
+					"city" => isset($city) ? $city : "",
+					"country" => isset($country) ? $country : ""
+				)
+			)));
+		}
+
+		if (isset($extent)) {
+			$inspireMetadata[] = new D4CMetadata("extent", $extent);
+		}
+		if (isset($lineage)) {
+			$inspireMetadata[] = new D4CMetadata("lineage", $lineage);
+		}
+		if (isset($useLimitation)) {
+			$inspireMetadata[] = new D4CMetadata("use-limitation", $useLimitation);
+		}
+
+		if (isset($inspireTheme)) {
+			$inspireMetadata[] = new D4CMetadata("inspire-theme", $inspireTheme);
+		}
+		if (isset($representationType)) {
+			$inspireMetadata[] = new D4CMetadata("spatial-representation-type", $representationType);
+		}
+		if (isset($referenceSystem)) {
+			$inspireMetadata[] = new D4CMetadata("reference-system", $referenceSystem);
+		}
+		if (isset($equivalentScale)) {
+			$inspireMetadata[] = new D4CMetadata("equivalent-scale", json_encode($equivalentScale));
+		}
+		if (isset($spatialResolution)) {
+			$inspireMetadata[] = new D4CMetadata("spatial-resolution-units", $spatialResolution);
+		}
+
+		if (isset($accessConstraints)) {
+			$inspireMetadata[] = new D4CMetadata("access_constraints", $accessConstraints);
+		}
+		if (isset($useConstraints)) {
+			$inspireMetadata[] = new D4CMetadata("use-constraints-1", json_encode($useConstraints));
+		}
+		if (isset($mentionLegales)) {
+			$inspireMetadata[] = new D4CMetadata("mention_legales", $mentionLegales);
+		}
+
+		return $inspireMetadata;
+	}
+
 	public function getMetadata(FormStateInterface $form_state) {
 		$description = $this->getDescription($form_state);
 		
@@ -513,9 +935,9 @@ abstract class MetadataForm extends FormBase {
 		$dataValidation = $this->getDataValidation($form_state);
 		$themes = $this->getThemes($form_state);
 
-		// Not used for now
+		$inspireMetadata = $this->getInspireMetadata($form_state);
+
 		$mention_legales = "";
-        // $mention_legales = $form_state->getValue('dataset_mention_legales');
 		$source = "";
 
 		$datasetVignette = $this->getDatasetVignette($form_state, $resourceManager);
@@ -535,7 +957,7 @@ abstract class MetadataForm extends FormBase {
 				$extras = $datasetToUpdate[extras];
 				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
 					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation);
+					$dateDeposit, $username, $datasetModel, $dataValidation, $inspireMetadata);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -545,7 +967,7 @@ abstract class MetadataForm extends FormBase {
 				// We build extras
 				$extras = $resourceManager->defineExtras(null, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, 
 					null,  $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation);
+					$dateDeposit, $username, $datasetModel, $dataValidation, $inspireMetadata);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));

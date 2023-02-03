@@ -2105,8 +2105,8 @@ class VisualisationController extends ControllerBase {
 
 	function translateValue($locales, $key) {
 		$translatedValue = current(array_filter($locales, function($elem) use($key){
-			return $elem['value'] == $key;
-		}))["text"];
+			return $elem['id'] == $key;
+		}))["value"];
 
 		return $translatedValue != null && $translatedValue != '' ? $translatedValue : $key;
 	}

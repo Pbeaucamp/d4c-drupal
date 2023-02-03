@@ -1654,7 +1654,7 @@ class ResourceManager {
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
 			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null,
-			$dateDeposit = null, $uploader = null, $datasetModel = null, $dataValidation = null) {
+			$dateDeposit = null, $uploader = null, $datasetModel = null, $dataValidation = null, $inspireMetadata = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1677,7 +1677,6 @@ class ResourceManager {
 		$hasFrequence = false;
 		$hasSource = false;
 		$hasDonneesSource = false;
-		$hasMentionLegales = false;
 		$hasDisplayVersionning = false;
 		$hasDataRgpd = false;
 		$hasData4citizenType = false;
@@ -1792,12 +1791,6 @@ class ResourceManager {
 					$hasDonneesSource = true;
 					$extras[$index]['value'] = $donnees_source;
 				}
-
-				// mention legales
-				if ($extras[$index]['key'] == 'mention_legales') {
-					$hasMentionLegales = true;
-					$extras[$index]['value'] = $mention_legales;
-				}
 	
 				if ($extras[$index]['key'] == 'disable_fields_empty') {
 					$hasDisableFieldsEmpty  = true;
@@ -1854,6 +1847,15 @@ class ResourceManager {
 				if ($extras[$index]['key'] == 'data_validation') {
 					$hasDataValidation = true;
 					$extras[$index]['value'] = $dataValidation;
+				}
+
+				if (isset($inspireMetadata)) {
+					foreach ($inspireMetadata as $meta) {
+						if ($extras[$index]['key'] == $meta->getKey()) {
+							$meta->setDefine(true);
+							$extras[$index]['value'] = $meta->getValue();
+						}
+					}
 				}
 			}
 		}
@@ -1943,11 +1945,6 @@ class ResourceManager {
 			$extras[(count($extras) - 1)]['value'] = $donnees_source;
 		}
 
-		if ($hasMentionLegales == false) {
-			$extras[count($extras)]['key'] = 'mention_legales';
-			$extras[(count($extras) - 1)]['value'] = $mention_legales;
-		}
-
 		if ($hasDisableFieldsEmpty  == false) {
 			$extras[count($extras)]['key'] = 'disable_fields_empty';
 			$extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
@@ -2001,6 +1998,15 @@ class ResourceManager {
 		if ($hasDataValidation == false) {
 			$extras[count($extras)]['key'] = 'data_validation';
 			$extras[(count($extras) - 1)]['value'] = $dataValidation;
+		}
+
+		if (isset($inspireMetadata)) {
+			foreach ($inspireMetadata as $meta) {
+				if (!$meta->isDefine()) {
+					$extras[count($extras)]['key'] = $meta->getKey();
+					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+				}
+			}
 		}
 
 		return $extras;
