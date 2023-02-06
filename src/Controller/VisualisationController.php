@@ -1964,7 +1964,7 @@ class VisualisationController extends ControllerBase {
 
 		$buttonEditMetadata = '
 			<a id="btn-edit-data" href="' . $editDatasetUrl . '" target="_self">
-				<img alt="Editer les métadonnées" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+				<img alt="Editer les métadonnées" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
 				<span>Editer les métadonnées</span>
 			</a>';
 
@@ -2019,7 +2019,7 @@ class VisualisationController extends ControllerBase {
 					if (isset($integration['validationSchemas']) && sizeof($integration['validationSchemas']) > 0) {
 						$buttonValidateData = '
 							<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\')">
-								<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
+								<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
 								<span>Valider les données</span>
 							</a>';
 					}
