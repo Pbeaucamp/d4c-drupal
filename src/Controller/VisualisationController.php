@@ -8,6 +8,7 @@ use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\Tools;
 use Drupal\data_bfc\Utils\UserManager;
 use Drupal\data_bfc\Utils\VanillaApiManager;
+use Drupal\ckan_admin\Utils\DatasetHelper;
 use \Parsedown;
 
 /**
@@ -517,7 +518,7 @@ class VisualisationController extends ControllerBase {
 		// $ratingPart = $this->buildRating($loggedIn, $datasetId);
 		$ratingPart = null;
 
-		$kpiPart = $this->buildKPI($loggedIn, $datasetId, $dataset, $selectedResourceId);
+		$kpiPart = $this->buildKPI($metadataExtras);
 
 		$rgpdPart = $this->buildRgpd($isRgpd, $rgpdNonConnected);
 
@@ -1356,66 +1357,105 @@ class VisualisationController extends ControllerBase {
 		return '<d4c-dataset-rating context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $datasetId . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-rating>';
 	}
 
-	function buildKPI($loggedIn, $datasetId, $dataset, $selectedResourceId) {
+	function buildKPI($metadataExtras) {
 		//We check if the module data_bfc exist and is enabled
 		$moduleHandler = \Drupal::service('module_handler');
 		if ($moduleHandler->moduleExists('data_bfc')) {
+			$apiManager = new Api();
 
-			$apiManager = new VanillaApiManager();
-			$kpiInfos = $apiManager->getKpis($datasetId);
+			$observatory = $this->config->client->client_organisation;
 
-			// If there is an error, we do not display the create indicator part
-			if ($kpiInfos['status'] == 'error') {
+			// We extract the kpi model from the dataset
+			$type = $this->exportExtras($metadataExtras, "data4citizen-type");
+			$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
+			$datasetModel = json_decode($datasetModel, true);
+
+			if ($type == 'kpi' && isset($datasetModel) && $datasetModel != '') {
+				$sourceLeftDataset = $datasetModel['datasetId'];
+				$leftDataset = $apiManager->getPackageShow2($sourceLeftDataset, "", true, false, null, true);
+				$leftOrganization = $leftDataset['metas']['organization']['name'];
+	  
+				$leftDatasetUrl = null;
+				if ($leftOrganization != $observatory) {
+				  // We need to get the organization url if it exist
+				  $organization = $apiManager->getOrganization("id=" . $leftOrganization);
+	  
+				  $organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
+				  if (isset($organizationUrl)) {
+					// Check if contains http
+					if (strpos($organizationUrl, 'http') === false) {
+					  $organizationUrl = "https://" . $organizationUrl;
+					}
+				  }
+				  else {
+					// We put the url of the master organization
+					$organizationUrl = "https://databfc.data4citizen.com";
+				  }
+	  
+				  $leftDatasetUrl = $organizationUrl . "/visualisation?id=" . $sourceLeftDataset;
+	
+				  $leftDatasetPart = '
+					<div class="col-sm-9 download-item">
+						<i class="fa fa-gauge-high inline download-img" fa-4x></i>
+						<span>Connaissance source</span>
+					</div>
+					<div class="col-sm-3">
+						<a href="' . $leftDatasetUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
+					</div>
+					';
+				}
+	  
+				$sourceRightDataset = $datasetModel['joinDatasetId'];
+				if (isset($sourceRightDataset)) {
+				  $rightDataset = $apiManager->getPackageShow2($sourceRightDataset, "", true, false, null, true);
+	  
+				  $rightOrganization = $rightDataset['metas']['organization']['name'];
+				  $rightDatasetUrl = null;
+				  if ($rightOrganization != $observatory) {
+					// We need to get the organization url if it exist
+					$organization = $apiManager->getOrganization("id=" . $rightOrganization);
+	  
+					$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
+					if (isset($organizationUrl)) {
+					  // Check if contains http
+					  if (strpos($organizationUrl, 'http') === false) {
+						$organizationUrl = "https://" . $organizationUrl;
+					  }
+					}
+					else {
+					  // We put the url of the master organization
+					  $organizationUrl = "https://databfc.data4citizen.com";
+					}
+	  
+					$rightDatasetUrl = $organizationUrl . "/visualisation?id=" . $sourceRightDataset;
+				  }
+	
+				  $rightDatasetPart = '
+					  <div class="col-sm-9 download-item">
+						  <i class="fa fa-gauge-high inline download-img" fa-4x></i>
+						  <span>Connaissance jointe</span>
+					  </div>
+					  <div class="col-sm-3">
+						  <a href="' . $rightDatasetUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
+					  </div>
+				  ';
+				}
+	
+				$kpiPart = '
+					<div>
+						' . $leftDatasetPart . '
+						' . $rightDatasetPart . '
+					</div>
+				';
+	
 				return '
 					<div>
-						<p>Il y a une erreur dans la récupération des indicateurs (' . $kpiInfos['message'] . ')
+						<div class="row">
+							' . $kpiPart . '
+						</div>
 					</div>
 				';
 			}
-
-			$kpis = $kpiInfos['result'];
-			
-			//Getting current resourceId
-			if ($selectedResourceId == null) {
-				$resources = $dataset["metas"]["resources"];
-				if (sizeof($resources) > 0 ) {
-					$selectedResourceId = $this->getLastDataResource($resources);
-				}
-			}
-
-			$selectedResource = $this->getDataResource($resources, $selectedResourceId);
-			if ($selectedResource == null || $selectedResource["datastore_active"] != true) {
-				return null;
-			}
-
-			$kpiPart = '';
-			if (isset($kpis)) {
-				foreach ($kpis as $kpi) {
-					$kpiPart .= '
-						<div>
-							<div class="col-sm-9 download-item">
-								<i class="fa fa-gauge-high inline download-img" fa-4x></i>
-								<div class="inline">
-									<div class="download-text">' . $kpi['nameService'] . '</div>
-								</div>
-							</div>
-							<div class="col-sm-3">
-								' .
-								// <a href="{{ path(\'data_bfc.ro_vanillahub_manage\', { \'vanillaHubId\': ' . $kpi['hubId'] . '}) }}" target="_self" class="use-ajax" data-dialog-type="modal" data-backdrop="static" ><button class="btn btn-primary">Gestion Vanilla Hub</button></a>
-								'<a href="{{ path(\'ckan_admin.visualisation\', { \'id\': \'' . $kpi['targetDatasetName'] . '\'}) }}" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
-							</div>
-						</div>
-					';
-				}
-			}
-
-			return '
-				<div>
-					<div class="row">
-						' . $kpiPart . '
-					</div>
-				</div>
-			';
 		}
 
 		return null;
