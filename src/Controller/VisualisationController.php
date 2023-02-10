@@ -53,7 +53,8 @@ class VisualisationController extends ControllerBase {
 		$id = $request->query->get('id');
 		$resourceId = $request->query->get('resource_id');
 		$location = $request->query->get('location');
-		return $this->myPage2($id, $tab, $resourceId, $location);
+		$visualizationId = $request->query->get('visualization_id');
+		return $this->myPage2($id, $tab, $resourceId, $location, $visualizationId);
 	}
 
 	/**
@@ -62,7 +63,7 @@ class VisualisationController extends ControllerBase {
 	 * @return array
 	 *   A simple renderable array.
 	 */
-	public function myPage2($id, $tab, $resourceId, $location = null) {
+	public function myPage2($id, $tab, $resourceId, $location = null, $visualizationId = null) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
 		$host = \Drupal::request()->getHost();
@@ -141,6 +142,11 @@ class VisualisationController extends ControllerBase {
 		
 		$availableResources = $dataset["metas"]["resources"];
 
+		// Loading visualization if exist
+		if (isset($visualizationId) && $visualizationId != "") {
+			$visualization = $api->getVisualization($visualizationId);
+		}
+
 		$exports = array();
 		$resourcesid = "";
 		//Last update date for the data (resources)
@@ -211,7 +217,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $visualization);
 		 
 		$element = array(
 			'example one' => [
@@ -224,7 +230,7 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location) {
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $visualization = null) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -272,7 +278,7 @@ class VisualisationController extends ControllerBase {
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected);
+		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected, $visualization);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -412,7 +418,7 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected) {
+	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected, $visualization = null) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 		$data4citizenType = $this->exportExtras($metadataExtras, 'data4citizen-type');
 
@@ -424,8 +430,8 @@ class VisualisationController extends ControllerBase {
 			}
 			else {
 				$tabTable = $this->buildTabTable($loggedIn);
-				$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location);
-				$tabAnalyze = $this->buildTabAnalyze($loggedIn);
+				$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location, $visualization);
+				$tabAnalyze = $this->buildTabAnalyze($loggedIn, $visualization);
 				$tabImage = $this->buildTabImage($loggedIn);
 				$tabCalendar = $this->buildTabCalendar($loggedIn);
 				$tabCustomView = $this->buildTabCustomView($loggedIn);
@@ -434,22 +440,22 @@ class VisualisationController extends ControllerBase {
 				$tabExport = $this->buildTabExport($dataset, $metadataExtras);
 				$tabAPI = $this->buildTabAPI($dataset);
 				$tabReuses = $this->buildTabReuses($loggedIn, $name);
+			}
 
-				$isAdmin = $api->isConnectedUserAdmin();
-				$isUserRO = false;
-				
-				//Checking if the module data_bfc exist and if the user is RO
-				$moduleHandler = \Drupal::service('module_handler');
-				$hasDataBfc = $moduleHandler->moduleExists('data_bfc');
+			$isAdmin = $api->isConnectedUserAdmin();
+			$isUserRO = false;
+			
+			//Checking if the module data_bfc exist and if the user is RO
+			$moduleHandler = \Drupal::service('module_handler');
+			$hasDataBfc = $moduleHandler->moduleExists('data_bfc');
 
-				if ($hasDataBfc) {
-					$userManager = new UserManager();
-					$isUserRO = $userManager->isConnectedUserRO();
-				}
+			if ($hasDataBfc) {
+				$userManager = new UserManager();
+				$isUserRO = $userManager->isConnectedUserRO();
+			}
 
-				if ($isAdmin || $isUserRO) {
-					$tabAdmin = $this->buildTabAdmin($hasDataBfc, $dataset, $selectedResourceId, $metadataExtras);
-				}
+			if ($isAdmin || $isUserRO) {
+				$tabAdmin = $this->buildTabAdmin($hasDataBfc, $dataset, $selectedResourceId, $metadataExtras);
 			}
 		}
 
@@ -1594,7 +1600,12 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabAnalyze($loggedIn) {
+	function buildTabAnalyze($loggedIn, $visualization = null) {
+		$visualizationId = null;
+		if (isset($visualization) && $visualization['type'] == 'analyze') {
+			$visualizationId = $visualization['id'];
+		}
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Analyze" icon="chart-bar" translate="title" slug="analyze" do-not-register="!ctx.dataset.hasFeature(\'analyze\')">
 				<d4c-analyze context="ctx" sync-to-url="true"></d4c-analyze>
@@ -1603,7 +1614,8 @@ class VisualisationController extends ControllerBase {
 					force-embed-dataset-card="false"
 					anonymous-access="true"
 					embed-type="analyze"
-					logged-in="' . $loggedIn . '"></d4c-embed-control>
+					logged-in="' . $loggedIn . '"
+					visualization-id="' . $visualizationId . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
@@ -1965,6 +1977,7 @@ class VisualisationController extends ControllerBase {
 
 		$buttonEditMetadata = '';
 		$buttonEditor = '';
+		$buttonEditorVisu = '';
 		$buttonValidateData = '';
 		$buttonIntegrateData = '';
 
@@ -2024,6 +2037,26 @@ class VisualisationController extends ControllerBase {
 		}
 		$tableHeader .= '</tr>';
 
+		// Part edit data visualization
+		if ($datasetType == 'visualization') {
+			$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');	
+	
+			$api = new Api;
+			$visualization = $api->getVisualization($entityId);
+
+			$shareUrl = $visualization["share_url"];
+			// Remove string /frame which can be anywhere from url
+			$shareUrl = str_replace("/frame", "", $shareUrl);
+			// Add visualisation ID at the end of url
+			$shareUrl = $shareUrl . "&visualization_id=" . $entityId;
+
+			$buttonEditorVisu = '
+				<a id="btn-edit-data-visu" href="' . $shareUrl . '" target="_self">
+					<img alt="Editer la visualisation" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+					<span>Editer la visualisation</span>
+				</a>';
+		}
+
 		// Part validate data
 		if ($hasDataBfc) {
 			$contractId = $this->exportExtras($metadataExtras, 'vanilla_contract');
@@ -2063,6 +2096,7 @@ class VisualisationController extends ControllerBase {
 					<div>
 						' . $buttonEditMetadata . '
 						' . $buttonEditor . '
+						' . $buttonEditorVisu . '
 						' . $buttonValidateData . '
 						' . $buttonIntegrateData . '
 					</div>
@@ -2190,7 +2224,6 @@ class VisualisationController extends ControllerBase {
 			$visualizationPart = '';
 			if (isset($visualization)) {
 				$iframeUrl = $visualization['share_url'];
-	
 				$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
 			}
 			else {

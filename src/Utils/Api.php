@@ -8840,14 +8840,23 @@ class Api
 			$iframe = $data->iframe;
 			$widget = $data->widget;
 			
-			$this->insertVisualization($datasetid, $userId, $type, $name, $shareUrl, $iframe, $widget);
+			$visualizationId = $this->insertVisualization($datasetid, $userId, $type, $name, $shareUrl, $iframe, $widget);
+
+			$visualization = array();
+			$visualization["visualizationId"] = $visualizationId;
 
 			$result = array();
 			$result["status"] = "success";
+			$result["result"] = $visualization;
 			echo json_encode($result);
 
 			break;
 		case 'PUT':
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+
+			$visualizationId = $data->visualizationId;
+
 			if ($visualizationId == "") {
 				$response = new Response();
 				$response->setStatusCode(500);
@@ -8856,11 +8865,11 @@ class Api
 				return $response;
 			}
 
-			$request_body = file_get_contents('php://input');
-			$data = json_decode($request_body);
-
+			$shareUrl = $data->shareUrl;
+			$iframe = $data->iframe;
+			$widget = $data->widget;
 			$publishDatasetId = $data->publish_dataset_id;
-			$this->updateVisualization($visualizationId, null, $publishDatasetId);
+			$this->updateVisualization($visualizationId, null, $publishDatasetId, '', $shareUrl, $iframe, $widget);
 
 			$response->setStatusCode(200);
 
@@ -8921,7 +8930,7 @@ class Api
 			$iframe,
 			$widget,
 		]);
-		$query->execute();
+		return $query->execute();
 	}
 
 	function updateVisualization($visualizationId, $itemId, $publishDatasetId = null, $name = null, $shareUrl = null, $iframe = null, $widget = null) {

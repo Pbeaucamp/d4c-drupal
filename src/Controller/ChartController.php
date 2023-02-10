@@ -39,6 +39,8 @@ class ChartController extends ControllerBase {
 	public function myPage(Request $request) {
 		$config = include(__DIR__ . "/../../config.php");
 
+		$visualizationId = $request->get('visualization_id');
+
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 	
 		$element = array(
@@ -59,7 +61,9 @@ class ChartController extends ControllerBase {
 								<d4c-embed-control embed-type="chartbuilder"
 												   widget-code="widgetCode.code"
 												   anonymous-access="true"
-												   logged-in="' . $loggedIn . '"></d4c-embed-control>
+												   logged-in="' . $loggedIn . '"
+												   visualization-id="' . $visualizationId . '"
+												   ></d4c-embed-control>
 							</div>
 							 <d4c-notification-handler></d4c-notification-handler>
 						</div>
