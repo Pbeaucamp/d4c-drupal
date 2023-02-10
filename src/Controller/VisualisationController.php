@@ -1169,11 +1169,28 @@ class VisualisationController extends ControllerBase {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-7">
-							<span><strong>Schema:</strong> RGPD</span><br/>
+							<span><strong>Données RGPD</strong></span><br/>
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
 							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
 							<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+						</div>
+					</div>
+				';
+			}
+			else if ($schemaValidation->schema == 'interop_schema') {
+				$details = '';
+				foreach ($schemaValidation->columnsWithNbOfErrors as $column => $nbOfErrors) {
+					$details .= '<span><strong>Nombre de lignes de la colonne ' . $column . ' correspondant:</strong> ' . ($schemaValidation->nbLinesCheck - $nbOfErrors) . ' sur ' . $schemaValidation->nbLinesCheck . '</span><br/>';
+				}
+
+				$schemaResult .= '
+					<div class="row schema-data-validation">
+						<div class="col-sm-7">
+							<span><strong>Données intéropérables</strong></span><br/>
+							<span><strong>Nombre de colonnes intéropérables:</strong> ' . count($schemaValidation->columnsWithError) . '</span><br/>
+							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
+							' . $details . '
 						</div>
 					</div>
 				';

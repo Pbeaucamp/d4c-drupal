@@ -78,6 +78,7 @@ abstract class MetadataForm extends FormBase {
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
 			$vignette = DatasetHelper::extractMetadata($selectedDataset["extras"], "img_backgr");
 			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
+			$dataInterop = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_interop") == '1';
 			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
 			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
 			$selectedThemes = json_decode($selectedThemes, true);
@@ -264,6 +265,13 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'checkbox',
 			'#title' => $this->t('Contient des données RGPD'),
 			'#default_value' => $selectedDataset != null ? $dataRgpd : 0,
+		];
+
+		// Add checkbox interop
+		$form['integration_option']['dataset_interop'] = [
+			'#type' => 'checkbox',
+			'#title' => $this->t('Contient des données intéropérables'),
+			'#default_value' => $selectedDataset != null ? $dataInterop : 0,
 		];
 
 		// Check if we need to include schemas
@@ -764,6 +772,16 @@ abstract class MetadataForm extends FormBase {
 		return json_encode($themes);
 	}
 
+	public function getGeneralMetadata(FormStateInterface $form_state) {
+		//WIP everything should be there
+
+		$dataInterop = $form_state->getValue(['integration_option','dataset_interop']);
+
+		$generalMetadata = array();
+		$generalMetadata[] = new D4CMetadata("data_interop", $dataInterop);
+		return $generalMetadata;
+	}
+
 	public function getInspireMetadata(FormStateInterface $form_state) {
 		$inspireMetadata = array();
 
@@ -935,6 +953,7 @@ abstract class MetadataForm extends FormBase {
 		$dataValidation = $this->getDataValidation($form_state);
 		$themes = $this->getThemes($form_state);
 
+		$generalMetadata = $this->getGeneralMetadata($form_state);
 		$inspireMetadata = $this->getInspireMetadata($form_state);
 
 		$mention_legales = "";
@@ -957,7 +976,7 @@ abstract class MetadataForm extends FormBase {
 				$extras = $datasetToUpdate[extras];
 				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
 					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation, $inspireMetadata);
+					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -967,7 +986,7 @@ abstract class MetadataForm extends FormBase {
 				// We build extras
 				$extras = $resourceManager->defineExtras(null, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, 
 					null,  $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation, $inspireMetadata);
+					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));

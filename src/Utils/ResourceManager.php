@@ -1654,7 +1654,7 @@ class ResourceManager {
 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer=null, $source=null, $donnees_source=null, 
 			$mention_legales=null, $frequence=null, $displayVersionning = null, $dataRgpd = null, $data4citizenType = null, $entityId = null,
-			$dateDeposit = null, $uploader = null, $datasetModel = null, $dataValidation = null, $inspireMetadata = null) {
+			$dateDeposit = null, $uploader = null, $datasetModel = null, $dataValidation = null, $generalMetadata = null, $inspireMetadata = null) {
 		if ($extras == null) {
 			$extras = array();
 		}
@@ -1849,6 +1849,15 @@ class ResourceManager {
 					$extras[$index]['value'] = $dataValidation;
 				}
 
+				if (isset($generalMetadata)) {
+					foreach ($generalMetadata as $meta) {
+						if ($extras[$index]['key'] == $meta->getKey()) {
+							$meta->setDefine(true);
+							$extras[$index]['value'] = $meta->getValue();
+						}
+					}
+				}
+
 				if (isset($inspireMetadata)) {
 					foreach ($inspireMetadata as $meta) {
 						if ($extras[$index]['key'] == $meta->getKey()) {
@@ -1998,6 +2007,15 @@ class ResourceManager {
 		if ($hasDataValidation == false) {
 			$extras[count($extras)]['key'] = 'data_validation';
 			$extras[(count($extras) - 1)]['value'] = $dataValidation;
+		}
+
+		if (isset($generalMetadata)) {
+			foreach ($generalMetadata as $meta) {
+				if (!$meta->isDefine()) {
+					$extras[count($extras)]['key'] = $meta->getKey();
+					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+				}
+			}
 		}
 
 		if (isset($inspireMetadata)) {
