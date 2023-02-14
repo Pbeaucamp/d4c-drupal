@@ -428,6 +428,9 @@ class VisualisationController extends ControllerBase {
 			if ($data4citizenType == 'visualization') {
 				$tabVisualization = $this->buildTabVisualization($api, $metadataExtras);
 			}
+			else if ($data4citizenType == 'tdb') {
+				$tabVisualization = $this->buildTabTDB($api, $metadataExtras);
+			}
 			else {
 				$tabTable = $this->buildTabTable($loggedIn);
 				$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location, $visualization);
@@ -2239,6 +2242,27 @@ class VisualisationController extends ControllerBase {
 		else {
 			return '';
 		}
+	}
+
+	/* Other types of dataset */
+	function buildTabTDB($api, $metadataExtras) {
+		$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
+		$datasetModel = json_decode($datasetModel, true);
+		$tdbUrl = $datasetModel['item'];
+
+		$visualizationPart = '';
+		if (isset($tdbUrl)) {
+			$visualizationPart = '<iframe src=' . $tdbUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+		}
+		else {
+			$visualizationPart = 'La visualisation n\'est pas disponible';
+		}
+
+		return '
+			<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
+				' . $visualizationPart . '
+			</d4c-pane>
+		';
 	}
 }
 
