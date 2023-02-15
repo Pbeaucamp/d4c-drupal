@@ -2360,9 +2360,63 @@ class ResourceManager {
         return array('0'=>$coll, '1'=>$idNewData);
     }
 
+	/**
+	 * Type can be "visibility", "extras"
+	 */
+	function updateDatasetMetadata($datasetId, $type, $key, $value) {
+		$result = array();
 
+		$api = new Api;
+		$dataset = $api->getPackageShow("id=" . $datasetId, true, true, true, true);
+		if ($dataset == null) {
+			// Meaning the dataset is not allowed for the user
+			$result["status"] = "error";
+			$result["result"] = "Dataset not found";
+		}
+		else {
+			$uniqId = -1;
+			$datasetToUpdate = $dataset["result"];
+			$datasetName = $datasetToUpdate["name"];
+			$title = $datasetToUpdate["title"];
+			$description = $datasetToUpdate["notes"];
+			$licence = $datasetToUpdate["license_id"];
+			$organization = $datasetToUpdate["organization"]["name"];
+			if ($type == "visibility") {
+				$isPrivate = $value;
+				$extras = $datasetToUpdate["extras"];
+			}
+			else if ($type == "extras") {
+				$extras = $datasetToUpdate["extras"];
+
+				$hasValue = false;
+				if ($extras != null && count($extras) > 0) {
+					for ($index = 0; $index < count($extras); $index++) {
+						if ($extras[$index]['key'] == $key) {
+							$hasValue = true;
+							$extras[$index]['value'] = $value;
+						}
+					}
+				}
+
+				if (!$hasValue) {
+					$extras[count($extras)]['key'] = $key;
+					$extras[(count($extras) - 1)]['value'] = $value;
+				}
+			}
+			$tags = $datasetToUpdate["tags"];
+
+			$this->updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, null);
+
+			$result["status"] = "success";
+		}
+
+		return $result;
+	}
 
 	function deleteDataset($datasetId) {
+		$currentUser = \Drupal::currentUser();
+		$this->updateDatasetMetadata($datasetId, "extras", "user-delete", $currentUser->getAccountName());
+
 		$callUrl = $this->urlCkan . "api/action/package_delete";
             
 		$delDataset = [

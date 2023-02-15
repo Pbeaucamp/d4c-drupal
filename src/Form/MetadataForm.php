@@ -56,6 +56,8 @@ abstract class MetadataForm extends FormBase {
 		$config = include(__DIR__ . "/../../config.php");
 		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
 
+		$datasetTitle = \Drupal::request()->query->get('dataset-title');
+
 		$organization = $config->client->client_organisation;
 
 		$hasDataBfc = \Drupal::moduleHandler()->moduleExists('data_bfc');
@@ -157,7 +159,7 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'textfield',
 			'#title' => $this->t('Nom de la connaissance'),
 			'#required' => TRUE,
-			'#default_value' => $selectedDataset != null ? $selectedDataset['title'] : '',
+			'#default_value' => $selectedDataset != null ? $selectedDataset['title'] : ($datasetTitle != null ? $datasetTitle : ''),
 		];
 		
 		$form['dataset_licence'] = array(
@@ -328,7 +330,6 @@ abstract class MetadataForm extends FormBase {
 			// Add checkbox to activate planifiction or not
 			$form['scheduler']['scheduler_active'] = [
 				'#type' => 'checkbox',
-				'#name' => 'scheduler_active',
 				'#title' => $this->t('Activer la planification'),
 				'#default_value' => isset($schedule) ? $schedule['on'] : true,
 			];
@@ -911,18 +912,14 @@ abstract class MetadataForm extends FormBase {
 
 	public function getSchedule(FormStateInterface $form_state) {
 		// Check if planification is active
-		$schedulerActive = $form_state->getValue('scheduler_active');
-		if ($schedulerActive == '0') {
-			return null;
-		}
-
+		$schedulerActive = $form_state->getValue(['scheduler', 'scheduler_active']);
 		$schedulerDate = $form_state->getValue(['scheduler','scheduler_date']);
 		$schedulerPeriod = $form_state->getValue(['scheduler','scheduler_period']);
 		$schedulerInterval = $form_state->getValue(['scheduler','scheduler_interval']);
 		$schedulerInterval = (int) $schedulerInterval;
 		$schedulerDateFin = $form_state->getValue(['scheduler','scheduler_date_end']);
 
-		return new Schedule($schedulerPeriod, $schedulerInterval, $schedulerDate, $schedulerDateFin);
+		return new Schedule($schedulerActive == 1, $schedulerPeriod, $schedulerInterval, $schedulerDate, $schedulerDateFin);
 	}
 
 	public function getDatasetName($form_state) {

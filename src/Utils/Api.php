@@ -5101,6 +5101,10 @@ class Api
 				$iframe = $data["embedCode"];
 				$widget = $data["widgetCode"];
 
+				// Build and add a visualisation link to the map
+				$visualizationId = $this->insertVisualization($name, $idUser, 'cartograph', $title, $shareUrl, $iframe, $widget);
+				$data["visualizationId"] = $visualizationId;
+
 				$data = json_encode($data);
 
 				$query = \Drupal::database()->insert($table);
@@ -5117,11 +5121,8 @@ class Api
 
 				$query->execute();
 
-				// Build and add a visualisation link to the map
-				$this->insertVisualization($name, $idUser, 'cartograph', $title, $shareUrl, $iframe, $widget);
-
 				$response->setStatusCode(200);
-				echo $data;
+				$response->setContent($data);
 				break;
 			case 'PUT': //save existing map, get idMap
 				if ($idmap == "") {
@@ -5155,14 +5156,30 @@ class Api
 				$data_array = array();
 				if ($idmap != '' && $idmap != null) { //echo json_encode($res);
 					$data_array = $res[0]->map_json;
-					echo $data_array;
-				} else {
+
+					Logger::logMessage("TRM - data_array: " . $data_array);
+					
+					$mapJson = json_decode($data_array, true);
+					$visualizationId = $mapJson['visualizationId'];
+					$visualization = $this->getVisualization($visualizationId);
+					$mapJson['publishDatasetId'] = $visualization['publish_dataset_id'];
+					
+					echo json_encode($mapJson);
+				}
+				else {
 					$data_array = array();
 					foreach ($res as $map) {
-						$data_array[] = json_decode($map->map_json, TRUE);
+						$mapJson = json_decode($map->map_json, true);
+						// Not needed for now
+						// $visualizationId = $mapJson['visualizationId'];
+						// $visualization = $this->getVisualization($visualizationId);
+						// $mapJson['publishDatasetId'] = $visualization['publish_dataset_id'];
+
+						$data_array[] = $mapJson;
 					}
 					echo json_encode($data_array);
 				}
+
 				break;
 			case 'DELETE':  //delete existing map, get idMap
 				if ($idmap == "") {
@@ -5172,12 +5189,22 @@ class Api
 
 					return $response;
 				}
+				
+				$res = $this->getMaps($idUser, $idmap);
+				$mapJson = $res[0]->map_json;
+				$mapJson = json_decode($mapJson, true);
+
+				$visualizationId = $mapJson['visualizationId'];
+				
 				$query = \Drupal::database()->delete($table);
 				$query->condition('map_name', $idmap);
 				$query->condition('map_id_user', $idUser);
 
 				$query->execute();
 
+				if (isset($visualizationId) && !empty($visualizationId)) {
+					$this->deleteVisualization($visualizationId);
+				}
 				break;
 		}
 
@@ -8063,7 +8090,7 @@ class Api
 		return $dataset[result];
 	}
 
-	public function updateDataset() {
+	public function updateDatasetVisibility() {
 		$current_user = \Drupal::currentUser();
 		if (!isset($current_user) || (!in_array("administrator", $current_user->getRoles()) && !in_array("ro", $current_user->getRoles()))) {
 			$result["status"] = "error";
@@ -8075,32 +8102,9 @@ class Api
 	
 			$datasetId = $data->dataset_id;
 			$private = $data->private;
-	
-			$result = array();
-	
-			$dataset = $this->getPackageShow("id=" . $datasetId, true, true, true, true);
-			if ($dataset == null) {
-				// Meaning the dataset is not allowed for the user
-				$result["status"] = "error";
-				$result["result"] = "Dataset not found";
-			}
-			else {
-				$uniqId = -1;
-				$datasetToUpdate = $dataset["result"];
-				$datasetName = $datasetToUpdate["name"];
-				$title = $datasetToUpdate["title"];
-				$description = $datasetToUpdate["notes"];
-				$licence = $datasetToUpdate["license_id"];
-				$organization = $datasetToUpdate["organization"]["name"];
-				$isPrivate = $private;
-				$tags = $datasetToUpdate["tags"];
-				$extras = $datasetToUpdate["extras"];
-	
-				$resourceManager = new ResourceManager();
-				$resourceManager->updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, null);
-	
-				$result["status"] = "success";
-			}
+
+			$resourceManager = new ResourceManager();
+			$result = $resourceManager->updateDatasetMetadata($datasetId, 'visibility', '', $private);
 		}
 
 		$response = new Response();
@@ -8991,17 +8995,8 @@ class Api
 				return $response;
 			}
 
-			$visualization = $this->getVisualization($visualizationId);
-			$publishDatasetId = $visualization['publish_dataset_id'];
+			$this->deleteVisualization($visualizationId);
 
-			$query = \Drupal::database()->delete($table);
-			$query->condition('id', $visualizationId);
-
-			if (isset($publishDatasetId)) {
-				$this->deleteDataset($publishDatasetId);
-			}
-
-			$query->execute();
 			echo json_encode(array("status" => "success"));
 			break;
 		}
@@ -9064,6 +9059,21 @@ class Api
 		else {
 			$query->condition('id', $visualizationId);
 		}
+		$query->execute();
+	}
+
+	function deleteVisualization($visualizationId) {
+		$visualization = $this->getVisualization($visualizationId);
+		$publishDatasetId = $visualization['publish_dataset_id'];
+
+		if (isset($publishDatasetId)) {
+			$this->deleteDataset($publishDatasetId);
+		}
+
+		$table = "d4c_dataset_visualization";
+
+		$query = \Drupal::database()->delete($table);
+		$query->condition('id', $visualizationId);
 		$query->execute();
 	}
 

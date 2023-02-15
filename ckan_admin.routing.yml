@@ -1006,7 +1006,7 @@ ckan_admin.api.datatable.manage:
 ckan_admin.api.dataset.manage:
   path: '/d4c/api/dataset/manage'
   defaults:
-    _controller: '\Drupal\ckan_admin\Utils\Api::updateDataset'
+    _controller: '\Drupal\ckan_admin\Utils\Api::updateDatasetVisibility'
     _title: ''
   requirements:
     _permission: 'access content'

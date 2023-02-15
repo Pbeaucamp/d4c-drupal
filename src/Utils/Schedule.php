@@ -8,6 +8,8 @@ class Schedule implements JsonSerializable {
 
 	private $workflowId;
 
+    private $isOn;
+
     /* Possible values: YEAR, MONTH, WEEK, DAY, HOUR, MINUTE */
 	private $period;
 	private $interval;
@@ -15,11 +17,16 @@ class Schedule implements JsonSerializable {
 	private $beginDate;
 	private $stopDate;
 
-    public function __construct($period, $interval, $beginDate, $stopDate = null) {
+    public function __construct($isOn, $period, $interval, $beginDate, $stopDate = null) {
+        $this->isOn = $isOn;
         $this->period = $period;
         $this->interval = $interval;
         $this->beginDate = $beginDate;
         $this->stopDate = $stopDate;
+    }
+
+    public function isOn() {
+        return $this->isOn;
     }
 
     public function getWorkflowId() {
@@ -48,6 +55,7 @@ class Schedule implements JsonSerializable {
     
     public function jsonSerialize() {
         $array = array();
+        $array['on'] = $this->isOn;
         $array['period'] = $this->period;
         $array['interval'] = $this->interval;
         // Format date in string as ISO 8601 format

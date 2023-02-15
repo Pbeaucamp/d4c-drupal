@@ -432,7 +432,7 @@ class VisualisationController extends ControllerBase {
 				$tabVisualization = $this->buildTabTDB($api, $metadataExtras);
 			}
 			else {
-				$tabTable = $this->buildTabTable($loggedIn);
+				$tabTable = $this->buildTabTable($loggedIn, $visualization);
 				$tabMap = $this->buildTabMap($loggedIn, $dataset, $metadataExtras, $location, $visualization);
 				$tabAnalyze = $this->buildTabAnalyze($loggedIn, $visualization);
 				$tabImage = $this->buildTabImage($loggedIn);
@@ -1178,6 +1178,11 @@ class VisualisationController extends ControllerBase {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-12">
+							<div class="my-3">
+								<i class="fa fa-calendar-check"></i>
+								<span class="ms-2" translate>Contrôlé le </span>
+								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
+							</div>
 							<span><strong>Données RGPD</strong></span><br/>
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
@@ -1196,6 +1201,11 @@ class VisualisationController extends ControllerBase {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-12">
+							<div class="my-3">
+								<i class="fa fa-calendar-check"></i>
+								<span class="ms-2" translate>Contrôlé le </span>
+								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
+							</div>
 							<span><strong>Données intéropérables</strong></span><br/>
 							<span><strong>Nombre de colonnes intéropérables:</strong> ' . count($schemaValidation->columnsWithError) . '</span><br/>
 							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
@@ -1208,6 +1218,11 @@ class VisualisationController extends ControllerBase {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-12">
+							<div class="my-3">
+								<i class="fa fa-calendar-check"></i>
+								<span class="ms-2" translate>Contrôlé le </span>
+								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
+							</div>
 							<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Nombre d\'erreurs:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
@@ -1221,11 +1236,6 @@ class VisualisationController extends ControllerBase {
 		
 		return '
 			<div class="row">
-				<div class="my-3">
-					<i class="fa fa-calendar-check"></i>
-					<span class="ms-2" translate>Contrôlé le </span>
-					<span>\{\{\'' . $dateValidation . '\' | formatMeta:\'date\' \}\}</span>
-				</div>
 				' . $schemaResult . '
 			</div>
 		';
@@ -1534,7 +1544,12 @@ class VisualisationController extends ControllerBase {
 
 	/* END METADATA */
 
-	function buildTabTable($loggedIn) {
+	function buildTabTable($loggedIn, $visualization = null) {
+		$visualizationId = null;
+		if (isset($visualization) && $visualization['type'] == 'table') {
+			$visualizationId = $visualization['id'];
+		}
+
 		return '
 			<d4c-pane title="Table" icon="table" translate="title" slug="table">
 				<d4c-table context="ctx" auto-resize="true" dataset-feedback="true"></d4c-table>
@@ -1543,12 +1558,13 @@ class VisualisationController extends ControllerBase {
 					force-embed-dataset-card="false"
 					anonymous-access="true"
 					embed-type="table"
-					logged-in="' . $loggedIn . '"></d4c-embed-control>
+					logged-in="' . $loggedIn . '"
+					visualization-id="' . $visualizationId . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
 
-	function buildTabMap($loggedIn, $dataset, $metadataExtras, $location) {
+	function buildTabMap($loggedIn, $dataset, $metadataExtras, $location, $visualization = null) {
 		$resources = $dataset["metas"]["resources"];
 
 		$customBounds = '';
@@ -1588,6 +1604,11 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
+		$visualizationId = null;
+		if (isset($visualization) && $visualization['type'] == 'map') {
+			$visualizationId = $visualization['id'];
+		}
+
 		return '
 			<d4c-pane pane-auto-unload="true" title="Map" icon="globe" translate="title" slug="map" do-not-register="!ctx.dataset.hasFeature(\'geo\') && !ctx.dataset.hasWMS()" class="d4c-dataset-visualization__tab-map">
 				<d4c-map context="ctx" location="' . $location . '" ' . $customBounds . ' sync-to-url="true" auto-resize="true"></d4c-map>
@@ -1598,7 +1619,8 @@ class VisualisationController extends ControllerBase {
 					force-embed-dataset-card="false"
 					anonymous-access="true"
 					embed-type="map"
-					logged-in="' . $loggedIn . '"></d4c-embed-control>
+					logged-in="' . $loggedIn . '"
+					visualization-id="' . $visualizationId . '"></d4c-embed-control>
 			</d4c-pane>
 		';
 	}
@@ -1968,6 +1990,7 @@ class VisualisationController extends ControllerBase {
 	function buildTabAdmin($hasDataBfc, $dataset, $selectedResourceId, $metadataExtras) {
 		$datasetId = $dataset["metas"]["id"];
 		$datasetType = $this->exportExtras($metadataExtras, 'data4citizen-type');
+		$datasetEntityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
 		//Getting current resourceId
 		if ($selectedResourceId == null) {
 			$resources = $dataset["metas"]["resources"];
@@ -1981,7 +2004,9 @@ class VisualisationController extends ControllerBase {
 		$buttonEditMetadata = '';
 		$buttonEditor = '';
 		$buttonEditorVisu = '';
-		$buttonValidateData = '';
+		$buttonValidateDataInterop = '';
+		$buttonValidateDataRGPD = '';
+		$buttonValidateDataSchemas = '';
 		$buttonIntegrateData = '';
 
 		// Part edit metadata
@@ -1991,7 +2016,12 @@ class VisualisationController extends ControllerBase {
 				$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_kpi_manage', { 'dataset-id': '$datasetId'}) }}";
 			}
 			else {
-				$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType'}) }}";
+				if (isset($datasetEntityId)) {
+					$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType', 'entity-id': '$datasetEntityId' }) }}";
+				}
+				else {
+					$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType'}) }}";
+				}
 			}
 		}
 
@@ -2044,20 +2074,28 @@ class VisualisationController extends ControllerBase {
 		if ($datasetType == 'visualization') {
 			$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');	
 	
-			$api = new Api;
-			$visualization = $api->getVisualization($entityId);
-
-			$shareUrl = $visualization["share_url"];
-			// Remove string /frame which can be anywhere from url
-			$shareUrl = str_replace("/frame", "", $shareUrl);
-			// Add visualisation ID at the end of url
-			$shareUrl = $shareUrl . "&visualization_id=" . $entityId;
-
-			$buttonEditorVisu = '
-				<a id="btn-edit-data-visu" href="' . $shareUrl . '" target="_self">
-					<img alt="Editer la visualisation" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-					<span>Editer la visualisation</span>
-				</a>';
+			if (isset($entityId) && $entityId != '') {
+				$api = new Api;
+				$visualization = $api->getVisualization($entityId);
+	
+				$shareUrl = $visualization["share_url"];
+				if ($visualization["type"] == "cartograph") {
+					$shareUrl = str_replace("/frame", "", $shareUrl);
+					$shareUrl = substr($shareUrl, -1) != "/" ? $shareUrl . "/edit" : $shareUrl . "edit";
+				}
+				else {
+					// Remove string /frame which can be anywhere from url
+					$shareUrl = str_replace("/frame", "", $shareUrl);
+					// Add visualisation ID at the end of url
+					$shareUrl = $shareUrl . "&visualization_id=" . $entityId;
+				}
+	
+				$buttonEditorVisu = '
+					<a id="btn-edit-data-visu" href="' . $shareUrl . '" target="_self">
+						<img alt="Editer la visualisation" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+						<span>Editer la visualisation</span>
+					</a>';
+			}
 		}
 
 		// Part validate data
@@ -2068,13 +2106,39 @@ class VisualisationController extends ControllerBase {
 				$vanillaManager = new VanillaApiManager();
 				try {
 					$integration = $vanillaManager->getIntegrationByContractId($contractId);
-	
-					if (isset($integration['validationSchemas']) && sizeof($integration['validationSchemas']) > 0) {
-						$buttonValidateData = '
-							<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\')">
-								<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
-								<span>Valider les données</span>
-							</a>';
+					$schemas = $integration['validationSchemas'];
+					if (isset($schemas ) && sizeof($schemas) > 0) {
+
+						$supSchemas = array();
+						foreach ($schemas as $schema) {
+							if ($schema == 'interop_schema') {
+								$buttonValidateDataInterop = '
+									<a id="btn-validate-data-interop" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\', \'' . $schema . '\')">
+										<img alt="Valider les données intéropérables" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
+										<span>Valider les données intéropérables</span>
+									</a>';
+							}
+							else if ($schema == 'rgpd_schema') {
+								$buttonValidateDataRGPD = '
+									<a id="btn-validate-data-rgpd" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\', \'' . $schema . '\')">
+										<img alt="Valider les données RGPD" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
+										<span>Valider les données RGPD</span>
+									</a>';
+							}
+							else {
+								$supSchemas[] = $schema;
+							}
+						}
+
+						if (sizeof($supSchemas) > 0) {
+							// Comma separated list of schemas
+							$schemas = implode(',', $supSchemas);
+							$buttonValidateDataSchemas = '
+								<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\', \'' . $schemas . '\')">
+									<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
+									<span>Valider les données</span>
+								</a>';
+						}
 					}
 				} catch (\Exception $e) {
 					Logger::logMessage("Error while getting integration by contract id: " . $e->getMessage());
@@ -2100,7 +2164,9 @@ class VisualisationController extends ControllerBase {
 						' . $buttonEditMetadata . '
 						' . $buttonEditor . '
 						' . $buttonEditorVisu . '
-						' . $buttonValidateData . '
+						' . $buttonValidateDataInterop . '
+						' . $buttonValidateDataRGPD . '
+						' . $buttonValidateDataSchemas . '
 						' . $buttonIntegrateData . '
 					</div>
 				</details>
@@ -2222,22 +2288,31 @@ class VisualisationController extends ControllerBase {
 		$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
 
 		if ($type == 'visualization') {
-			$visualization = $api->getVisualization($entityId);
-
-			$visualizationPart = '';
-			if (isset($visualization)) {
-				$iframeUrl = $visualization['share_url'];
-				$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+			if (!isset($entityId)) {
+				return '
+					<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
+						La visualisation n\'est pas disponible
+					</d4c-pane>
+				';
 			}
 			else {
-				$visualizationPart = 'La visualisation n\'est pas disponible';
-			}
+				$visualization = $api->getVisualization($entityId);
 	
-			return '
-				<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
-					' . $visualizationPart . '
-				</d4c-pane>
-			';
+				$visualizationPart = '';
+				if (isset($visualization)) {
+					$iframeUrl = $visualization['share_url'];
+					$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+				}
+				else {
+					$visualizationPart = 'La visualisation n\'est pas disponible';
+				}
+		
+				return '
+					<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
+						' . $visualizationPart . '
+					</d4c-pane>
+				';
+			}
 		}
 		else {
 			return '';

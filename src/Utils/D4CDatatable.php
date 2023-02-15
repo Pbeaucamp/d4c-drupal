@@ -17,12 +17,15 @@ use
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\ResourceManager;
 
 
 class D4CDatatable {
 
 	private $config;
 	protected $db;
+	protected $datasetId;
+	protected $resourceId;
 
 	public function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
@@ -57,16 +60,16 @@ class D4CDatatable {
 		$api = new Api;
 		$query_params = $api->proper_parse_str($params);
 
-		// $datasetId = $query_params['datasetId'];
-		$resourceId = $query_params['resource_id'];
+		$this->datasetId = $query_params['datasetId'];
+		$this->resourceId = $query_params['resource_id'];
 		$fields = urldecode($query_params['fields']);
 		// Split fields by comma
 		$fields = explode(",", $fields);
 
 		$api = new Api;
-		$fieldsDefinition = $api->getAllFields($resourceId);		
+		$fieldsDefinition = $api->getAllFields($this->resourceId);		
 
-		$tableName = $resourceId;
+		$tableName = $this->resourceId;
 		$columnKey = '_id';
 
 		// New array to store the fields
@@ -94,10 +97,33 @@ class D4CDatatable {
 		// Build our Editor instance and process the data coming from _POST
 		// Editor::inst($this->db, $tableName, $columnKey)
 		Editor::inst($this->db, $tableName, $columnKey)
-			->debug(true)
+			// ->debug(true)
 			->fields( $editorFields )
 			->process( $_POST )
+			// Not working for now
+			// ->on("postCreate", function ($editor, $id, &$values, &$row) {
+			// 	Logger::logMessage("TRM - Test create");
+			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+			// })
+			// ->on("postEdit", function ($editor, $id, &$values, &$row) {
+			// 	Logger::logMessage("TRM - Test edit");
+			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+			// })
+			// ->on("postRemove", function ($editor, $id, &$values) {
+			// 	Logger::logMessage("TRM - Test remove");
+			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+			// })
 			->json();
+		
+		// $currentUser = \Drupal::currentUser();
+		// $accountName = $currentUser->getAccountName();
+
+		// $modifyData = array();
+		// $modifyData['user-modify'] = $accountName;
+		// $modifyData['date-modify'] = date('Y-m-d H:i:s');
+
+		// $resourceManager = new ResourceManager();
+		// $resourceManager->updateDatasetMetadata($datasetId, 'extras', 'datatable-modification', $modifyData);
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
