@@ -985,6 +985,14 @@ ckan_admin.api:
   requirements:
     _permission: 'access content'
 
+ckan_admin.platformInformations:
+  path: '/d4c/api/platform/informations'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::getPlatformInformations'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
 # Part Datatable
 ckan_admin.api.datatable.manage:
   path: '/d4c/api/datatable/manage/{params}'
@@ -994,6 +1002,15 @@ ckan_admin.api.datatable.manage:
     _title: ''
   requirements:
     _permission: 'access content'
+    
+ckan_admin.api.dataset.manage:
+  path: '/d4c/api/dataset/manage'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::updateDataset'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  methods: [POST]
     
 # Part API
 ckan_admin.api.findDataset:

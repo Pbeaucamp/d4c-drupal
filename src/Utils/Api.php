@@ -129,6 +129,24 @@ class Api
 		return $this->config;
 	}
 
+	function getPlatformInformations() {
+		$currentUser = \Drupal::currentUser();
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+
+		$result = array();
+		$result['isUserConnected'] = $isConnected;
+		$result['isUserAdmin'] = in_array("administrator", $currentUser->getRoles());
+		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
+		$result['isDataBfc'] = true;
+
+		
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
 	/**
 	 * 
 	 * This method is specifically made for CR Reunion
@@ -766,6 +784,34 @@ class Api
 		$result = json_decode($result, true);
 
 		Logger::logMessage("Found " . count($result["result"]["results"]) . " datasets");
+
+		// Go through the results and add missing informations
+		foreach ($result["result"]["results"] as &$dataset) {
+			// Checking number of reuses for dataset
+			$reuses = $this->countReuses($dataset['name']);
+			$dataset['nb_reuses'] = $reuses;
+
+			// Checking if dataset is a visualization
+			$datasetType = DatasetHelper::extractMetadata($dataset['extras'], 'data4citizen-type');
+			if ($datasetType == "visualization") {
+				$entityId = DatasetHelper::extractMetadata($dataset['extras'], 'data4citizen-entity-id');
+
+				$api = new Api;
+				$visualization = $api->getVisualization($entityId);
+	
+				$type = $visualization["type"];
+				$shareUrl = $visualization["share_url"];
+				$widget = $visualization["widget"];
+				$widget = str_replace(array("'"), array("\'"), $widget);
+				$widget = str_replace(array("\""), array("&quot;"), $widget);
+
+				$dataset['visualization'] = [
+					"type" => $type,
+					"share_url" => $shareUrl,
+					"widget" => $widget
+				];
+			}
+		}
 
 		//Here we have the result from CKAN
 		//We need to filter those result according to the selected map area (if there is a selection)
@@ -7154,6 +7200,16 @@ class Api
 		return $response;
 	}
 
+	function countReuses($datasetId) {
+		$table = "d4c_reuses";
+		$query = \Drupal::database()->select($table, 'reuse');
+		$query->condition('reu_dataset_id', $datasetId);
+		$query->condition('reu_status', 1);
+		$query->addExpression('COUNT(reu_id)', 'count');
+		$res = $query->execute()->fetchAssoc();
+		return $res["count"];
+	}
+
 	function getReuses($orga = null, $dataset = null, $q = null, $status = null, $rows = null, $start = null)
 	{
 
@@ -8005,6 +8061,53 @@ class Api
 
 		$dataset = json_decode($dataset, true);
 		return $dataset[result];
+	}
+
+	public function updateDataset() {
+		$current_user = \Drupal::currentUser();
+		if (!isset($current_user) || (!in_array("administrator", $current_user->getRoles()) && !in_array("ro", $current_user->getRoles()))) {
+			$result["status"] = "error";
+			$result["result"] = "User is not allowed to update a dataset";
+		}
+		else {
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+	
+			$datasetId = $data->dataset_id;
+			$private = $data->private;
+	
+			$result = array();
+	
+			$dataset = $this->getPackageShow("id=" . $datasetId, true, true, true, true);
+			if ($dataset == null) {
+				// Meaning the dataset is not allowed for the user
+				$result["status"] = "error";
+				$result["result"] = "Dataset not found";
+			}
+			else {
+				$uniqId = -1;
+				$datasetToUpdate = $dataset["result"];
+				$datasetName = $datasetToUpdate["name"];
+				$title = $datasetToUpdate["title"];
+				$description = $datasetToUpdate["notes"];
+				$licence = $datasetToUpdate["license_id"];
+				$organization = $datasetToUpdate["organization"]["name"];
+				$isPrivate = $private;
+				$tags = $datasetToUpdate["tags"];
+				$extras = $datasetToUpdate["extras"];
+	
+				$resourceManager = new ResourceManager();
+				$resourceManager->updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, null);
+	
+				$result["status"] = "success";
+			}
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
 	}
 
 	public function callRemoveDataset()
@@ -9045,7 +9148,7 @@ class Api
 
 					if (!isset($publishDataset) || $publishDataset['state'] == 'deleted') {
 						Logger::logMessage("The dataset with ID '$publishDatasetId' does not exist anymore. We remove the link with the visualization.");
-						$this->updateVisualization($visualizationId, null);
+						$this->updateVisualization($visualizationId, null, '');
 					}
 					else {
 						$enregistrement->hasIntegration = true;

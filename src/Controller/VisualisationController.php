@@ -1177,7 +1177,7 @@ class VisualisationController extends ControllerBase {
 			if ($schemaValidation->schema == 'rgpd_schema') {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
-						<div class="col-sm-7">
+						<div class="col-sm-12">
 							<span><strong>Données RGPD</strong></span><br/>
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
@@ -1195,7 +1195,7 @@ class VisualisationController extends ControllerBase {
 
 				$schemaResult .= '
 					<div class="row schema-data-validation">
-						<div class="col-sm-7">
+						<div class="col-sm-12">
 							<span><strong>Données intéropérables</strong></span><br/>
 							<span><strong>Nombre de colonnes intéropérables:</strong> ' . count($schemaValidation->columnsWithError) . '</span><br/>
 							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
@@ -1207,7 +1207,7 @@ class VisualisationController extends ControllerBase {
 			else {
 				$schemaResult .= '
 					<div class="row schema-data-validation">
-						<div class="col-sm-7">
+						<div class="col-sm-12">
 							<span><strong>Schema:</strong> ' . $schemaValidation->schema . '</span><br/>
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Nombre d\'erreurs:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
