@@ -2301,7 +2301,7 @@ class VisualisationController extends ControllerBase {
 				$visualizationPart = '';
 				if (isset($visualization)) {
 					$iframeUrl = $visualization['share_url'];
-					$visualizationPart = '<iframe src=' . $iframeUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+					$visualizationPart = '<iframe src="' . $iframeUrl . '" frameborder="0" width="100%" height="600px"></iframe>';
 				}
 				else {
 					$visualizationPart = 'La visualisation n\'est pas disponible';
@@ -2327,7 +2327,8 @@ class VisualisationController extends ControllerBase {
 
 		$visualizationPart = '';
 		if (isset($tdbUrl)) {
-			$visualizationPart = '<iframe src=' . $tdbUrl . ' frameborder="0" width="100%" height="600px"></iframe>';
+			$tdbUrl = $tdbUrl . '?frame=true';
+			$visualizationPart = '<iframe src="' . $tdbUrl . '" frameborder="0" width="100%" height="600px"></iframe>';
 		}
 		else {
 			$visualizationPart = 'La visualisation n\'est pas disponible';

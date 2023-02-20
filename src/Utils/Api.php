@@ -8441,6 +8441,10 @@ class Api
 		}
 
 		$uploaddir = $this->config->client->drupal_root . '/sites/default/files/dataset/';
+		if (!file_exists($uploaddir)) {
+			mkdir($uploaddir, 0777, true);
+		}
+
 		$uploadfile = $uploaddir . $fileName;
 
 		$encodingUrl = str_replace(' ', '%20', $resourceUrl);
@@ -8543,15 +8547,16 @@ class Api
 		}
 
 		$uploaddir = $this->config->client->drupal_root . '/sites/default/files/dataset/';
+		if (!file_exists($uploaddir)) {
+			mkdir($uploaddir, 0777, true);
+		}
+		
 		$uploadfile = $uploaddir . basename($_FILES['upload_file']['name']);
-
-		Logger::logMessage("TRM - Move uploaded file from " . $_FILES['upload_file']['tmp_name'] . " to " . $uploadfile . "");
 
 		if (move_uploaded_file($_FILES['upload_file']['tmp_name'], $uploadfile)) {
 			Logger::logMessage("The file is valid and has been uploaded with success");
 			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
 		} else {
-			Logger::logMessage("Error while uploading file : " . $_FILES["upload_file"]["error"]);
 			Logger::logMessage("Potential attack by file upload.");
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Potential attack by file upload.';
