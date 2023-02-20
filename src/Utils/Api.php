@@ -8551,6 +8551,7 @@ class Api
 			Logger::logMessage("The file is valid and has been uploaded with success");
 			$url = 'https://' . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/' . basename($_FILES['upload_file']['name']);
 		} else {
+			Logger::logMessage("Error while uploading file : " . $_FILES["upload_file"]["error"]);
 			Logger::logMessage("Potential attack by file upload.");
 			$data_array["status"] = "error";
 			$data_array["message"] = 'Potential attack by file upload.';
