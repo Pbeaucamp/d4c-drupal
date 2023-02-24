@@ -6,6 +6,7 @@ class PropertiesHelper {
 
   // Create constants for the keys of the properties we want to use.
   const PACKAGE_DOWNLOAD_LIMIT = 'package_download_limit';
+  const CO_LINKED_SURVEYS = 'co_linked_surveys';
 
   private $properties;
 
@@ -19,6 +20,6 @@ class PropertiesHelper {
 
   public function setProperty($key, $value) {
     $this->properties[$key] = $value;
-    file_put_contents(__DIR__ . "/../../properties.json", json_encode($this->properties));
+    file_put_contents(__DIR__ . "/../../properties.json", json_encode($this->properties, JSON_PRETTY_PRINT));
   }
 }

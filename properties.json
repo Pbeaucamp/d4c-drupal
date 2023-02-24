@@ -1,1 +1,7 @@
-{"package_download_limit":"-1"}
+{
+    "package_download_limit": "-1",
+    "co_linked_surveys": [
+        "374658",
+        "735313"
+    ]
+}

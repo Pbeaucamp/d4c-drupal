@@ -82,8 +82,6 @@ class DatasetsBoardForm extends HelpFormBase {
 			}
 		}
 
-		Logger::logMessage("TRM - Filter query " . $filterQuery);
-
 		$query = 'include_private=true&rows=' . $num_per_page . '&start='  .$offset . $filterQuery;
         $result = $api->callPackageSearch_public_private($query, $current_user->id(), $orga, true);
 							   

@@ -993,6 +993,14 @@ ckan_admin.platformInformations:
   requirements:
     _permission: 'access content'
 
+ckan_admin.datasets.updateorg:
+ path: '/admin/config/data4citizen/datasets/updateOrganization'
+ defaults:
+   _title: 'Réassignation de connaissance'
+   _form: 'Drupal\ckan_admin\Form\DatasetsUpdateOrganizationForm'
+ requirements:
+   _permission: 'administer site configuration'
+
 # Part Datatable
 ckan_admin.api.datatable.manage:
   path: '/d4c/api/datatable/manage/{params}'

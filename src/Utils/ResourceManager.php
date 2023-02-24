@@ -109,10 +109,7 @@ class ResourceManager {
 
 			if ($currentOrganization != $organization) {
 				Logger::logMessage("Updating organization.");
-			
-				$callUrl = $this->urlCkan . "api/action/package_owner_org_update";
-				$result = $api->updateRequest($callUrl, ["id" => $datasetToUpdate[id], "organization_id" => $organization], "POST");
-				$result = json_decode($result);
+				$result = $this->changeDatasetOrganization($datasetToUpdate[id], $organization);
 				if ($result->success != true) {
 					$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
@@ -126,6 +123,13 @@ class ResourceManager {
 			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 		}
+	}
+
+	function changeDatasetOrganization($datasetId, $newOrganization) {
+		$api = new Api;
+		$callUrl = $this->urlCkan . "api/action/package_owner_org_update";
+		$result = $api->updateRequest($callUrl, ["id" => $datasetId, "organization_id" => $newOrganization], "POST");
+		return json_decode($result);
 	}
 
 	/** WIP - Not used for now - We do specific action for specific key */
