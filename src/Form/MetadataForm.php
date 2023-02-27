@@ -1006,7 +1006,14 @@ abstract class MetadataForm extends FormBase {
 			return $datasetId;
 		} catch (\Exception $e) {
 			Logger::logMessage($e->getMessage());
-			\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');
+
+			// If error contains "That URL is already in use"
+			if (strpos($e->getMessage(), "That URL is already in use") !== false) {
+				\Drupal::messenger()->addMessage("Le nom de la connaissance est déjà utilisé. Veuillez en choisir un autre.", 'error');
+			}
+			else {
+				\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création de la connaissance (" . t($e->getMessage()) . ").", 'error');
+			}
 		}
 
 		return null;

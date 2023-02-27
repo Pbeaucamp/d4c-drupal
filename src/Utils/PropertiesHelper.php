@@ -7,6 +7,7 @@ class PropertiesHelper {
   // Create constants for the keys of the properties we want to use.
   const PACKAGE_DOWNLOAD_LIMIT = 'package_download_limit';
   const CO_LINKED_SURVEYS = 'co_linked_surveys';
+  const MESSAGE_RGPD = 'message_rgpd';
 
   private $properties;
 

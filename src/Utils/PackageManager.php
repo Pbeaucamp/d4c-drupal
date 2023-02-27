@@ -60,6 +60,11 @@ class PackageManager {
 
 		$documentRoot = $_SERVER['DOCUMENT_ROOT'];
 
+		$zipFolder = $documentRoot . $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/';
+		if (!file_exists($zipFolder)) {
+			mkdir($zipFolder, 0777, true);
+		}
+
 		$prefix = date("YmdHis") . "_package";
 		$filename = $prefix . ".zip";
 		$zipPath = $this->config->client->routing_prefix . '/sites/default/files/dataset/packageDataset/' . $filename;
