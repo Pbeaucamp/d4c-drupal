@@ -340,13 +340,7 @@ abstract class MetadataForm extends FormBase {
 				'#title' => $this->t('Date de lancement'),
 				'#default_value' => isset($schedule) ? new DrupalDateTime(date('Y-m-d H:i:s', strtotime($schedule['beginDate']))) : DrupalDateTime::createFromTimestamp(time()),
 				'#date_format' => 'd/m/Y H:i:s',
-				// Not working for now https://www.drupal.org/project/drupal/issues/2419131#comment-13328255
-				// '#states' => array(
-				// 	// Hide the settings when the cancel notify checkbox is disabled.
-				// 	'disabled' => array(
-				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
-				// 	),
-				// ),
+				'#date_timezone' => 'Europe/Paris',
 			];
 
 			// Add a list box for the period (YEAR, MONTH, WEEK, DAY, HOUR)
@@ -361,12 +355,6 @@ abstract class MetadataForm extends FormBase {
 					'YEAR' => $this->t('Toutes les X années'),
 				],
 				'#default_value' => isset($schedule) ? $schedule['period'] : 'DAY',
-				// '#states' => array(
-				// 	// Hide the settings when the cancel notify checkbox is disabled.
-				// 	'disabled' => array(
-				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
-				// 	),
-				// ),
 			];
 			
 
@@ -375,12 +363,6 @@ abstract class MetadataForm extends FormBase {
 				'#type' => 'number',
 				'#title' => $this->t('Intervalle'),
 				'#default_value' => isset($schedule) ? $schedule['interval'] : 1,
-				// '#states' => array(
-				// 	// Hide the settings when the cancel notify checkbox is disabled.
-				// 	'disabled' => array(
-				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
-				// 	),
-				// ),
 			];
 
 			// Add date field and set default value to today
@@ -389,12 +371,6 @@ abstract class MetadataForm extends FormBase {
 				'#title' => $this->t('Date de fin de planification'),
 				'#date_format' => 'Y-m-d',
 				'#default_value' => isset($schedule) && isset($schedule['stopDate']) ? date('Y-m-d', strtotime($schedule['stopDate'])) : null,
-				// '#states' => array(
-				// 	// Hide the settings when the cancel notify checkbox is disabled.
-				// 	'disabled' => array(
-				// 		':input[name="scheduler_active"]' => array('checked' => FALSE),
-				// 	),
-				// ),
 			];
 		}
 
