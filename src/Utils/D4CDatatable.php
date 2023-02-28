@@ -23,6 +23,7 @@ use Drupal\ckan_admin\Utils\ResourceManager;
 class D4CDatatable {
 
 	private $config;
+	protected $sqlDetails;
 	protected $db;
 	protected $datasetId;
 	protected $resourceId;
@@ -36,7 +37,7 @@ class D4CDatatable {
 		$dbUser = $this->config->ckan->db_user;
 		$dbPass = $this->config->ckan->db_pass;
 
-		$sql_details = array(
+		$this->sqlDetails = array(
 			"type" => "Postgres", // Database type: "Mysql", "Postgres", "Sqlserver", "Sqlite" or "Oracle"
 			"user" => $dbUser,
 			"pass" => $dbPass,
@@ -48,15 +49,38 @@ class D4CDatatable {
 		);
 
 		Logger::logMessage("Init D4CDatatable with dbHost: " . $dbHost . " dbPort: " . $dbPort . " dbName: " . $dbName . " dbUser: " . $dbUser . " dbPass: " . $dbPass);
-		
-		//
-		// Database connection
-		//   Database connection is globally available
-		//
-		$this->db = new Database($sql_details);
+	}
+
+	function previewData($params) {
+		$api = new Api;
+		$query_params = $api->proper_parse_str($params);
+
+		$encodeSqlQuery = $query_params['query'];
+		$decodeSqlQuery = base64_decode($encodeSqlQuery);
+
+		Logger::logMessage("TRM - Query: " . $decodeSqlQuery);
+
+		try {
+			$databaseHelper = new DatabaseHelper();
+			$data = $databaseHelper->executeQuery('datastore', 'datastore', $decodeSqlQuery, 20);
+			$data = json_encode($data);
+		}  catch (\Exception $e) {
+			// Return http error code 500 with message
+			$response = new Response();
+			$response->setStatusCode(500);
+			$response->setContent($e->getMessage());
+			return $response;
+		}
+
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		$response->setContent($data);
+		return $response;
 	}
 	
 	function manageData($params) {
+		$this->db = new Database($this->sqlDetails);
+
 		$api = new Api;
 		$query_params = $api->proper_parse_str($params);
 
@@ -67,7 +91,7 @@ class D4CDatatable {
 		$fields = explode(",", $fields);
 
 		$api = new Api;
-		$fieldsDefinition = $api->getAllFields($this->resourceId);		
+		$fieldsDefinition = $api->getAllFields($this->resourceId);
 
 		$tableName = $this->resourceId;
 		$columnKey = '_id';

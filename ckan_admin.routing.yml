@@ -1010,6 +1010,15 @@ ckan_admin.api.datatable.manage:
     _title: ''
   requirements:
     _permission: 'access content'
+
+ckan_admin.api.datatable.preview:
+  path: '/d4c/api/datatable/preview/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\D4CDatatable::previewData'
+    params: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
     
 ckan_admin.api.dataset.manage:
   path: '/d4c/api/dataset/manage'
