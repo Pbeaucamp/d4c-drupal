@@ -139,7 +139,7 @@ class PackageManager {
 	}
 
 	private function addDatasetToPackage($zip, $dataset) {
-		$datasetId = $dataset["id"];
+		$datasetId = $dataset["name"];
 
 		Logger::logMessage("Packaging dataset with ID = '" . $datasetId . "'");
 
