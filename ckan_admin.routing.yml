@@ -1106,6 +1106,14 @@ ckan_admin.api.removeResource:
     _auth: [ 'basic_auth' ]
   requirements:
     _user_is_logged_in: 'TRUE'
+
+ckan_admin.api.autocomplete.datasets:
+  path: '/d4c/api/v1/autocomplete/datasets'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\AutocompleteController::handleAutocomplete'
+    _title: ''
+  requirements:
+    _permission: 'access content'
     
 ckan_admin.visualizations:
   path: '/d4c/api/v1/visualizations'
