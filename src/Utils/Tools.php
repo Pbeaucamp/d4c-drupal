@@ -100,7 +100,7 @@ class Tools {
         // Send email in php drupal
         $mailManager = \Drupal::service('plugin.manager.mail');
 
-        $email = 'sebastien.vigroux@bpm-conseil.com';
+        // $email = 'sebastien.vigroux@bpm-conseil.com';
 
         $params['subject'] = $subject;
         $params['body'] = [$content];
