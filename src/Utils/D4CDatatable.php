@@ -58,8 +58,6 @@ class D4CDatatable {
 		$encodeSqlQuery = $query_params['query'];
 		$decodeSqlQuery = base64_decode($encodeSqlQuery);
 
-		Logger::logMessage("TRM - Query: " . $decodeSqlQuery);
-
 		try {
 			$databaseHelper = new DatabaseHelper();
 			$data = $databaseHelper->executeQuery('datastore', 'datastore', $decodeSqlQuery, 20);
@@ -118,39 +116,58 @@ class D4CDatatable {
 		//TODO : Gestion des valeurs NULL et des types date !
 		//https://www.drupal8.ovh/en/tutoriels/353/get-table-column-names-drupal-8
 
-		// Build our Editor instance and process the data coming from _POST
+		$editor = Editor::inst($this->db, $tableName, $columnKey);
+		// $editor->debug(true);
+		$editor->fields($editorFields);
+		$editor->on('postEdit', function ($id, $data, $row) {
+			$this->addModificationMetadata($this->datasetId, 'edit');
+		});
+		$editor->on('postCreate', function ($id, $data, $row) {
+			$this->addModificationMetadata($this->datasetId, 'create');
+		});
+		$editor->on('postRemove', function ($id, $data, $row) {
+			$this->addModificationMetadata($this->datasetId, 'remove');
+		});
+		$editor->process($_POST)->json();
+
 		// Editor::inst($this->db, $tableName, $columnKey)
-		Editor::inst($this->db, $tableName, $columnKey)
-			// ->debug(true)
-			->fields( $editorFields )
-			->process( $_POST )
-			// Not working for now
-			// ->on("postCreate", function ($editor, $id, &$values, &$row) {
-			// 	Logger::logMessage("TRM - Test create");
-			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
-			// })
-			// ->on("postEdit", function ($editor, $id, &$values, &$row) {
-			// 	Logger::logMessage("TRM - Test edit");
-			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
-			// })
-			// ->on("postRemove", function ($editor, $id, &$values) {
-			// 	Logger::logMessage("TRM - Test remove");
-			// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
-			// })
-			->json();
-		
-		// $currentUser = \Drupal::currentUser();
-		// $accountName = $currentUser->getAccountName();
-
-		// $modifyData = array();
-		// $modifyData['user-modify'] = $accountName;
-		// $modifyData['date-modify'] = date('Y-m-d H:i:s');
-
-		// $resourceManager = new ResourceManager();
-		// $resourceManager->updateDatasetMetadata($datasetId, 'extras', 'datatable-modification', $modifyData);
+		// 	->fields( $editorFields )
+		// 	->process( $_POST )
+		// 	// Not working for now
+		// 	// ->on("postCreate", function ($editor, $id, &$values, &$row) {
+		// 	// 	Logger::logMessage("TRM - Test create");
+		// 	// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+		// 	// })
+		// 	// ->on("postEdit", function ($editor, $id, &$values, &$row) {
+		// 	// 	Logger::logMessage("TRM - Test edit");
+		// 	// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+		// 	// })
+		// 	// ->on("postRemove", function ($editor, $id, &$values) {
+		// 	// 	Logger::logMessage("TRM - Test remove");
+		// 	// 	Logger::logMessage("manageData with datasetId: " . $this->datasetId . " resourceId: " . $this->resourceId);
+		// 	// })
+		// 	->json();
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
+	}
+
+	function addModificationMetadata($datasetId, $type) {
+		Logger::logMessage("addModificationMetadata with datasetId: " . $datasetId . " type: " . $type);
+		
+		$currentUser = \Drupal::currentUser();
+		$accountName = $currentUser->getAccountName();
+
+		$modifyData = array();
+		$modifyData['type'] = $type;
+		$modifyData['user-modify'] = $accountName;
+		$modifyData['date-modify'] = date('Y-m-d H:i:s');
+
+		$data = array();
+		$data[] = $modifyData;
+
+		$resourceManager = new ResourceManager();
+		$resourceManager->updateDatasetMetadata($datasetId, 'extras', 'datatable-modification', json_encode($data), true);
 	}
 }

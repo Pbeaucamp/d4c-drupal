@@ -2367,7 +2367,7 @@ class ResourceManager {
 	/**
 	 * Type can be "visibility", "extras"
 	 */
-	function updateDatasetMetadata($datasetId, $type, $key, $value) {
+	function updateDatasetMetadata($datasetId, $type, $key, $value, $addToData = false) {
 		$result = array();
 
 		$api = new Api;
@@ -2397,7 +2397,18 @@ class ResourceManager {
 					for ($index = 0; $index < count($extras); $index++) {
 						if ($extras[$index]['key'] == $key) {
 							$hasValue = true;
-							$extras[$index]['value'] = $value;
+
+							if ($addToData) {
+								$extrasArray = json_decode($extras[$index]['value'], true);
+								if ($extrasArray == null) {
+									$extrasArray = array();
+								}
+								$extrasArray[] = json_decode($value, true)[0];
+								$extras[$index]['value'] = json_encode($extrasArray);
+							}
+							else {
+								$extras[$index]['value'] = $value;
+							}
 						}
 					}
 				}
