@@ -5,6 +5,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\data_bfc\Utils\VanillaApiManager;
 use ZipArchive;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
@@ -2432,6 +2433,9 @@ class ResourceManager {
 		$currentUser = \Drupal::currentUser();
 		$this->updateDatasetMetadata($datasetId, "extras", "user-delete", $currentUser->getAccountName());
 
+		$api = new Api;
+		$dataset = $api->getPackageShow("id=" . $datasetId, true, true, true, true);
+
 		$callUrl = $this->urlCkan . "api/action/package_delete";
             
 		$delDataset = [
@@ -2445,6 +2449,23 @@ class ResourceManager {
 		if ($response[success] == true) {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
+
+
+			// If databfc module is enabled, we delete the integration from Vanilla if exist
+			try {
+				$moduleHandler = \Drupal::service('module_handler');
+				$hasDataBfc = $moduleHandler->moduleExists('data_bfc');
+				if ($hasDataBfc) {
+					$contractId = DatasetHelper::extractMetadata($dataset["result"]["extras"], "vanilla_contract");
+					$hubId = DatasetHelper::extractMetadata($dataset["result"]["extras"], "vanilla-hub-id");
+
+					$vanillaManager = new VanillaApiManager();
+					$vanillaManager->removeIntegration($contractId, $hubId);
+				}
+			} catch (\Exception $e) {
+				Logger::logMessage("Impossible de supprimer l'intégration Vanilla (" . $e->getMessage() . ")");
+			}
+
 			return true;
 		}
 		else {
