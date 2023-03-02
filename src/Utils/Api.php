@@ -941,6 +941,11 @@ class Api
 			$query_params["sort"] = str_replace("title", "title_string", $query_params["sort"]);
 		}
 
+		// Removing backoffice from params if exists
+		if (isset($query_params["backoffice"])) {
+			unset($query_params["backoffice"]);
+		}
+
 		//Apply security
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 		//If the user is not connected we do not apply security

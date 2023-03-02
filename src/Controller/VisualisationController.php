@@ -1159,14 +1159,15 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildDataValidation($metadataExtras) {
+		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
+		// $isInterop = $this->exportExtras($metadataExtras, 'data_interop');
+
 		$dataValidation = $this->exportExtras($metadataExtras, 'data_validation');
 		if (!isset($dataValidation) || $dataValidation == '') {
 			return null;
 		}
 
 		$dataValidation = json_decode($dataValidation);
-
-		$dateValidation = $dataValidation->validationDate;
 
 		$schemaResult = '';
 		foreach ($dataValidation->schemaValidationResults as $schemaValidation) {
@@ -1175,6 +1176,11 @@ class VisualisationController extends ControllerBase {
 			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
 
 			if ($schemaValidation->schema == 'rgpd_schema') {
+				if (!$isRgpd) {
+					// Display RGPD validation only if data_rgpd is check in dataset metadata
+					continue;
+				}
+
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-12">
@@ -1198,6 +1204,8 @@ class VisualisationController extends ControllerBase {
 					$details .= '<span><strong>Nombre de lignes de la colonne ' . $column . ' correspondant:</strong> ' . ($schemaValidation->nbLinesCheck - $nbOfErrors) . ' sur ' . $schemaValidation->nbLinesCheck . '</span><br/>';
 				}
 
+				$nbColumnsWithError = count($schemaValidation->columnsWithError);
+
 				$schemaResult .= '
 					<div class="row schema-data-validation">
 						<div class="col-sm-12">
@@ -1207,8 +1215,8 @@ class VisualisationController extends ControllerBase {
 								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
 							</div>
 							<span><strong>Données intéropérables</strong></span><br/>
-							<span><strong>Nombre de colonnes intéropérables:</strong> ' . count($schemaValidation->columnsWithError) . '</span><br/>
-							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
+							<span><strong>Nombre de colonnes intéropérables:</strong> ' . $nbColumnsWithError . '</span><br/>
+							' . ($nbColumnsWithError > 0 ? '<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>' : '') . '
 							' . $details . '
 						</div>
 					</div>
@@ -1813,8 +1821,6 @@ class VisualisationController extends ControllerBase {
 		usort($formats, function($a, $b) {
 			return $a['displayValue'] <=> $b['displayValue'];
 		});
-
-		// Logger::logMessage("TRM - Available formats: " . json_encode($formats));
 
 		return $formats;
 	}
