@@ -648,14 +648,14 @@ class ResourceManager {
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_CLUSTER', 'SUCCESS', 'Les clusters ont été générés pour le fichier \'' . $fileName . '\'');
 
-			return $this->buildResponse($resourceId, 'CLUSTER', null, 'complete', null, null);
+			return $this->buildResponse($resourceId, 'CLUSTER', null, 'complete', null, null, 'CLUSTER');
 		}
 		else {
 			Logger::logMessage("Clusters created with error (" . json_encode($result) . ")");
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_CLUSTER', 'ERROR', "Impossible de générer les clusters pour le fichier \'' . $fileName . '\' (" . $result . ")");
 
-			return $this->buildResponse($resourceId, 'CLUSTER', null, 'error', null, $result);
+			return $this->buildResponse($resourceId, 'CLUSTER', null, 'error', null, $result, 'CLUSTER');
 		}
 	}
 
@@ -666,13 +666,14 @@ class ResourceManager {
 	 * $type -> CLUSTER, DATAPUSHER
 	 * $status -> complete, error, pending
 	 */
-	function buildResponse($resourceId, $type, $fileName, $status, $resourceUrl, $message) {
+	function buildResponse($resourceId, $type, $fileName, $status, $resourceUrl, $message, $format = null) {
 		$result = array();
 		$result[$resourceId]['type'] = $type;
 		$result[$resourceId]['filename'] = $fileName;
 		$result[$resourceId]['status'] = $status;
 		$result[$resourceId]['resourceUrl'] = $resourceUrl;
 		$result[$resourceId]['message'] = $message;
+		$result[$resourceId]['format'] = $format;
 		return $result;
 	}
 
@@ -1304,7 +1305,7 @@ class ResourceManager {
 			if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {
 				// We monitore the datapusher
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
-				$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
+				$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher, $type);
 
 				if ($datapusherResult[$resourceId]['status'] == 'error') {
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'ERROR', "Impossible d'ajouter les données du fichier \'' .  $fileName . '\' dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
@@ -1317,7 +1318,7 @@ class ResourceManager {
 				}
 			}
 			else {
-				return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null);
+				return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null, $type);
 			}
 
 			// We reupload the dictionnary
@@ -1364,7 +1365,7 @@ class ResourceManager {
 					// We monitore the datapusher
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
 					
-					$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
+					$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher, $type);
 
 					if ($datapusherResult[$resourceId]['status'] == 'error') {
 						$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'ERROR', "Impossible d'ajouter les données du fichier \'' .  $fileName . '\' dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
@@ -1377,7 +1378,7 @@ class ResourceManager {
 					}
 				}
 				else {
-					return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null);
+					return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null, $type);
 				}
 
 				return $datapusherResult;
@@ -1399,7 +1400,7 @@ class ResourceManager {
 	 *  > Success : We return the status 'success'
 	 * 
 	 */
-	function manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher) {
+	function manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $format = null) {
 		//place this before any script you want to calculate time
 		if ($startTime == null) {
 			$startTime = microtime(true);
@@ -1420,13 +1421,13 @@ class ResourceManager {
 	
 			if ($datapusherStatus->status == 'pending') {
 				sleep(5);
-				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher);
+				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $format);
 			}
 			else if ($datapusherStatus->status == 'error') {
 				if ($firstTime) {
 					Logger::logMessage("The datapusher had an error, we try to push the file again.");
 					$api->callDatapusher($resourceId);
-					return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, false, $pushToDataspusher);
+					return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, false, $pushToDataspusher, $format);
 				}
 				else {
 					Logger::logMessage("The datapusher had an error again (" . json_encode($datapusherStatus) . ").");
@@ -1435,11 +1436,11 @@ class ResourceManager {
 			}
 			else if ($datapusherStatus->status == 'complete') {
 				Logger::logMessage("The datapusher has inserted the file.");
-				return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null);
+				return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'complete', $resourceUrl, null, $format);
 			}
 			else if ($datapusherStatus->status == null) {
 				Logger::logMessage("An error occured during status's checking, we try to check the status again: " . json_encode($datapusherStatus));
-				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher);
+				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $format);
 			}
 			else {
 				throw new \Exception("Le datapusher a renvoyé un status inconnu '" . json_encode($datapusherStatus->status) . "', veuillez relancer l'insertion dans le datapusher.");
