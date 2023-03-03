@@ -868,22 +868,28 @@ class VisualisationController extends ControllerBase {
 
 	function buildLimitesUtilisation($metadataExtras) {
 		$useConstraintsPart = '';
+		$useLimitationsPart = '';
 
 		for ($i = 1; $i <= 5; $i++) {
 			$useConstraint = $this->exportExtras($metadataExtras, 'use-constraints-' . $i);
-
-			if ($useConstraint != null) {
+			if ($useConstraint != null && $useConstraint != '') {
 				$useConstraint = json_decode($useConstraint, true);
-				$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
+				if ($useConstraint != null && $useConstraint != '') {
+					$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
+				}
 			}
 		}
 
-		if ($this->isNullOrEmptyString($useConstraintsPart)) {
+		$useLimitation = $this->exportExtras($metadataExtras, 'use-limitation');
+		$useLimitationsPart = $useLimitation;
+
+		if ($this->isNullOrEmptyString($useConstraintsPart) && $this->isNullOrEmptyString($useLimitationsPart)) {
 			return null;
 		}
 
 		return '
 			<ul class="m-0">
+				' . $useLimitationsPart . '
 				' . $useConstraintsPart . '
 			</ul>
 		';

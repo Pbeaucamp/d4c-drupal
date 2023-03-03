@@ -2497,6 +2497,8 @@ class ResourceManager {
 		$str = str_replace("'", "_", $str);
 		$str = str_replace('’', "_", $str);
 		// $str = str_replace("-", "_", $str);
+		// Replace non-breaking space with an underscore
+		$str = str_replace(" ", "_", $str);
 		$str = str_replace(" ", "_", $str);
 		$str = str_replace(",", "", $str);
 		$str = str_replace("%", "", $str);
