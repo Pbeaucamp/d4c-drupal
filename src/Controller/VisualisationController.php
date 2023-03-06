@@ -66,6 +66,8 @@ class VisualisationController extends ControllerBase {
 	public function myPage2($id, $tab, $resourceId, $location = null, $visualizationId = null) {
 		\Drupal::service('page_cache_kill_switch')->trigger();
 
+		$referer = $this->buildBackToSearchUrl();
+
 		$host = \Drupal::request()->getHost();
 		$protocol = \Drupal::request()->getScheme()."://";
 		
@@ -95,7 +97,7 @@ class VisualisationController extends ControllerBase {
 							<div class="d4c-dataset-visualization__header">
 								<h1 class="d4c-dataset-visualization__dataset-title">
 									<div class="box_3">
-										<button class="d4c-button" ng-click="goBackToSearch()">
+										<button class="d4c-button" ng-click="goBackToSearch(\'' . $referer . '\')">
 											<i class="fa fa-angle-left" aria-hidden="true"></i>
 											RETOUR AUX RESULTATS DE RECHERCHE
 										</button>
@@ -217,7 +219,7 @@ class VisualisationController extends ControllerBase {
 		}
 		
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $visualization);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $visualization);
 		 
 		$element = array(
 			'example one' => [
@@ -230,7 +232,19 @@ class VisualisationController extends ControllerBase {
 		return $element;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $visualization = null) {
+	function buildBackToSearchUrl() {
+		$referer = \Drupal::request()->headers->get('referer');
+
+		$domain = $this->config->client->domain;
+		//Checking if referer is from a search in the portail
+		$referer = isset($referer) || str_contains($referer, $domain) ? $referer : $this->config->client->routing_prefix . "/portail";
+
+		Logger::logMessage("TRM - Referer : " . $referer . "");
+
+		return $referer;
+	}
+
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $visualization = null) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -267,7 +281,7 @@ class VisualisationController extends ControllerBase {
 		$ctx = str_replace(array("{", "}", '"'), array("\{", "\}", "&quot;"), json_encode($dataset));
 
 		$themes = $this->buildTheme($api, $metadataExtras);
-		$datasetTitle = $this->buildDatasetTitle($themes);
+		$datasetTitle = $this->buildDatasetTitle($referer, $themes);
 		// $imgTheme = $themes[0];
 		// $themes = $themes[1];
 		
@@ -706,11 +720,11 @@ class VisualisationController extends ControllerBase {
 		return $themes;
 	}
 
-	function buildDatasetTitle($themes) {
+	function buildDatasetTitle($referer, $themes) {
 		$themeImages = '<div class="box_3">';
 		$themeImages .= '	<d4c-social-buttons></d4c-social-buttons>';
 		
-		$themeImages .= '	<button class="d4c-button" ng-click="goBackToSearch()">';
+		$themeImages .= '	<button class="d4c-button" ng-click="goBackToSearch(\'' . $referer . '\')">';
 		$themeImages .= '		<i class="fa fa-angle-left" aria-hidden="true"></i>';
 		$themeImages .= '		RETOUR AUX RESULTATS DE RECHERCHE';
 		$themeImages .= '	</button>';
@@ -1166,7 +1180,7 @@ class VisualisationController extends ControllerBase {
 
 	function buildDataValidation($metadataExtras) {
 		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
-		// $isInterop = $this->exportExtras($metadataExtras, 'data_interop');
+		$isInterop = $this->exportExtras($metadataExtras, 'data_interop');
 
 		$dataValidation = $this->exportExtras($metadataExtras, 'data_validation');
 		if (!isset($dataValidation) || $dataValidation == '') {
@@ -1199,12 +1213,17 @@ class VisualisationController extends ControllerBase {
 							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
 							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
 							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
-							<span><strong>Types de données en erreur:</strong> ' . $rulesWithError . '</span>
+							<span><strong>Types de données :</strong> ' . $rulesWithError . '</span>
 						</div>
 					</div>
 				';
 			}
 			else if ($schemaValidation->schema == 'interop_schema') {
+				if (!$isInterop) {
+					// Display RGPD validation only if data_rgpd is check in dataset metadata
+					continue;
+				}
+
 				$details = '';
 				foreach ($schemaValidation->columnsWithNbOfErrors as $column => $nbOfErrors) {
 					$details .= '<span><strong>Nombre de lignes de la colonne ' . $column . ' correspondant:</strong> ' . ($schemaValidation->nbLinesCheck - $nbOfErrors) . ' sur ' . $schemaValidation->nbLinesCheck . '</span><br/>';
