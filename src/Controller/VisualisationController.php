@@ -541,7 +541,7 @@ class VisualisationController extends ControllerBase {
 		// $ratingPart = $this->buildRating($loggedIn, $datasetId);
 		$ratingPart = null;
 
-		$kpiPart = $this->buildKPI($metadataExtras);
+		$referencePart = $this->buildReferernce($metadataExtras);
 
 		$rgpdPart = $this->buildRgpd($isRgpd, $rgpdNonConnected);
 
@@ -559,7 +559,7 @@ class VisualisationController extends ControllerBase {
 						' . ($downloadsAndLinks != null ? $this->buildCard('Documents et ressources', $downloadsAndLinks) : '') . '
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
-						' . ($kpiPart != null ? $this->buildCard('Indicateurs', $kpiPart) : '') . '
+						' . ($referencePart != null ? $this->buildCard('Connaissances de référence', $referencePart) : '') . '
 						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
@@ -1426,108 +1426,86 @@ class VisualisationController extends ControllerBase {
 		return '<d4c-dataset-rating context="ctx" logged-in="' . $loggedIn . '" dataset-id="' . $datasetId . '" preset="ctx.dataset.is_subscribed"></d4c-dataset-rating>';
 	}
 
-	function buildKPI($metadataExtras) {
+	function buildReferernce($metadataExtras) {
 		//We check if the module data_bfc exist and is enabled
 		$moduleHandler = \Drupal::service('module_handler');
 		if ($moduleHandler->moduleExists('data_bfc')) {
-			$apiManager = new Api();
-
 			$observatory = $this->config->client->client_organisation;
 
 			// We extract the kpi model from the dataset
 			$type = $this->exportExtras($metadataExtras, "data4citizen-type");
 			$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
+			Logger::logMessage("TRM - Dataset model " . $datasetModel);
 			$datasetModel = json_decode($datasetModel, true);
 
 			if ($type == 'kpi' && isset($datasetModel) && $datasetModel != '') {
 				$sourceLeftDataset = $datasetModel['datasetId'];
-				$leftDataset = $apiManager->getPackageShow2($sourceLeftDataset, "", true, false, null, true);
-				$leftOrganization = $leftDataset['metas']['organization']['name'];
-	  
-				$leftDatasetUrl = null;
-				if ($leftOrganization != $observatory) {
-				  // We need to get the organization url if it exist
-				  $organization = $apiManager->getOrganization("id=" . $leftOrganization);
-	  
-				  $organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
-				  if (isset($organizationUrl)) {
-					// Check if contains http
-					if (strpos($organizationUrl, 'http') === false) {
-					  $organizationUrl = "https://" . $organizationUrl;
-					}
-				  }
-				  else {
-					// We put the url of the master organization
-					$organizationUrl = "https://databfc.data4citizen.com";
-				  }
-	  
-				  $leftDatasetUrl = $organizationUrl . "/visualisation?id=" . $sourceLeftDataset;
-	
-				  $leftDatasetPart = '
-					<div class="col-sm-9 download-item">
-						<i class="fa fa-gauge-high inline download-img" fa-4x></i>
-						<span>Connaissance source</span>
-					</div>
-					<div class="col-sm-3">
-						<a href="' . $leftDatasetUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
-					</div>
-					';
-				}
+				$leftDatasetPart = $this->buildDatasetReference('Connaissance source', $sourceLeftDataset, $observatory);
 	  
 				$sourceRightDataset = $datasetModel['joinDatasetId'];
-				if (isset($sourceRightDataset)) {
-				  $rightDataset = $apiManager->getPackageShow2($sourceRightDataset, "", true, false, null, true);
-	  
-				  $rightOrganization = $rightDataset['metas']['organization']['name'];
-				  $rightDatasetUrl = null;
-				  if ($rightOrganization != $observatory) {
-					// We need to get the organization url if it exist
-					$organization = $apiManager->getOrganization("id=" . $rightOrganization);
-	  
-					$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
-					if (isset($organizationUrl)) {
-					  // Check if contains http
-					  if (strpos($organizationUrl, 'http') === false) {
-						$organizationUrl = "https://" . $organizationUrl;
-					  }
-					}
-					else {
-					  // We put the url of the master organization
-					  $organizationUrl = "https://databfc.data4citizen.com";
-					}
-	  
-					$rightDatasetUrl = $organizationUrl . "/visualisation?id=" . $sourceRightDataset;
-				  }
+				$rightDatasetPart = $this->buildDatasetReference('Connaissance jointe', $sourceRightDataset, $observatory);
 	
-				  $rightDatasetPart = '
-					  <div class="col-sm-9 download-item">
-						  <i class="fa fa-gauge-high inline download-img" fa-4x></i>
-						  <span>Connaissance jointe</span>
-					  </div>
-					  <div class="col-sm-3">
-						  <a href="' . $rightDatasetUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
-					  </div>
-				  ';
-				}
-	
-				$kpiPart = '
+				$referencePart = '
 					<div>
 						' . $leftDatasetPart . '
 						' . $rightDatasetPart . '
 					</div>
 				';
-	
-				return '
-					<div>
-						<div class="row">
-							' . $kpiPart . '
-						</div>
-					</div>
-				';
+			}
+			else if ($type == 'visualization' && isset($datasetModel) && $datasetModel != '') {
+				$referenceDataset = $datasetModel['reference-dataset-id'];
+				$referencePart = $this->buildDatasetReference('Connaissance source', $referenceDataset, $observatory);
 			}
 		}
 
+		if (isset($referencePart) && $referencePart != '') {
+			return '
+				<div>
+					<div class="row">
+						' . $referencePart . '
+					</div>
+				</div>
+			';
+		}
 		return null;
+	}
+
+	function buildDatasetReference($label, $datasetId, $observatory) {
+		if (!isset($datasetId) || $datasetId == '') {
+			return '';
+		}
+
+		$apiManager = new Api();
+
+		$dataset = $apiManager->getPackageShow2($datasetId, "", true, false, null, true);
+		$organization = $dataset['metas']['organization']['name'];
+
+		if ($organization != $observatory) {
+			// We need to get the organization url if it exist
+			$organization = $apiManager->getOrganization("id=" . $organization);
+			$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
+			if (isset($organizationUrl)) {
+				// Check if contains http
+				if (strpos($organizationUrl, 'http') === false) {
+					$organizationUrl = "https://" . $organizationUrl;
+				}
+			}
+			else {
+				// We put the url of the master organization
+				$organizationUrl = "https://databfc.data4citizen.com";
+			}
+		}
+
+		$datasetUrl = $organizationUrl . "/visualisation?id=" . $datasetId;
+		return '
+			<div class="col-sm-9 download-item">
+				<i class="fa fa-gauge-high inline download-img" fa-4x></i>
+				<span>' . $label . '</span>
+			</div>
+			<div class="col-sm-3">
+				<a href="' . $datasetUrl . '" target="_blank"><i class="fa fa-arrow-up-right-from-square" title="Ouvir la connaissance"></i></a>
+			</div>
+		 ';
 	}
 
 	function getLastDataResource($resources) {
