@@ -78,6 +78,7 @@ abstract class MetadataForm extends FormBase {
 
 			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
+			$encoding = DatasetHelper::extractMetadata($selectedDataset["extras"], "encoding");
 			$vignette = DatasetHelper::extractMetadata($selectedDataset["extras"], "img_backgr");
 			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
 			$dataInterop = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_interop") == '1';
@@ -242,7 +243,8 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_encoding'] = [
 			'#type' => 'textfield',
 			'#title' => $this->t('Encodage'),
-			'#default_value' => 'UTF-8'
+			'#default_value' => isset($encoding) ? $encoding : 'UTF-8',
+			'#disabled' => true,
 		];
 
 		$form['integration_option']['dataset_vignette'] = array(

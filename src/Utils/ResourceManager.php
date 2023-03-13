@@ -226,16 +226,25 @@ class ResourceManager {
 			$filesize = filesize(self::ROOT . $filePath);
 		} catch (\Exception $e) {
 			$filesize = 0;
-			error_log('Unable to get file size for ' . self::ROOT . $filePath);
+			Logger::logMessage("Impossible de récupérer la taille du fichier pour " . self::ROOT . $filePath . "(" . $e->getMessage() . ")");
 		}
 
 		try {
 			$type = $this->extractFormat($filePath);
+			Logger::logMessage("Found format " . $type);
 		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer le format du fichier (" . $e->getMessage() . ")");
 		}
-		
-		Logger::logMessage("Found format " . $type);
+
+		try {
+			$encoding = $this->extractEncoding(self::ROOT . $filePath);
+			Logger::logMessage("Found encoding " . $encoding);
+
+			// We need to update the dataset metadata
+			$this->updateDatasetMetadata($datasetId, 'extras', 'encoding', $encoding, false);
+		} catch (\Exception $e) {
+			Logger::logMessage("Impossible de récupérer l'encodage du fichier (" . $e->getMessage() . ")");
+		}
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
@@ -251,7 +260,8 @@ class ResourceManager {
 				//Cleaning column name to insert in CKAN and D4C
 				if (($handle = fopen($csvFile, "r")) !== FALSE) {
 
-					$tmpFile = '/tmp/test.csv';
+					// Create a random name for the temporary file
+					$tmpFile = tempnam(sys_get_temp_dir(), 'csv');
 					$fp = fopen($tmpFile, 'w');
 
 					$firstRow = true;
@@ -538,6 +548,24 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	function extractEncoding($filePath) {
+		Logger::logMessage("Testing encoding for file '" . $filePath . "'");
+
+		$encodings = "UTF-8,ISO-8859-1,ISO-8859-15,CP1252,UTF-16,UTF-16LE,UTF-16BE";
+
+		$handle = fopen($filePath, "r");
+		$contents = fread($handle, 1000);
+		fclose($handle);
+
+		$detectedEncoding = mb_detect_encoding($contents, $encodings, true);
+
+		if (!$detectedEncoding) {
+			Logger::logMessage("No encoding detected, using Unknown by default");
+		}
+
+		return $detectedEncoding ? $detectedEncoding : "Unknown";
 	}
 
 	/**
