@@ -5,7 +5,13 @@ return (object) array(
 		'url' => 'http://ckan:5000/',
 		'api_key' => 'xxx',
 		'datapusher_key' => 'DodDHpXihz7p9nr',
-		'datapusher_url' => 'http://datapusher:8800/'
+		'datapusher_url' => 'http://datapusher:8800/',
+		'db_ckan_name' => 'ckan',
+		'db_datastore_name' => 'datastore',
+		'db_user' => 'ckan',
+		'db_pass' => 'xxx',
+		'db_host' => 'ckan-db',
+		'db_port' => '5432'
 	),
 	'cluster' => (object) array(
 		'url' => 'https://127.0.0.1:1337/'
@@ -24,7 +30,11 @@ return (object) array(
         'check_rgpd' => true,
 		'protocol' => 'http',
 		'host' => 'localhost',
-		'port' => '80'
+		'port' => '80',
+		'enable_mail' => false,
+		'client_is_observatory' => false,
+		'client_organisation' => 'master',
+		'drupal_root' => '/home/user-client/drupal-d4c/web'
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',

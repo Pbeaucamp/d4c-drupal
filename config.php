@@ -31,6 +31,7 @@ return (object) array(
 		'protocol' => getenv('CLIENT_PROTOCOL'),
 		'host' => getenv('CLIENT_HOST'),
 		'port' => getenv('CLIENT_PORT'),
+		'enable_mail' => getenv('CLIENT_ENABLE_MAIL'),
 		'client_is_observatory' => getenv('CLIENT_IS_OBSERVATORY'),
 		'client_organisation' => getenv('CLIENT_ORGANISATION'),
 		'drupal_root' => getenv('DRUPAL_ROOT'),

@@ -988,8 +988,18 @@ class VisualisationController extends ControllerBase {
 		$modificationDate = $dataset["metas"]['metadata_modified'];
 		$producer = $this->exportExtras($metadataExtras, 'producer');
 		$organization = $dataset["metas"]["organization"]["title"];
+		$datasetType = $this->getDatasetType($dataset, $metadataExtras);
 
 		$synthese = '';
+		if (isset($datasetType)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file-code"></i>
+					<span class="ms-2">Type : <b>' . $datasetType . '</b></span>
+				</div>
+			';
+		}
+
 		if (isset($recordsCount)) {
 			$synthese .= '
 				<div class="my-3">
@@ -1110,6 +1120,65 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '</div>';
 
 		return $synthese;
+	}
+
+	function getDatasetType($dataset, $metadataExtras) {
+		$data4citizenType = $this->exportExtras($metadataExtras, 'data4citizen-type');
+
+		Logger::logMessage("TRM - Found data4citizen-type : " . $data4citizenType . "");
+	
+		$datasetType = '';
+		if ($data4citizenType == 'api') {
+			$datasetType = 'API';
+		}
+		else if ($data4citizenType == 'sftp') {
+			$datasetType = 'SFTP';
+		}
+		else if ($data4citizenType == 'limesurvey') {
+			$datasetType = 'Limesurvey';
+		}
+		else if ($data4citizenType == 'visualization') {
+			$visualizationId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
+
+			$apiManager = new Api();
+			if ($visualizationId != null) {
+				$visualization = $apiManager->getVisualization($visualizationId);
+				$visualizationType = $visualization['type'];
+
+				if ($visualizationType == 'analyze' || $visualizationType == 'chartbuilder') {
+					$datasetType = 'Graphique';
+				}
+				else if ($visualizationType == 'cartograph' || $visualizationType == 'map') {
+					$datasetType = 'Carte';
+				}
+				else if ($visualizationType == 'table') {
+					$datasetType = 'Tableau';
+				}
+				else {
+					$datasetType = 'Visualisation';
+				}
+			}
+			else {
+				$datasetType = 'Visualisation';
+			}
+		}
+		else if ($data4citizenType == 'tdb') {
+			$datasetType = 'Tableau de bord';
+		}
+		else if ($data4citizenType == 'kpi') {
+			$datasetType = 'Indicateur';
+		}
+		else {
+
+			Logger::logMessage("TRM - Dataset features " . json_encode($dataset['features']));
+
+			$features = $dataset['features'];
+			// Does features exist, is not empty and contain the value geo
+			$hasGeo = isset($features) && $features != -1 && in_array('geo', $features);
+			$datasetType = $hasGeo /*|| hasWMS(data)*/ ? 'Carte' : 'Données';
+		}
+	
+		return $datasetType;
 	}
 
 	function isOpenData($keywords) {
