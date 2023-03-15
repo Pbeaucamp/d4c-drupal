@@ -889,13 +889,16 @@ class VisualisationController extends ControllerBase {
 			if ($useConstraint != null && $useConstraint != '') {
 				$useConstraint = json_decode($useConstraint, true);
 				if ($useConstraint != null && $useConstraint != '') {
+					$useConstraint = $this->translateValue($this->locale["codelists"]["MD_RestrictionCode"], $useConstraint);
 					$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
 				}
 			}
 		}
 
 		$useLimitation = $this->exportExtras($metadataExtras, 'use-limitation');
-		$useLimitationsPart = $useLimitation;
+		if ($useLimitation != null && $useLimitation != '') {
+			$useLimitationsPart = '<li>' . $useLimitation . "</li>";
+		}
 
 		if ($this->isNullOrEmptyString($useConstraintsPart) && $this->isNullOrEmptyString($useLimitationsPart)) {
 			return null;
@@ -931,17 +934,23 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if (!$this->isNullOrEmptyString($accessConstraints)) {
-			$accessConstraints = json_decode($accessConstraints, true);
-
-			if (!empty($accessConstraints)) {
-				$hasValue = true;
+			if ($this->isJson($accessConstraints)) {
+				$accessConstraints = json_decode($accessConstraints, true);
 	
-				foreach ($accessConstraints as $value) {	
-					$accessConstraints = '<li>' . $value . '</li>';
+				if (!empty($accessConstraints)) {
+					$hasValue = true;
+		
+					foreach ($accessConstraints as $value) {	
+						$accessConstraints = '<li>' . $value . '</li>';
+					}
+				}
+				else {
+					$accessConstraints = '';
 				}
 			}
 			else {
-				$accessConstraints = '';
+				$accessConstraints = $this->translateValue($this->locale["codelists"]["MD_RestrictionCode"], $accessConstraints);
+				$accessConstraints = '<li>' . $accessConstraints . '</li>';
 			}
 		}
 
@@ -976,11 +985,19 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
+	function isJson($value) {
+		json_decode($value);
+		return json_last_error() === JSON_ERROR_NONE;
+	 }
+
 	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
 		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
 		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
 		$isOpenData = $this->isOpenData($keywords);
 		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
+		$extent = $this->exportExtras($metadataExtras, 'extent-name');
+		$extentBegin = $this->exportExtras($metadataExtras, 'extent-begin');
+		$extentEnd = $this->exportExtras($metadataExtras, 'extent-end');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
@@ -989,6 +1006,7 @@ class VisualisationController extends ControllerBase {
 		$producer = $this->exportExtras($metadataExtras, 'producer');
 		$organization = $dataset["metas"]["organization"]["title"];
 		$datasetType = $this->getDatasetType($dataset, $metadataExtras);
+		$themeInspire = $this->exportExtras($metadataExtras, 'inspire-theme');
 
 		$synthese = '';
 		if (isset($datasetType)) {
@@ -1039,9 +1057,20 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-clock-o"></i>
-				<span class="ms-2">' . ($frequence != null ? 'Mise à jour ' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) : 'Mise à jour inconnue') . '</span>
+				<span class="ms-2">' . ($frequence != null ? 'Mise à jour <b>' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) . '</b>' : '<b>Mise à jour inconnue</b>') . '</span>
 			</div>
 		';
+
+		if (isset($extent)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-clock-o"></i>
+					<span class="ms-2">Emprise temporelle : <b>' . $extent . '</b></span>
+					' . (isset($extentBegin) ? '<br><span class="ms-2">Début : <b>\{\{\'' . $extentBegin . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+					' . (isset($extentEnd) ? '<br><span class="ms-2">Fin : <b>\{\{\'' . $extentEnd . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+				</div>
+			';
+		}
 
 		// Manage creation or deposit date
 		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
@@ -1063,7 +1092,7 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-calendar"></i>
 					<span class="ms-2" translate>Publié le </span>
-					<span>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</span>
+					<span><b>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</b></span>
 				</div>
 			';
 		}
@@ -1074,7 +1103,7 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-calendar-o"></i>
 					<span class="ms-2" translate>Modifié le </span>
-					<span>\{\{\'' . $modificationDate . '\' | formatMeta:\'date\' \}\}</span>
+					<span><b>\{\{\'' . $modificationDate . '\' | formatMeta:\'date\' \}\}</b></span>
 				</div>
 			';
 		}
@@ -1106,10 +1135,20 @@ class VisualisationController extends ControllerBase {
 			';
 		}
 
+		if (isset($themeInspire)) {
+			$themeInspire = $this->translateValue($this->locale["codelists"]["MD_InspireTopicCategoryCode"], $themeInspire);
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-tag"></i>
+					<span class="ms-2">Thème Inspire : <b>' . $themeInspire . '</b></span>
+				</div>
+			';
+		}
+
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-tag"></i>
-				<span class="ms-2"><strong>Thèmes</strong></span>';
+				<span class="ms-2">Thèmes</span>';
 		if ($themes != null) {
 			$synthese .= '	<ul>';
 			foreach ($themes as $theme) {	
@@ -1264,31 +1303,9 @@ class VisualisationController extends ControllerBase {
 			$columnsWithError = implode(', ', $schemaValidation->columnsWithError);
 			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
 
-			if ($schemaValidation->schema == 'rgpd_schema') {
-				if (!$isRgpd) {
-					// Display RGPD validation only if data_rgpd is check in dataset metadata
-					continue;
-				}
-
-				$schemaResult .= '
-					<div class="row schema-data-validation">
-						<div class="col-sm-12">
-							<div class="my-3">
-								<i class="fa fa-calendar-check"></i>
-								<span class="ms-2" translate>Contrôlé le </span>
-								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
-							</div>
-							<span><strong>Données RGPD</strong></span><br/>
-							<span><strong>Nombre de lignes vérifiées:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>
-							<span><strong>Occurences:</strong> ' . $schemaValidation->nbLinesError . '</span><br/>
-							<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>
-							<span><strong>Types de données :</strong> ' . $rulesWithError . '</span>
-						</div>
-					</div>
-				';
-			}
-			else if ($schemaValidation->schema == 'interop_schema') {
-				if (!$isInterop) {
+			if ($schemaValidation->schema == 'rgpd_schema' || $schemaValidation->schema == 'interop_schema') {
+				$type = $schemaValidation->schema == 'rgpd_schema' ? 'RGPD' : 'INTEROP';
+				if (($schemaValidation->schema == 'rgpd_schema' && !$isRgpd) || ($schemaValidation->schema == 'interop_schema' && !$isInterop)) {
 					// Display RGPD validation only if data_rgpd is check in dataset metadata
 					continue;
 				}
@@ -1308,8 +1325,8 @@ class VisualisationController extends ControllerBase {
 								<span class="ms-2" translate>Contrôlé le </span>
 								<span>\{\{\'' . $schemaValidation->validationDate . '\' | formatMeta:\'date\' \}\}</span>
 							</div>
-							<span><strong>Données intéropérables</strong></span><br/>
-							<span><strong>Nombre de colonnes intéropérables:</strong> ' . $nbColumnsWithError . '</span><br/>
+							<span><strong>Données ' . ($type == "RGPD" ? 'RGPD' : 'intéropérables') . '</strong></span><br/>
+							<span><strong>Nombre de colonnes ' . ($type == "RGPD" ? 'RGPD' : 'intéropérables') . ':</strong> ' . $nbColumnsWithError . '</span><br/>
 							' . ($nbColumnsWithError > 0 ? '<span><strong>Colonnes concernées:</strong> ' . $columnsWithError . '</span><br/>' : '') . '
 							' . $details . '
 						</div>
@@ -1358,22 +1375,26 @@ class VisualisationController extends ControllerBase {
 			if ($organisation != null) {
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
+				$organisationRole = $organisation['organisation-role'];
 
-				
 				$address = $organisation['contact-info']['address'];
 				$postalCode = $organisation['contact-info']['postal-code'];
 				$city = $organisation['contact-info']['city'];
 				$contactEmail = $organisation['contact-info']['email'];
 				$phone = $organisation['contact-info']['phone'];
+				$country = $organisation['contact-info']['country'];
 
+				$organisationRole = !$this->isNullOrEmptyString($organisationRole) ? '<p class="mb-0">Rôle : ' . $this->translateValue($this->locale["codelists"]["CI_RoleCode"], $organisationRole) . '</p>' : '';
 				$address = !$this->isNullOrEmptyString($address) ? '<p class="mb-0">' . $address . '</p>' : "";
-				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
+				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) || !$this->isNullOrEmptyString($country) ? '<p class="mb-0">' . $postalCode . ' ' . $city . ' ' . $country . '</p>' : '';
 				$contactEmail = !$this->isNullOrEmptyString($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
 				$phone = !$this->isNullOrEmptyString($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
 				$contacts .= '
 					<div class="d-flex align-items-center mt-3">
-						<div class="flex-grow-1 ms-3"><strong id="displayContact1">' . $organisationName . '</strong>
+						<div class="flex-grow-1 ms-3">
+							<strong id="displayContact1">' . $organisationName . '</strong>
+							' . $organisationRole . '
 							' . $address . '
 							' . $postalCodeCity . '
 							' . $contactEmail . '
@@ -2377,9 +2398,21 @@ class VisualisationController extends ControllerBase {
 				$visualization = $api->getVisualization($entityId);
 	
 				$visualizationPart = '';
+				$widgetPart = '';
 				if (isset($visualization)) {
 					$iframeUrl = $visualization['share_url'];
+					$widget = $visualization["widget"];
+					$widget = str_replace(array("'"), array("\'"), $widget);
+					$widget = str_replace(array("\""), array("&quot;"), $widget);
+
 					$visualizationPart = '<iframe src="' . $iframeUrl . '" frameborder="0" width="100%" height="600px"></iframe>';
+
+					$widgetPart .= '
+						<div class="flex">
+							<a href="javascript:copyValue(\'' . $iframeUrl . '\')"><i class="btn-visu fa fa-share-from-square" title="Copier l\'url"></i></a>
+							<a href="javascript:copyValue(\'' . $widget . '\')"><i class="btn-visu fa fa-copy" title="Copier le widget"></i></a>
+						</div>
+					';
 				}
 				else {
 					$visualizationPart = 'La visualisation n\'est pas disponible';
@@ -2388,6 +2421,7 @@ class VisualisationController extends ControllerBase {
 				return '
 					<d4c-pane pane-auto-unload="true" title="Visualization" icon="list" translate="title" slug="visualization">
 						' . $visualizationPart . '
+						' . $widgetPart . '
 					</d4c-pane>
 				';
 			}

@@ -126,6 +126,13 @@ abstract class MetadataForm extends FormBase {
 			$referenceSystem = DatasetHelper::extractMetadata($selectedDataset["extras"], "reference-system");
 			$spatialResolution = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-resolution-units");
 			$representationType = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-representation-type");
+
+			$bboxEastLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-east-long");
+			$bboxNorthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-north-lat");
+			$bboxSouthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-south-lat");
+			$bboxWestLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-west-long");
+
+			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution);
 		}
 
 		$licences = $api->getLicenses();
@@ -538,6 +545,7 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'checkbox',
 			'#name' => 'geographic_data',
 			'#title' => t('Données géographiques'),
+			'#default_value' => $hasGeographicData,
 		);
 
 		//Theme inspire
@@ -605,6 +613,70 @@ abstract class MetadataForm extends FormBase {
 			'#name' => 'spatial_resolution_distance',
 			'#title' => t('Résolution (mètre/pixel)'),
 			'#default_value' => isset($spatialResolution) ? $spatialResolution : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Add title
+		$form['inspire_option']['technicaldescription']['geographic_extent'] = array(
+			'#type' => 'item',
+			'#title' => t('Etendue géographique'),
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+		
+		$form['inspire_option']['technicaldescription']['geographic_extent_west'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_west',
+			'#title' => t('Ouest'),
+			'#default_value' => isset($bboxWestLong) ? $bboxWestLong : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_east'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_east',
+			'#title' => t('Est'),
+			'#default_value' => isset($bboxEastLong) ? $bboxEastLong : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_south'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_south',
+			'#title' => t('Sud'),
+			'#default_value' => isset($bboxSouthLat) ? $bboxSouthLat : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_north'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_north',
+			'#title' => t('Nord'),
+			'#default_value' => isset($bboxNorthLat) ? $bboxNorthLat : '',
 			// Dependent on geographic data
 			'#states' => array(
 				'visible' => array(
@@ -790,6 +862,10 @@ abstract class MetadataForm extends FormBase {
 		$referenceSystem = $form_state->getValue(['projection']);
 		$equivalentScale = $form_state->getValue(['spatial_resolution']);
 		$spatialResolution = $form_state->getValue(['spatial_resolution_distance']);
+		$bboxEastLong = $form_state->getValue(['geographic_extent_east']);
+		$bboxNorthLat = $form_state->getValue(['geographic_extent_north']);
+		$bboxSouthLat = $form_state->getValue(['geographic_extent_south']);
+		$bboxWestLong = $form_state->getValue(['geographic_extent_west']);
 
 		$accessConstraints = $form_state->getValue(['data_legal_access_constraints']);
 		$useConstraints = $form_state->getValue(['data_legal_use_constraints']);
@@ -844,13 +920,25 @@ abstract class MetadataForm extends FormBase {
 			$inspireMetadata[] = new D4CMetadata("spatial-representation-type", $representationType);
 		}
 		if (isset($referenceSystem)) {
-			$inspireMetadata[] = new D4CMetadata("reference-system", $referenceSystem);
+			$inspireMetadata[] = new D4CMetadata("spatial-reference-system", $referenceSystem);
 		}
 		if (isset($equivalentScale)) {
 			$inspireMetadata[] = new D4CMetadata("equivalent-scale", json_encode($equivalentScale));
 		}
 		if (isset($spatialResolution)) {
 			$inspireMetadata[] = new D4CMetadata("spatial-resolution-units", $spatialResolution);
+		}
+		if (isset($bboxEastLong)) {
+			$inspireMetadata[] = new D4CMetadata("bbox-east-long", $bboxEastLong);
+		}
+		if (isset($bboxNorthLat)) {
+			$inspireMetadata[] = new D4CMetadata("bbox-north-lat", $bboxNorthLat);
+		}
+		if (isset($bboxSouthLat)) {
+			$inspireMetadata[] = new D4CMetadata("bbox-south-lat", $bboxSouthLat);
+		}
+		if (isset($bboxWestLong)) {
+			$inspireMetadata[] = new D4CMetadata("bbox-west-long", $bboxWestLong);
 		}
 
 		if (isset($accessConstraints)) {
