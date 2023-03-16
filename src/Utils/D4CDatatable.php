@@ -13,7 +13,7 @@ use
 	DataTables\Editor\Upload,
 	DataTables\Editor\Validate,
 	DataTables\Editor\ValidateOptions;
-
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
@@ -167,7 +167,12 @@ class D4CDatatable {
 		$data = array();
 		$data[] = $modifyData;
 
+		$datatableModification = new D4CMetadata('datatable-modification', json_encode($data));
+		$datatableModification->setAddToData(true);
+
+		$datasetModification = new D4CMetadata('date_modification', date('Y-m-d'));
+
 		$resourceManager = new ResourceManager();
-		$resourceManager->updateDatasetMetadata($datasetId, 'extras', 'datatable-modification', json_encode($data), true);
+		$resourceManager->updateDatasetMetadata($datasetId, 'extras', [$datatableModification, $datasetModification]);
 	}
 }

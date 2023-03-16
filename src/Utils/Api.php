@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Drupal\ckan_admin\Model\Organization;
 use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Logger;
@@ -8074,7 +8075,7 @@ class Api
 			$private = $data->private;
 
 			$resourceManager = new ResourceManager();
-			$result = $resourceManager->updateDatasetMetadata($datasetId, 'visibility', '', $private);
+			$result = $resourceManager->updateDatasetMetadata($datasetId, 'visibility', [new D4CMetadata('visibility', $private)]);
 		}
 
 		$response = new Response();

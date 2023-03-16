@@ -78,6 +78,7 @@ abstract class MetadataForm extends FormBase {
 
 			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
+			$dateModification = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_modification");
 			$encoding = DatasetHelper::extractMetadata($selectedDataset["extras"], "encoding");
 			$vignette = DatasetHelper::extractMetadata($selectedDataset["extras"], "img_backgr");
 			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
@@ -213,6 +214,15 @@ abstract class MetadataForm extends FormBase {
 			'#title' => $this->t('Date de création'),
 			'#default_value' => isset($dateDataset) ? $dateDataset : date('Y-m-d'),
 		];
+
+		// Add date modification only if $selectedDataset is not null
+		if ($selectedDataset != null) {
+			$form['integration_option']['dataset_date_modification'] = [
+				'#type' => 'date',
+				'#title' => $this->t('Date de modification'),
+				'#default_value' => isset($dateModification) ? $dateModification : date('Y-m-d'),
+			];
+		}
 
 		// Add date field and set default value to today
 		$form['integration_option']['dataset_deposit_date'] = [
@@ -827,9 +837,13 @@ abstract class MetadataForm extends FormBase {
 		//WIP everything should be there
 
 		$dataInterop = $form_state->getValue(['integration_option','dataset_interop']);
+		$modificationDate = $form_state->getValue(['integration_option','dataset_date_modification']);
 
 		$generalMetadata = array();
 		$generalMetadata[] = new D4CMetadata("data_interop", $dataInterop);
+		if ($modificationDate != null) {
+			$generalMetadata[] = new D4CMetadata("date_modification", $modificationDate);
+		}
 		return $generalMetadata;
 	}
 
@@ -871,17 +885,17 @@ abstract class MetadataForm extends FormBase {
 		$useConstraints = $form_state->getValue(['data_legal_use_constraints']);
 		$mentionLegales = $form_state->getValue(['data_legal_use_limitations']);
 
-		if (isset($frequence)) {
+		if (isset($frequence) && $frequence != "") {
 			$inspireMetadata[] = new D4CMetadata("frequency-of-update", $frequence);
 		}
 
-		if (isset($extentName)) {
+		if (isset($extentName) && $extentName != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-name", $extentName);
 		}
-		if (isset($extentBegin)) {
+		if (isset($extentBegin) && $extentBegin != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-begin", $extentBegin);
 		}
-		if (isset($extentEnd)) {
+		if (isset($extentEnd) && $extentEnd != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-end", $extentEnd);
 		}
 		if (isset($organisationRole) || isset($organisationName) || isset($contactEmail) || isset($individualName) || isset($function) 
@@ -903,51 +917,51 @@ abstract class MetadataForm extends FormBase {
 			)));
 		}
 
-		if (isset($extent)) {
+		if (isset($extent) && $extent != "") {
 			$inspireMetadata[] = new D4CMetadata("extent", $extent);
 		}
-		if (isset($lineage)) {
+		if (isset($lineage) && $lineage != "") {
 			$inspireMetadata[] = new D4CMetadata("lineage", $lineage);
 		}
-		if (isset($useLimitation)) {
+		if (isset($useLimitation) && $useLimitation != "") {
 			$inspireMetadata[] = new D4CMetadata("use-limitation", $useLimitation);
 		}
 
-		if (isset($inspireTheme)) {
+		if (isset($inspireTheme) && $inspireTheme != "") {
 			$inspireMetadata[] = new D4CMetadata("inspire-theme", $inspireTheme);
 		}
-		if (isset($representationType)) {
+		if (isset($representationType) && $representationType != "") {
 			$inspireMetadata[] = new D4CMetadata("spatial-representation-type", $representationType);
 		}
-		if (isset($referenceSystem)) {
+		if (isset($referenceSystem) && $referenceSystem != "") {
 			$inspireMetadata[] = new D4CMetadata("spatial-reference-system", $referenceSystem);
 		}
-		if (isset($equivalentScale)) {
+		if (isset($equivalentScale) && $equivalentScale != "") {
 			$inspireMetadata[] = new D4CMetadata("equivalent-scale", json_encode($equivalentScale));
 		}
-		if (isset($spatialResolution)) {
+		if (isset($spatialResolution) && $spatialResolution != "") {
 			$inspireMetadata[] = new D4CMetadata("spatial-resolution-units", $spatialResolution);
 		}
-		if (isset($bboxEastLong)) {
+		if (isset($bboxEastLong) && $bboxEastLong != "") {
 			$inspireMetadata[] = new D4CMetadata("bbox-east-long", $bboxEastLong);
 		}
-		if (isset($bboxNorthLat)) {
+		if (isset($bboxNorthLat) && $bboxNorthLat != "") {
 			$inspireMetadata[] = new D4CMetadata("bbox-north-lat", $bboxNorthLat);
 		}
-		if (isset($bboxSouthLat)) {
+		if (isset($bboxSouthLat) && $bboxSouthLat != "") {
 			$inspireMetadata[] = new D4CMetadata("bbox-south-lat", $bboxSouthLat);
 		}
-		if (isset($bboxWestLong)) {
+		if (isset($bboxWestLong) && $bboxWestLong != "") {
 			$inspireMetadata[] = new D4CMetadata("bbox-west-long", $bboxWestLong);
 		}
 
-		if (isset($accessConstraints)) {
+		if (isset($accessConstraints) && $accessConstraints != "") {
 			$inspireMetadata[] = new D4CMetadata("access_constraints", $accessConstraints);
 		}
-		if (isset($useConstraints)) {
+		if (isset($useConstraints) && $useConstraints != "") {
 			$inspireMetadata[] = new D4CMetadata("use-constraints-1", json_encode($useConstraints));
 		}
-		if (isset($mentionLegales)) {
+		if (isset($mentionLegales) && $mentionLegales != "") {
 			$inspireMetadata[] = new D4CMetadata("mention_legales", $mentionLegales);
 		}
 

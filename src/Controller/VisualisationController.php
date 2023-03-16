@@ -1001,8 +1001,8 @@ class VisualisationController extends ControllerBase {
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
-		$dateDeposit = $this->exportExtras($metadataExtras, 'date_deposit');
-		$modificationDate = $dataset["metas"]['metadata_modified'];
+		$dateDataset = $this->exportExtras($metadataExtras, 'date_dataset');
+		$dateModification = $this->exportExtras($metadataExtras, 'date_modification');
 		$producer = $this->exportExtras($metadataExtras, 'producer');
 		$organization = $dataset["metas"]["organization"]["title"];
 		$datasetType = $this->getDatasetType($dataset, $metadataExtras);
@@ -1061,13 +1061,13 @@ class VisualisationController extends ControllerBase {
 			</div>
 		';
 
-		if (isset($extent)) {
+		if (isset($extent) && $extent != '') {
 			$synthese .= '
 				<div class="my-3">
 					<i class="fa fa-clock-o"></i>
 					<span class="ms-2">Emprise temporelle : <b>' . $extent . '</b></span>
-					' . (isset($extentBegin) ? '<br><span class="ms-2">Début : <b>\{\{\'' . $extentBegin . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
-					' . (isset($extentEnd) ? '<br><span class="ms-2">Fin : <b>\{\{\'' . $extentEnd . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+					' . (isset($extentBegin) && $extentBegin != '' ? '<br><span class="ms-2">Début : <b>\{\{\'' . $extentBegin . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+					' . (isset($extentEnd) && $extentEnd != '' ? '<br><span class="ms-2">Fin : <b>\{\{\'' . $extentEnd . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
 				</div>
 			';
 		}
@@ -1086,7 +1086,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		$displayDate = $displayDate == null ? $dateDeposit : $displayDate;
+		$displayDate = $displayDate == null ? $dateDataset : $displayDate;
 		if ($displayDate != null) {
 			$synthese .= '
 				<div class="my-3">
@@ -1098,12 +1098,12 @@ class VisualisationController extends ControllerBase {
 		}
 
 		// Manage modification date
-		if ($modificationDate != null && $modificationDate != '') {
+		if ($dateModification != null && $dateModification != '') {
 			$synthese .= '
 				<div class="my-3">
 					<i class="fa fa-calendar-o"></i>
 					<span class="ms-2" translate>Modifié le </span>
-					<span><b>\{\{\'' . $modificationDate . '\' | formatMeta:\'date\' \}\}</b></span>
+					<span><b>\{\{\'' . $dateModification . '\' | formatMeta:\'date\' \}\}</b></span>
 				</div>
 			';
 		}
@@ -1135,7 +1135,7 @@ class VisualisationController extends ControllerBase {
 			';
 		}
 
-		if (isset($themeInspire)) {
+		if (isset($themeInspire) && $themeInspire != '') {
 			$themeInspire = $this->translateValue($this->locale["codelists"]["MD_InspireTopicCategoryCode"], $themeInspire);
 			$synthese .= '
 				<div class="my-3">
@@ -1145,18 +1145,19 @@ class VisualisationController extends ControllerBase {
 			';
 		}
 
-		$synthese .= '
-			<div class="my-3">
-				<i class="fa fa-tag"></i>
-				<span class="ms-2">Thèmes</span>';
 		if ($themes != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-tag"></i>
+					<span class="ms-2">Thèmes</span>
+			';
 			$synthese .= '	<ul>';
 			foreach ($themes as $theme) {	
 				$synthese .= '		<li>' . $theme["label"] . '</li>';
 			}
 			$synthese .= '	</ul>';
+			$synthese .= '</div>';
 		}
-		$synthese .= '</div>';
 
 		return $synthese;
 	}

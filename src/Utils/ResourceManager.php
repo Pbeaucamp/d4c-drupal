@@ -1,6 +1,8 @@
 <?php
 
 namespace Drupal\ckan_admin\Utils;
+
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
@@ -241,7 +243,7 @@ class ResourceManager {
 			Logger::logMessage("Found encoding " . $encoding);
 
 			// We need to update the dataset metadata
-			$this->updateDatasetMetadata($datasetId, 'extras', 'encoding', $encoding, false);
+			$this->updateDatasetMetadata($datasetId, 'extras', [new D4CMetadata('encoding', $encoding)]);
 		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer l'encodage du fichier (" . $e->getMessage() . ")");
 		}
@@ -2396,8 +2398,9 @@ class ResourceManager {
 
 	/**
 	 * Type can be "visibility", "extras"
+	 * $data is an array of D4CMetadata
 	 */
-	function updateDatasetMetadata($datasetId, $type, $key, $value, $addToData = false) {
+	function updateDatasetMetadata($datasetId, $type, $metadatas) {
 		$result = array();
 
 		$api = new Api;
@@ -2412,40 +2415,48 @@ class ResourceManager {
 			$datasetToUpdate = $dataset["result"];
 			$datasetName = $datasetToUpdate["name"];
 			$title = $datasetToUpdate["title"];
+			$isPrivate = $datasetToUpdate["private"];
 			$description = $datasetToUpdate["notes"];
 			$licence = $datasetToUpdate["license_id"];
 			$organization = $datasetToUpdate["organization"]["name"];
 			if ($type == "visibility") {
-				$isPrivate = $value;
-				$extras = $datasetToUpdate["extras"];
+				foreach ($metadatas as $metadata) {
+					if ($metadata->getKey() == "visibility") {
+						$isPrivate = $metadata->getValue();
+						$extras = $datasetToUpdate["extras"];
+						break;
+					}
+				}
 			}
 			else if ($type == "extras") {
 				$extras = $datasetToUpdate["extras"];
-
-				$hasValue = false;
 				if ($extras != null && count($extras) > 0) {
 					for ($index = 0; $index < count($extras); $index++) {
-						if ($extras[$index]['key'] == $key) {
-							$hasValue = true;
 
-							if ($addToData) {
-								$extrasArray = json_decode($extras[$index]['value'], true);
-								if ($extrasArray == null) {
-									$extrasArray = array();
+						foreach ($metadatas as $metadata) {
+							if ($extras[$index]['key'] == $metadata->getKey()) {
+								if ($metadata->addToData()) {
+									$extrasArray = json_decode($extras[$index]['value'], true);
+									if ($extrasArray == null) {
+										$extrasArray = array();
+									}
+									$extrasArray[] = json_decode($metadata->getValue(), true)[0];
+									$extras[$index]['value'] = json_encode($extrasArray);
 								}
-								$extrasArray[] = json_decode($value, true)[0];
-								$extras[$index]['value'] = json_encode($extrasArray);
-							}
-							else {
-								$extras[$index]['value'] = $value;
+								else {
+									$extras[$index]['value'] = $metadata->getValue();
+								}
+								$metadata->setDefine(true);
 							}
 						}
 					}
 				}
 
-				if (!$hasValue) {
-					$extras[count($extras)]['key'] = $key;
-					$extras[(count($extras) - 1)]['value'] = $value;
+				foreach ($metadatas as $metadata) {
+					if (!$metadata->isDefine()) {
+						$extras[count($extras)]['key'] = $metadata->getKey();
+						$extras[(count($extras) - 1)]['value'] = $metadata->getValue();
+					}
 				}
 			}
 			$tags = $datasetToUpdate["tags"];
@@ -2460,7 +2471,7 @@ class ResourceManager {
 
 	function deleteDataset($datasetId) {
 		$currentUser = \Drupal::currentUser();
-		$this->updateDatasetMetadata($datasetId, "extras", "user-delete", $currentUser->getAccountName());
+		$this->updateDatasetMetadata($datasetId, "extras", [new D4CMetadata("user-delete", $currentUser->getAccountName())]);
 
 		$api = new Api;
 		$dataset = $api->getPackageShow("id=" . $datasetId, true, true, true, true);
