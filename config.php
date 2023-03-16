@@ -35,6 +35,7 @@ return (object) array(
 		'client_is_observatory' => getenv('CLIENT_IS_OBSERVATORY'),
 		'client_organisation' => getenv('CLIENT_ORGANISATION'),
 		'master_organisation' => getenv('MASTER_ORGANISATION'),
+		'master_url' => getenv('MASTER_URL'),
 		'drupal_root' => getenv('DRUPAL_ROOT'),
 	),
 	'sitesSearch' => array(

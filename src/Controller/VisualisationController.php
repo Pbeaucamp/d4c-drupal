@@ -1565,6 +1565,7 @@ class VisualisationController extends ControllerBase {
 			return '';
 		}
 
+		$masterUrl = $this->config->client->master_url;
 		$apiManager = new Api();
 
 		$dataset = $apiManager->getPackageShow2($datasetId, "", true, false, null, true);
@@ -1582,7 +1583,7 @@ class VisualisationController extends ControllerBase {
 			}
 			else {
 				// We put the url of the master organization
-				$organizationUrl = "https://databfc.data4citizen.com";
+				$organizationUrl = $masterUrl;
 			}
 		}
 

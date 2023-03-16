@@ -8970,6 +8970,10 @@ class Api
 			$this->updateVisualization($visualizationId, null, $publishDatasetId, '', $shareUrl, $iframe, $widget);
 
 			$response->setStatusCode(200);
+			$result = array();
+			$result["status"] = "success";
+			$result["result"] = $data;
+			echo json_encode($result);
 
 			break;
 		case 'DELETE':
