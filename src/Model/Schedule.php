@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\ckan_admin\Utils;
+namespace Drupal\ckan_admin\Model;
 
 use JsonSerializable;
 

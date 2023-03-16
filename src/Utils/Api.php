@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-
+use Drupal\ckan_admin\Model\Organization;
 use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
@@ -973,7 +973,11 @@ class Api
 				}
 				else {
 					//We include private datasets from allowed organisations for the user
-					$allowedOrganizations = $this->getAllOrganisations(false, false, true);
+					$orgs = $this->getAllOrganisations(false, false, true);
+					$allowedOrganizations = array();
+					foreach ($orgs as $org) {
+						$allowedOrganizations[] = new Organization($org["name"], true);
+					}
 				}
 			}
 			else if ($this->isObservatory()) {
@@ -981,20 +985,26 @@ class Api
 				$allowedOrganizations = $this->getObservatoryOrganisations();
 			}
 
-			if ($applySecurity) {
-				foreach ($allowedOrganizations as $org) {
-					if ($query_params["fq"] == null) {
-						$query_params["fq"] = "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
-					else {
-						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
+			if ($applySecurity && $allowedOrganizations != null && sizeof($allowedOrganizations) > 0) {
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "(";
 				}
+				else {
+					$query_params["fq"] .= " AND (";
+				}
+				$isFirst = true;
+				foreach ($allowedOrganizations as $orga) {
+					$query_params["fq"] .= $isFirst ? "" : " OR ";
+					$query_params["fq"] .= $orga->getQuery();
+					$isFirst = false;
+				}
+				$query_params["fq"] .= ")";
 			}
 		}
 		else if ($this->isObservatory()) {
 			$allowedOrganizations = $this->getObservatoryOrganisations();
-			foreach ($allowedOrganizations as $org) {
+			foreach ($allowedOrganizations as $orga) {
+				$org = $orga->getName();
 				if ($query_params["fq"] == null) {
 					$query_params["fq"] .= "(organization:(" . $org . "))";
 				}
@@ -8750,9 +8760,13 @@ class Api
 
 	function getObservatoryOrganisations() {
 		$organizationName = $this->config->client->client_organisation;
+		$masterOrganization = $this->config->client->master_organisation;
 
 		$allowedOrganizations = array();
-		$allowedOrganizations[] = strtolower($organizationName);
+		$allowedOrganizations[] = new Organization(strtolower($organizationName), true);
+		if (isset($masterOrganization) && $masterOrganization != "") {
+			$allowedOrganizations[] = new Organization(strtolower($masterOrganization), false);
+		}
 		return $allowedOrganizations;
 	}
 
@@ -8762,7 +8776,7 @@ class Api
 
 		$current_user = \Drupal::currentUser();
 		if (in_array("administrator", $current_user->getRoles())) {
-			$allowedOrganizations[] = "*";
+			$allowedOrganizations[] = new Organization("*", true);
 			return $allowedOrganizations;
 		}
 
@@ -8780,7 +8794,7 @@ class Api
 				//We lowercase
 				$organizationName = strtolower($organizationName);
 
-				$allowedOrganizations[] = $organizationName;
+				$allowedOrganizations[] = new Organization($organizationName, true);
 			}
 		}
 
@@ -8793,7 +8807,9 @@ class Api
 
 		//We add all the organization allowed for the user
 		$organizationParameter = "(";
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
+
 			if ($org == "*") {
 				return null;
 			}
@@ -8813,7 +8829,8 @@ class Api
 
 	function isOrganizationAllowed($organization, $allowedOrganizations)
 	{
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
 			}
@@ -8830,7 +8847,7 @@ class Api
 		if ($applySecurity) {
 			$datasetOrganization = $datasetOrganization;
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
 				return false;
 			}
 		}
@@ -8849,7 +8866,7 @@ class Api
 
 			$datasetOrganization = $datasetOrganization;
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
 				return false;
 			}
 		}
@@ -8857,10 +8874,16 @@ class Api
 		return true;
 	}
 
-	function isDatasetAllowedForOrganization($organization, $allowedOrganizations)
+	function isDatasetAllowedForOrganization($organization, $allowedOrganizations, $isPrivate)
 	{
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
+			$allowPrivate = $orga->getAllowPrivate();
+
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
+				if ($isPrivate && !$allowPrivate) {
+					return false;
+				}
 				return true;
 			}
 		}

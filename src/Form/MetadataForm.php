@@ -6,12 +6,12 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 
+use Drupal\ckan_admin\Model\D4CMetadata;
+use Drupal\ckan_admin\Model\MetadataDefinition;
+use Drupal\ckan_admin\Model\Schedule;
 
 use Drupal\ckan_admin\Utils\Api;
-use Drupal\ckan_admin\Utils\D4CMetadata;
-use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
-use Drupal\ckan_admin\Utils\Schedule;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\DatasetHelper;
 
