@@ -2128,8 +2128,8 @@ class VisualisationController extends ControllerBase {
 
 		$buttonEditMetadata = '
 			<a id="btn-edit-data" href="' . $editDatasetUrl . '" target="_self">
-				<img alt="Editer les métadonnées" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
-				<span>Editer les métadonnées</span>
+				<img alt="Modifier la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
+				<span>Modifier la connaissance</span>
 			</a>';
 
 		// Part edit data

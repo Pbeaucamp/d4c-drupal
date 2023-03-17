@@ -2333,52 +2333,47 @@ class ResourceManager {
 		if ($resnew->success == true) {
 			$idNewData = $resnew->result->id;
 		} 
-		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
+		else if ($resnew->error->name[0] == 'That URL is already in use.' || $resnew->error->name[0] == 'Cette URL est déjà utilisée.') {
 			$coll++;
 			
 			if($coll==1){
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10){
 				$newData[name]=substr($newData[name],0, -3);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -3);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[name] = $newData[name].'_'.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else if($coll>100){
 				$newData[name]=substr($newData[name],0, -4);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -4);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>1000){
 				$newData[name]=substr($newData[name],0, -5);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -5);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10000){
 				$newData[name]=substr($newData[name],0, -6);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -6);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else{
 				$newData[name]=substr($newData[name],0, -2);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -2);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
