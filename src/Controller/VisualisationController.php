@@ -220,7 +220,7 @@ class VisualisationController extends ControllerBase {
 		
 		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
 		//Build interface
-		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $visualization);
+		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $isRgpd, $visualization);
 		 
 		$element = array(
 			'example one' => [

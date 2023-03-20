@@ -1248,7 +1248,7 @@ class Api
 		}
 
 		if ($iduser != NULL) {
-			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
+			//If we apply security by organizations, we do not apply the user security which will probably disappear in a future version
 			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
@@ -8786,7 +8786,12 @@ class Api
 
 		$current_user = \Drupal::currentUser();
 		if (in_array("administrator", $current_user->getRoles())) {
-			$allowedOrganizations[] = new Organization("*", true);
+			if ($this->isObservatory()) {
+				$allowedOrganizations = $this->getObservatoryOrganisations();
+			}
+			else {
+				$allowedOrganizations[] = new Organization("*", true);
+			}
 			return $allowedOrganizations;
 		}
 
@@ -8814,7 +8819,6 @@ class Api
 	function getUserOrganizationsParameter($allowedOrganizations)
 	{
 		$hasParameter = false;
-
 		//We add all the organization allowed for the user
 		$organizationParameter = "(";
 		foreach ($allowedOrganizations as $orga) {
