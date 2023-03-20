@@ -761,6 +761,8 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
+		// Logger::logMessage("TRM - callUrl : " . $callUrl);
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
@@ -1004,15 +1006,22 @@ class Api
 		}
 		else if ($this->isObservatory()) {
 			$allowedOrganizations = $this->getObservatoryOrganisations();
+			if ($query_params["fq"] == null) {
+				$query_params["fq"] = "(";
+			}
+			else {
+				$query_params["fq"] .= " AND (";
+			}
+			$isFirst = true;
 			foreach ($allowedOrganizations as $orga) {
 				$org = $orga->getName();
-				if ($query_params["fq"] == null) {
-					$query_params["fq"] .= "(organization:(" . $org . "))";
-				}
-				else {
-					$query_params["fq"] .= " AND " . "(organization:(" . $org . "))";
-				}
+				$orga->setAllowPrivate(false);
+				
+				$query_params["fq"] .= $isFirst ? "" : " OR ";
+				$query_params["fq"] .= $orga->getQuery();
+				$isFirst = false;
 			}
+			$query_params["fq"] .= ")";
 		}
 
 		// Logger::logMessage("TRM - Query params " . json_encode($query_params["fq"]));
@@ -8847,6 +8856,7 @@ class Api
 
 		if ($applySecurity) {
 			$datasetOrganization = $datasetOrganization;
+
 			$allowedOrganizations = $this->getUserOrganisations();
 			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
 				return false;

@@ -218,6 +218,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		
+		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
 		//Build interface
 		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $visualization);
 		 
@@ -229,6 +230,26 @@ class VisualisationController extends ControllerBase {
 			],
 		);
 		$element['#attached']['library'][] = 'ckan_admin/visu.angular';
+
+		if ($isRgpd) {
+			$noindex = [
+				'#tag' => 'meta',
+				'#attributes' => [
+					'name' => 'robots',
+					'content' => 'noindex',
+				],
+			];
+			$nofollow = [
+				'#tag' => 'meta',
+				'#attributes' => [
+					'name' => 'robots',
+					'content' => 'nofollow',
+				],
+			];
+	
+			$element['page']['#attached']['html_head'][] = [$noindex, 'noindex'];
+			$element['page']['#attached']['html_head'][] = [$nofollow, 'nofollow'];
+		}
 		return $element;
 	}
 
@@ -244,7 +265,7 @@ class VisualisationController extends ControllerBase {
 		return $referer;
 	}
 
-	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $visualization = null) {
+	function buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $isRgpd, $visualization = null) {
 		
 		$visu = $this->buildVisu($metadataExtras);
 		$customView = $this->buildCustomView($metadataExtras);
@@ -288,7 +309,6 @@ class VisualisationController extends ControllerBase {
 		$resourcesList = $this->buildResourcesList($pageId, $dataset, $resourceId);
 
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
-		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
@@ -1209,9 +1229,6 @@ class VisualisationController extends ControllerBase {
 			$datasetType = 'Indicateur';
 		}
 		else {
-
-			Logger::logMessage("TRM - Dataset features " . json_encode($dataset['features']));
-
 			$features = $dataset['features'];
 			// Does features exist, is not empty and contain the value geo
 			$hasGeo = isset($features) && $features != -1 && in_array('geo', $features);
@@ -1243,6 +1260,8 @@ class VisualisationController extends ControllerBase {
 		// $: dataScaleDenominator = converter.getValue($storeMdjs, "dataScaleDenominator")[0] || "";
 		// $: dataScaleDistance = converter.getValue($storeMdjs, "dataScaleDistance")[0] || "";
 
+
+		$extent = $this->exportExtras($metadataExtras, 'extent');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
@@ -1269,6 +1288,7 @@ class VisualisationController extends ControllerBase {
 		return '
 			<div class="row">
 				<div class="col-sm-7">
+					<p><strong>Nom de l\'emprise:</strong> ' . ($extent != null ? $extent : 'non renseignée') . '</p>
 					<p><strong>Type de représentation:</strong> ' . ($representationType != null ? $this->translateValue($this->locale["codelists"]["MD_SpatialRepresentationTypeCode"], $representationType) : 'non renseignée') . '</p>
 					<p><strong>Etendue géographique:</strong></p>
 					<ul>
@@ -1526,7 +1546,6 @@ class VisualisationController extends ControllerBase {
 			// We extract the kpi model from the dataset
 			$type = $this->exportExtras($metadataExtras, "data4citizen-type");
 			$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
-			Logger::logMessage("TRM - Dataset model " . $datasetModel);
 			$datasetModel = json_decode($datasetModel, true);
 
 			if ($type == 'kpi' && isset($datasetModel) && $datasetModel != '') {

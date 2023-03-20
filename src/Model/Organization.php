@@ -18,8 +18,16 @@ class Organization implements JsonSerializable {
         return $this->name;
     }
 
+    public function setName($name) {
+        $this->name = $name;
+    }
+
     public function getAllowPrivate() {
         return $this->allowPrivate;
+    }
+
+    public function setAllowPrivate($allowPrivate) {
+        $this->allowPrivate = $allowPrivate;
     }
 
     public function getQuery() {
