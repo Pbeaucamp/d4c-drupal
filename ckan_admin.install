@@ -421,7 +421,6 @@ function ckan_admin_update_8705(&$sandbox) {
     ); 
     $schema = Database::getConnection()->schema();
     $schema->addField('d4c_user_story', 'title_story', $spec);
-    return $schema;
 }
 
 function ckan_admin_update_8706(&$sandbox) {
@@ -534,5 +533,4 @@ function ckan_admin_update_8709(&$sandbox) {
     ); 
     $schema = Database::getConnection()->schema();
     $schema->addField('d4c_dataset_visualization', 'publish_dataset_id', $spec);
-    return $schema;
 }

@@ -536,7 +536,69 @@ class ApiControllerOld extends ControllerBase {
 			                <div class="d4c-form__group d4c-form__group--horizontal">
 			                    <label class="d4c-form__label"></label>
 			                    <button type="submit" class="d4c-button d4c-button--primary" translate=""><span class="ng-scope">Envoyer</span></button>
-			                </div>
+							</div>
+						</form>
+					</div>
+			        <div class="col-sm-12 col-md-6">
+			            <div d4c-json-formatter="results" ng-show="results" class="d4c-api-console-page__service-result ng-isolate-scope ng-hide"></div>
+			            <div class="d4c-message-box d4c-message-box--error ng-binding ng-hide" ng-show="errors">
+			                
+			            </div>
+			        </div>
+				</div>
+
+			    <code class="d4c-api-console-page__service-url">
+			        <a href="' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//" target="_blank" class="ng-binding">
+			            <i class="fa fa-link"></i> ' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//
+			        </a>
+			    </code>
+			</div>
+		</div><!-- end ngRepeat: service in services --><div ng-class="{\'service-box\': true, \'active\': activeBox == service}" ng-repeat="service in services4" class="ng-scope service-box active">	
+			<div class="service-header clearfix" ng-click="toggleActiveBox(service)">
+				<span class="service-label ng-binding">Consultation de données</span>
+				<div class="service-techinfo">
+					<span class="service-method ng-binding">GET</span>
+					<span class="service-url ng-binding">/api/records/2.0/resource/</span>
+				</div>
+			</div>
+			<div class="d4c-api-console ng-isolate-scope" service="service" api="api[service.id]">
+				<div class="row">
+					<div class="col-sm-12 col-md-6">
+						<form ng-submit="sendRequest(service)" class="ng-pristine ng-valid">
+							<!-- ngRepeat: param in service.urlParameters --><div class="d4c-form__group d4c-form__group--horizontal ng-scope" ng-init="param1=service.urlParameters[0]">
+								<label class="d4c-form__label ng-binding" for="dataset_lookup-url-RESOURCEID">
+									Resource ID
+								</label>
+								<div class="d4c-form__vertical-controls">
+									<input type="text" id="dataset_lookup-url-RESOURCEID" delayed-apply-model="api.urlParameters[param1.name]" placeholder="" ng-readonly="param1.readonly" class="d4c-form__control">
+									<span class="d4c-form__help-text ng-binding ng-hide" ng-show="param1.helptext"></span>
+								</div>
+							</div><!-- end ngRepeat: param in service.urlParameters -->
+
+							<!-- ngRepeat: param in service.urlParameters --><div class="d4c-form__group d4c-form__group--horizontal ng-scope" ng-init="param2=service.urlParameters[0]">
+								<label class="d4c-form__label ng-binding" for="dataset_lookup-url-FORMAT">
+									Format
+								</label>
+								<div class="d4c-form__vertical-controls">
+									<input type="text" id="dataset_lookup-url-FORMAT" delayed-apply-model="api.urlParameters[param2.name]" placeholder="" ng-readonly="param2.readonly" class="d4c-form__control">
+									<span class="d4c-form__help-text ng-binding ng-hide" ng-show="param2.helptext"></span>
+								</div>
+							</div><!-- end ngRepeat: param in service.urlParameters -->
+
+							<!-- ngRepeat: param in service.urlParameters --><div class="d4c-form__group d4c-form__group--horizontal ng-scope" ng-init="param3=service.urlParameters[0]">
+								<label class="d4c-form__label ng-binding" for="dataset_lookup-url-REFINE">
+									Format
+								</label>
+								<div class="d4c-form__vertical-controls">
+									<input type="text" id="dataset_lookup-url-REFINE" delayed-apply-model="api.urlParameters[param3.name]" placeholder="" ng-readonly="param3.readonly" class="d4c-form__control">
+									<span class="d4c-form__help-text ng-binding ng-hide" ng-show="param3.helptext"></span>
+								</div>
+							</div><!-- end ngRepeat: param in service.urlParameters -->
+
+							<div class="d4c-form__group d4c-form__group--horizontal">
+								<label class="d4c-form__label"></label>
+								<button type="submit" class="d4c-button d4c-button--primary" translate=""><span class="ng-scope">Envoyer</span></button>
+							</div>
 			            </form>
 			        </div>
 			        <div class="col-sm-12 col-md-6">
@@ -547,11 +609,11 @@ class ApiControllerOld extends ControllerBase {
 			        </div>
 			    </div>
 
-			    <code class="d4c-api-console-page__service-url">
-			        <a href="' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//" target="_blank" class="ng-binding">
-			            <i class="fa fa-link"></i> ' . $config->client->routing_prefix . '/d4c/api/records/1.0/search//
-			        </a>
-			    </code>
+				<code class="d4c-api-console-page__service-url">
+					<a href="' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/emprise-batie-paris/" target="_blank" class="ng-binding">
+						<i class="fa fa-link"></i> ' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/emprise-batie-paris/
+					</a>
+				</code>
 			</div>
         </div><!-- end ngRepeat: service in services -->
     </div>
@@ -606,8 +668,7 @@ class ApiControllerOld extends ControllerBase {
  	<script>
  		
 			var mod = angular.module(\'bpm.explore.api.console.config\', [\'bpm.explore.api.console.services\'])
-            .factory(\'ServicesDescription\', function(translate, DatasetsSearchParameters/*, DatasetsLookupUrlParameters*/, DatasetsLookupParameters,
-        	RecordsSearchParameters) {
+            .factory(\'ServicesDescription\', function(translate, DatasetsSearchParameters/*, DatasetsLookupUrlParameters*/, DatasetsLookupParameters, RecordsSearchParameters, ResourceRecordsSearchParameters) {
                 return [
                     {
                         id: \'dataset_search\',
@@ -629,6 +690,13 @@ class ApiControllerOld extends ControllerBase {
                         url: fetchPrefix() + \'/d4c/api/records/1.0/search//\',
                         method: \'GET\',
                         parameters: RecordsSearchParameters
+                    },
+                    {
+                        id: \'resource_records_search\',
+                        label: \'Consultation de données\',
+                        url: fetchPrefix() + \'/d4c/api/records/2.0/resource//\',
+                        method: \'GET\',
+                        parameters: ResourceRecordsSearchParameters
                     }
                 ];
             });

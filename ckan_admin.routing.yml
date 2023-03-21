@@ -343,6 +343,14 @@ ckan_admin.api.record.download2:
   requirements:
     _permission: 'access content'
 
+ckan_admin.api.record.resource:
+  path: '/d4c/api/records/2.0/resource/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApiResourceRecords'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
 ckan_admin.api.dataset.id:
   path: '/d4c/api/datasets/1.0/{datasetid}/{params}'
   defaults:
@@ -556,6 +564,15 @@ ckan_admin.api.alternative.export:
   defaults:
     _controller: '\Drupal\ckan_admin\Utils\Api::callAlternativeExport'
     resourceid: ''
+    _title: ''
+  requirements:
+    _permission: 'access content'
+
+ckan_admin.api.file.generate:
+  path: '/d4c/api/datasets/1.0/generate/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callGenerateDownloadFiles'
+    params: ''
     _title: ''
   requirements:
     _permission: 'access content'

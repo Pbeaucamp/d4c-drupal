@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use Box\Spout\Reader\Common\Creator\ReaderFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 
@@ -21,7 +22,7 @@ use SimpleXMLElement;
 
 
 ini_set('memory_limit', '4G'); // or you could use 1G
-ini_set('max_execution_time', 200);
+ini_set('max_execution_time', 2000);
 
 /*
  *
@@ -52,6 +53,7 @@ SOFTWARE.
 
 class Api
 {
+	const ROOT = '/home/user-client/drupal-d4c';
 
 	protected $urlCkan;
 	protected $urlDatapusher;
@@ -59,6 +61,10 @@ class Api
 	protected $isSpecial;
 	protected $isPostgis;
 	protected $themes;
+
+	protected $d4cUrl;
+	protected $urlDataFolder;
+	protected $dataFolder;
 
 	public function __construct()
 	{
@@ -68,6 +74,10 @@ class Api
 		$this->urlDatapusher = $this->config->ckan->datapusher_url;
 		$this->isSpecial = $this->config->client->name == 'cda2';
 		$this->isPostgis = $this->config->client->name == 'cda2';
+
+		$this->d4cUrl = (isset($this->config->client->protocol) ? $this->config->client->protocol : "https") . '://' . $this->config->client->domain;
+		$this->urlDataFolder = $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+		$this->dataFolder = self::ROOT . $this->urlDataFolder;
 
 		// Testing if map_tiles file exist and copy from model if not
 		$mapTilesExist = file_exists(__DIR__ . "/../../map_tiles.json");
@@ -312,14 +322,13 @@ class Api
 				$field = explode(":", $value)[0];
 				$data = explode(":", $value)[1];
 				if (strpos($field, "_id") !== false || is_numeric($data)) {
-
+					$data = urldecode($data);
 					if (strpos($data, "%27") !== false) {
 						$data = str_replace("%27", "", $data);
 					}
-
-					Logger::logMessage("Search by " . $field . " '" . $data . "'");
 					$res .=  $field . " = " . $data;
 				} else {
+					$data = urldecode($data);
 					if (substr($data, 0, 1) == '"') {
 						$data = substr($data, 1, -1);
 					}
@@ -537,12 +546,17 @@ class Api
 								$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
 								$where .= $fieldCoordinates . " not in ('', ',') and ";
 							} else {
-								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
+								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
 									$where .= $key . "=" . $value . " and ";
 								} else if (is_array($value)) {
-									$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-									$value = urldecode($value);
-									$where .= $key . " in (" . $value . ") and ";
+									if ($key != "insee_com" && $key != "code_insee") {
+										$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+										$value = urldecode($value);
+										$where .= $key . " in (" . $value . ") and ";
+									}
+									else {
+										$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+									}
 								} else {
 									$value = urldecode($value);
 									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -1400,12 +1414,17 @@ class Api
 				} else {
 					Logger::logMessage("Build query without parameter \r\n");
 
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
+						if ($key != "insee_com" && $key != "code_insee") {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = urldecode($value);
+							$where .= $key . " in (" . $value . ") and ";
+						}
+						else {
+							$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+						}
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -1527,9 +1546,12 @@ class Api
 		return $response;
 	}
 
-	private function quotesArrayValue($item)
-	{
-		if (!is_numeric($item)) {
+	private function quotesStringArrayValue($item){
+		return "'" . $item . "'";
+	}
+
+	private function quotesArrayValue($item){
+		if(!is_numeric($item)) {
 			return "'" . $item . "'";
 		} else {
 			return $item;
@@ -1810,7 +1832,7 @@ class Api
 		}
 	}
 
-	public function getRecordsDownload($params)
+	public function getRecordsDownload($params, $downloadFile = false)
 	{
 		$patternId = '/id|num|code|siren/i';
 		$patternRefine = '/refine./i';
@@ -2019,12 +2041,17 @@ class Api
 
 					$where .= $fieldCoordinates . " not in ('', ',') and ";
 				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
+						if ($key != "insee_com" && $key != "code_insee") {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = urldecode($value);
+							$where .= $key . " in (" . $value . ") and ";
+						}
+						else {
+							$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+						}
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -2151,14 +2178,28 @@ class Api
 			$records = array();
 		}
 
+		if ($downloadFile) {
+			//If the result will be download we create a new temp file to store the data as big export can lead to problem in memory
+			$tempFilePath = tempnam(sys_get_temp_dir(), strftime() . 'export.' . $format);
 
+			$header = chr(239) . chr(187) . chr(191) . $fieldsHeader;
+			file_put_contents($tempFilePath, $header, FILE_APPEND);
+		}
 
+		//For each chunk, we call the database to get the data
 		foreach ($chunk as $_ids) {
+			//Add ids in query
 			$query_params['filters'] = json_encode(array($fieldId => $_ids));
+
+			//Add fields in query
 			if ($reqFields != "") {
 				$query_params['fields'] = $reqFields;
 			}
+
+			//Add format
 			$query_params['records_format'] = $format;
+
+			//Set limit if none exist
 			if (!array_key_exists('limit', $query_params)) {
 				$query_params['limit'] = 100000000;
 			}
@@ -2180,12 +2221,26 @@ class Api
 				$records = array_merge($records, json_decode($result2, true)["result"]["records"]);
 			}
 			else {
-				$records .= json_decode($result2, true)["result"]["records"];
+				$data = json_decode($result2,true)["result"]["records"];
+				if ($downloadFile) {
+					$data = preg_replace('/,(?![^"]*",)/i', ';', $data);
+					file_put_contents($tempFilePath, $data, FILE_APPEND);
+				}
+				else {
+					$records .= $data;
+				}
 			}
 		}
+		$chunk = null;
 		if ($format == "objects") {
 			$data_array = Export::getExport($globalFormat, $fieldGeometries, $fieldCoordinates, $records, $query_params, $ids);
+			
+			$records = null;
+			$ids = null;
 			return json_encode($data_array);
+		}
+		else if ($downloadFile) {
+			return $tempFilePath;
 		}
 		else {
 			//We use to export the data with ; as separator, now we came back to , as separator
@@ -2205,11 +2260,14 @@ class Api
 		return $response;
 	}
 
-	public function callDatastoreApiDownloadFile($params)
-	{
+	public function callDatastoreApiResourceRecords($params) {
+		return $this->callDatastoreApiDownloadFile($params, false);
+	}
 
+	public function callDatastoreApiDownloadFile($params, $download = true) {
 		$query_params = $this->proper_parse_str($params);
 		$format = $query_params['format'];
+		$resourceId = $query_params['resource_id'];
 
 
 		//$fields = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
@@ -2260,10 +2318,14 @@ class Api
 				header('Content-Disposition:attachment; filename=' . $filename . '.xlsx');
 			} else if ($format == "json") {
 				header('Content-Type:application/json');
-				header('Content-Disposition:attachment; filename=' . $filename . '.json');
+				if ($download) {
+					header('Content-Disposition:attachment; filename=' . $filename . '.json');
+				}
 			} else if ($format == "geojson") {
 				header('Content-Type:application/vnd.geo+json');
-				header('Content-Disposition:attachment; filename=' . $filename . '.geojson');
+				if ($download) {
+					header('Content-Disposition:attachment; filename=' . $filename . '.geojson');
+				}
 			} else if ($format == "shp") {
 				header('Content-Type:application/zip');
 				header('Content-Disposition:attachment; filename=' . $filename . '.zip');
@@ -2271,26 +2333,91 @@ class Api
 				header('Content-Type:application/vnd.google-earth.kml+xml');
 				header('Content-Disposition:attachment; filename=' . $filename . '.kml');
 			} else {
+				$params = $params . "&format=json";
 				header('Content-Type:application/json');
-				header('Content-Disposition:attachment; filename=' . $filename . '.json');
+				if ($download) {
+					header('Content-Disposition:attachment; filename=' . $filename . '.json');
+				}
 			}
 
-			$result = $this->getRecordsDownload($params . "&fields=" . $reqFields);
+			// if the query has no refine
+			$hasRefine = false;
+			$patternRefine = '/refine./i';
+			foreach($query_params as $key => $value) {
+				if (preg_match($patternRefine, $key)) {
+					$hasRefine = true;
+				}
+			}
+			if (!$hasRefine) {
+				//First we check if the file has been generated or exist already
+				$resource = $this->getResource($resourceId);
+				$resource = json_decode($resource, true);
+				$datasetId = $resource['result']['package_id'];
 
+				$dataset = $this->getDataset($datasetId);
+				$dataset = json_decode($dataset, true);
+				$extras = $dataset['result']['extras'];
 
-			if ($format == "csv" || $format == "json" || $format == "geojson") {
+				$keyFormat = null;
+				if (strcasecmp($format, 'CSV') == 0) {
+					$keyFormat = "file_csv";
+				}
+				else if (strcasecmp($format, 'XLSX') == 0 || strcasecmp($format, 'XLS') == 0) {
+					$keyFormat = "file_xlsx";
+				}
+				else if (strcasecmp($format, 'GEOJSON') == 0) {
+					$keyFormat = "file_geojson";
+				}
+				else if (strcasecmp($format, 'JSON') == 0) {
+					$keyFormat = "file_json";
+				}
+				else if (strcasecmp($format, 'KML') == 0) {
+					$keyFormat = "file_kml";
+				}
+				else if (strcasecmp($format, 'SHP') == 0) {
+					$keyFormat = "file_shp";
+				}
+
+				$fileToDownload = null;
+				if ($keyFormat != null && $extras != null && count($extras) > 0) {
+					for ($index = 0; $index < count($extras); $index++) {
+						// If file_json, we check if geojson exist
+						if ($keyFormat == "file_json" && $extras[$index]['key'] == 'file_geojson') {
+							$fileToDownload = $extras[$index]['value'];
+						}
+						// If file_json and key is json, we set the file if it is not already defined with a geojson
+						else if ($keyFormat == "file_json" && $extras[$index]['key'] == "file_json" && $fileToDownload == null) {
+							$fileToDownload = $extras[$index]['value'];
+						}
+						else if ($extras[$index]['key'] == $keyFormat) {
+							$fileToDownload = $extras[$index]['value'];
+						}
+					}
+				}
+
+				if ($fileToDownload != null) {
+					Logger::logMessage("Existing file found, we redirect the user to " . $fileToDownload);
+
+					header("Location: " . $fileToDownload);
+					die();
+				}
+			}
+
+			$result = $this->getRecordsDownload($params . "&fields=" . $reqFields, true);
+			if ($format == "json" || $format == "geojson") {
 				echo $result;
+			}
+			else if ($format == "csv") {
+				header('Content-Length: ' . filesize($result));
+				readfile($result);
 			} else if ($format == "xls") {
-				//We create a tmp file in which we write the result and an output file to convert
-				$pathInput = tempnam(sys_get_temp_dir(), 'input_convert_geo_file_');
-				$fileInput = fopen($pathInput, 'w');
-				fwrite($fileInput, $result);
-				fclose($fileInput);
-
 				//We rename the file because PhpSpreadsheet does not support conversion without
-				rename($pathInput, $pathInput .= '.csv');
+				rename($result, $result .= '.csv');
+
+				$pathOutput = $this->generateXLSX($result, sys_get_temp_dir());
 
 				$pathOutput = tempnam(sys_get_temp_dir(), 'output_convert_geo_file_');
+				
 
 				$reader = ReaderEntityFactory::createCSVReader();
 				// $reader->setFieldDelimiter(';');
@@ -2299,7 +2426,7 @@ class Api
 
 				$writer = WriterEntityFactory::createXLSXWriter();
 
-				$reader->open($pathInput);
+				$reader->open($result);
 				$writer->openToFile($pathOutput); // write data to a file or to a PHP stream
 
 				foreach ($reader->getSheetIterator() as $sheet) {
@@ -2536,7 +2663,7 @@ class Api
 
 		$visu['map_tooltip_html'] = $this->getMapTooltip(false, null);
 		$visu['image_tooltip_html_enabled'] = false;
-		$visu['map_marker_color'] = "#0e7ce3"; //"#df0ee3";
+		$visu['map_marker_color'] = "#df0ee3"; // "#0e7ce3"; //"#df0ee3";
 
 		/*if($result['result']['name'] == 'observatoire_2g_3g_4g' || $result['result']['name'] == 'observatoire-2g'){
 			$visu['map_tooltip_html_enabled'] = true; //true si page d'accueil, false sinon
@@ -3199,12 +3326,17 @@ class Api
 			if (!empty($filters_init)) {
 				$where = " where ";
 				foreach ($filters_init as $key => $value) {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
+						if ($key != "insee_com" && $key != "code_insee") {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = urldecode($value);
+							$where .= $key . " in (" . $value . ") and ";
+						}
+						else {
+							$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+						}
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -3983,9 +4115,14 @@ class Api
 					if (($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
+						if ($key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = urldecode($value);
+							$where .= $key . " in (" . $value . ") and ";
+						}
+						else {
+							$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+						}
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -4032,11 +4169,13 @@ class Api
 		}
 		$req['sql'] = $sql;
 
+		// Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $sql);
+
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 
-		Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
+		// Logger::logMessage("TRM - SQL getDatastoreRecord_v2 : " . $callUrl);
 
 		//echo $callUrl . "\r\n";
 		$curl = curl_init($callUrl);
@@ -4551,12 +4690,17 @@ class Api
 					//polygon(path '((0,0),(1,1),(2,0))')
 					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
 				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
+					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee" && $key != "sta_nm_dpt") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
+						if ($key != "insee_com" && $key != "code_insee") {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = urldecode($value);
+							$where .= $key . " in (" . $value . ") and ";
+						}
+						else {
+							$where .= $key . " in (" . implode(',', array_map(array($this, 'quotesStringArrayValue'), $value)) . ") and ";
+						}
 					} else {
 						$value = urldecode($value);
 						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
@@ -5417,6 +5561,278 @@ class Api
 		return $response;
 	}
 
+	// You need to set CKAN Api KEY and D4C URL for this function to work
+	// drush cset ckan_admin.organisationForm clef 'MY_KEY'
+	// drush cset ckan_admin.organisationForm d4c 'MY_KEY'
+	function callGenerateDownloadFiles($params) {
+		$query_params = $this->proper_parse_str($params);
+		$datasetId = $query_params["datasetId"];
+
+		//TEST TO REMOVE
+		// $result = array();
+		// $result["status"] = "success";
+		// $result["message"] = $this->dataFolder;
+		// $result["message3"] = $this->urlDataFolder;
+		// $result["message4"] = $this->d4cUrl;
+
+		// $response = new Response();
+		// $response->setContent(json_encode($result));
+		// $response->headers->set('Content-Type', 'application/json');
+
+		// return $response;
+		//END TEST
+
+		try {
+			$now = date("YmdHis");
+			$uniqiD = uniqid();
+
+			$hasCSV = false;
+			$nameCSV = null;
+			$idCSV = null;
+			$urlCSV = null;
+
+			// TODO: Deactivated for now, we set hasXLSX to true even if the file doesn't exist
+			$hasXLSX = true;
+			$urlXLSX = null;
+
+			$hasJSON = false;
+			$urlJSON = null;
+
+			$hasGEOJSON = false;
+			$urlGEOJSON = null;
+
+			$hasKML = false;
+			$urlKML = null;
+
+			$hasSHP = false;
+			$urlSHP = null;
+
+			// Getting dataset and checking if resource file already exist
+			$dataset = $this->getDataset($datasetId);
+			$dataset = json_decode($dataset, true);
+			$dataset = $dataset['result'];
+
+			// Going through resources to see if the files already exists
+			$resources = $dataset['resources'];
+			foreach ($resources as $resource) {
+				$name = $resource['name'];
+				$format = $resource['format'];
+				$resourceId = $resource['id'];
+				$url = $resource['url'];
+
+				if (strcasecmp($format, 'CSV') == 0) {
+					$hasCSV = true;
+					$nameCSV = $name;
+					$idCSV = $resourceId;
+					$urlCSV = $url;
+				}
+				else if (strcasecmp($format, 'XLSX') == 0 || strcasecmp($format, 'XLS') == 0) {
+					$hasXLSX = true;
+					$urlXLSX = $url;
+				}
+				// We check if it is a geojson in format or in the name
+				else if (strcasecmp($format, 'GEOJSON') == 0 || $this->str_contains($name, 'geojson') == 0) {
+					$hasGEOJSON = true;
+					$urlGEOJSON = $url;
+				}
+				else if (strcasecmp($format, 'JSON') == 0) {
+					$hasJSON = true;
+					$urlJSON = $url;
+				}
+				else if (strcasecmp($format, 'KML') == 0) {
+					$hasKML = true;
+					$urlKML = $url;
+				}
+				else if (strcasecmp($format, 'SHP') == 0) {
+					$hasSHP = true;
+					$urlSHP = $url;
+				}
+			}
+
+			Logger::logMessage("We generate CSV for resource " . $idCSV);
+
+			// We generate a CSV from the data because the date format does not fit ANFR and need to be yyyy-mm-dd
+			$params = 'format=csv&use_labels_for_header=true&resource_id=' . $idCSV;
+			$generatedUrlCSV = $this->getRecordsDownload($params, true);
+
+			// Manage CSV - We write the file in data folder to use it
+			$filenameCSV = $now . '_' . $nameCSV;
+			$filePathCSV = $this->dataFolder . $filenameCSV;
+			rename($generatedUrlCSV, $filePathCSV);
+
+			$urlCSV = $this->d4cUrl . $this->urlDataFolder . $filenameCSV;
+
+			Logger::logMessage("TRM - filePathCSV = " . $filePathCSV . " and generatedUrlCSV = " . $generatedUrlCSV . " and urlCSV = " . $urlCSV);
+
+			Logger::logMessage("CSV has been generated at " . $urlCSV);
+
+			// Generate XLSX
+			if (!$hasXLSX) {
+				Logger::logMessage("We generate XLSX from CSV file");
+
+				$fileXLSX = $this->generateXLSX($filePathCSV, $this->dataFolder);
+				$filenameXLSX = $now . "_" . $uniqiD . ".xlsx";
+				rename($fileXLSX, $this->dataFolder . $filenameXLSX);
+
+				$urlXLSX = $this->d4cUrl . "/" . $this->urlDataFolder . $filenameXLSX;
+
+				Logger::logMessage("XLSX has been generated at " . $urlXLSX);
+			}
+
+			// TODO: Generate SHP and KML file (SHP has a 50k limit)
+
+			// We reinit variable to define extras
+			$hasCSV = false;
+			$hasXLSX = false;
+			$hasJSON = false;
+			$hasGEOJSON = false;
+			$hasKML = false;
+			$hasSHP = false;
+
+			$keyCSV = "file_csv";
+			$keyXLSX = "file_xlsx";
+			$keyJSON = "file_json";
+			$keyGEOJSON = "file_geojson";
+			$keyKML = "file_kml";
+			$keySHP = "file_shp";
+
+			// Add files to dataset's extras
+			$extras = $dataset['extras'];
+			if ($extras == null) {
+				$extras = array();
+			}
+
+			if ($extras != null && count($extras) > 0) {
+				for ($index = 0; $index < count($extras); $index++) {
+					if ($extras[$index]['key'] == $keyCSV) {
+						$hasCSV = true;
+						$extras[$index]['value'] = $urlCSV;
+					}
+
+					if ($extras[$index]['key'] == $keyXLSX) {
+						$hasXLSX = true;
+						$extras[$index]['value'] = $urlXLSX;
+					}
+
+					if ($extras[$index]['key'] == $keyJSON) {
+						$hasJSON = true;
+						$extras[$index]['value'] = $urlJSON;
+					}
+
+					if ($extras[$index]['key'] == $keyGEOJSON) {
+						$hasGEOJSON = true;
+						$extras[$index]['value'] = $urlGEOJSON;
+					}
+
+					if ($extras[$index]['key'] == $keyKML) {
+						$hasKML = true;
+						$extras[$index]['value'] = $urlKML;
+					}
+
+					if ($extras[$index]['key'] == $keySHP) {
+						$hasSHP = true;
+						$extras[$index]['value'] = $urlSHP;
+					}
+				}
+			}
+
+			if ($hasCSV == false) {
+				$extras[count($extras)]['key'] = $keyCSV;
+				$extras[(count($extras) - 1)]['value'] = $urlCSV;
+			}
+
+			if ($hasXLSX == false) {
+				$extras[count($extras)]['key'] = $keyXLSX;
+				$extras[(count($extras) - 1)]['value'] = $urlXLSX;
+			}
+
+			if ($hasJSON == false) {
+				$extras[count($extras)]['key'] = $keyJSON;
+				$extras[(count($extras) - 1)]['value'] = $urlJSON;
+			}
+
+			if ($hasGEOJSON == false) {
+				$extras[count($extras)]['key'] = $keyGEOJSON;
+				$extras[(count($extras) - 1)]['value'] = $urlGEOJSON;
+			}
+
+			if ($hasKML == false) {
+				$extras[count($extras)]['key'] = $keyKML;
+				$extras[(count($extras) - 1)]['value'] = $urlKML;
+			}
+
+			if ($hasSHP == false) {
+				$extras[count($extras)]['key'] = $keySHP;
+				$extras[(count($extras) - 1)]['value'] = $urlSHP;
+			}
+
+			$dataset['extras'] = $extras;
+
+			$callUrl = $this->urlCkan . "api/action/package_update";
+			$return = Query::putSolrRequest($callUrl, $dataset, 'POST');
+			
+			$result = array();
+			$result["status"] = "success";
+			$result["message"] = $return;
+		} catch (\Exception $e) {
+			Logger::logMessage($e->getMessage());
+			$data_array = array();
+			$data_array["message"] = $e->getMessage();
+			
+			$result["result"] = $data_array;
+			$result["status"] = "error";
+		}
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+
+		return $response;
+	}
+
+	function getDataset($datasetId) {
+		$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+		return $result;
+	}
+
+	function getResource($resourceId) {
+		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceId;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getSimpleOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+		return $result;
+	}
+
+	function generateXLSX($inputPath, $outputFolder) {
+		$outputPath = tempnam($outputFolder, 'output_convert_geo_file_');
+
+		$reader = ReaderEntityFactory::createCSVReader();
+		$writer = WriterEntityFactory::createXLSXWriter();
+
+		$reader->open($inputPath);
+		$writer->openToFile($outputPath); // write data to a file or to a PHP stream
+
+		foreach ($reader->getSheetIterator() as $sheet) {
+			foreach ($sheet->getRowIterator() as $row) {
+				$writer->addRow($row);
+			}
+		}
+
+		$reader->close();
+		$writer->close();
+
+		return $outputPath;
+	}
+
+	function str_contains(string $haystack, string $needle): bool {
+		return '' === $needle || false !== strpos($haystack, $needle);
+	}
+
 
 	function callVanillaUrlReports()
 	{
@@ -5743,16 +6159,6 @@ class Api
 		$response->setContent(json_encode($res->result->url));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-	}
-
-	function getResource($resourceId)
-	{
-		$callUrl =  $this->urlCkan . "api/action/resource_show?id=" . $resourceId;
-		$curl = curl_init($callUrl);
-		curl_setopt_array($curl, $this->getSimpleOptions());
-		$result = curl_exec($curl);
-		curl_close($curl);
-		return $result;
 	}
 
 
@@ -6285,27 +6691,33 @@ class Api
 			$jobValue = json_decode($task["value"], true);
 			$jobId = $jobValue["job_id"];
 
-			$callUrl = $this->urlDatapusher . 'job/' . $jobId;
-			Logger::logMessage("Getting datapusher infos '" . $callUrl . "'");
+			if (isset($jobId)) {
+				$callUrl = $this->urlDatapusher . 'job/' . $jobId;
+				Logger::logMessage("Getting datapusher infos '" . $callUrl . "'");
 
-			$cle = $this->config->ckan->datapusher_key;
-			$url = $this->config->ckan->url;
+				$cle = $this->config->ckan->datapusher_key;
+				$url = $this->config->ckan->url;
 
-			$options = array(
-				CURLOPT_RETURNTRANSFER => true,
-				CURLOPT_CUSTOMREQUEST => 'GET',
-				// CURLOPT_POSTFIELDS => $jsonData,
-				CURLOPT_HTTPHEADER => array(
-					'Authorization: ' . $cle
-				)
-			);
+				$options = array(
+					CURLOPT_RETURNTRANSFER => true,
+					CURLOPT_CUSTOMREQUEST => 'GET',
+					// CURLOPT_POSTFIELDS => $jsonData,
+					CURLOPT_HTTPHEADER => array(
+						'Authorization: ' . $cle
+					)
+				);
 
-			$curl = curl_init($callUrl);
-			curl_setopt_array($curl, $options);
-			$result = curl_exec($curl);
-			curl_close($curl);
+				$curl = curl_init($callUrl);
+				curl_setopt_array($curl, $options);
+				$result = curl_exec($curl);
+				curl_close($curl);
 
-			return $result;
+				return $result;
+			}
+
+			$result = array();
+			$result["status"] = "pending";
+			return json_encode($result);
 		}
 
 		throw new \Exception("Impossible de trouver une tâche associée à la ressource '" . $resourceId . "'");
@@ -8182,6 +8594,7 @@ class Api
 		$encoding = $_POST['encoding'];
 		$unzipZip = $_POST['unzip_zip'] == "true" ? true : false;
 		$manageFile = $_POST['manage_file'] == "true" ? true : false;
+		$createCsv = $_POST['create_csv'] == "true" ? true : false;
 
 		//Options for update
 		$resourceId = $_POST['selected_resource_id'];
@@ -8196,6 +8609,7 @@ class Api
 		Logger::logMessage("Unzip ZIP: " . $unzipZip);
 		Logger::logMessage("Manage file: " . $manageFile);
 		Logger::logMessage("Resource ID: " . $resourceId);
+		Logger::logMessage("Create CSV: " . $createCsv);
 
 		//We check if we upload a resource by URL or a FILE
 		if ($resourceUrl) {
@@ -8207,17 +8621,18 @@ class Api
 
 						if ($manageFileResult["status"] == "error") {
 							throw new \Exception($manageFileResult["message"]);
-						} else if ($manageFileResult["status"] == "success") {
-
+						}
+						else if ($manageFileResult["status"] == "success") {
 							$resourceUrl = $manageFileResult["url"];
+							$datapusherCheckTime = 0;
 							//Managing resources
-							$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+							$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName, true, $datapusherCheckTime, $createCsv);
 
 							//We update the visualisation's icons
 							$this->calculateVisualisations($datasetId);
 						}
 					} else {
-						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", $description, false, $format);
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, false, null, $resourceUrl, $resourceName, "", $description, false, $format, null, false);
 						$results[] = $resultUpload;
 					}
 
@@ -8229,16 +8644,18 @@ class Api
 
 						if ($manageFileResult["status"] == "error") {
 							throw new \Exception($manageFileResult["message"]);
-						} else if ($manageFileResult["status"] == "success") {
+						}
+						else if ($manageFileResult["status"] == "success") {
 							$resourceUrl = $manageFileResult["url"];
+							$datapusherCheckTime = 0;
 							//Managing resources
-							$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName);
+							$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, $resourceName, true, $datapusherCheckTime, $createCsv);
 
 							//We update the visualisation's icons
 							$this->calculateVisualisations($datasetId);
 						}
 					} else {
-						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
+						$resultUpload = $resourceManager->uploadResourceToCKAN($this, $datasetId, true, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format, null, false);
 						$results[] = $resultUpload;
 					}
 
@@ -8264,10 +8681,10 @@ class Api
 				try {
 					if (!$resourceId) {
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, false, null, $resourceUrl, $description, $encoding, $unzipZip, false, true, null, true, false, $createCsv);
 					} else {
 						//Managing resources
-						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
+						$results = $resourceManager->manageFileWithPath($datasetId, null, true, $resourceId, $resourceUrl, $description, $encoding, $unzipZip, false, true, null, true, false, $createCsv);
 					}
 
 					//We update the visualisation's icons

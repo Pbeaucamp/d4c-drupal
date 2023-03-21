@@ -19,6 +19,7 @@ class ResourceManager {
 	 * In sec
 	 */
 	const DATAPUSHER_WAIT_TIME = 120;
+	const DATAPUSHER_WAIT_TIME_BY_API = 1800;
 
 	function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
@@ -141,7 +142,8 @@ class ResourceManager {
 		return $resourceUrl;
 	}
 
-	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, $customName = null, $moveFileToDatasetFolder = true) {
+	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, 
+			$customName = null, $moveFileToDatasetFolder = true, $checkDatapusherTime = true, $createCSV = true) {
 		$results = array();
 
 		//Managing file (filepath and filename)
@@ -198,6 +200,7 @@ class ResourceManager {
 				//Cleaning column name to insert in CKAN and D4C
 				if (($handle = fopen($csvFile, "r")) !== FALSE) {
 
+					// TODO: Name should be random
 					$tmpFile = '/tmp/test.csv';
 					$fp = fopen($tmpFile, 'w');
 
@@ -302,7 +305,7 @@ class ResourceManager {
 
 
 			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName, $checkDatapusherTime);
 			$results[] = $result;
 		}
 		else if ($type == 'xls' || $type == 'xlsx') {
@@ -325,7 +328,7 @@ class ResourceManager {
 				$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 				
 				// We upload the excel file and we convert it to insert data if we can
-				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true);
+				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true, $checkDatapusherTime);
 				$results = array_merge($results, $result);
 
 				$writer = new Csv($spreadsheet);
@@ -352,13 +355,13 @@ class ResourceManager {
 					$writer->save($csvpath);
 
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-					$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage, true, $customName);
+					$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, false, $fromPackage, true, $customName, true, $checkDatapusherTime);
 					$results = array_merge($results, $result);
 				}
 			}
 			else {
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'SUCCESS', 'Traitement du fichier ' . $fileName . ' terminé.');
-				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName);
+				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, true, null, $customName, $checkDatapusherTime);
 				$results[] = $result;
 			}
 		}
@@ -409,19 +412,23 @@ class ResourceManager {
 				}  
 			}
 
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName, $checkDatapusherTime);
 			$results[] = $result;
 
 			if ($unzipZip) {
-				$result = $this->manageZip($datasetId, $generateColumns, false, $resourceId, $filePath, $encoding);
+				$result = $this->manageZip($datasetId, $generateColumns, false, $resourceId, $filePath, $encoding, $checkDatapusherTime);
 				$results = array_merge($results, $result);
 			}
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp' || $type == 'gml') {
 			// We upload the geojson file as resource except if it is a shp or kml file
 			if ($type != 'kml' && $type != 'shp' && $type != 'gml') {
-				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
+				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName, $checkDatapusherTime);
 				$results[] = $result;
+			}
+
+			if (!$createCSV) {
+				return $results;
 			}
 
 			//If we update the geojson, we need to get the previous CSV resource to update it
@@ -460,7 +467,7 @@ class ResourceManager {
 			if ($csvGenerated) {
 				$resourceUrl = $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 				
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName, true, $checkDatapusherTime);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
 				
@@ -477,7 +484,7 @@ class ResourceManager {
 		}
 		else {
 			// We upload the file as resource
-			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName);
+			$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName, $checkDatapusherTime);
 			$results[] = $result;
 			// $this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', 'Une erreur est survenue avec le fichier ' . $fileName . '.');
 			// Logger::logMessage("We do not process the file '" . $filePath . "'");
@@ -846,7 +853,7 @@ class ResourceManager {
 			//We upload the ressources
 			$results = array();
 			$results['datasetId'] = $datasetId;
-			$results['resources'] = $this->manageFiles($datasetId, false, false, null, $directoryPath, 'UTF-8', true);
+			$results['resources'] = $this->manageFiles($datasetId, false, false, null, $directoryPath, 'UTF-8', true, true);
 
 			// We reupload the dictionnary
 			if ($fields != null) {
@@ -889,7 +896,7 @@ class ResourceManager {
 		}
 	}
 	
-	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding) {
+	function manageZip($datasetId, $generateColumns, $isUpdate, $resourceId, $filePath, $encoding, $checkDatapusherTime = true) {
 		$zipPath = self::ROOT . substr($filePath, 1);
 
 		Logger::logMessage("Manage zip file with path '" . $zipPath . "'");
@@ -912,14 +919,14 @@ class ResourceManager {
 			$zip->extractTo($directoryPath);
 			$zip->close();
 
-			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, false);
+			return $this->manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, false, $checkDatapusherTime);
 		}
 		else {
 			throw new \Exception('Le fichier ne peut pas être extrait.');
 		}
 	}
 
-	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, $fromPackage) {
+	function manageFiles($datasetId, $generateColumns, $isUpdate, $resourceId, $directoryPath, $encoding, $fromPackage, $checkDatapusherTime = true) {
 		Logger::logMessage("Managing files in '" . $directoryPath . "'");
 		$results = array();
 
@@ -1020,7 +1027,7 @@ class ResourceManager {
 				}
 
 				//We don't move the file if it is a shape
-				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape, $checkDatapusherTime);
 				$results = array_merge($results, $result);
 			}
 
@@ -1202,9 +1209,9 @@ class ResourceManager {
 		return $results;
 	}
 
-	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null, $customName = null) {
+	function uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, $pushToDataspusher, $format = null, $customName = null, $checkDatapusherTime = true) {
 		
-		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher");
+		Logger::logMessage(($isUpdate ? "Updating " : "Uploading " ) . " resource '" . $fileName . "' on CKAN and monitoring the datapusher for the dataset '" . $datasetId . "'");
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'PENDING', 'Ajout du fichier \'' .  $fileName . '\' dans CKAN');
 
 		$resourceName = $customName != null ? $customName : $fileName;
@@ -1222,11 +1229,13 @@ class ResourceManager {
 				"description" => $description,
 				//TODO: Add format
 				// "format" => "csv",
-				"last_modified" => date('Y-m-d\TH:i:s'),
+				// get utc time
+				"last_modified" => gmdate('Y-m-d\TH:i:s'),
 				"clear_upload" => true,
 				"uuid" => uniqid()
 			];
 
+			// Logger::logMessage("Update request for resource: " . json_encode($resource));
 			Logger::logMessage("Keeping dictionnary backup.");
 			// Get dictionnary for dataset
 			$result = $api->getAllFieldsForTableParam($resourceId);
@@ -1250,7 +1259,7 @@ class ResourceManager {
 			if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {
 				// We monitore the datapusher
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
-				$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
+				$datapusherResult = $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher, $checkDatapusherTime);
 
 				if ($datapusherResult[$resourceId]['status'] == 'error') {
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'ERROR', "Impossible d'ajouter les données du fichier \'' .  $fileName . '\' dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
@@ -1310,7 +1319,7 @@ class ResourceManager {
 					// We monitore the datapusher
 					$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'PENDING', 'Ajout des données du fichier \'' .  $fileName . '\' dans le magasin de données.');
 					
-					$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher);
+					$datapusherResult =  $this->manageDatapusher($api, null, $resourceId, $resourceUrl, $fileName, true, $pushToDataspusher, $checkDatapusherTime);
 
 					if ($datapusherResult[$resourceId]['status'] == 'error') {
 						$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_DATASTORE', 'ERROR', "Impossible d'ajouter les données du fichier \'' .  $fileName . '\' dans le magasin de données (" . $datapusherResult[$resourceId]['message'] . ")");
@@ -1327,10 +1336,12 @@ class ResourceManager {
 				}
 
 				return $datapusherResult;
-			} 
+			}
 			else {
-				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'ERROR', "Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . json_encode($return->error->message) . ")");
-				throw new \Exception("Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . json_encode($return->error->message) . ")");
+				$errorMessage = isset($return->error->message) ? json_encode($return->error->message) : json_encode($return->error);
+
+				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'ERROR', "Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . $errorMessage . ")");
+				throw new \Exception("Impossible d'ajouter le fichier de resource '" . $fileName . "' (" . $errorMessage . ")");
 			}
 		}
 	}
@@ -1340,22 +1351,25 @@ class ResourceManager {
 	 * If checkDatapusher is false, this means that the file is not push to the datastore, but we still need the status
 	 * 
 	 * According to the status, we do different action
-	 * 	> Pending : We wait for 5 secondes and we check the status again. If the processus take longer than the constant DATAPUSHER_WAIT_TIME, we return the status 'pending'
+	 * 	> Pending : We wait for 5 secondes and we check the status again. If the processus take longer than the constant DATAPUSHER_WAIT_TIME or DATAPUSHER_WAIT_TIME_BY_API, we return the status 'pending'
 	 *  > Error : If it is the first try, we try to push the file again in the datastore. If not we return the status 'error' and the associated message.
 	 *  > Success : We return the status 'success'
 	 * 
 	 */
-	function manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher) {
+	function manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $checkTime) {
 		//place this before any script you want to calculate time
 		if ($startTime == null) {
 			$startTime = microtime(true);
 		}
 		$currentTime = microtime(true);
 
-		$result = array();
-
-		if ($startTime + self::DATAPUSHER_WAIT_TIME < $currentTime) {
-			Logger::logMessage("The datapusher has been running for more than " . self::DATAPUSHER_WAIT_TIME . " sec. We inform the user that the status is pending.");
+		Logger::logMessage("Check time value is " . $checkTime);
+		if ($checkTime && $startTime + self::DATAPUSHER_WAIT_TIME < $currentTime) {
+			Logger::logMessage("The datapusher has been running for more than " . self::DATAPUSHER_WAIT_TIME . " sec. We return the status as pending.");
+			return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'pending', $resourceUrl, null);
+		}
+		else if ($startTime + self::DATAPUSHER_WAIT_TIME_BY_API < $currentTime) {
+			Logger::logMessage("The datapusher has been running for more than " . self::DATAPUSHER_WAIT_TIME_BY_API . " sec. We return the status as pending.");
 			return $this->buildResponse($resourceId, 'DATAPUSHER', $fileName, 'pending', $resourceUrl, null);
 		}
 
@@ -1366,13 +1380,13 @@ class ResourceManager {
 	
 			if ($datapusherStatus->status == 'pending') {
 				sleep(5);
-				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher);
+				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $checkTime);
 			}
 			else if ($datapusherStatus->status == 'error') {
 				if ($firstTime) {
 					Logger::logMessage("The datapusher had an error, we try to push the file again.");
 					$api->callDatapusher($resourceId);
-					return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, false, $pushToDataspusher);
+					return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, false, $pushToDataspusher, $checkTime);
 				}
 				else {
 					Logger::logMessage("The datapusher had an error again (" . json_encode($datapusherStatus) . ").");
@@ -1386,7 +1400,7 @@ class ResourceManager {
 			else if ($datapusherStatus->status == null) {
 				Logger::logMessage("An error occured during status's checking, we try to check the status again: " . json_encode($datapusherStatus));
 				sleep(5);
-				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher);
+				return $this->manageDatapusher($api, $startTime, $resourceId, $resourceUrl, $fileName, $firstTime, $pushToDataspusher, $checkTime);
 			}
 			else {
 				throw new \Exception("Le datapusher a renvoyé un status inconnu '" . json_encode($datapusherStatus->status) . "', veuillez relancer l'insertion dans le datapusher.");

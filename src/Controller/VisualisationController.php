@@ -337,6 +337,11 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildFilters($datasetId, $dataset, $selectedResourceId) {
+		$customTooltip = '';
+		if ($datasetId == 'observatoire_2g_3g_4g' || $datasetId == 'dd11fac6-4531-4a27-9c8c-a3a9e4ec2107') {
+			$customTooltip = '<div style="color: #313131;font-size: 0.85em;">	<p style="margin-bottom:6px;">Le statut "approuvé" concerne l’ensemble des systèmes.</p>	<p style="margin-bottom:6px;">Le statut "en service" concerne les systèmes 2G/3G/4G.</p>	<p style="margin-bottom:6px;">Le statut "techniquement opérationnel" concerne exclusivement les systèmes 5G.</p></div><br/><div style="color:#919191;font-size:0.65em; ">	<p >Un système correspond à l’association d’une technologie de radiocommunication (2G-GSM, 3G-UMTS, 4G-LTE, 5G-NR) et d’une bande de fréquences utilisées sur une antenne relais.</p></div>';
+		}
+
 		return '
 			<div class="d4c-filters-summary" ng-show="canDisplayFilters()">
 				<div class="d4c-filters-summary__count">
@@ -368,6 +373,8 @@ class VisualisationController extends ControllerBase {
 				</ul>
 
 				<d4c-facets context="ctx"></d4c-facets>
+
+				' . $customTooltip . '
 			</div>';
 	}
 
