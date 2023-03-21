@@ -7,6 +7,7 @@ input=$3
 projection=$4
 shapeName=$5
 
+
 if [ -z "$projection" ]
 then
     projection="EPSG:4326"
