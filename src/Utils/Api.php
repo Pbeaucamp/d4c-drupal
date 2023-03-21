@@ -934,15 +934,20 @@ class Api
 				$allowedOrganizations = $this->getObservatoryOrganisations();
 			}
 
-			if ($applySecurity) {
-				foreach ($allowedOrganizations as $org) {
-					if ($query_params["fq"] == null) {
-						$query_params["fq"] .= "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
-					else {
-						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
+			if ($applySecurity && $allowedOrganizations != null && sizeof($allowedOrganizations) > 0) {
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "(";
 				}
+				else {
+					$query_params["fq"] .= " AND (";
+				}
+				$isFirst = true;
+				foreach ($allowedOrganizations as $org) {
+					$query_params["fq"] .= $isFirst ? "" : " OR ";
+					$query_params["fq"] .= "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
+					$isFirst = false;
+				}
+				$query_params["fq"] .= ")";
 			}
 		}
 		else if ($this->isObservatory()) {
@@ -8291,6 +8296,9 @@ class Api
 	function manageFileByUrl($resourceManager, $resourceName, $resourceFormat, $resourceUrl)
 	{
 		Logger::logMessage("Managing file received from POST with URL " . $resourceUrl);
+		//Decode the URL
+		$resourceUrl = urldecode($resourceUrl);
+
 		$data_array = array();
 
 		$fileName = basename($resourceUrl);
@@ -8318,6 +8326,7 @@ class Api
 			return $data_array;
 		}
 
+		Logger::logMessage("Downloading file from " . $encodingUrl . " to " . $uploadfile . "");
 
 		if (($data = @file_put_contents($uploadfile, file_get_contents($encodingUrl))) === false) {
 			$error = error_get_last();

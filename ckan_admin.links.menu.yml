@@ -1,5 +1,5 @@
 hello.demo:
-  title: 'Explorer les connaissances'
+  title: 'Les données'
   description: 'Recherche des connaissances'
   parent: main
   menu_name: main
