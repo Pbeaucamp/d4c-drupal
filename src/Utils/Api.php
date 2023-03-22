@@ -1777,18 +1777,24 @@ class Api
 		curl_close($curl);
 		$result = json_decode($result, true);
 
+		$fields = $result['result']['fields'];
+
 		$res = array();
 		$allFields = array();
+		
+		// Sort fields by poids if not null
+		$sort = array();
 
-		// sort array by poids
-		$fieldArray = array();
-		foreach ($result['result']['fields'] as $key => $row) {
-
-			$fieldArray[$key] = $row["info"]["poids"];
+		$fieldsSize = count($fields);
+		$index = $fieldsSize;
+		foreach ($fields as $key => $value) {
+			$sort['poids'][$key] = isset($value['info']['poids']) && $value['info']['poids'] != "" ? ($value['info']['poids'] + $fieldsSize) : $index;
+			$index--;
 		}
-		array_multisort($fieldArray, SORT_DESC, $result['result']['fields']);
 
-		foreach ($result['result']['fields'] as $value) {
+		array_multisort($sort['poids'], SORT_DESC, $fields);
+
+		foreach ($fields as $value) {
 			$description = $value['info']['notes'];
 			if (preg_match("/<!--\s*table\s*-->/i", $description)) {
 				$res[] =  $value['id'];
