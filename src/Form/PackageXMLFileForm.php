@@ -374,9 +374,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				if ($selectedTypeMap != NULL) {
 					$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
 				}
-				$linkDatasets = "";
-
-				$linkDatasets = $resourceManager->defineLinkDatasets($linkDatasets);
+				
 				$private = 0;
 				if ($private == '1') {
 				$isPrivate = true;

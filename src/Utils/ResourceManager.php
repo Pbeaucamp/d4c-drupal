@@ -1552,17 +1552,6 @@ class ResourceManager {
 		return $analyseDefault;
 	}
 
-	function defineLinkDatasets($linkDatasets) {
-		$linkDatasetsStr = '';
-		foreach ($linkDatasets as $key => &$val) {
-			if ($val[dt] == 1) {
-				$linkDatasetsStr = $linkDatasetsStr . ';' . $key;
-			}
-		}
-		
-		return substr($linkDatasetsStr, 1);
-	}
-
 	function defineTags($tags) {
 		// Changing method to allow space and accent in tags
 

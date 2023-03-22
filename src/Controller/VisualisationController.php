@@ -599,22 +599,30 @@ class VisualisationController extends ControllerBase {
 	/* MANAGE METADATA */
 
 	function buildLinkedDatasets($metadataExtras) {
+		$apiManager = new Api();
 		$links = $this->exportExtras($metadataExtras, 'LinkedDataSet');
 
 		if ($links != null) {
-			$links = explode(";", $links);
+			$links = explode(",", $links);
 
-			$linkedDatasets = null;
+			$linkedDatasets = '';
 			for ($j=0; $j<count($links); $j++) {
-				$link = explode(":", $links[$j]);
+				$datasetId = $links[$j];
+				if ($datasetId == null || $datasetId == '' || $datasetId == 'false') {
+					continue;
+				}
+
+				$dataset = $apiManager->getPackageShow2($datasetId, "", true, false, null, true);
 				
-				if ($link[0] != 'false') {
-					$url = $this->config->client->routing_prefix . '/visualisation?id='. $link[1];
-					$linkedDatasets = $linkedDatasets . '&nbsp<p style="margin: -1.1em 0 -1em;" ><code style="cursor: pointer;" onclick="window.open(`'.$url.'`, `_blank`);">' . $link[0] . '</code></p><br>';
+				if (isset($dataset)) {
+					$datasetName = $dataset['metas']['title'];
+
+					$url = $this->config->client->routing_prefix . '/visualisation?id='. $datasetId;
+					$linkedDatasets .= '<a href="' . $url . '" target="_blank" style="text-decoration: none;"><code>' . $datasetName . '</code></a><br>';
 				}
 			}
 	
-			if ($linkedDatasets != null) {
+			if ($linkedDatasets != null && $linkedDatasets != '') {
 				return $linkedDatasets;
 			}
 		}

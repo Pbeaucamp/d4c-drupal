@@ -474,6 +474,15 @@ class editMetaDataForm extends HelpFormBase {
 			'#attributes' => array('style' => 'width: 50%;'),
 			'#maxlength' => null,
         );
+		
+		// Add field to set linked dataset separated by comma
+		$form['linked_dataset'] = array(
+            '#markup' => '',
+			'#type' => 'textfield',
+			'#title' => $this->t('Saisir les identifiants des jeux de données liés (séparés par une virgule) :'),
+			'#attributes' => array('style' => 'width: 50%;'),
+			'#maxlength' => null,
+		);
         
 		// $form['#suffix'] = '</div>';
         
@@ -742,47 +751,7 @@ class editMetaDataForm extends HelpFormBase {
 		);       
            
 		////////////////CONFIGURATION/////////////////////////////////////// 
-        
-        
-		////////////////Jeux de donnees lies///////////////////////////////////////
 
-		// $form['m5'] = array(
-		// 	'#markup' => '<div id="datasetLies" >',
-    	// ); 
-        
-		// $form['dataset_lies'] = array(
-		// 	'#type' => 'textfield',
-		// 	//'#title' => $this->t('Dataset liés:'),
-		// 	'#attributes' => array('style' => 'width: 50%; display: none;'),
-		// );
-
-		// $form['Dataset_lies_table'] = array(
-		// 	'#type' => 'table',
-		// 	//'#prefix' => '<div id="datasetLies" >',
-		// 	'#header' => array(
-		// 		$this->t('Jeux de données liés'),
-		// 	),
-		// 	'#attributes' => array('style' => 'width: 100%;'),
-		// 	//'#attributes' => array('style' =>'display: none'),
-		// 	//            '#suffix' => '</div>',
-		// );
-
-		// foreach ($dataSet as &$value) {
-		// 	$form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
-		// 		'#prefix' => '<div id="id_row_'.$value[id].'" >',
-		// 		'#type' => 'checkbox',
-		// 		'#title' => $this->t($value[title]),
-		// 		'#suffix' => '</div>',
-
-		// 	);
-		// }
-        
-        
-		// $form['m5_2'] = array(
-		// '#markup' => '</div>',
-		// );
-
-		////////////////Jeux de donnees lies///////////////////////////////////////        
 		$form['valider'] = array(
 			'#type' => 'submit',
 			'#value' => $this->t('Valider'),
@@ -925,8 +894,7 @@ class editMetaDataForm extends HelpFormBase {
 		}
 
 		// Define link dataset
-		$linkDatasets = $form_state->getValue('Dataset_lies_table');
-		$linkDatasets = $resourceManager->defineLinkDatasets($linkDatasets);
+		$linkDatasets = $form_state->getValue('linked_dataset');
 
 		// Define if it is private
 		if ($private == '1') {
