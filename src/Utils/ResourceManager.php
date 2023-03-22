@@ -2402,6 +2402,9 @@ class ResourceManager {
                             'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
 		$str = strtr( $str, $unwanted_array );
 		
+		// Replace bom characters
+		$str = str_replace("\xEF\xBB\xBF", "", $str);
+
 		$str = str_replace("?", "", $str);
 		$str = str_replace("`", "_", $str);
 		$str = str_replace("'", "_", $str);
@@ -2441,6 +2444,7 @@ class ResourceManager {
 
 		//We set the value to 63 characters as it is the limit of the database
 		$str = substr($str, 0, 62);
+
 		return $str;
 	}
 
