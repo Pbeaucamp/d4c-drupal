@@ -134,8 +134,9 @@ class Api
 		$currentUser = \Drupal::currentUser();
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 
+		$callApi = $this->isObservatory();
 		$propertiesHelper = new PropertiesHelper();
-		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD);
+		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD, $callApi);
 
 		$result = array();
 		$result['isUserConnected'] = $isConnected;
@@ -143,7 +144,6 @@ class Api
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
 		$result['messageRgpd'] = $messageRgpd;
-
 		
 		$response = new Response();
 		$response->setContent(json_encode($result));
@@ -2326,7 +2326,10 @@ class Api
 			$resource = $this->getResource($query_params['resource_id'], true);
 			$resourceName = $resource['result']['name'];
 			//We remove the format if present
-			$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			// if format is present, we remove it
+			if (strpos($resourceName, '.') !== false) {
+				$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			}
 			$filename = isset($resourceName) ? $resourceName : $query_params['resource_id'];
 
 			if ($format == "csv") {
@@ -9254,5 +9257,19 @@ class Api
 	function isConnectedUserAdmin() {
 		$current_user = \Drupal::currentUser();
 		return in_array("administrator", $current_user->getRoles());
+	}
+
+	function callProperties($params) {
+		$propertiesHelper = new PropertiesHelper();
+		$property = $propertiesHelper->getProperty($params, false, false);
+
+		$result = array();
+		$result["result"] = $property;
+		$result["status"] = "success";
+		
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		$response->setContent(json_encode($result));
+		return $response;
 	}
 }

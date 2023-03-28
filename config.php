@@ -36,6 +36,8 @@ return (object) array(
 		'client_organisation' => getenv('CLIENT_ORGANISATION'),
 		'master_organisation' => getenv('MASTER_ORGANISATION'),
 		'master_url' => getenv('MASTER_URL'),
+		'master_api_login' => getenv('MASTER_API_LOGIN'),
+		'master_api_password' => getenv('MASTER_API_PASSWORD'),
 		'drupal_root' => getenv('DRUPAL_ROOT'),
 	),
 	'sitesSearch' => array(
