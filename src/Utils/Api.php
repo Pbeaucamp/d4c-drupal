@@ -1996,6 +1996,7 @@ class Api
 
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
+		unset($query_params["resourceId"]);
 		$where = "";
 		$limit  = "";
 		if (!empty($filters_init)) {
@@ -2223,13 +2224,13 @@ class Api
 			$result2 = curl_exec($curl);
 			curl_close($curl);
 
+			$data = json_decode($result2, true)["result"]["records"];
 			if ($format == "objects") {
-				$records = array_merge($records, json_decode($result2, true)["result"]["records"]);
+				$records = array_merge($records, $data);
 			}
 			else {
-				$data = json_decode($result2,true)["result"]["records"];
 				if ($downloadFile) {
-					$data = preg_replace('/,(?![^"]*",)/i', ';', $data);
+					$data = preg_replace('/,(?![^"]*",)/i', ',', $data);
 					file_put_contents($tempFilePath, $data, FILE_APPEND);
 				}
 				else {
@@ -2313,7 +2314,10 @@ class Api
 			$resource = json_decode($resource, true);
 			$resourceName = $resource['result']['name'];
 			//We remove the format if present
-			$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			// if format is present, we remove it
+			if (strpos($resourceName, '.') !== false) {
+				$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			}
 			$filename = isset($resourceName) ? $resourceName : $query_params['resource_id'];
 
 			if ($format == "csv") {
