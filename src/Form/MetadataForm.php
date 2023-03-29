@@ -23,9 +23,9 @@ abstract class MetadataForm extends FormBase {
 		return 'MetadataForm';
 	}
 
-	public function loadDataset($datasetId) {
+	public function loadDataset($datasetId, $applySecurity = true) {
 		$api = new Api();
-		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, true) : null;
+		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, $applySecurity) : null;
 	}
 
 	public function getDatasetIntegration($dataset) {

@@ -3,6 +3,7 @@
 namespace Drupal\ckan_admin\Controller;
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\Logger;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;

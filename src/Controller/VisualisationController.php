@@ -121,6 +121,24 @@ class VisualisationController extends ControllerBase {
 				],
 			);
 			$element['#attached']['library'][] = 'ckan_admin/visu.angular';
+			
+			$noindex = [
+				'#tag' => 'meta',
+				'#attributes' => [
+					'name' => 'robots',
+					'content' => 'noindex',
+				],
+			];
+			$nofollow = [
+				'#tag' => 'meta',
+				'#attributes' => [
+					'name' => 'robots',
+					'content' => 'nofollow',
+				],
+			];
+	
+			$element['page']['#attached']['html_head'][] = [$noindex, 'noindex'];
+			$element['page']['#attached']['html_head'][] = [$nofollow, 'nofollow'];
 			return $element;
 		}
 
@@ -218,6 +236,7 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 		
+		$isPrivate = $dataset["metas"]["private"]  == "true" || $dataset["metas"]["private"]  == "1";
 		$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
 		//Build interface
 		$body = $this->buildBody($api, $host, $dataset, $tab, $pageId, $id, $resourceId, $name, $description, $url, $dateModified, $licence, $keywords, $exports, $metadataExtras, $location, $referer, $isRgpd, $visualization);
@@ -231,7 +250,7 @@ class VisualisationController extends ControllerBase {
 		);
 		$element['#attached']['library'][] = 'ckan_admin/visu.angular';
 
-		if ($isRgpd) {
+		if ($isPrivate || $isRgpd) {
 			$noindex = [
 				'#tag' => 'meta',
 				'#attributes' => [
@@ -543,7 +562,7 @@ class VisualisationController extends ControllerBase {
 		$synthese = $this->buildSynthese($dataset, $metadataExtras, $themes, $keywords);
 
 		//CONTACTS
-		$contacts = $this->buildContacts($metadataExtras);
+		$contacts = $this->buildContacts($loggedIn, $metadataExtras);
 
 		//Linked datasets
 		$linkedDataSets = $this->buildLinkedDatasets($metadataExtras);
@@ -571,7 +590,6 @@ class VisualisationController extends ControllerBase {
 					<div class="col-sm-9">
 						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
 						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
-						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
@@ -585,7 +603,7 @@ class VisualisationController extends ControllerBase {
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
 						' . $this->buildCard('Synthèse', $synthese) . '
-						' . $this->buildCard('Contacts', $contacts) . '
+						' . ($contacts != null ? $this->buildCard('Contacts', $contacts) : '') . '
 					</div>
 				</div>
 				
@@ -596,10 +614,22 @@ class VisualisationController extends ControllerBase {
 				<d4c-collapsible ng-if="ctx.dataset.has_records" class="d4c-dataset-visualization__schema">
 					<d4c-collapsible-above-fold>
 						<h3 class="d4c-dataset-visualization__toggle-schema">
-							<span translate>Dataset schema</span>
+							<span translate>Informations techniques</span>
 						</h3>
 					</d4c-collapsible-above-fold>
 					<d4c-collapsible-fold>
+						<h3 class="d4c-dataset-visualization__toggle-schema">
+							<span translate>Limites techniques d\'usage</span>
+						</h3>
+						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
+
+						<br/>
+						<br/>
+						
+						<h3 class="d4c-dataset-visualization__toggle-schema">
+							<span translate>Dataset schema</span>
+						</h3>
+
 						<d4c-dataset-schema context="ctx"></d4c-dataset-schema>
 
 						<h4 translate>JSON Schema</h4>
@@ -1389,19 +1419,12 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildContacts($metadataExtras) {
-		// TODO
-		// $: {
-		// 	const contacts = converter.getValue($storeMdjs, "dataPointOfContacts") || [];
-		// 	dataPointOfContacts = getContacts(contacts);
-		// }
-
-		$contacts = '<div class="list-unstyled">';
-
+	function buildContacts($loggedIn, $metadataExtras) {
+		$contactsPart = null;
 		//We tried to get the first 5 responsible-organisation
 		for ($i = 1; $i <= 5; $i++) {
 			$organisation = $this->exportExtras($metadataExtras, 'responsible-organisation-' . $i);
-			if ($organisation != null) {
+			if ($organisation != null && $organisation != '') {
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
 				$organisationRole = $organisation['organisation-role'];
@@ -1413,13 +1436,25 @@ class VisualisationController extends ControllerBase {
 				$phone = $organisation['contact-info']['phone'];
 				$country = $organisation['contact-info']['country'];
 
+				// Checking if everything is null or empty we continue to the next organization
+				if ($this->isNullOrEmptyString($organisationName) && 
+						$this->isNullOrEmptyString($organisationRole) && 
+						$this->isNullOrEmptyString($address) && 
+						$this->isNullOrEmptyString($postalCode) && 
+						$this->isNullOrEmptyString($city) && 
+						$this->isNullOrEmptyString($contactEmail) && 
+						$this->isNullOrEmptyString($phone) && 
+						$this->isNullOrEmptyString($country)) {
+					continue;
+				}
+
 				$organisationRole = !$this->isNullOrEmptyString($organisationRole) ? '<p class="mb-0">Rôle : ' . $this->translateValue($this->locale["codelists"]["CI_RoleCode"], $organisationRole) . '</p>' : '';
 				$address = !$this->isNullOrEmptyString($address) ? '<p class="mb-0">' . $address . '</p>' : "";
 				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) || !$this->isNullOrEmptyString($country) ? '<p class="mb-0">' . $postalCode . ' ' . $city . ' ' . $country . '</p>' : '';
 				$contactEmail = !$this->isNullOrEmptyString($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
 				$phone = !$this->isNullOrEmptyString($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
-				$contacts .= '
+				$contactsPart .= '
 					<div class="d-flex align-items-center mt-3">
 						<div class="flex-grow-1 ms-3">
 							<strong id="displayContact1">' . $organisationName . '</strong>
@@ -1435,8 +1470,14 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		$contacts .= '</div>';
-		return $contacts;
+		if (($contactsPart != null && $contactsPart != "") || $loggedIn) {
+			$contacts = '<div class="list-unstyled">';
+			$contacts .= $contactsPart;
+			$contacts .= '</div>';
+			return $contacts;
+		}
+
+		return null;
 	}
 
 	function manageAdditionnalResources($dataset, $datasetId, $selectedResourceId) {
