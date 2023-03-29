@@ -1341,7 +1341,7 @@ class VisualisationController extends ControllerBase {
 
 				$details = '';
 				foreach ($schemaValidation->columnsWithNbOfErrors as $column => $nbOfErrors) {
-					$details .= '<span><strong>Nombre de lignes de la colonne ' . $column . ' correspondant:</strong> ' . ($schemaValidation->nbLinesCheck - $nbOfErrors) . ' sur ' . $schemaValidation->nbLinesCheck . '</span><br/>';
+					$details .= '<span><strong>Nombre de lignes de la colonne ' . $column . ' conforme:</strong> ' . ($schemaValidation->nbLinesCheck - $nbOfErrors) . ' sur ' . $schemaValidation->nbLinesCheck . '</span><br/>';
 				}
 
 				$nbColumnsWithError = count($schemaValidation->columnsWithError);
