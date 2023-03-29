@@ -801,136 +801,152 @@ class Api
 		}
 
 		//Here we have the result from CKAN
-		//We need to filter those result according to the selected map area (if there is a selection)
+		//We need to filter those result according to the selected map area (if there is a selection) or additionnal data filter
 
-		//First we get the coordinate from the map
-		$coordmap = "";
+		Logger::logMessage("TRM - Additionnal parameters : " . json_encode($additionnalParameters));
+
 		if ($additionnalParameters) {
+			$coordmap = $additionnalParameters['coordinates'];
+			$hasCoordinates = isset($coordmap) && $coordmap != "";
 
-			$coordmap = $additionnalParameters;
+			$siret = $additionnalParameters['siret'];
+			$hasSiret = isset($siret) && $siret != "";
 
 			//We put the coordinates in an array. Very ugly way to do but no time. To remake
-			$coordmap = str_replace('%28', '(', $coordmap);
-			$coordmap = str_replace('%29', ')', $coordmap);
-			$coordmap = str_replace('%2C', ',', $coordmap);
-			$coordinates = explode("),", $coordmap);
-
-			for ($i = 0; $i < count($coordinates); ++$i) {
-				$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
-				$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+			if ($hasCoordinates) {
+				$coordmap = str_replace('%28', '(', $coordmap);
+				$coordmap = str_replace('%29', ')', $coordmap);
+				$coordmap = str_replace('%2C', ',', $coordmap);
+				$coordinates = explode("),", $coordmap);
+	
+				for ($i = 0; $i < count($coordinates); ++$i) {
+					$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
+					$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+				}
 			}
 
-			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
-			$dataSetscontent = [];
+			Logger::logMessage("Checking if datasets have data filters");
+			Logger::logMessage("Has coordinates : " . $hasCoordinates . " - " . json_encode($coordinates));
+			Logger::logMessage("Has siret : " . $hasSiret . " - " . $siret);
 
-
-
+			$datasets = [];
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
 			foreach ($result["result"]["results"] as $keydataset => $dataset) {
 
-				$resourceId = null;
-				$fieldCoordinates = null;
 				foreach ($dataset["resources"] as $value) {
-					//We get the field for the dataset
-					$fields = $this->getAllFields($value['id']);
-					// Logger::logMessage("Dataset      " . $dataset['id'] . "    with resource     " . $value['id']);
+					$resourceId = $value['id'];
 
-					foreach ($fields as $field) {
-						if ($field['type'] == "geo_point_2d") {
-							$fieldCoordinates = $field['name'];
-							break;
-						}
+					//We get the field for the dataset
+					$fields = $this->getAllFields($resourceId);
+
+					// Filter fields on type geo_point_2d
+					$fieldCoordinates = array_filter($fields, function ($field) {
+						return $field['type'] == 'geo_point_2d';
+					});
+
+					$fieldCoordinates = $fieldCoordinates != null && sizeof($fieldCoordinates) > 0 ? array_values($fieldCoordinates)[0] : null;
+					$fieldCoordinates = $fieldCoordinates['name'];
+
+					// Filter fields on name siret
+					$fieldSiret = array_filter($fields, function ($field) {
+						return $field['name'] == 'siret';
+					});
+					$fieldSiret = $fieldSiret != null && sizeof($fieldSiret) > 0 ? array_values($fieldSiret)[0] : null;
+					$fieldSiret = $fieldSiret['name'];
+
+					$datasetMatch = true;
+					if ($hasCoordinates && !$this->checkDataCoordinates($dataset['id'], $resourceId, $fieldCoordinates, $coordinates)) {
+						$datasetMatch = false;
 					}
 
-					//If there is a coordinate field, we 
-					if ($fieldCoordinates) {
-						$resourceId = $value['id'];
+					if ($hasSiret && !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiret, $siret)) {
+						$datasetMatch = false;
+					}
+
+					if ($datasetMatch) {
+						$datasets[] = $dataset;
 						break;
 					}
 				}
-
-				//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
-				if ($fieldCoordinates) {
-					Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $dataset['id'] . "'");
-
-					$polygon = '';
-					$first = true;
-
-					$coord = explode(',', $coordinates);
-					if (sizeof($coordinates) <= 3) {
-						if ($coord == null) {
-							$coord = explode(',', $coordinates[0]);
-						}
-						$lat = $coord[0];
-						$long = $coord[1];
-
-
-						if (count($coord) > 2) {
-							$dist = $coord[2];
-
-
-							$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
-							$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ")  ";
-						}
-					} else {
-						foreach ($coordinates as $coordinate) {
-							if (!$first) {
-								$polygon .= ",";
-							}
-							$first = false;
-							$polygon .= "(" . $coordinate . ")";
-						}
-
-						$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
-						$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
-					}
-
-
-
-
-					$req['sql'] = $sql;
-
-					$sqlUrl = http_build_query($req);
-					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $sqlUrl;
-					$curl = curl_init($callUrl);
-					curl_setopt_array($curl, $this->getStoreOptions());
-					$resultSql = curl_exec($curl);
-
-					// Logger::logMessage("TRM - getPackageSearch - SQL " . $resultSql);
-
-					curl_close($curl);
-					$resultSql = json_decode($resultSql, true);
-
-					if ((int)$resultSql["result"]["records"][0]["count"] > 0) {
-						if (!in_array($dataset, $dataSetscontent)) {
-							array_push($dataSetscontent, $dataset);
-						}
-					} else {
-
-						unset($result["result"]["results"][$keydataset]);
-						$result["result"]["count"] -= 1;
-					}
-					//array_push($dataSetscontent, $dataset);
-					//TODO : LEAVE THE DATASET OR REMOVE ACCORDING TO THE RESULT
-				}
-				//If not we remove the dataset from the result
-				else {
-
-					$result["result"]["count"] -= 1;
-
-					unset($result["result"]["results"][$keydataset]);
-
-
-					//TODO : REMOVE THE DATASET
-				}
 			}
-			if ($fieldCoordinates) {
-				$result["result"]["results"] = $dataSetscontent;
-				$result["result"]["count"] = sizeof($dataSetscontent);
-			}
+
+			$result["result"]["results"] = $datasets;
+			$result["result"]["count"] = sizeof($datasets);
 		}
 
 		return $result;
+	}
+
+	function checkDataCoordinates($datasetId, $resourceId, $fieldCoordinates, $coordinates) {
+		if (!isset($fieldCoordinates)) {
+			return false;
+		}
+		
+		//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+		Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $datasetId . "'");
+
+		$polygon = '';
+		$first = true;
+
+		$coord = explode(',', $coordinates);
+		if (sizeof($coordinates) <= 3) {
+			if ($coord == null) {
+				$coord = explode(',', $coordinates[0]);
+			}
+			$lat = $coord[0];
+			$long = $coord[1];
+
+			if (count($coord) > 2) {
+				$dist = $coord[2];
+
+				$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+				$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ")  ";
+			}
+		}
+		else {
+			foreach ($coordinates as $coordinate) {
+				if (!$first) {
+					$polygon .= ",";
+				}
+				$first = false;
+				$polygon .= "(" . $coordinate . ")";
+			}
+
+			$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+			$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
+		}
+
+		$resultSql = $this->searchDatastoreSQL($sql);
+		return (int) $resultSql["result"]["records"][0]["count"] > 0;
+	}
+
+	function checkDataColumn($datasetId, $resourceId, $field, $value) {
+		if (!isset($field)) {
+			return false;
+		}
+		
+		//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+		Logger::logMessage("Found field '" . $field . "' for resource id '" . $resourceId . "' and dataset id '" . $datasetId . "'");
+
+		$sql = "Select count(*) from \"" . $resourceId . "\"";
+		$sql .= " where " . $field . " = '" . $value . "'";
+
+		$resultSql = $this->searchDatastoreSQL($sql);
+		return (int) $resultSql["result"]["records"][0]["count"] > 0;
+	}
+
+	function searchDatastoreSQL($sql) {
+		$req = array();
+		$req['sql'] = $sql;
+		$req = http_build_query($req);
+
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $req;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$resultSql = curl_exec($curl);
+
+		curl_close($curl);
+		return json_decode($resultSql, true);
 	}
 
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/)
@@ -1026,10 +1042,29 @@ class Api
 
 		// Logger::logMessage("TRM - Query params " . json_encode($query_params["fq"]));
 		
-		$coordinateParam = null;
-		if (array_key_exists('coordReq', $query_params)) {
-			$coordinateParam = $query_params['coordReq'];
-			unset($query_params['coordReq']);
+		$additionnalParameters = array();
+		if (array_key_exists('coordReq', $query_params) || array_key_exists('siret', $query_params)) {
+
+			if (array_key_exists('siret', $query_params)) {
+				$additionnalParameters['siret'] = $query_params['siret'];
+				unset($query_params['siret']);
+
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "features:(*analyze*)";
+				} else {
+					$query_params["fq"] .= " AND features:(*analyze*)";
+				}
+			}
+			else if (array_key_exists('coordReq', $query_params)) {
+				$additionnalParameters['coordinates'] = $query_params['coordReq'];
+				unset($query_params['coordReq']);
+
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "features:(*geo*)";
+				} else {
+					$query_params["fq"] .= " AND features:(*geo*)";
+				}
+			}
 
 			//We replace the rows and start to get all the dataset
 			$rows = $query_params['rows'];
@@ -1039,12 +1074,6 @@ class Api
 			unset($query_params['rows']);
 
 			$query_params["rows"] = 1000;
-
-			if ($query_params["fq"] == null) {
-				$query_params["fq"] = "features:(*geo*)";
-			} else {
-				$query_params["fq"] .= " AND features:(*geo*)";
-			}
 		}
 
 		if ($exclude_private_orgas) {
@@ -1104,7 +1133,7 @@ class Api
 		$url2 = http_build_query($query_params);
 
 		//echo $url2;
-		$result = $this->getPackageSearch($url2, $coordinateParam, $rows, $start);
+		$result = $this->getPackageSearch($url2, $additionnalParameters, $rows, $start);
 		$result["all_organizations"] = $orgs["result"];
 		error_log($result["result"]["count"]);
 		return $result;
