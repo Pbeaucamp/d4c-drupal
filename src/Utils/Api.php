@@ -308,6 +308,8 @@ class Api
 
 	private function constructReqQToSQL($value, $append = "")
 	{
+		$value = urldecode($value);
+		
 		//"q=emr_dt_service:[2018-04-21T22:00:00Z TO 2018-07-20T22:00:00Z]"
 		//"q=emr_dt_service>=\"2018-04-02T22:00:00Z\""
 		//q=nom_com:"lyon"

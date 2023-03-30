@@ -24,8 +24,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\ckan_admin\Utils\Logger;
-
-	
+use Drupal\Core\Url;
 
 /**
  * Implements an example form.
@@ -80,15 +79,18 @@ class MoissonnageDataGouv extends HelpFormBase {
     
 	public function buildForm(array $form, FormStateInterface $form_state) {
         $form = parent::buildForm($form, $form_state);
+
+		$currentUrl = Url::fromRoute('<current>');
+
         $form['#attached']['library'][] = 'ckan_admin/MoissonnageDataGouv.form';
         $form['#attached']['html_head'][] = [
 			array(
 			  '#tag' => 'base',
 			  '#attributes' => array(
-				'href' => '/data4citizen/admin/config/data4citizen/datagouvForm/'
+				'href' => $currentUrl->toString()
 			  ),
-			),
-		"dd"];
+			)
+		];
         
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 		// $config->set('dataForUpdateDatasets', null)->save();

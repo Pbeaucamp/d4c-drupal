@@ -12,6 +12,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\Core\Url;
 
 /**
  * Implements an example form.
@@ -34,7 +35,17 @@ class userStoryForm extends HelpFormBase
     public function buildForm(array $form, FormStateInterface $form_state){
         $form = parent::buildForm($form, $form_state);
 
+		$currentUrl = Url::fromRoute('<current>');
+
         $form['#attached']['library'][] = 'ckan_admin/userstoryForm.form';
+        $form['#attached']['html_head'][] = [
+			array(
+			  '#tag' => 'base',
+			  '#attributes' => array(
+				'href' => $currentUrl->toString()
+			  ),
+			)
+		];
         
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
