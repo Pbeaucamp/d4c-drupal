@@ -589,7 +589,7 @@ class VisualisationController extends ControllerBase {
 				<div class="row">
 					<div class="col-sm-9">
 						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
-						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
+						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
