@@ -50,7 +50,7 @@ class VisualisationController extends ControllerBase {
 
 	public function myPage(Request $request, $tab) {
 		$id = $request->query->get('id');
-		$resourceId = $request->query->get('resourceId');
+		$resourceId = $request->query->get('resource_id');
 		$location = $request->query->get('location');
 		return $this->myPage2($id, $tab, $resourceId, $location);
 	}
@@ -131,6 +131,12 @@ class VisualisationController extends ControllerBase {
 		$Parsedown = new Parsedown();
 		$description = $Parsedown->text($dataset["metas"]["notes"]);
 
+		// We remove html tags and &quot; as it breaks json
+		$dataset["metas"]["description"] = strip_tags($dataset["metas"]["description"]);
+		$dataset["metas"]["description"] = str_replace(array('&quot;'), array("'"), $dataset["metas"]["description"]);
+		$dataset["metas"]["notes"] = strip_tags($dataset["metas"]["notes"]);
+		$dataset["metas"]["notes"] = str_replace(array('&quot;'), array("'"), $dataset["metas"]["notes"]);
+		
 		$dateModified = $dataset["metas"]["modified"];
 		$keywords = $dataset["metas"]["keyword"];
 		$licence = $dataset["metas"]["license"];

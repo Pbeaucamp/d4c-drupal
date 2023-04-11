@@ -1099,7 +1099,7 @@ class ResourceManager {
 				fclose($handle);
 			}
 	
-			$extra_columns = array('coordinate' => null, 'geoshape' => null, 'route_color' => null);
+			$extra_columns = array('geo_point_2d' => null, 'geoshape' => null, 'route_color' => null);
 
 			$latIndex = "";
 			$lngIndex = "";
@@ -1154,7 +1154,7 @@ class ResourceManager {
 	
 			foreach ($csv_data as $i => $data) {
 				if ($i == 0) {
-					$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
+					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
 					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
 				}
 				else {
@@ -1171,10 +1171,10 @@ class ResourceManager {
 							}
 						}
 						
-						$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);			
+						$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);			
 					} 
 					else {
-						$extra_columns = array('coordinate' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
+						$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
 					}
 					$csv_data[$i] = $data = array_merge($data, $extra_columns);
 				}

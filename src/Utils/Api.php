@@ -289,6 +289,7 @@ class Api
 
 	private function constructReqQToSQL($value, $append = "")
 	{
+		$value = urldecode($value);
 		//"q=emr_dt_service:[2018-04-21T22:00:00Z TO 2018-07-20T22:00:00Z]"
 		//"q=emr_dt_service>=\"2018-04-02T22:00:00Z\""
 		//q=nom_com:"lyon"
@@ -1105,6 +1106,9 @@ class Api
 			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
+
+			$lastDateModification = $this->extractLastModificationDate($dataset);
+			$dataset["dataset_modification_date"] = $lastDateModification;
 		}
 
 		if ($hasFacetFeature) {
@@ -1161,6 +1165,104 @@ class Api
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
+	}
+
+	function extractLastModificationDate($dataset) {
+
+		$referenceDate = null;
+
+		// Manage geonetwork
+		$datasetReferenceDateJson = DatasetHelper::extractMetadata($dataset['extras'], "dataset-reference-date");
+		$datasetReferenceDate = json_decode($datasetReferenceDateJson, true);
+		foreach ($datasetReferenceDate as $date) {
+			if ($date['type'] == "creation") {
+				$dateCreation = $date['value'];
+			}
+			else if ($date['type'] == "publication") {
+				$datePublication = $date['value'];
+			}
+			else if ($date['type'] == "revision") {
+				$dateRevision = $date['value'];
+			}
+		}
+
+		$dateIssued = DatasetHelper::extractMetadata($dataset['extras'], "issued");
+		$dateModified = DatasetHelper::extractMetadata($dataset['extras'], "modified");
+
+		// Check if not null, compare them and return the most recent
+		if ($dateCreation != null) {
+			$referenceDate = new \DateTime($dateCreation);
+		}
+		if ($datePublication != null) {
+			$datePublication = new \DateTime($datePublication);
+			if ($referenceDate == null || $datePublication > $referenceDate) {
+				$referenceDate = $datePublication;
+			}
+		}
+		if ($dateRevision != null) {
+			$dateRevision = new \DateTime($dateRevision);
+			if ($referenceDate == null || $dateRevision > $referenceDate) {
+				$referenceDate = $dateRevision;
+			}
+		}
+		if ($dateIssued != null) {
+			$dateIssued = new \DateTime($dateIssued);
+			if ($referenceDate == null || $dateIssued > $referenceDate) {
+				$referenceDate = $dateIssued;
+			}
+		}
+		if ($dateModified != null) {
+			$dateModified = new \DateTime($dateModified);
+			if ($referenceDate == null || $dateModified > $referenceDate) {
+				$referenceDate = $dateModified;
+			}
+		}
+
+		if ($referenceDate != null) {
+			return $referenceDate->format('Y-m-d');
+		}
+
+		// If OpenDataSoft not found manage ArcGIS
+		$arcgisDcatIssued = DatasetHelper::extractMetadata($dataset['extras'], "dcat_issued");
+		$arcgisDcatModified = DatasetHelper::extractMetadata($dataset['extras'], "dcat_modified");
+
+		if ($arcgisDcatIssued != null) {
+			$arcgisDcatIssued = new \DateTime($arcgisDcatIssued);
+			if ($referenceDate == null || $arcgisDcatIssued > $referenceDate) {
+				$referenceDate = $arcgisDcatIssued;
+			}
+		}
+
+		if ($arcgisDcatModified != null) {
+			$arcgisDcatModified = new \DateTime($arcgisDcatModified);
+			if ($referenceDate == null || $arcgisDcatModified > $referenceDate) {
+				$referenceDate = $arcgisDcatModified;
+			}
+		}
+
+		$metadataModified = $dataset["metadata_modified"];
+		if ($metadataModified != null) {
+			$metadataModified = new \DateTime($metadataModified);
+			if ($referenceDate == null || $metadataModified > $referenceDate) {
+				$referenceDate = $metadataModified;
+			}
+		}
+
+		foreach ($dataset["resources"] as $j => $value) {
+			$resourceDateModified = $value['last_modified'];
+			if ($resourceDateModified != null) {
+				$resourceDateModified = new \DateTime($resourceDateModified);
+				if ($referenceDate == null || $resourceDateModified > $referenceDate) {
+					$referenceDate = $resourceDateModified;
+				}
+			}
+		}
+
+		// Format date and include the time and convert date to paris timezone
+		if ($referenceDate != null)
+			$referenceDate->setTimezone(new \DateTimeZone('Europe/Paris'));
+
+		return $referenceDate != null ? $referenceDate->format('Y-m-d H:i') : null;
 	}
 
 
@@ -1850,9 +1952,6 @@ class Api
 		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 
-
-
-
 		if ($query_params['user_defined_fields']) {
 			//array_pop($query_params);
 			$exportUserField = $this->getAllFieldsForTableParam($query_params['resource_id'], 'true');
@@ -2083,18 +2182,13 @@ class Api
 		$sql = "Select " . $fieldId . " as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
-		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
-
-
-
-		//echo $callUrl;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
-		//echo $result . "\r\n";
 		curl_close($curl);
+
 		$result = json_decode($result, true);
 
 		//We build the first row with the header's name
@@ -3608,6 +3702,8 @@ class Api
 		unset($query_params["facet"]);
 		$query_params["id"] = $query_params["DATASETID"];
 		unset($query_params["DATASETID"]);
+		$resourceId = $query_params["resource_id"];
+		unset($query_params["resource_id"]);
 
 		$url2 = http_build_query($query_params);
 
@@ -3634,10 +3730,16 @@ class Api
 		$data_array["attachments"] = "";
 		$data_array["alternative_exports"] = "";
 		$data_array["features"] = array("timeserie", "analyse", "geo");
-		$resourceCSV;
-
+		
+		$resourceCSV = null;
 		foreach ($result['result']['resources'] as $value) {
-			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+			if (isset($resourceId) && $resourceId != "") {
+				if ($resourceId == $value['id']) {
+					$resourceCSV = $value;
+					break;
+				}
+			}
+			else if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 				$resourceCSV = $value;
 				break;
 			}
@@ -7043,127 +7145,121 @@ class Api
 		return $response;
 	}
 
-	function calculateVisualisations($id, $blockDateModification = FALSE)
-	{
-		//error_log($id);
+	function calculateVisualisations($id, $blockDateModification = FALSE) {
+		Logger::logMessage("Calculate visualisation for " . $id);
 
-		Logger::logMessage("Calculate visualisation for " . $id . "\r\n");
+		$count = 0;
 
-		$features = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud", timeline]
-		$records_count = 0;
-		$fields = array();
-
-		//if($dataset == null){
 		$dataset = $this->getPackageShow("id=" . $id);
 		$dataset = $dataset["result"];
 
+		$hasTimeserie = false;
+		$hasAnalyze = false;
+		$hasGeo = false;
+		$hasImage = false;
+		$hasCalendar = false;
+		$hasWordcloud = false;
+		$hasTimeline = false;
+		$hasApi = false;
+		$hasTable = false;
 
-		//Logger::logMessage("Found dataset " . json_encode($dataset) . "\r\n");
-		//}
-		//$id = $dataset["id"];
-
-		//if(!$hasFields){
-		$resourcesid = null;
-		$hasWMS = false;
 		foreach ($dataset['resources'] as $value) {
 			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 				$resourcesid = $value['id'];
+
+				$resourceCount = $this->getDatastoreApi("resource_id=" . $resourcesid . "&limit=0");
+				$resourceCount = $resourceCount["result"]["total"];
+				$count += $resourceCount;
+
+				Logger::logMessage("Found ressource with id " . $resourcesid . " with record count = " . $resourceCount);
+
+				$fields = $this->getAllFields($resourcesid, TRUE);
+				if (count($fields) > 0) {
+					Logger::logMessage("Searching features for resource " . $resourcesid);
+		
+					$hasStart = false;
+					$hasEnd = false;
+					foreach ($fields as $f) {
+						foreach ($f["annotations"] as $a) {
+							if ($a["name"] == "startDate") {
+								$hasStart = true;
+							}
+							else if ($a["name"] == "endDate") {
+								$hasEnd = true;
+							}
+							else if ($a["name"] == "date") {
+								$hasStart = true;
+								$hasEnd = true;
+							}
+							else if ($a["name"] == "wordcount" || $a["name"] == "wordcountNumber") {
+								$hasWordcloud = true;
+							}
+							else if ($a["name"] == "date_timeLine"  || $a["name"] == "title_for_timeLine"  || $a["name"] == "descr_for_timeLine") {
+								$hasTimeline = true;
+							}
+						}
+						if ($f["type"] == "file") {
+							$hasImage = true;
+						}
+						if ($f["type"] == "geo_point_2d"  || $f["type"] == "geo_shape") {
+							$hasGeo = true;
+						}
+					}
+		
+					if ($hasStart && $hasEnd) {
+						$hasTimeserie = true;
+						$hasCalendar = true;
+					}
+
+					$hasApi = true;
+					$hasAnalyze = true;
+					$hasTable = true;
+				}
 			}
 
 			//Checking if we have a WMS resource to add the feature geo
 			if (strcasecmp($value['format'], "WMS") == 0) {
-				$hasWMS = true;
+				$hasGeo = true;
 			}
 		}
-		if ($resourcesid != null) {
-			$fields = $this->getAllFields($resourcesid, TRUE);
-			$records_result = $this->getDatastoreApi("resource_id=" . $resourcesid . "&limit=0");
-			$records_count = str_pad($records_result["result"]["total"], 10, "0", STR_PAD_LEFT);
-
-
-			Logger::logMessage("Found ressource with id " . $resourcesid . " with record count = " . $records_count . "\r\n");
+		
+		foreach ($dataset['extras'] as $value) {
+			if ($value["key"] == "dont_visualize_tab") {
+				if (strpos($value["value"], "api") === false) {
+					$hasApi = false;
+				}
+				if (strpos($value["value"], "analize") === false) {
+					$hasAnalyze = false;
+				}
+				break;
+			}
 		}
-		//}
 
-
-
-		//$features[] = "analyze"; //tab chart
-
-		if (count($fields) > 0) {
-			Logger::logMessage("Search features" . "\r\n");
-
-			$colStart = null;
-			$colEnd = null;
-			$colWordCount = null;
-			$colTimeline = null;
-			$colGeo = null;
-			foreach ($fields as $f) {
-				foreach ($f["annotations"] as $a) {
-					if ($a["name"] == "startDate") {
-						$colStart = $f["name"];
-					} else if ($a["name"] == "endDate") {
-						$colEnd = $f["name"];
-					} else if ($a["name"] == "date") {
-						$colEnd = $f["name"];
-						$colStart = $f["name"];
-					} else if ($a["name"] == "wordcount" || $a["name"] == "wordcountNumber") {
-						$colWordCount = $f["name"];
-					} else if ($a["name"] == "date_timeLine"  || $a["name"] == "title_for_timeLine"  || $a["name"] == "descr_for_timeLine") {
-						$colTimeline = $f["name"];
-					}
-				}
-				/*if($colEnd != null && $colStart != null){
-					//break;
-				}*/
-				if ($f["type"] == "file") {
-					$features[] = "image";
-				}
-				if ($f["type"] == "geo_point_2d"  || $f["type"] == "geo_shape") {
-					$colGeo = $f["name"];
-				}
-			}
-
-			if ($colStart != null && $colEnd != null) {
-				$features[] = "timeserie";
-				$features[] = "calendar";
-			}
-			if ($colWordCount != null) {
-				$features[] = "wordcloud";
-			}
-			if ($colTimeline != null) {
-				$features[] = "timeline";
-			}
-			if ($colGeo != null || $hasWMS) {
-				$features[] = "geo";
-			}
-
-			$found = false;
-			foreach ($dataset['extras'] as $value) {
-				if ($value["key"] == "dont_visualize_tab") {
-					if (strpos($value["value"], "api") === false) {
-						$features[] = "api";
-					}
-					if (strpos($value["value"], "analize") === false) {
-						$features[] = "analyze";
-					}
-					$found = true;
-					break;
-				}
-			}
-			if (!$found) {
-				$features[] = "api";
-				$features[] = "analyze";
-			}
-			$features[] = "table";
-		}
-		else if ($hasWMS) {
+		$features = array(); //["timeserie", "analyze", "geo", "image", "calendar", "custom_view","wordcloud", timeline]
+		if ($hasTimeserie)
+			$features[] = "timeserie";
+		if ($hasAnalyze)
+			$features[] = "analyze";
+		if ($hasGeo)
 			$features[] = "geo";
-		}
+		if ($hasImage)
+			$features[] = "image";
+		if ($hasCalendar)
+			$features[] = "calendar";
+		if ($hasWordcloud)
+			$features[] = "wordcloud";
+		if ($hasTimeline)
+			$features[] = "timeline";
+		if ($hasApi)
+			$features[] = "api";
+		if ($hasTable)
+			$features[] = "table";
+
+		$records_count = str_pad($count, 10, "0", STR_PAD_LEFT);
 
 		$customView = $this->getCustomView($dataset['id']);
 		if ($customView) {
-			Logger::logMessage("Found custom view" . "\r\n");
-
+			Logger::logMessage("Found custom view");
 			$features[] = "custom_view";
 		}
 
@@ -7211,14 +7307,9 @@ class Api
 			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
 		$dataset["extras"] = $extras;
-		//error_log(json_encode($fields));
-		//error_log(json_encode($dataset['extras']));
 		if ($blockDateModification) {
 			$dataset["modified_date_forced"] = true;
 		}
-
-
-		Logger::logMessage("Update package" . "\r\n");
 
 		$callUrl = $this->urlCkan . "api/action/package_update";
 		$this->updateRequest($callUrl, $dataset, "POST");
