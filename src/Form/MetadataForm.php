@@ -220,7 +220,7 @@ abstract class MetadataForm extends FormBase {
 			$form['integration_option']['dataset_date_modification'] = [
 				'#type' => 'date',
 				'#title' => $this->t('Date de modification'),
-				'#default_value' => isset($dateModification) ? $dateModification : date('Y-m-d'),
+				'#default_value' => date('Y-m-d'),
 			];
 		}
 

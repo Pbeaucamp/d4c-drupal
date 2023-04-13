@@ -3115,6 +3115,7 @@ class Api
 		$query = "idRes=" . $datasetId . "&zoom=" . $clusterPrec . "&minLat=" . $geofilter_bbox[0] . "&minLong=" . $geofilter_bbox[1] . "&maxLat=" . $geofilter_bbox[2] . "&maxLong=" . $geofilter_bbox[3];
 
 		$callUrl = $this->config->cluster->url . "cluster?" . $query;
+		
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleGetOptions());
