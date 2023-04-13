@@ -83,8 +83,10 @@ function getFields(urlCkan) {
 
   // $("textfield[name='title']").val() == 'Test';
   let datasetId = $("#edit-selected-dataset").val();
-  if (datasetId != "" && datasetId != "----") {
-    $.ajax(fetchPrefix() + "/d4c/api/datasets/1.0/DATASETID/DATASETID=" + datasetId,
+  let resourceId = $("#edit-selected-resource").val();
+
+  if (datasetId != "" && datasetId != "----" && resourceId != "" && resourceId != "----") {
+    $.ajax(fetchPrefix() + "/d4c/api/datasets/1.0/DATASETID/DATASETID=" + datasetId + "&resource_id=" + resourceId,
       {
         type: "POST",
         dataType: "json",

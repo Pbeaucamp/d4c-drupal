@@ -527,46 +527,7 @@ class Api
 
 					unset($query_params['limit']);
 
-
-					$where = "";
-					if (!empty($filters)) {
-						$where = " where ";
-						foreach ($filters as $key => $value) {
-							if ($key == "geofilter.distance") {
-								$coord = explode(',', $value);
-								$lat = $coord[0];
-								$long = $coord[1];
-								if (count($coord) > 2) {
-									$dist = $coord[2];
-									$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-								} else {
-									$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-								}
-
-								$where .= $fieldCoordinates . " not in ('', ',') and ";
-							} else if ($key == "geofilter.polygon") {
-								$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-								$where .= $fieldCoordinates . " not in ('', ',') and ";
-							} else {
-								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-									$where .= $key . "=" . $value . " and ";
-								} else if (is_array($value)) {
-									$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-									$value = urldecode($value);
-									$where .= $key . " in (" . $value . ") and ";
-								} else {
-									$value = urldecode($value);
-									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-								}
-							}
-						}
-						$where = substr($where, 0, strlen($where) - 4);
-						if ($reqQfilter != NULL) {
-							$where .= $reqQfilter;
-						}
-					} else if ($reqQfilter != NULL) {
-						$where = " where " . substr($reqQfilter, 5);
-					}
+					$where = $this->buildFacetWhere($fields, $filters, $reqQfilter, $fieldCoordinates, null);
 
 					$req = array();
 					$sql = "Select \"" . $query_params['fields'] . "\", count(\"" . $query_params['fields'] . "\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"" . $query_params['fields'] . "\"";
@@ -586,7 +547,7 @@ class Api
 					curl_close($curl);
 					$result = json_decode($result, true);
 
-					// Logger::logMessage("Result : " . json_encode($result));
+					Logger::logMessage("Result : " . json_encode($result));
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);
@@ -677,6 +638,75 @@ class Api
 		else {
 			return $this->getDatastoreApi($params);
 		}
+	}
+
+	private function buildFacetWhere($fields, $filters, $reqQfilter, $fieldCoordinates, $fieldGeometries) {
+		$where = "";
+		if (!empty($filters)) {
+			$where = " where ";
+			foreach ($filters as $key => $value) {
+				if ($key == "geofilter.bbox") {
+					$bbox = explode(',', $value);
+					$minlat = $bbox[0];
+					$minlong = $bbox[1];
+					$maxlat = $bbox[2];
+					$maxlong = $bbox[3];
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else if ($key == "geofilter.distance") {
+					$coord = explode(',', $value);
+					$lat = $coord[0];
+					$long = $coord[1];
+					if (count($coord) > 2) {
+						$dist = $coord[2];
+						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
+					} else {
+						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
+					}
+
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else if ($key == "geo_digest") {
+					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
+				}
+				else if ($key == "geofilter.polygon") {
+					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else {
+					$fieldType = null;
+					foreach ($fields as $field) {
+						if ($field["name"] == $key) {
+							$fieldType = $field["type"];
+							break;
+						}
+					}
+
+					// Logger::logMessage("TRM - buildFacetWhere - Found field type : " . $fieldType . " for field " . $key . "");
+
+					if (($fieldType != null && $fieldType == "double") || ($fieldType == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
+						$where .= $key . "=" . $value . " and ";
+					}
+					else if (is_array($value)) {
+						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
+					}
+					else {
+						$value = urldecode($value);
+						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
+					}
+				}
+			}
+			$where = substr($where, 0, strlen($where) - 4);
+			if ($reqQfilter != NULL) {
+				$where .= $reqQfilter;
+			}
+		} else if ($reqQfilter != NULL) {
+			$where = " where " . substr($reqQfilter, 5);
+		}
+		return $where;
 	}
 
 	private function getFacetValuebyName($name, $array)
@@ -805,7 +835,7 @@ class Api
 		//Here we have the result from CKAN
 		//We need to filter those result according to the selected map area (if there is a selection) or additionnal data filter
 
-		Logger::logMessage("TRM - Additionnal parameters : " . json_encode($additionnalParameters));
+		// Logger::logMessage("TRM - Additionnal parameters : " . json_encode($additionnalParameters));
 
 		if ($additionnalParameters) {
 			$coordmap = $additionnalParameters['coordinates'];
@@ -1410,61 +1440,8 @@ class Api
 				$filters_init[$key] =  $value;
 			}
 		}
-		$where = "";
-		if (!empty($filters_init)) {
-			Logger::logMessage("Filters exists");
 
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					Logger::logMessage("Build query for geofilter.bbox \r\n");
-
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					Logger::logMessage("Build query for geofilter.distance \r\n");
-
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					if (count($coord) > 2) {
-						$dist = $coord[2];
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-					} else {
-						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					}
-				} else if ($key == "geofilter.polygon") {
-					Logger::logMessage("Build query for geofilter.polygon \r\n");
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-				} else {
-					Logger::logMessage("Build query without parameter \r\n");
-
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-			if ($reqQfilter != "") {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != "") {
-			Logger::logMessage("Req filter is not empty '" . $reqQfilter . "' and we put '" . substr($reqQfilter, 5) . "'");
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
 
 		$req = array();
 		if ($fieldGeometries != "") {
@@ -2073,68 +2050,13 @@ class Api
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
 		unset($query_params["resourceId"]);
-		$where = "";
+
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
+
 		$limit  = "";
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					if (count($coord) > 2) {
-						$dist = $coord[2];
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-					} else {
-						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					}
-
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geo_digest") {
-					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
-				} else if ($key == "geofilter.polygon") {
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-
-					//We add a Postgis function because polygon(path) use the bounding box and with the tolerance it can contains multiples point
-					// if ($this->isPostgis) {
-					// 	$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
-					// }
-
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
 		if (array_key_exists("limit", $query_params)) {
 			$limit = " limit " . $query_params['limit'];
 		}
-
 
 		$req = array();
 		$sql = "Select " . $fieldId . " as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
@@ -3463,7 +3385,7 @@ class Api
 			$limit = " limit " . $query_params['rows'];
 		}
 
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$sql = "Select  " . $fieldsMapDisplayQuery . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
@@ -3535,6 +3457,8 @@ class Api
 		unset($query_params["facet"]);
 		$query_params["id"] = $query_params["DATASETID"];
 		unset($query_params["DATASETID"]);
+		$resourceId = $query_params["resource_id"];
+		unset($query_params["resource_id"]);
 
 		$url2 = http_build_query($query_params);
 
@@ -3564,7 +3488,13 @@ class Api
 		$resourceCSV = null;
 
 		foreach ($result['result']['resources'] as $value) {
-			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+			if (isset($resourceId) && $resourceId != "") {
+				if ($resourceId == $value['id']) {
+					$resourceCSV = $value;
+					break;
+				}
+			}
+			else if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 				$resourceCSV = $value;
 				break;
 			}
@@ -4031,67 +3961,21 @@ class Api
 			}
 		}
 
-		$where = "";
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
+
 		$limit  = "";
-		$offset  = "";
-		$orderby = "";
-
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else {
-					$ftype = null;
-					foreach ($fields as $field) {
-						if ($field["name"] == $key) {
-							$ftype = $field["type"];
-							break;
-						}
-					}
-					if (($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
 		if (array_key_exists("limit", $query_params)) {
 			$limit = " limit " . $query_params['limit'];
 		} else {
 			$limit = " limit 100"; //par defaut
 		}
 
+		$offset  = "";
 		if (array_key_exists("offset", $query_params)) {
 			$offset = " offset " . $query_params['offset'];
 		}
 
+		$orderby = "";
 		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
 			foreach (explode(',', $query_params["sort"]) as $sort) {
@@ -4490,7 +4374,7 @@ class Api
 		return $response;
 	}
 
-	public function getSQLWhereRecordsDownload($params)
+	public function getSQLWhereRecordsDownload($params, $resourceId)
 	{
 
 		$patternId = '/id|num|code|siren/i';
@@ -4502,7 +4386,7 @@ class Api
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id']);
+		$fields = $this->getAllFields($resourceId);
 		//echo json_encode($fields);
 		$fieldId = "id";
 		$reqFields = "";
@@ -4601,53 +4485,8 @@ class Api
 		}
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
-		$where = "";
-		$limit  = "";
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geo_digest") {
-					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
-				} else if ($key == "geofilter.polygon") {
-					Logger::logMessage("Build query for geofilter.polygon");
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
 
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
-		return $where;
+		return $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
 	}
 
 	public function renderFrame(Request $request, $tab)
@@ -4999,7 +4838,7 @@ class Api
 		}
 */
 		$where = "";
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 
 		if (array_key_exists("maxpoints", $query_params) && $query_params['maxpoints'] != "") {
 			$limit = " limit " . $query_params['maxpoints'];
@@ -5024,7 +4863,7 @@ class Api
 		curl_close($curl);
 		//echo $result . "\r\n";
 
-		error_log('ttt' . $result);
+		// error_log('ttt' . $result);
 
 		$result = json_decode($result, true);
 
