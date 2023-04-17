@@ -1214,6 +1214,12 @@ class Api
 			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
+
+			// Checking if the dataset is coming from master and if it is a reference dataset
+			$dataset["is_reference"] = false;
+			if ($dataset["organization"]["name"] == $this->config->client->master_organisation) {
+				$dataset["is_reference"] = true;
+			}
 		}
 
 		if ($hasFacetFeature) {
