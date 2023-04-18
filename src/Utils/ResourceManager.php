@@ -13,6 +13,7 @@ use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 use \JsonMachine\JsonMachine;
+use OzdemirBurak\JsonCsv\File\Json;
 
 class ResourceManager {
 
@@ -2145,31 +2146,36 @@ class ResourceManager {
 				$jsonItems = JsonMachine::fromFile($json, '/features');
 			} catch (\Exception $e) {
 				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
-				return null;
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
 		}
 		else {
 			Logger::logMessage("Creating CSV from GeoJson from String");
 		
-			// If passed a string, turn it into an array
-			if (is_array($json) === false) {
-				
-				$types = JsonMachine::fromFile($json, '/type');
-				$type = iterator_to_array($types)['type'];
+			try {
+				// If passed a string, turn it into an array
+				if (is_array($json) === false) {
+					
+					$types = JsonMachine::fromFile($json, '/type');
+					$type = iterator_to_array($types)['type'];
 
-				if ($type != "FeatureCollection") {
-					return "";
+					if ($type != "FeatureCollection") {
+						return "";
+					}
+
+					$jsonItems = JsonMachine::fromString($json, '/features');
+					// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 				}
+				else {
+					if ($json['type'] != "FeatureCollection") {
+						return "";
+					}
 
-				$jsonItems = JsonMachine::fromString($json, '/features');
-				// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
-			}
-			else {
-				if ($json['type'] != "FeatureCollection") {
-					return "";
+					$jsonItems = $json['features'];
 				}
-
-				$jsonItems = $json['features'];
+			} catch (\Exception $e) {
+				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
 		}
 
@@ -2286,6 +2292,12 @@ class ResourceManager {
 
 		fclose($fp);
 
+		return true;
+	}
+
+	function buildCSVFromJson($json, $newCSVPath, $isFromPath = false) {
+		$json = new Json($json);
+		$json->convertAndSave($newCSVPath);
 		return true;
 	}
 	
