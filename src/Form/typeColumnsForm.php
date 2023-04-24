@@ -17,6 +17,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\Component\Render\FormattableMarkup; 
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\InvokeCommand;
 
 /**
  * Implements an example form.
@@ -44,42 +46,90 @@ class typeColumnsForm extends HelpFormBase {
 		$this->urlCkan = $this->config->ckan->url; 
         
 		///////////////////////////////organization_list////
-		
+
+		// Get all observatory
         $api = new Api;
 		$orgs = $api->getAllOrganisations(true, false, true);
-
-		$organizationList = array();
+		$organizationOptions = array();
+		$organizationOptions["-1"] = "----";
         foreach ($orgs as &$value) {
-            $organizationList[$value[name]] = $value[display_name];
-        }
+			$organizationOptions[$value[name]] = $value[display_name];
+		}
 		
 			
 		// select for table
-		
-		$form['filtr_org'] = array(
-            //'#prefix' =>'',
-            '#type' => 'select',
-            '#title' => t('Filtres :'),
-            '#options' => $organizationList,
-            '#empty_option' => t('----'),
-            '#attributes' => array('style' => 'width: 50%;','onchange' => 'baba();'),
-            '#ajax'         => [
-                'callback'  => '::datasetCallback',
-                'wrapper'   => 'selected_data',
-			],
-        );
 
-        $ids = array();
-		$form['selected_data'] = array(
+		$form['filter_organisation'] = [
 			'#type' => 'select',
-			'#options' => $ids,
-			'#attributes' => array(
-				'onchange' => 'getTableById()',
-				'id' => 'selected_data'
-			),
-			'#prefix' =>'<div id="selected_data">',
-			'#suffix' =>'</div>',
-		);
+			'#title' => $this->t('Sélection de l\'observatoire'),
+			'#prefix' => '<div class="select-metadata">',
+			'#suffix' => '</div>',
+			'#options' => $organizationOptions,
+			'#default_value' => isset($mainOrganisationId) ? $mainOrganisationId : null,
+			'#ajax' => [
+				'callback' => '::getMainDatasetsCallback',
+      			'wrapper' => 'dataset-autocomplete-wrapper',
+				'disable-refocus' => FALSE,
+				'event' => 'change',
+				'progress' => [
+					'type' => 'throbber',
+					'message' => $this->t('Chargement des connaissances...'),
+				],
+			],
+		];
+		
+		$selectedOrganization = $form_state->getValue(['filter_organisation']);
+		$form['selected_data'] = [
+			'#type' => 'textfield',
+			'#title' => t('Choix de la connaissance'),
+			'#autocomplete_route_name' => 'ckan_admin.api.autocomplete.datasets',
+			'#autocomplete_route_parameters' => ['organization' => $selectedOrganization],
+			'#required' => TRUE,
+			'#default_value' => isset($mainDataset) ? $mainDataset['metas']['name'] : null,
+			// for some reason you  need to set '#validated' => 'true' other wise tou get :
+			// An illegal choice has been detected. Please contact the site administrator.
+			'#validated' => 'true',
+			'#prefix' => '<div id="dataset-autocomplete-wrapper">',
+			'#suffix' => '</div>',
+			// '#attributes' => [
+			// 	'id' => 'selected_data'
+			// ],
+			'#ajax' => [
+				'callback' => '::getColumns',
+				'disable-refocus' => FALSE,
+				'event' => 'autocompleteclose',
+				'progress' => [
+					'type' => 'throbber',
+					'message' => $this->t('Chargement des colonnes...'),
+				]
+			],
+		];
+
+		
+		// $form['filtr_org'] = array(
+        //     //'#prefix' =>'',
+        //     '#type' => 'select',
+        //     '#title' => t('Filtres :'),
+        //     '#options' => $organizationList,
+        //     '#empty_option' => t('----'),
+        //     '#attributes' => array('style' => 'width: 50%;','onchange' => 'baba();'),
+        //     '#ajax'         => [
+        //         'callback'  => '::datasetCallback',
+        //         'wrapper'   => 'selected_data',
+		// 	],
+        // );
+
+        // $ids = array();
+		// $form['selected_data'] = array(
+		// 	'#type' => 'select',
+		// 	'#options' => $ids,
+		// 	'#attributes' => array(
+		// 		'onchange' => 'getTableById()',
+		// 		'id' => 'selected_data'
+		// 	),
+		// 	'#prefix' =>'<div id="selected_data">',
+		// 	'#suffix' =>'</div>',
+		// );
         
         $form['selected_data_id'] = array(
             '#type' => 'textfield',
@@ -449,6 +499,22 @@ class typeColumnsForm extends HelpFormBase {
 		 
 		return $form;
 	}
+
+	function getMainDatasetsCallback(array &$form, FormStateInterface $form_state) {
+		Logger::logMessage("getMainDatasetsCallback 1");
+
+		$selectedOrganization = $form_state->getValue(['filter_organisation']);
+		$form['selected_data']['#autocomplete_route_parameters'] = ['organization' => $selectedOrganization];
+		return $form['selected_data'];
+	}
+
+	public function getColumns(array &$form, FormStateInterface $form_state) {
+		Logger::logMessage("getColumns 1");
+
+		$response = new AjaxResponse();
+		$response->addCommand(new InvokeCommand(NULL, 'loadDataset'));
+		return $response;
+	  }
     
     
 	public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -818,47 +884,47 @@ class typeColumnsForm extends HelpFormBase {
 		\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 	}
 
-	public function datasetCallback(array &$form, FormStateInterface $form_state){
-		$api = new Api;
+	// public function datasetCallback(array &$form, FormStateInterface $form_state){
+	// 	$api = new Api;
 		
-		$selected_org = $form_state->getValue('filtr_org');
-        $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id(), $selected_org);
+	// 	$selected_org = $form_state->getValue('filtr_org');
+    //     $dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id(), $selected_org);
 			
-        $dataSet = $dataSet->getContent();
-        $dataSet = json_decode($dataSet, true);
-		$dataSet = $dataSet[result][results];
+    //     $dataSet = $dataSet->getContent();
+    //     $dataSet = json_decode($dataSet, true);
+	// 	$dataSet = $dataSet[result][results];
 		
-		uasort($dataSet, function($a, $b) {
-			$res =  strcasecmp($a['title'], $b['title']);
-			return $res;
-		});
+	// 	uasort($dataSet, function($a, $b) {
+	// 		$res =  strcasecmp($a['title'], $b['title']);
+	// 		return $res;
+	// 	});
 
-		$ids = array();
-        $ids["new"] = "";
-        // $tableData=array();
-        for($i=0; $i<count($dataSet); $i++){
-            for($j=0; $j<count($dataSet[$i][resources]); $j++){
-                if($dataSet[$i][resources][$j][format]=='CSV'){
-					// $fields = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
-					// $tableData[$i]=$fields;
+	// 	$ids = array();
+    //     $ids["new"] = "";
+    //     // $tableData=array();
+    //     for($i=0; $i<count($dataSet); $i++){
+    //         for($j=0; $j<count($dataSet[$i][resources]); $j++){
+    //             if($dataSet[$i][resources][$j][format]=='CSV'){
+	// 				// $fields = $api->getAllFieldsForTableParam($dataSet[$i][resources][$j][id], 'true');
+	// 				// $tableData[$i]=$fields;
 						
-					$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
+	// 				$ids[$dataSet[$i][id].'%'.$dataSet[$i][resources][$j][id]]=$dataSet[$i][title];    
 						
-					break;
-                }
-            }
-		}
+	// 				break;
+    //             }
+    //         }
+	// 	}
 
-		$elem = [
-            '#type' => 'select',
-            '#options' => $ids,
-            '#attributes' => [
-                'onchange' => 'getTableById()', 
-				'id' => 'selected_data'
-			],
+	// 	$elem = [
+    //         '#type' => 'select',
+    //         '#options' => $ids,
+    //         '#attributes' => [
+    //             'onchange' => 'getTableById()', 
+	// 			'id' => 'selected_data'
+	// 		],
        
-		];
+	// 	];
 		
-		return $elem;
-	}
+	// 	return $elem;
+	// }
 }

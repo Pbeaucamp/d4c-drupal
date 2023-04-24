@@ -39,14 +39,18 @@ document.addEventListener('DOMContentLoaded', function () {
 	baba();
 }); // end ready  
 
+$.fn.loadDataset = function(argument) {
+	getTableById();
+};
+
 function getTableById(refresh = true) {
 	//$('#edit-table > tbody').val("");
 	$('#edit-table tbody tr').remove();
 
-	$('#edit-selected-data-id').val('');
-	$('#edit-selected-data-id').val($('#selected_data').val());
+	let param = $('input[name="selected_data"]').val();
 
-	let param = $('#selected_data').val();
+	$('#edit-selected-data-id').val('');
+	$('#edit-selected-data-id').val(param);
 
 	$('#selected_data select').attr("data-drupal-selector", "edit-selected-data");
 	$('#selected_data select').attr("id", "edit-selected-data");
