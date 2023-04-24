@@ -2205,6 +2205,13 @@ class VisualisationController extends ControllerBase {
 				<span>Modifier la connaissance</span>
 			</a>';
 
+		$configureDatasetUrl = "{{ path('ckan_admin.typeColumnsForm', { 'dataset-id': '$datasetId', 'resource-id': '$selectedResourceId'}) }}";
+		$buttonConfigureDataset = '
+			<a id="btn-configure-dataset" href="' . $configureDatasetUrl . '" target="_self">
+				<img alt="Paramétrage de la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/manage_observatoire.png">
+				<span>Paramétrage de la connaissance</span>
+			</a>';
+
 		// Part edit data
 		$tableHeader = '<tr>';
 		if (sizeof($fields) > 0 && $datasetType != 'kpi') {
@@ -2336,6 +2343,7 @@ class VisualisationController extends ControllerBase {
 					<summary>Administration</summary>
 					<div>
 						' . $buttonEditMetadata . '
+						' . $buttonConfigureDataset . '
 						' . $buttonEditor . '
 						' . $buttonEditorVisu . '
 						' . $buttonValidateDataInterop . '
