@@ -38,15 +38,17 @@ class typeColumnsForm extends HelpFormBase {
 	 * {@inheritdoc}
 	 */
 	public function buildForm(array $form, FormStateInterface $form_state) {
+		\Drupal::service('page_cache_kill_switch')->trigger();
 		
         $form = parent::buildForm($form, $form_state);
         $form['#attached']['library'][] = 'ckan_admin/typeColumns.form'; 
 
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url; 
+		
+		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
+		$mainDataset = $this->loadDataset($selectedDatasetId);
         
-		///////////////////////////////organization_list////
-
 		// Get all observatory
         $api = new Api;
 		$orgs = $api->getAllOrganisations(true, false, true);
@@ -58,7 +60,6 @@ class typeColumnsForm extends HelpFormBase {
 		
 			
 		// select for table
-
 		$form['filter_organisation'] = [
 			'#type' => 'select',
 			'#title' => $this->t('Sélection de l\'observatoire'),
@@ -91,9 +92,6 @@ class typeColumnsForm extends HelpFormBase {
 			'#validated' => 'true',
 			'#prefix' => '<div id="dataset-autocomplete-wrapper">',
 			'#suffix' => '</div>',
-			// '#attributes' => [
-			// 	'id' => 'selected_data'
-			// ],
 			'#ajax' => [
 				'callback' => '::getColumns',
 				'disable-refocus' => FALSE,
@@ -509,13 +507,27 @@ class typeColumnsForm extends HelpFormBase {
 	}
 
 	public function getColumns(array &$form, FormStateInterface $form_state) {
-		Logger::logMessage("getColumns 1");
+		$selectedDataset = $form_state->getValue(['selected_data']);
+
+		$dataset = $this->loadDataset($selectedDataset);
+		$resourceId = null;
+
+		foreach ($dataset[metas][resources] as $resource) {
+			if ($resource[format] == 'CSV') {
+				$resourceId = $resource[id];
+				break;
+			}
+		}
 
 		$response = new AjaxResponse();
-		$response->addCommand(new InvokeCommand(NULL, 'loadDataset'));
+		$response->addCommand(new InvokeCommand(NULL, 'loadDataset', [$selectedDataset, $resourceId]));
 		return $response;
-	  }
-    
+	}
+
+	public function loadDataset($datasetId, $applySecurity = true) {
+		$api = new Api();
+		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, $applySecurity) : null;
+	}
     
 	public function submitForm(array &$form, FormStateInterface $form_state) {
 		$api = new Api;
