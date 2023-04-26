@@ -20,8 +20,7 @@ use Drupal\file\Entity\File;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Drupal\Component\Render\FormattableMarkup; 
 use Drupal\ckan_admin\Utils\Logger;
-
-
+use Exception;
 
 /**
  * Implements an example form.
@@ -324,243 +323,125 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
         $dataset_file = $form_state->getValue('jdd', 0);
         if(sizeof($dataset_file) > 0 ) {
-        	$resourceUrl = $resourceManager->manageFile($dataset_file[0]);
+        	$infos = $resourceManager->manageFile($dataset_file[0]);
+			$file = $infos[0];
+			$resourceUrl = $infos[1];
 
-       
-		$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
+			try {
 
+				$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
 
-		if (file_exists(urldecode($resourceUrl))) {
-			$str=implode("\n",file(urldecode($resourceUrl)));
-			$fp=fopen(urldecode($resourceUrl),'w');
-				$str=str_replace('&','??',$str);
-				$str=str_replace(':','',$str);
-				fwrite($fp,$str,strlen($str));
-				$xml = simplexml_load_file(urldecode($resourceUrl));
+				if (file_exists(urldecode($resourceUrl))) {
+					$str=implode("\n",file(urldecode($resourceUrl)));
+					$fp=fopen(urldecode($resourceUrl),'w');
+					$str=str_replace('&','??',$str);
+					$str=str_replace(':','',$str);
+					fwrite($fp,$str,strlen($str));
+					$xml = simplexml_load_file(urldecode($resourceUrl));
 
-				$visu=0;
-				$imgPicto = array();
-				$imgPicto = $resourceManager->definePicto($imgPicto, $imgBack);
-				$imgBackground = array();
+					$visu=0;
+					$imgPicto = array();
+					$imgPicto = $resourceManager->definePicto($imgPicto, $imgBack);
+					$imgBackground = array();
 
-				$imgBackground = $resourceManager->defineBackground($imgBackground);
-				$removeBackground = 0;
-				$removeBackground = isset($removeBackground);
+					$imgBackground = $resourceManager->defineBackground($imgBackground);
+					$removeBackground = 0;
+					$removeBackground = isset($removeBackground);
 
-				$widgets =  array();
-				$widgets = $resourceManager->defineWidget($widgets);
-				$analize_false = 0;
-        		$api_false = 0;
+					$widgets =  array();
+					$widgets = $resourceManager->defineWidget($widgets);
+					$analize_false = 0;
+					$api_false = 0;
 
-        		$dont_visualize_tab = '';
-		        if ($api_false == 1) {
-					$dont_visualize_tab = $dont_visualize_tab . 'api;';
-				}
-		        if ($analize_false == 1) {
-		            $dont_visualize_tab = $dont_visualize_tab . 'analize;';
-				}
-
-				$analyseDefault = "";
-
-				$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
-
-				$theme = "default%Default";
-		        $theme = explode("%", $theme);
-		        $themeLabel = $theme[1];
-				$theme = $theme[0];
-				$selectedTypeMap = "";
-
-				$selectedOverlays = "";
-				if ($selectedTypeMap != NULL) {
-					$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
-				}
-				$private = 0;
-				if ($private == '1') {
-				$isPrivate = true;
-				} 
-				else {
-					$isPrivate = false;
-				}
-				$tags = array();
-				$userId = "*" . \Drupal::currentUser()->id() . "*";
-				// $users = \Drupal\user\Entity\User::loadMultiple();
-				$title="";
-				$datasetName="";
-				$description = "";
-				$licence ="";
-				$disableFieldsEmpty = 1;
-				$generatedTaskId = $this->gen_uuid();
-				$resourceUrlval="";
-				$generateColumns =0;
-				$unzipZip =0;
-				$encoding ="UTF-8";
-				$validata ="non_valider";
-
-			/*	foreach ($xml as $key => $value) {
-					echo "<pre>";
-					if($key == "gmdidentificationInfo") {
-						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
-						$datasetName = $resourceManager->defineDatasetName($title);
-						var_dump($datasetName);
+					$dont_visualize_tab = '';
+					if ($api_false == 1) {
+						$dont_visualize_tab = $dont_visualize_tab . 'api;';
 					}
-					echo "</pre>";
-
-				}die;*/
-
-				foreach ($xml as $key => $value) {
-		
-
-					if($key == "gmdidentificationInfo") {
-						
-						$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
-						$datasetName = $resourceManager->defineDatasetName($title);
-						$datasetName = str_replace(".", "-", $datasetName);
-						$description = $value->gmdMD_DataIdentification->gmdabstract->gcoCharacterString->__toString();
-						
-
-						
-
-						foreach ($value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as $key3 => $value3) {
-							
-						if($value3->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "creation") {
-							
-							$dateDataset = $value3->gmdCI_Date->gmddate->gcoDate->__toString();
-						}
-						}
-
-						foreach ($value->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
-	
-							if($value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode != null ){
-								$licence = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
-								
-							}
-
-						}
-
+					if ($analize_false == 1) {
+						$dont_visualize_tab = $dont_visualize_tab . 'analize;';
 					}
 
-					/*if($key == "gmdcontact") {
-						$organization = $value->gmdCI_ResponsibleParty->gmdorganisationName->gcoCharacterString->__toString();
+					$analyseDefault = "";
 
-					}*/
+					$analyseDefault = $resourceManager->defineAnalyse($analyseDefault);
 
-					if($key == "gmddistributionInfo") {
-						
-						/*$resourceUrlval = urldecode($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine[0]->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+					$theme = "default%Default";
+					$theme = explode("%", $theme);
+					$themeLabel = $theme[1];
+					$theme = $theme[0];
+					$selectedTypeMap = "";
 
-						echo "<pre>";*/
-						/*var_dump($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions);*/
-						foreach ($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine as $k => $f) {
-					echo "<pre>";
-				
+					$selectedOverlays = "";
+					if ($selectedTypeMap != NULL) {
+						$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+					}
+					$private = 0;
+					if ($private == '1') {
+						$isPrivate = true;
+					} 
+					else {
+						$isPrivate = false;
+					}
+					$tags = array();
+					$title="";
+					$datasetName="";
+					$description = "";
+					$licence ="";
+					$disableFieldsEmpty = 1;
+					$generatedTaskId = $this->gen_uuid();
+					$resourceUrlval="";
+					$generateColumns =0;
+					$unzipZip =0;
+					$encoding ="UTF-8";
+					$validata ="non_valider";
 
-							if($f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'csv' || $f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'CSV' ){
-								
-								$resourceUrlval = urldecode($f->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
-								
+					foreach ($xml as $key => $value) {
+						if($key == "gmdidentificationInfo") {
+							$title = $value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmdtitle->gcoCharacterString->__toString();
+							$datasetName = $resourceManager->defineDatasetName($title);
+							$datasetName = str_replace(".", "-", $datasetName);
+							$description = $value->gmdMD_DataIdentification->gmdabstract->gcoCharacterString->__toString();
 
-							}
-							
-						}
-						
-
-					
-						
-		
-					
-						$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
-						
-			/*			$resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
-						
-						$newfile="";
-						$filepathContent = file_get_contents($resourceUrlval);
-						
-						 $delimiter = $api->getFileDelimiter($resourceUrlval);
-					
-						 $arr1 =file($resourceUrlval);
-			            $arr = array();
-			            $a=15;
-			            
-			            if(count($arr1)<15){
-							$a=count($arr1);
-						}
-
-			            for($i=0; $i<$a; $i++){
-
-							$text = $arr1[$i];
-							$arr[$i] = iconv(mb_detect_encoding($text, mb_detect_order(), true), "UTF-8", $text);
-			            }
-
-			            if($arr[0]==null || $arr[0]==''){
-						$arr[0]="Pas d'accès de ligne ou de colonne aux tables non tabulaires";
-					}*/
-					//echo "<pre>";
-						/*var_dump($resourceUrlval);
-						echo "</pre>";die;
-						$resourceUrlval = str_replace('https://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrlval);
-		            	$fp = fopen($resourceUrlval, 'wb');
-						foreach ( $arr as $line ) {
-						    $val = explode($delimiter, $line);
-						    foreach ($val as $key22 => $value22) {
-						    	$value22 = str_replace('","', ',', $value22);
-						    	$val[$key22] = trim($value22, '"');
-						    	
-						    }
-						    fputcsv($fp, $val);
-						}
-						fclose($fp);
-						$resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $resourceUrlval);*/
-						/*if (strpos(file_get_contents($resourceUrlval), ';') !== false) {
-							
-
-							$commaReplace = str_replace(";",",",$filepathContent);
-							$commaReplace = str_replace('"','',$filepathContent);
-							
-							$pathinfo = pathinfo($resourceUrlval);
-
-							$pathfiles = explode("/", $resourceUrlval);
-							
-							foreach ($pathfiles as $key => $value) {
-
-								if($key == 0) {
-									$newfile= $value;
+							foreach ($value->gmdMD_DataIdentification->gmdcitation->gmdCI_Citation->gmddate as $key3 => $value3) {	
+								if($value3->gmdCI_Date->gmddateType->gmdCI_DateTypeCode->__toString() == "creation") {
+									$dateDataset = $value3->gmdCI_Date->gmddate->gcoDate->__toString();
 								}
-								else {
-									$newfile .="/".$value;
-								}
-								
 							}
-							//create a new csv files contains the same content of text file
-							file_put_contents($newfile, $commaReplace);
-							$resourceUrlval = str_replace($_SERVER['DOCUMENT_ROOT'],'https://' . $_SERVER['HTTP_HOST'], $newfile);
-						
+
+							foreach ($value->gmdMD_DataIdentification->gmdresourceConstraints as $key2 => $value2) {
+								if($value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode != null ){
+									$licence = $value2->gmdMD_LegalConstraints->gmduseConstraints->gmdMD_RestrictionCode->__toString();
+									
+								}
+							}
 						}
-*/
 
-
-
+						if($key == "gmddistributionInfo") {
+							foreach ($value->gmdMD_Distribution->gmdtransferOptions->gmdMD_DigitalTransferOptions->gmdonLine as $k => $f) {
+								echo "<pre>";
+								if ($f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'csv' || $f->gmdCI_OnlineResource->gmdname->gcoCharacterString->__toString() == 'CSV' ){	
+									$resourceUrlval = urldecode($f->gmdCI_OnlineResource->gmdlinkage->gmdURL->__toString());
+								}
+							}
+							$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
+						}
 					}
+					drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+							
+					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					
-				
+					$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);
 				}
-				// $extras = $resourceManager->defineExtras(null, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, $themeLabel,
-				// 			$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
-				// 			$dateDataset, $disableFieldsEmpty, $analyseDefault, $security);
-				
-							drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
-				       
 
-				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
-			
-				$this->manageResource($api, $resourceManager, $datasetId, null, $resourceUrlval, $generateColumns, false, '', $encoding, $validata, $unzipZip);
-
+				$resourceManager->cleanResources($file);
+			} catch (Exception $e) {
+				$this->messenger()->addError($this->t('Erreur lors de l\'importation du fichier'));
+				$resourceManager->cleanResources($file);
+			}
 		}
-        }
 
-        
 		$callUrl = $this->urlCkan . "/api/action/package_update";
 		$return = $api->updateRequest($callUrl, $oldDataset, "POST");
-       
 	}
 
 	function manageResource($api, $resourceManager, $datasetId, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $validata, $unzipZip) {

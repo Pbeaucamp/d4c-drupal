@@ -177,13 +177,20 @@ class ResourceManager {
 
 		$file = File::load($file);
 
-		$file->setPermanent();
-		$file->save();
+		// We remove the save for now as it block the file with the unique uri problem
+		// $file->setPermanent();
+		// $file->save();
 
 		$resourceUrl = $file->createFileUrl(FALSE);
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
-		return $resourceUrl;
+		return [$file, $resourceUrl];
+	}
+
+	function cleanResources($file)  {
+		if (isset($file)) {
+			$file->delete();
+		}
 	}
 
 	function getFilePath($resourceUrl) {
@@ -240,7 +247,7 @@ class ResourceManager {
 		}
 
 		try {
-			$encoding = $this->extractEncoding(self::ROOT . $filePath);
+			$encoding = isset($encoding) && $encoding != "" ? $encoding : $this->extractEncoding(self::ROOT . $filePath);
 			Logger::logMessage("Found encoding " . $encoding);
 
 			// We need to update the dataset metadata

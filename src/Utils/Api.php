@@ -563,18 +563,14 @@ class Api
 						$value['path'] = $value['name'];
 						//$value['count'] = $result2['result']['total'];
 						$value['count'] = $result['result']['records'][$j]['total'];
+						
 						$bool = false;
 						foreach ($filters_init as $k => $v) {
-							if (is_array($v)) {
-								if (in_array($value['name'], $v)) {
-									$bool = true;
-									break;
-								}
-							} else {
-								if ($value['name'] == $v) {
-									$bool = true;
-									break;
-								}
+							$v = urldecode($v);
+
+							if (is_array($v) && in_array($value['name'], $v) || $value['name'] == $v) {
+								$bool = true;
+								break;
 							}
 						}
 						if ($qField != "" && $value['name'] == $qField) {

@@ -132,9 +132,11 @@ $(document).ready(function () {
     let mathpow = Math.pow(10, number - 1);
     let scrolltime = (scroll * 1000) / mathpow;
 
-    timer = setInterval(function () {
-      next.trigger("click");
-    }, scrolltime);
+    if (scrolltime > 0) {
+      timer = setInterval(function () {
+        next.trigger("click");
+      }, scrolltime);
+    }
   });
 
   console.log(" slide array ");

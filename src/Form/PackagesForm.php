@@ -13,8 +13,7 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 use Drupal\Core\Url;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\ckan_admin\Utils\Logger;
-
-
+use Exception;
 
 /**
  * Implements an example form.
@@ -283,6 +282,13 @@ class PackagesForm extends HelpFormBase {
 		return $form;
 	}
 
+	// Check form beform submit
+	public function validateForm(array &$form, FormStateInterface $form_state) {
+        $orgavalue = $form_state->getValue('orga_selected_input');
+		if ($orgavalue == "") {
+			$form_state->setErrorByName('orga_selected_input', $this->t('Veuillez choisir une organisation pour importer le package'));
+		}
+	}
 
     //submit form
 	public function submitForm(array &$form, FormStateInterface $form_state) {
@@ -304,6 +310,7 @@ class PackagesForm extends HelpFormBase {
 		
 		$organization="";
 	    $orga = $api->getAllOrganisations();
+		
 		foreach ($orga as $key => $value) {
 			if($value["display_name"] == $orgavalue || $value["title"] == $orgavalue || $value["name"] == $orgavalue) {
 				$organization = $value["id"];
@@ -312,9 +319,17 @@ class PackagesForm extends HelpFormBase {
 
         $resources = $form_state->getValue('jdd', 0);
         if (isset($resources[0]) && !empty($resources[0])) {
-			$resourceUrl = $resourceManager->manageFile($resources[0]);
+			$infos = $resourceManager->manageFile($resources[0]);
+			$file = $infos[0];
+			$resourceUrl = $infos[1];
 
-			$this->manageResource($api, $resourceManager, $generatedTaskId, $resourceUrl, $security, $organization);
+			try {
+				$this->manageResource($api, $resourceManager, $generatedTaskId, $resourceUrl, $security, $organization);
+				$resourceManager->cleanResources($file);
+			} catch (Exception $e) {
+				\Drupal::messenger()->addError($e->getMessage());
+				$resourceManager->cleanResources($file);
+			}
 		}
 	}
 	
