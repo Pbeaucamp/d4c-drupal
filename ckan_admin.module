@@ -21,6 +21,17 @@ function ckan_admin_mail($key, &$message, $params) {
 }
 
 /**
+ * Implements hook_theme().
+ */
+function ckan_admin_theme($existing, $type, $theme, $path) {
+  return [
+    'visualizations_template' => [
+      'variables' => ['selectOptions' => NULL, 'selectedName' => NULL, 'selectedType' => NULL, 'visualizations' => NULL, 'error' => NULL]
+    ]
+  ];
+}
+
+/**
  * Implements hook_mail_alter().
  */
 function another_module_mail_alter(&$message) {

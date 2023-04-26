@@ -1,0 +1,9 @@
+{# ckan_admin/templates/visualizations-template.html.twig #}
+
+{% include '@ckan_admin/parts/visualizations-search.html.twig' %}
+
+{% if error != NULL %}
+    <span>{{ error }}</span>
+{% else %}
+    {% include '@ckan_admin/parts/visualizations-list.html.twig' %}
+{% endif %}

@@ -133,13 +133,20 @@ class ResourceManager {
 
 		$file = File::load($file);
 
-		$file->setPermanent();
-		$file->save();
+		// We remove the save for now as it block the file with the unique uri problem
+		// $file->setPermanent();
+		// $file->save();
 
 		$resourceUrl = $file->createFileUrl(FALSE);
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
-		return $resourceUrl;
+		return [$file, $resourceUrl];
+	}
+
+	function cleanResources($file)  {
+		if (isset($file)) {
+			$file->delete();
+		}
 	}
 
 	function manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip = false, $fromPackage = false, $transformFile = true, 
@@ -185,6 +192,13 @@ class ResourceManager {
 		}
 		
 		Logger::logMessage("Found format " . $type);
+
+		try {
+			$encoding = isset($encoding) && $encoding != "" ? $encoding : $this->extractEncoding(self::ROOT . $filePath);
+			Logger::logMessage("Found encoding " . $encoding);
+		} catch (\Exception $e) {
+			Logger::logMessage("Impossible de récupérer l'encodage du fichier (" . $e->getMessage() . ")");
+		}
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
@@ -491,6 +505,24 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	function extractEncoding($filePath) {
+		Logger::logMessage("Testing encoding for file '" . $filePath . "'");
+
+		$encodings = "UTF-8,ISO-8859-1,ISO-8859-15,CP1252,UTF-16,UTF-16LE,UTF-16BE";
+
+		$handle = fopen($filePath, "r");
+		$contents = fread($handle, 1000);
+		fclose($handle);
+
+		$detectedEncoding = mb_detect_encoding($contents, $encodings, true);
+
+		if (!$detectedEncoding) {
+			Logger::logMessage("No encoding detected, using Unknown by default");
+		}
+
+		return $detectedEncoding ? $detectedEncoding : "Unknown";
 	}
 
 	/**

@@ -5,6 +5,8 @@ routing:
 
 tools:
   version: VERSION
+  js:
+      js/tools.js: {}
   dependencies:    
     - core/jquery #Just to be safe
     - core/drupal.dialog.ajax #Required for dialogs
@@ -294,7 +296,15 @@ userstoryForm.form:
   css:
     base:
       css/userstory.css: {}
-      https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css: {}
+      https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css: {}     
+
+visualizations:
+  version: VERSION
+  js:
+      js/visualizations.js: {}
+  dependencies:    
+    - core/jquery #Just to be safe
+    - core/jquery.form #If you also want to use Ajax for form operations
 
 
 

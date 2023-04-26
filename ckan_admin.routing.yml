@@ -994,6 +994,14 @@ ckan_admin.api:
   requirements:
     _permission: 'access content'
 
+ckan_admin.visualizations:
+  path: '/d4c/visualizations'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Controller\VisualizationsController::page'
+    _title: 'Visualisations'
+  requirements:
+    _permission: 'access ro'
+
 # Part Datatable
 ckan_admin.api.datatable.manage:
   path: '/d4c/api/datatable/manage/{params}'

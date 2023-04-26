@@ -1,0 +1,24 @@
+{# ckan_admin/templates/parts/visualizations-search.html.twig #}
+<div class="form--inline form-inline clearfix">
+    <div class="form-item js-form-item form-type-textfield js-form-type-textfield form-item-title js-form-item-title form-group">
+        <label for="edit-visualization" class="control-label">Nom contenant</label> 
+        <input type="text" id="search-visualization-name" name="visualization" class="form-text form-control" value="{{ selectedName }}"/>
+    </div>
+    <div class="form-item js-form-item form-type-select js-form-type-select form-item-type js-form-item-type form-group">
+        <span class="control-label">Type</span>
+        <select id="search-visualization-type" class="form-select form-control">
+            <option value="">---</option>
+            {% for option in selectOptions %}
+                {% set selected = '' %}
+                {% if option.name == selectedType %}
+                    {% set selected = 'selected' %}
+                {% endif %}
+                <option value="{{ option.name }}" {{ selected }}>{{option.value}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div data-drupal-selector="edit-actions" class="form-actions form-group js-form-wrapper form-wrapper" id="edit-actions">
+        <a href="javascript:search('{{ path('ckan_admin.visualizations') }}', ['text','search-visualization-name','q'], ['select','search-visualization-type','type'])"><button class="button js-form-submit form-submit btn-default btn">Rechercher</button></a>
+        <a href="javascript:clearSearch('{{ path('ckan_admin.visualizations') }}')"><button class="button js-form-submit form-submit btn-default btn">Réinitialiser</button></a>
+    </div>
+</div>

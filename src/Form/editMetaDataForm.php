@@ -456,7 +456,7 @@ class editMetaDataForm extends HelpFormBase {
         $form['encoding'] = array(
             '#type' => 'textfield',
 			'#title' => $this->t('Encoding :'),
-            '#default_value' => t('UTF-8'),
+            '#default_value' => t(''),
             '#attributes' => array('style' => 'width: 50%;'),
 			'#required' => FALSE
 		);
@@ -481,6 +481,7 @@ class editMetaDataForm extends HelpFormBase {
 			'#type' => 'textfield',
 			'#title' => $this->t('Saisir les identifiants des jeux de données liés (séparés par une virgule) :'),
 			'#attributes' => array('style' => 'width: 50%;'),
+            '#required' => FALSE,
 			'#maxlength' => null,
 		);
         
@@ -1037,10 +1038,18 @@ class editMetaDataForm extends HelpFormBase {
 		}
 		else if (isset($resources[0]) && !empty($resources[0])) {
 
-			$resourceUrl = $resourceManager->manageFile($resources[0]);
+			$infos = $resourceManager->manageFile($resources[0]);
+			$file = $infos[0];
+			$resourceUrl = $infos[1];
         
-
-			$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
+			try {
+				$this->manageResource($api, $resourceManager, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, '', $encoding, $validata, $unzipZip);
+				$resourceManager->cleanResources($file);
+			} catch (\Exception $e) {
+				Logger::logMessage($e->getMessage());
+				\Drupal::messenger()->addMessage(t($e->getMessage()), 'error');
+				$resourceManager->cleanResources($file);
+			}
 		}
 	}
 	

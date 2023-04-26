@@ -1,0 +1,31 @@
+{# ckan_admin/templates/parts/visualizations-list.html.twig #}
+
+<table class="admin-list visualizations-list table table-hover table-striped">
+    <thead>
+        <tr>
+            <th><input type="checkbox"></input></th>
+            <th>NOM</th>
+            <th>CONNAISSANCE</th>
+            <th>TYPE</th>
+            <th>DATE DE CREATION</th>
+            <th>ACTION</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for visualization in visualizations %}
+            <tr>
+                <td><input type="checkbox"></input></td>
+                <td>{{ visualization.name }}</td>
+                <td>{{ visualization.datasetName }}</td>
+                <td>{{ visualization.type }}</td>
+                <td>{{ visualization.creation_date }}</td>
+                <td>
+                    <a href="javascript:copyValue('{{ visualization.share_url }}')"><i class="btn-visu fa fa-share-from-square" title="Copier l'url"></i></a>
+                    <a href="javascript:copyValue('{{ visualization.iframe }}')"><i class="btn-visu fa fa-link" title="Copier l'Iframe"></i></a>
+                    <a href="javascript:copyValue('{{ visualization.widget }}')"><i class="btn-visu fa fa-copy" title="Copier le widget"></i></a>
+                    <a href="javascript:deleteVisualization('{{ visualization.id }}')" onclick="if(!confirm('Voulez-vous vraiment supprimer cette visualisation ?')){return false;}"><button class="btn btn-danger">Supprimer</button></a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
