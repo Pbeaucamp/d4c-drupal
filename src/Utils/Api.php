@@ -681,13 +681,18 @@ class Api
 
 					// Logger::logMessage("TRM - buildFacetWhere - Found field type : " . $fieldType . " for field " . $key . "");
 
-					if (($fieldType != null && $fieldType == "double") || ($fieldType == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
-						$where .= $key . "=" . $value . " and ";
-					}
-					else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+					if (is_array($value)) {
+						if ($fieldType != null && $fieldType == "double") {
+							$value = implode(',', $value);
+						}
+						else {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						}
 						$value = urldecode($value);
 						$where .= $key . " in (" . $value . ") and ";
+					}
+					else if (($fieldType != null && $fieldType == "double") || ($fieldType == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
+						$where .= $key . "=" . $value . " and ";
 					}
 					else {
 						$value = urldecode($value);
