@@ -3,6 +3,7 @@
 namespace Drupal\ckan_admin\Controller;
 
 use Drupal\ckan_admin\Utils\Api;
+use Drupal\ckan_admin\Utils\Logger;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,8 @@ class AutocompleteController extends ControllerBase {
   public function handleAutocomplete(Request $request) {
     $organization = $request->query->get('organization');
     $input = $request->query->get('q');
+
+    // Logger::logMessage("AutocompleteController:handleAutocomplete: organization: $organization, input: $input");
     
     // Get the typed string from the URL, if it exists.
     if (!$input) {

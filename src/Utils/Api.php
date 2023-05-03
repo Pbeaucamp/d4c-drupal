@@ -8,7 +8,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-
+use Drupal\ckan_admin\Model\D4CMetadata;
+use Drupal\ckan_admin\Model\Organization;
 use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
@@ -133,8 +134,9 @@ class Api
 		$currentUser = \Drupal::currentUser();
 		$isConnected = \Drupal::currentUser()->isAuthenticated();
 
+		$callApi = $this->isObservatory();
 		$propertiesHelper = new PropertiesHelper();
-		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD);
+		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD, $callApi);
 		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME);
 
 		$result = array();
@@ -143,7 +145,6 @@ class Api
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
 		$result['messageRgpd'] = $messageRgpd;
-		$result['typesMime'] = $typesMime;
 
 		
 		$response = new Response();
@@ -309,6 +310,8 @@ class Api
 
 	private function constructReqQToSQL($value, $append = "")
 	{
+		$value = urldecode($value);
+		
 		//"q=emr_dt_service:[2018-04-21T22:00:00Z TO 2018-07-20T22:00:00Z]"
 		//"q=emr_dt_service>=\"2018-04-02T22:00:00Z\""
 		//q=nom_com:"lyon"
@@ -526,46 +529,7 @@ class Api
 
 					unset($query_params['limit']);
 
-
-					$where = "";
-					if (!empty($filters)) {
-						$where = " where ";
-						foreach ($filters as $key => $value) {
-							if ($key == "geofilter.distance") {
-								$coord = explode(',', $value);
-								$lat = $coord[0];
-								$long = $coord[1];
-								if (count($coord) > 2) {
-									$dist = $coord[2];
-									$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-								} else {
-									$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-								}
-
-								$where .= $fieldCoordinates . " not in ('', ',') and ";
-							} else if ($key == "geofilter.polygon") {
-								$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-								$where .= $fieldCoordinates . " not in ('', ',') and ";
-							} else {
-								if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-									$where .= $key . "=" . $value . " and ";
-								} else if (is_array($value)) {
-									$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-									$value = urldecode($value);
-									$where .= $key . " in (" . $value . ") and ";
-								} else {
-									$value = urldecode($value);
-									$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-								}
-							}
-						}
-						$where = substr($where, 0, strlen($where) - 4);
-						if ($reqQfilter != NULL) {
-							$where .= $reqQfilter;
-						}
-					} else if ($reqQfilter != NULL) {
-						$where = " where " . substr($reqQfilter, 5);
-					}
+					$where = $this->buildFacetWhere($fields, $filters, $reqQfilter, $fieldCoordinates, null);
 
 					$req = array();
 					$sql = "Select \"" . $query_params['fields'] . "\", count(\"" . $query_params['fields'] . "\") as total from \"" . $query_params['resource_id'] . "\"" . $where . "group by \"" . $query_params['fields'] . "\"";
@@ -585,7 +549,7 @@ class Api
 					curl_close($curl);
 					$result = json_decode($result, true);
 
-					// Logger::logMessage("Result : " . json_encode($result));
+					Logger::logMessage("Result : " . json_encode($result));
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);
@@ -601,18 +565,14 @@ class Api
 						$value['path'] = $value['name'];
 						//$value['count'] = $result2['result']['total'];
 						$value['count'] = $result['result']['records'][$j]['total'];
+						
 						$bool = false;
 						foreach ($filters_init as $k => $v) {
-							if (is_array($v)) {
-								if (in_array($value['name'], $v)) {
-									$bool = true;
-									break;
-								}
-							} else {
-								if ($value['name'] == $v) {
-									$bool = true;
-									break;
-								}
+							$v = urldecode($v);
+
+							if (is_array($v) && in_array($value['name'], $v) || $value['name'] == $v) {
+								$bool = true;
+								break;
 							}
 						}
 						if ($qField != "" && $value['name'] == $qField) {
@@ -676,6 +636,80 @@ class Api
 		else {
 			return $this->getDatastoreApi($params);
 		}
+	}
+
+	private function buildFacetWhere($fields, $filters, $reqQfilter, $fieldCoordinates, $fieldGeometries) {
+		$where = "";
+		if (!empty($filters)) {
+			$where = " where ";
+			foreach ($filters as $key => $value) {
+				if ($key == "geofilter.bbox") {
+					$bbox = explode(',', $value);
+					$minlat = $bbox[0];
+					$minlong = $bbox[1];
+					$maxlat = $bbox[2];
+					$maxlong = $bbox[3];
+					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else if ($key == "geofilter.distance") {
+					$coord = explode(',', $value);
+					$lat = $coord[0];
+					$long = $coord[1];
+					if (count($coord) > 2) {
+						$dist = $coord[2];
+						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
+					} else {
+						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
+					}
+
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else if ($key == "geo_digest") {
+					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
+				}
+				else if ($key == "geofilter.polygon") {
+					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
+					$where .= $fieldCoordinates . " not in ('', ',') and ";
+				}
+				else {
+					$fieldType = null;
+					foreach ($fields as $field) {
+						if ($field["name"] == $key) {
+							$fieldType = $field["type"];
+							break;
+						}
+					}
+
+					// Logger::logMessage("TRM - buildFacetWhere - Found field type : " . $fieldType . " for field " . $key . "");
+
+					if (is_array($value)) {
+						if ($fieldType != null && $fieldType == "double") {
+							$value = implode(',', $value);
+						}
+						else {
+							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						}
+						$value = urldecode($value);
+						$where .= $key . " in (" . $value . ") and ";
+					}
+					else if (($fieldType != null && $fieldType == "double") || ($fieldType == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
+						$where .= $key . "=" . $value . " and ";
+					}
+					else {
+						$value = urldecode($value);
+						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
+					}
+				}
+			}
+			$where = substr($where, 0, strlen($where) - 4);
+			if ($reqQfilter != NULL) {
+				$where .= $reqQfilter;
+			}
+		} else if ($reqQfilter != NULL) {
+			$where = " where " . substr($reqQfilter, 5);
+		}
+		return $where;
 	}
 
 	private function getFacetValuebyName($name, $array)
@@ -762,6 +796,8 @@ class Api
 			$callUrl = str_replace('%3D', '=', $callUrl);
 		}
 
+		// Logger::logMessage("TRM - callUrl : " . $callUrl);
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
@@ -800,136 +836,152 @@ class Api
 		}
 
 		//Here we have the result from CKAN
-		//We need to filter those result according to the selected map area (if there is a selection)
+		//We need to filter those result according to the selected map area (if there is a selection) or additionnal data filter
 
-		//First we get the coordinate from the map
-		$coordmap = "";
+		// Logger::logMessage("TRM - Additionnal parameters : " . json_encode($additionnalParameters));
+
 		if ($additionnalParameters) {
+			$coordmap = $additionnalParameters['coordinates'];
+			$hasCoordinates = isset($coordmap) && $coordmap != "";
 
-			$coordmap = $additionnalParameters;
+			$siret = $additionnalParameters['siret'];
+			$hasSiret = isset($siret) && $siret != "";
 
 			//We put the coordinates in an array. Very ugly way to do but no time. To remake
-			$coordmap = str_replace('%28', '(', $coordmap);
-			$coordmap = str_replace('%29', ')', $coordmap);
-			$coordmap = str_replace('%2C', ',', $coordmap);
-			$coordinates = explode("),", $coordmap);
-
-			for ($i = 0; $i < count($coordinates); ++$i) {
-				$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
-				$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+			if ($hasCoordinates) {
+				$coordmap = str_replace('%28', '(', $coordmap);
+				$coordmap = str_replace('%29', ')', $coordmap);
+				$coordmap = str_replace('%2C', ',', $coordmap);
+				$coordinates = explode("),", $coordmap);
+	
+				for ($i = 0; $i < count($coordinates); ++$i) {
+					$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
+					$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
+				}
 			}
 
-			// Logger::logMessage("COORDINATES " . json_encode($coordinates));
-			$dataSetscontent = [];
+			Logger::logMessage("Checking if datasets have data filters");
+			Logger::logMessage("Has coordinates : " . $hasCoordinates . " - " . json_encode($coordinates));
+			Logger::logMessage("Has siret : " . $hasSiret . " - " . $siret);
 
-
-
+			$datasets = [];
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
 			foreach ($result["result"]["results"] as $keydataset => $dataset) {
 
-				$resourceId = null;
-				$fieldCoordinates = null;
 				foreach ($dataset["resources"] as $value) {
-					//We get the field for the dataset
-					$fields = $this->getAllFields($value['id']);
-					// Logger::logMessage("Dataset      " . $dataset['id'] . "    with resource     " . $value['id']);
+					$resourceId = $value['id'];
 
-					foreach ($fields as $field) {
-						if ($field['type'] == "geo_point_2d") {
-							$fieldCoordinates = $field['name'];
-							break;
-						}
+					//We get the field for the dataset
+					$fields = $this->getAllFields($resourceId);
+
+					// Filter fields on type geo_point_2d
+					$fieldCoordinates = array_filter($fields, function ($field) {
+						return $field['type'] == 'geo_point_2d';
+					});
+
+					$fieldCoordinates = $fieldCoordinates != null && sizeof($fieldCoordinates) > 0 ? array_values($fieldCoordinates)[0] : null;
+					$fieldCoordinates = $fieldCoordinates['name'];
+
+					// Filter fields on name siret
+					$fieldSiret = array_filter($fields, function ($field) {
+						return $field['name'] == 'siret';
+					});
+					$fieldSiret = $fieldSiret != null && sizeof($fieldSiret) > 0 ? array_values($fieldSiret)[0] : null;
+					$fieldSiret = $fieldSiret['name'];
+
+					$datasetMatch = true;
+					if ($hasCoordinates && !$this->checkDataCoordinates($dataset['id'], $resourceId, $fieldCoordinates, $coordinates)) {
+						$datasetMatch = false;
 					}
 
-					//If there is a coordinate field, we 
-					if ($fieldCoordinates) {
-						$resourceId = $value['id'];
+					if ($hasSiret && !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiret, $siret)) {
+						$datasetMatch = false;
+					}
+
+					if ($datasetMatch) {
+						$datasets[] = $dataset;
 						break;
 					}
 				}
-
-				//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
-				if ($fieldCoordinates) {
-					Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $dataset['id'] . "'");
-
-					$polygon = '';
-					$first = true;
-
-					$coord = explode(',', $coordinates);
-					if (sizeof($coordinates) <= 3) {
-						if ($coord == null) {
-							$coord = explode(',', $coordinates[0]);
-						}
-						$lat = $coord[0];
-						$long = $coord[1];
-
-
-						if (count($coord) > 2) {
-							$dist = $coord[2];
-
-
-							$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
-							$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ")  ";
-						}
-					} else {
-						foreach ($coordinates as $coordinate) {
-							if (!$first) {
-								$polygon .= ",";
-							}
-							$first = false;
-							$polygon .= "(" . $coordinate . ")";
-						}
-
-						$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
-						$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
-					}
-
-
-
-
-					$req['sql'] = $sql;
-
-					$sqlUrl = http_build_query($req);
-					$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $sqlUrl;
-					$curl = curl_init($callUrl);
-					curl_setopt_array($curl, $this->getStoreOptions());
-					$resultSql = curl_exec($curl);
-
-					// Logger::logMessage("TRM - getPackageSearch - SQL " . $resultSql);
-
-					curl_close($curl);
-					$resultSql = json_decode($resultSql, true);
-
-					if ((int)$resultSql["result"]["records"][0]["count"] > 0) {
-						if (!in_array($dataset, $dataSetscontent)) {
-							array_push($dataSetscontent, $dataset);
-						}
-					} else {
-
-						unset($result["result"]["results"][$keydataset]);
-						$result["result"]["count"] -= 1;
-					}
-					//array_push($dataSetscontent, $dataset);
-					//TODO : LEAVE THE DATASET OR REMOVE ACCORDING TO THE RESULT
-				}
-				//If not we remove the dataset from the result
-				else {
-
-					$result["result"]["count"] -= 1;
-
-					unset($result["result"]["results"][$keydataset]);
-
-
-					//TODO : REMOVE THE DATASET
-				}
 			}
-			if ($fieldCoordinates) {
-				$result["result"]["results"] = $dataSetscontent;
-				$result["result"]["count"] = sizeof($dataSetscontent);
-			}
+
+			$result["result"]["results"] = $datasets;
+			$result["result"]["count"] = sizeof($datasets);
 		}
 
 		return $result;
+	}
+
+	function checkDataCoordinates($datasetId, $resourceId, $fieldCoordinates, $coordinates) {
+		if (!isset($fieldCoordinates)) {
+			return false;
+		}
+		
+		//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+		Logger::logMessage("Found field geo_point_2d '" . $fieldCoordinates . "' for resource id '" . $resourceId . "' and dataset id '" . $datasetId . "'");
+
+		$polygon = '';
+		$first = true;
+
+		$coord = explode(',', $coordinates);
+		if (sizeof($coordinates) <= 3) {
+			if ($coord == null) {
+				$coord = explode(',', $coordinates[0]);
+			}
+			$lat = $coord[0];
+			$long = $coord[1];
+
+			if (count($coord) > 2) {
+				$dist = $coord[2];
+
+				$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+				$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ")  ";
+			}
+		}
+		else {
+			foreach ($coordinates as $coordinate) {
+				if (!$first) {
+					$polygon .= ",";
+				}
+				$first = false;
+				$polygon .= "(" . $coordinate . ")";
+			}
+
+			$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
+			$sql .= " where polygon(path '(" . $polygon . ")') @> point(" . $fieldCoordinates . ") ";
+		}
+
+		$resultSql = $this->searchDatastoreSQL($sql);
+		return (int) $resultSql["result"]["records"][0]["count"] > 0;
+	}
+
+	function checkDataColumn($datasetId, $resourceId, $field, $value) {
+		if (!isset($field)) {
+			return false;
+		}
+		
+		//If there is a coordinate field, we call the database to see if one of his point belong to the user selection
+		Logger::logMessage("Found field '" . $field . "' for resource id '" . $resourceId . "' and dataset id '" . $datasetId . "'");
+
+		$sql = "Select count(*) from \"" . $resourceId . "\"";
+		$sql .= " where " . $field . " = '" . $value . "'";
+
+		$resultSql = $this->searchDatastoreSQL($sql);
+		return (int) $resultSql["result"]["records"][0]["count"] > 0;
+	}
+
+	function searchDatastoreSQL($sql) {
+		$req = array();
+		$req['sql'] = $sql;
+		$req = http_build_query($req);
+
+		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $req;
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $this->getStoreOptions());
+		$resultSql = curl_exec($curl);
+
+		curl_close($curl);
+		return json_decode($resultSql, true);
 	}
 
 	public function getExtendedPackageSearch($params, $exclude_private_orgas = TRUE/*, $return_visualisations = TRUE*/)
@@ -975,7 +1027,11 @@ class Api
 				}
 				else {
 					//We include private datasets from allowed organisations for the user
-					$allowedOrganizations = $this->getAllOrganisations(false, false, true);
+					$orgs = $this->getAllOrganisations(false, false, true);
+					$allowedOrganizations = array();
+					foreach ($orgs as $org) {
+						$allowedOrganizations[] = new Organization($org["name"], true);
+					}
 				}
 			}
 			else if ($this->isObservatory()) {
@@ -983,35 +1039,67 @@ class Api
 				$allowedOrganizations = $this->getObservatoryOrganisations();
 			}
 
-			if ($applySecurity) {
-				foreach ($allowedOrganizations as $org) {
-					if ($query_params["fq"] == null) {
-						$query_params["fq"] = "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
-					else {
-						$query_params["fq"] .= " AND " . "(organization:(" . $org . ") AND (private:(true) OR private:(false)))";
-					}
+			if ($applySecurity && $allowedOrganizations != null && sizeof($allowedOrganizations) > 0) {
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "(";
 				}
+				else {
+					$query_params["fq"] .= " AND (";
+				}
+				$isFirst = true;
+				foreach ($allowedOrganizations as $orga) {
+					$query_params["fq"] .= $isFirst ? "" : " OR ";
+					$query_params["fq"] .= $orga->getQuery();
+					$isFirst = false;
+				}
+				$query_params["fq"] .= ")";
 			}
 		}
 		else if ($this->isObservatory()) {
 			$allowedOrganizations = $this->getObservatoryOrganisations();
-			foreach ($allowedOrganizations as $org) {
-				if ($query_params["fq"] == null) {
-					$query_params["fq"] .= "(organization:(" . $org . "))";
-				}
-				else {
-					$query_params["fq"] .= " AND " . "(organization:(" . $org . "))";
-				}
+			if ($query_params["fq"] == null) {
+				$query_params["fq"] = "(";
 			}
+			else {
+				$query_params["fq"] .= " AND (";
+			}
+			$isFirst = true;
+			foreach ($allowedOrganizations as $orga) {
+				$org = $orga->getName();
+				$orga->setAllowPrivate(false);
+				
+				$query_params["fq"] .= $isFirst ? "" : " OR ";
+				$query_params["fq"] .= $orga->getQuery();
+				$isFirst = false;
+			}
+			$query_params["fq"] .= ")";
 		}
 
 		// Logger::logMessage("TRM - Query params " . json_encode($query_params["fq"]));
 		
-		$coordinateParam = null;
-		if (array_key_exists('coordReq', $query_params)) {
-			$coordinateParam = $query_params['coordReq'];
-			unset($query_params['coordReq']);
+		$additionnalParameters = array();
+		if (array_key_exists('coordReq', $query_params) || array_key_exists('siret', $query_params)) {
+
+			if (array_key_exists('siret', $query_params)) {
+				$additionnalParameters['siret'] = $query_params['siret'];
+				unset($query_params['siret']);
+
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "features:(*analyze*)";
+				} else {
+					$query_params["fq"] .= " AND features:(*analyze*)";
+				}
+			}
+			else if (array_key_exists('coordReq', $query_params)) {
+				$additionnalParameters['coordinates'] = $query_params['coordReq'];
+				unset($query_params['coordReq']);
+
+				if ($query_params["fq"] == null) {
+					$query_params["fq"] = "features:(*geo*)";
+				} else {
+					$query_params["fq"] .= " AND features:(*geo*)";
+				}
+			}
 
 			//We replace the rows and start to get all the dataset
 			$rows = $query_params['rows'];
@@ -1021,12 +1109,6 @@ class Api
 			unset($query_params['rows']);
 
 			$query_params["rows"] = 1000;
-
-			if ($query_params["fq"] == null) {
-				$query_params["fq"] = "features:(*geo*)";
-			} else {
-				$query_params["fq"] .= " AND features:(*geo*)";
-			}
 		}
 
 		if ($exclude_private_orgas) {
@@ -1086,7 +1168,7 @@ class Api
 		$url2 = http_build_query($query_params);
 
 		//echo $url2;
-		$result = $this->getPackageSearch($url2, $coordinateParam, $rows, $start);
+		$result = $this->getPackageSearch($url2, $additionnalParameters, $rows, $start);
 		$result["all_organizations"] = $orgs["result"];
 		error_log($result["result"]["count"]);
 		return $result;
@@ -1134,6 +1216,12 @@ class Api
 
 			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
+			}
+
+			// Checking if the dataset is coming from master and if it is a reference dataset
+			$dataset["is_reference"] = false;
+			if ($dataset["organization"]["name"] == $this->config->client->master_organisation) {
+				$dataset["is_reference"] = true;
 			}
 		}
 
@@ -1230,7 +1318,7 @@ class Api
 		}
 
 		if ($iduser != NULL) {
-			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
+			//If we apply security by organizations, we do not apply the user security which will probably disappear in a future version
 			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
@@ -1361,61 +1449,8 @@ class Api
 				$filters_init[$key] =  $value;
 			}
 		}
-		$where = "";
-		if (!empty($filters_init)) {
-			Logger::logMessage("Filters exists");
 
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					Logger::logMessage("Build query for geofilter.bbox \r\n");
-
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					Logger::logMessage("Build query for geofilter.distance \r\n");
-
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					if (count($coord) > 2) {
-						$dist = $coord[2];
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-					} else {
-						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					}
-				} else if ($key == "geofilter.polygon") {
-					Logger::logMessage("Build query for geofilter.polygon \r\n");
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-				} else {
-					Logger::logMessage("Build query without parameter \r\n");
-
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-			if ($reqQfilter != "") {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != "") {
-			Logger::logMessage("Req filter is not empty '" . $reqQfilter . "' and we put '" . substr($reqQfilter, 5) . "'");
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
 
 		$req = array();
 		if ($fieldGeometries != "") {
@@ -2024,68 +2059,13 @@ class Api
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
 		unset($query_params["resourceId"]);
-		$where = "";
+
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
+
 		$limit  = "";
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					if (count($coord) > 2) {
-						$dist = $coord[2];
-						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
-					} else {
-						$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					}
-
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geo_digest") {
-					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
-				} else if ($key == "geofilter.polygon") {
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-
-					//We add a Postgis function because polygon(path) use the bounding box and with the tolerance it can contains multiples point
-					// if ($this->isPostgis) {
-					// 	$where .= "ST_Intersects(polygon(path '(" . $value . ")')::geometry, point(geo_point_2d)::geometry) and ";
-					// }
-
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
 		if (array_key_exists("limit", $query_params)) {
 			$limit = " limit " . $query_params['limit'];
 		}
-
 
 		$req = array();
 		$sql = "Select " . $fieldId . " as id from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
@@ -2308,7 +2288,10 @@ class Api
 			$resource = $this->getResource($query_params['resource_id'], true);
 			$resourceName = $resource['result']['name'];
 			//We remove the format if present
-			$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			// if format is present, we remove it
+			if (strpos($resourceName, '.') !== false) {
+				$resourceName = substr($resourceName, 0, strrpos($resourceName, '.'));
+			}
 			$filename = isset($resourceName) ? $resourceName : $query_params['resource_id'];
 
 			if ($format == "csv") {
@@ -3141,6 +3124,7 @@ class Api
 		$query = "idRes=" . $datasetId . "&zoom=" . $clusterPrec . "&minLat=" . $geofilter_bbox[0] . "&minLong=" . $geofilter_bbox[1] . "&maxLat=" . $geofilter_bbox[2] . "&maxLong=" . $geofilter_bbox[3];
 
 		$callUrl = $this->config->cluster->url . "cluster?" . $query;
+		
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleGetOptions());
@@ -3411,7 +3395,7 @@ class Api
 			$limit = " limit " . $query_params['rows'];
 		}
 
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$sql = "Select  " . $fieldsMapDisplayQuery . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
@@ -3483,6 +3467,8 @@ class Api
 		unset($query_params["facet"]);
 		$query_params["id"] = $query_params["DATASETID"];
 		unset($query_params["DATASETID"]);
+		$resourceId = $query_params["resource_id"];
+		unset($query_params["resource_id"]);
 
 		$url2 = http_build_query($query_params);
 
@@ -3512,7 +3498,13 @@ class Api
 		$resourceCSV = null;
 
 		foreach ($result['result']['resources'] as $value) {
-			if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+			if (isset($resourceId) && $resourceId != "") {
+				if ($resourceId == $value['id']) {
+					$resourceCSV = $value;
+					break;
+				}
+			}
+			else if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
 				$resourceCSV = $value;
 				break;
 			}
@@ -3979,67 +3971,21 @@ class Api
 			}
 		}
 
-		$where = "";
+		$where = $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
+
 		$limit  = "";
-		$offset  = "";
-		$orderby = "";
-
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else {
-					$ftype = null;
-					foreach ($fields as $field) {
-						if ($field["name"] == $key) {
-							$ftype = $field["type"];
-							break;
-						}
-					}
-					if (($ftype != null && $ftype == "double") || ($ftype == null && is_numeric($value) && $key != "insee_com" && $key != "code_insee")) {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
-
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
 		if (array_key_exists("limit", $query_params)) {
 			$limit = " limit " . $query_params['limit'];
 		} else {
 			$limit = " limit 100"; //par defaut
 		}
 
+		$offset  = "";
 		if (array_key_exists("offset", $query_params)) {
 			$offset = " offset " . $query_params['offset'];
 		}
 
+		$orderby = "";
 		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
 			foreach (explode(',', $query_params["sort"]) as $sort) {
@@ -4055,13 +4001,16 @@ class Api
 		$req = array();
 		// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
 		if ($query_params['fields'] != null) {
+			// We need to add double quotes to the fields names
+			$fields = "\"" . str_replace(",", "\",\"", $query_params['fields']) . "\"";
+
 			// We have to check if a column geo_point_2d exists and comes from the concatenation of the columns lat and lon
 			if ($hasVirtualGeoPoint) {
 				// We have to replace the geo_point_2d column by the concatenation of the columns lat and lon
-				$query_params['fields'] = str_replace("geo_point_2d", $fieldCoordinates . " AS geo_point_2d", $query_params['fields']);
+				$fields = str_replace("\"geo_point_2d\"", $fieldCoordinates . " AS geo_point_2d", $fields);
 			}
 
-			$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+			$sql = "Select " . $fields . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		} else {
 			$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		}
@@ -4438,7 +4387,7 @@ class Api
 		return $response;
 	}
 
-	public function getSQLWhereRecordsDownload($params)
+	public function getSQLWhereRecordsDownload($params, $resourceId)
 	{
 
 		$patternId = '/id|num|code|siren/i';
@@ -4450,7 +4399,7 @@ class Api
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id']);
+		$fields = $this->getAllFields($resourceId);
 		//echo json_encode($fields);
 		$fieldId = "id";
 		$reqFields = "";
@@ -4549,53 +4498,8 @@ class Api
 		}
 		unset($query_params["clusterprecision"]);
 		unset($query_params["q"]);
-		$where = "";
-		$limit  = "";
-		if (!empty($filters_init)) {
-			$where = " where ";
-			foreach ($filters_init as $key => $value) {
-				if ($key == "geofilter.bbox") {
-					$bbox = explode(',', $value);
-					$minlat = $bbox[0];
-					$minlong = $bbox[1];
-					$maxlat = $bbox[2];
-					$maxlong = $bbox[3];
-					$where .= "box(point(" . $minlat . "," . $minlong . "),point(" . $maxlat . "," . $maxlong . ")) @> point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geofilter.distance") {
-					$coord = explode(',', $value);
-					$lat = $coord[0];
-					$long = $coord[1];
-					$where .= "point(" . $lat . "," . $long . ") ~= point(" . $fieldCoordinates . ") and ";
-					$where .= $fieldCoordinates . " not in ('', ',') and ";
-				} else if ($key == "geo_digest") {
-					$where .= "md5(" . $fieldGeometries . ") = '" . $value . "' and ";
-				} else if ($key == "geofilter.polygon") {
-					Logger::logMessage("Build query for geofilter.polygon");
-					$where .= "polygon(path '(" . $value . ")') @> point(" . $fieldCoordinates . ") and ";
-				} else {
-					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
-						$where .= $key . "=" . $value . " and ";
-					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
-						$value = urldecode($value);
-						$where .= $key . " in (" . $value . ") and ";
-					} else {
-						$value = urldecode($value);
-						$where .= $key . "='" . str_replace("'", "''", $value) . "' and ";
-					}
-				}
-			}
-			$where = substr($where, 0, strlen($where) - 4);
 
-			if ($reqQfilter != NULL) {
-				$where .= $reqQfilter;
-			}
-		} else if ($reqQfilter != NULL) {
-			$where = " where " . substr($reqQfilter, 5);
-		}
-
-		return $where;
+		return $this->buildFacetWhere($fields, $filters_init, $reqQfilter, $fieldCoordinates, $fieldGeometries);
 	}
 
 	public function renderFrame(Request $request, $tab)
@@ -4656,7 +4560,7 @@ class Api
 			<a class="d4c-embed-watermark d4c-embed-watermark--' . $tab . '"
                target="_parent"
                href="' . str_replace("/frame/", "/", $request->getUri()) . '">
-                <img class="d4c-embed-watermark__image" ng-src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png" />
+                <img class="d4c-embed-watermark__image" ng-src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/tab.png" />
             </a>
         
     </div>
@@ -4947,7 +4851,7 @@ class Api
 		}
 */
 		$where = "";
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 
 		if (array_key_exists("maxpoints", $query_params) && $query_params['maxpoints'] != "") {
 			$limit = " limit " . $query_params['maxpoints'];
@@ -4972,7 +4876,7 @@ class Api
 		curl_close($curl);
 		//echo $result . "\r\n";
 
-		error_log('ttt' . $result);
+		// error_log('ttt' . $result);
 
 		$result = json_decode($result, true);
 
@@ -8066,7 +7970,7 @@ class Api
 			$private = $data->private;
 
 			$resourceManager = new ResourceManager();
-			$result = $resourceManager->updateDatasetMetadata($datasetId, 'visibility', '', $private);
+			$result = $resourceManager->updateDatasetMetadata($datasetId, 'visibility', [new D4CMetadata('visibility', $private)]);
 		}
 
 		$response = new Response();
@@ -8752,9 +8656,13 @@ class Api
 
 	function getObservatoryOrganisations() {
 		$organizationName = $this->config->client->client_organisation;
+		$masterOrganization = $this->config->client->master_organisation;
 
 		$allowedOrganizations = array();
-		$allowedOrganizations[] = strtolower($organizationName);
+		$allowedOrganizations[] = new Organization(strtolower($organizationName), true);
+		if (isset($masterOrganization) && $masterOrganization != "") {
+			$allowedOrganizations[] = new Organization(strtolower($masterOrganization), false);
+		}
 		return $allowedOrganizations;
 	}
 
@@ -8764,7 +8672,12 @@ class Api
 
 		$current_user = \Drupal::currentUser();
 		if (in_array("administrator", $current_user->getRoles())) {
-			$allowedOrganizations[] = "*";
+			if ($this->isObservatory()) {
+				$allowedOrganizations = $this->getObservatoryOrganisations();
+			}
+			else {
+				$allowedOrganizations[] = new Organization("*", true);
+			}
 			return $allowedOrganizations;
 		}
 
@@ -8782,7 +8695,7 @@ class Api
 				//We lowercase
 				$organizationName = strtolower($organizationName);
 
-				$allowedOrganizations[] = $organizationName;
+				$allowedOrganizations[] = new Organization($organizationName, true);
 			}
 		}
 
@@ -8792,10 +8705,11 @@ class Api
 	function getUserOrganizationsParameter($allowedOrganizations)
 	{
 		$hasParameter = false;
-
 		//We add all the organization allowed for the user
 		$organizationParameter = "(";
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
+
 			if ($org == "*") {
 				return null;
 			}
@@ -8815,7 +8729,8 @@ class Api
 
 	function isOrganizationAllowed($organization, $allowedOrganizations)
 	{
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
 				return true;
 			}
@@ -8831,8 +8746,9 @@ class Api
 
 		if ($applySecurity) {
 			$datasetOrganization = $datasetOrganization;
+
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
 				return false;
 			}
 		}
@@ -8851,7 +8767,7 @@ class Api
 
 			$datasetOrganization = $datasetOrganization;
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
 				return false;
 			}
 		}
@@ -8859,10 +8775,16 @@ class Api
 		return true;
 	}
 
-	function isDatasetAllowedForOrganization($organization, $allowedOrganizations)
+	function isDatasetAllowedForOrganization($organization, $allowedOrganizations, $isPrivate)
 	{
-		foreach ($allowedOrganizations as $org) {
+		foreach ($allowedOrganizations as $orga) {
+			$org = $orga->getName();
+			$allowPrivate = $orga->getAllowPrivate();
+
 			if ($org == "*" || strcasecmp($org, $organization) == 0) {
+				if ($isPrivate && !$allowPrivate) {
+					return false;
+				}
 				return true;
 			}
 		}
@@ -8949,6 +8871,10 @@ class Api
 			$this->updateVisualization($visualizationId, null, $publishDatasetId, '', $shareUrl, $iframe, $widget);
 
 			$response->setStatusCode(200);
+			$result = array();
+			$result["status"] = "success";
+			$result["result"] = $data;
+			echo json_encode($result);
 
 			break;
 		case 'DELETE':
@@ -9214,5 +9140,19 @@ class Api
 	function isConnectedUserAdmin() {
 		$current_user = \Drupal::currentUser();
 		return in_array("administrator", $current_user->getRoles());
+	}
+
+	function callProperties($params) {
+		$propertiesHelper = new PropertiesHelper();
+		$property = $propertiesHelper->getProperty($params, false, false);
+
+		$result = array();
+		$result["result"] = $property;
+		$result["status"] = "success";
+		
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		$response->setContent(json_encode($result));
+		return $response;
 	}
 }

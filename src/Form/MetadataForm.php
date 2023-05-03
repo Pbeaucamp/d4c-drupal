@@ -6,12 +6,12 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
 
+use Drupal\ckan_admin\Model\D4CMetadata;
+use Drupal\ckan_admin\Model\MetadataDefinition;
+use Drupal\ckan_admin\Model\Schedule;
 
 use Drupal\ckan_admin\Utils\Api;
-use Drupal\ckan_admin\Utils\D4CMetadata;
-use Drupal\ckan_admin\Utils\MetadataDefinition;
 use Drupal\ckan_admin\Utils\Logger;
-use Drupal\ckan_admin\Utils\Schedule;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\DatasetHelper;
 
@@ -23,9 +23,9 @@ abstract class MetadataForm extends FormBase {
 		return 'MetadataForm';
 	}
 
-	public function loadDataset($datasetId) {
+	public function loadDataset($datasetId, $applySecurity = true) {
 		$api = new Api();
-		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, true) : null;
+		return isset($datasetId) ? $api->getPackageShow2($datasetId, null, true, $applySecurity) : null;
 	}
 
 	public function getDatasetIntegration($dataset) {
@@ -78,6 +78,8 @@ abstract class MetadataForm extends FormBase {
 
 			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
+			$dateModification = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_modification");
+			$encoding = DatasetHelper::extractMetadata($selectedDataset["extras"], "encoding");
 			$vignette = DatasetHelper::extractMetadata($selectedDataset["extras"], "img_backgr");
 			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
 			$dataInterop = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_interop") == '1';
@@ -125,6 +127,13 @@ abstract class MetadataForm extends FormBase {
 			$referenceSystem = DatasetHelper::extractMetadata($selectedDataset["extras"], "reference-system");
 			$spatialResolution = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-resolution-units");
 			$representationType = DatasetHelper::extractMetadata($selectedDataset["extras"], "spatial-representation-type");
+
+			$bboxEastLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-east-long");
+			$bboxNorthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-north-lat");
+			$bboxSouthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-south-lat");
+			$bboxWestLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-west-long");
+
+			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution);
 		}
 
 		$licences = $api->getLicenses();
@@ -206,6 +215,15 @@ abstract class MetadataForm extends FormBase {
 			'#default_value' => isset($dateDataset) ? $dateDataset : date('Y-m-d'),
 		];
 
+		// Add date modification only if $selectedDataset is not null
+		if ($selectedDataset != null) {
+			$form['integration_option']['dataset_date_modification'] = [
+				'#type' => 'date',
+				'#title' => $this->t('Date de modification'),
+				'#default_value' => date('Y-m-d'),
+			];
+		}
+
 		// Add date field and set default value to today
 		$form['integration_option']['dataset_deposit_date'] = [
 			'#type' => 'date',
@@ -242,7 +260,8 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_encoding'] = [
 			'#type' => 'textfield',
 			'#title' => $this->t('Encodage'),
-			'#default_value' => 'UTF-8'
+			'#default_value' => isset($encoding) ? $encoding : 'UTF-8',
+			'#disabled' => true,
 		];
 
 		$form['integration_option']['dataset_vignette'] = array(
@@ -536,6 +555,7 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'checkbox',
 			'#name' => 'geographic_data',
 			'#title' => t('Données géographiques'),
+			'#default_value' => $hasGeographicData,
 		);
 
 		//Theme inspire
@@ -603,6 +623,70 @@ abstract class MetadataForm extends FormBase {
 			'#name' => 'spatial_resolution_distance',
 			'#title' => t('Résolution (mètre/pixel)'),
 			'#default_value' => isset($spatialResolution) ? $spatialResolution : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		// Add title
+		$form['inspire_option']['technicaldescription']['geographic_extent'] = array(
+			'#type' => 'item',
+			'#title' => t('Etendue géographique'),
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+		
+		$form['inspire_option']['technicaldescription']['geographic_extent_west'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_west',
+			'#title' => t('Ouest'),
+			'#default_value' => isset($bboxWestLong) ? $bboxWestLong : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_east'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_east',
+			'#title' => t('Est'),
+			'#default_value' => isset($bboxEastLong) ? $bboxEastLong : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_south'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_south',
+			'#title' => t('Sud'),
+			'#default_value' => isset($bboxSouthLat) ? $bboxSouthLat : '',
+			// Dependent on geographic data
+			'#states' => array(
+				'visible' => array(
+					':input[name="geographic_data"]' => array('checked' => TRUE),
+				),
+			),
+		);
+
+		$form['inspire_option']['technicaldescription']['geographic_extent_north'] = array(
+			'#type' => 'textfield',
+			'#name' => 'geographic_extent_north',
+			'#title' => t('Nord'),
+			'#default_value' => isset($bboxNorthLat) ? $bboxNorthLat : '',
 			// Dependent on geographic data
 			'#states' => array(
 				'visible' => array(
@@ -753,9 +837,13 @@ abstract class MetadataForm extends FormBase {
 		//WIP everything should be there
 
 		$dataInterop = $form_state->getValue(['integration_option','dataset_interop']);
+		$modificationDate = $form_state->getValue(['integration_option','dataset_date_modification']);
 
 		$generalMetadata = array();
 		$generalMetadata[] = new D4CMetadata("data_interop", $dataInterop);
+		if ($modificationDate != null) {
+			$generalMetadata[] = new D4CMetadata("date_modification", $modificationDate);
+		}
 		return $generalMetadata;
 	}
 
@@ -788,22 +876,26 @@ abstract class MetadataForm extends FormBase {
 		$referenceSystem = $form_state->getValue(['projection']);
 		$equivalentScale = $form_state->getValue(['spatial_resolution']);
 		$spatialResolution = $form_state->getValue(['spatial_resolution_distance']);
+		$bboxEastLong = $form_state->getValue(['geographic_extent_east']);
+		$bboxNorthLat = $form_state->getValue(['geographic_extent_north']);
+		$bboxSouthLat = $form_state->getValue(['geographic_extent_south']);
+		$bboxWestLong = $form_state->getValue(['geographic_extent_west']);
 
 		$accessConstraints = $form_state->getValue(['data_legal_access_constraints']);
 		$useConstraints = $form_state->getValue(['data_legal_use_constraints']);
 		$mentionLegales = $form_state->getValue(['data_legal_use_limitations']);
 
-		if (isset($frequence)) {
+		if (isset($frequence) && $frequence != "") {
 			$inspireMetadata[] = new D4CMetadata("frequency-of-update", $frequence);
 		}
 
-		if (isset($extentName)) {
+		if (isset($extentName) && $extentName != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-name", $extentName);
 		}
-		if (isset($extentBegin)) {
+		if (isset($extentBegin) && $extentBegin != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-begin", $extentBegin);
 		}
-		if (isset($extentEnd)) {
+		if (isset($extentEnd) && $extentEnd != "") {
 			$inspireMetadata[] = new D4CMetadata("extent-end", $extentEnd);
 		}
 		if (isset($organisationRole) || isset($organisationName) || isset($contactEmail) || isset($individualName) || isset($function) 
@@ -825,39 +917,51 @@ abstract class MetadataForm extends FormBase {
 			)));
 		}
 
-		if (isset($extent)) {
+		if (isset($extent) && $extent != "") {
 			$inspireMetadata[] = new D4CMetadata("extent", $extent);
 		}
-		if (isset($lineage)) {
+		if (isset($lineage) && $lineage != "") {
 			$inspireMetadata[] = new D4CMetadata("lineage", $lineage);
 		}
-		if (isset($useLimitation)) {
+		if (isset($useLimitation) && $useLimitation != "") {
 			$inspireMetadata[] = new D4CMetadata("use-limitation", $useLimitation);
 		}
 
-		if (isset($inspireTheme)) {
+		if (isset($inspireTheme) && $inspireTheme != "") {
 			$inspireMetadata[] = new D4CMetadata("inspire-theme", $inspireTheme);
 		}
-		if (isset($representationType)) {
+		if (isset($representationType) && $representationType != "") {
 			$inspireMetadata[] = new D4CMetadata("spatial-representation-type", $representationType);
 		}
-		if (isset($referenceSystem)) {
-			$inspireMetadata[] = new D4CMetadata("reference-system", $referenceSystem);
+		if (isset($referenceSystem) && $referenceSystem != "") {
+			$inspireMetadata[] = new D4CMetadata("spatial-reference-system", $referenceSystem);
 		}
-		if (isset($equivalentScale)) {
+		if (isset($equivalentScale) && $equivalentScale != "") {
 			$inspireMetadata[] = new D4CMetadata("equivalent-scale", json_encode($equivalentScale));
 		}
-		if (isset($spatialResolution)) {
+		if (isset($spatialResolution) && $spatialResolution != "") {
 			$inspireMetadata[] = new D4CMetadata("spatial-resolution-units", $spatialResolution);
 		}
+		if (isset($bboxEastLong) && $bboxEastLong != "") {
+			$inspireMetadata[] = new D4CMetadata("bbox-east-long", $bboxEastLong);
+		}
+		if (isset($bboxNorthLat) && $bboxNorthLat != "") {
+			$inspireMetadata[] = new D4CMetadata("bbox-north-lat", $bboxNorthLat);
+		}
+		if (isset($bboxSouthLat) && $bboxSouthLat != "") {
+			$inspireMetadata[] = new D4CMetadata("bbox-south-lat", $bboxSouthLat);
+		}
+		if (isset($bboxWestLong) && $bboxWestLong != "") {
+			$inspireMetadata[] = new D4CMetadata("bbox-west-long", $bboxWestLong);
+		}
 
-		if (isset($accessConstraints)) {
+		if (isset($accessConstraints) && $accessConstraints != "") {
 			$inspireMetadata[] = new D4CMetadata("access_constraints", $accessConstraints);
 		}
-		if (isset($useConstraints)) {
+		if (isset($useConstraints) && $useConstraints != "") {
 			$inspireMetadata[] = new D4CMetadata("use-constraints-1", json_encode($useConstraints));
 		}
-		if (isset($mentionLegales)) {
+		if (isset($mentionLegales) && $mentionLegales != "") {
 			$inspireMetadata[] = new D4CMetadata("mention_legales", $mentionLegales);
 		}
 
@@ -995,6 +1099,14 @@ abstract class MetadataForm extends FormBase {
 		return null;
 	}
 
+	function manageResourceUrl($datasetId, $resourceId, $resourceUrl, $resourceName, $description, $format) {
+		$isUpdate = $resourceId != null;
+
+		$api = new Api;
+		$resourceManager = new ResourceManager;
+		return $resourceManager->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
+	}
+
 	function deleteDataset(array &$form, FormStateInterface $form_state) {
 		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
 
@@ -1006,6 +1118,11 @@ abstract class MetadataForm extends FormBase {
 				$form_state->setRedirect('ckan_admin.portail');
 			}
 		}
+	}
+
+	function deleteAllResources($datasetId) {
+		$resourceManager = new ResourceManager();
+		$resourceManager->deleteDatasetResources($datasetId);
 	}
 
 	function redirectToDataset($form_state, $datasetId) {

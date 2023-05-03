@@ -477,15 +477,10 @@ function fillData(data) {
         }
 
         if (data.extras[g].key == 'LinkedDataSet') {
-            //$("#edit-dataset-lies").val(data.extras[g].value);
             let links = data.extras[g].value;
-            links = links.split(';');
-
-            //Disable for now until a better solution is found
-            // for (let f = 0; f < links.length; f++) {
-            //     $('#edit-dataset-lies-table-' + (links[f].replace(/:/, '')) + '-dt').attr('checked', 'checked');
-            //     $('#edit-dataset-lies-table-' + links[f] + '-dt').val(1);
-            // }
+            if (links) {
+                $("#edit-linked-dataset input").val(links);
+            }
         }
 		
 		if (data.extras[g].key == 'default_visu') {

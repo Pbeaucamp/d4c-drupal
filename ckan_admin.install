@@ -544,3 +544,62 @@ function ckan_admin_update_8710(&$sandbox) {
     $schema->dropField('d4c_dataset_visualization', 'dataset_id');
     $schema->addField('d4c_dataset_visualization', 'dataset_id', $spec);
 }
+
+function ckan_admin_update_8711(&$sandbox) {
+
+  $widget = [
+    'description' => 'Gestion des widgets',
+    'fields' => [
+      'widget_id' => [
+        'description' => 'Myfield1 description.',
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'widget_label' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'widget' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
+      'story_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'image' => [
+        'type' => 'text',
+        'not null' => TRUE,
+      ],
+    ],
+    'primary key' => ['widget_id'],
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_user_story_widget', $widget);
+}
+
+function ckan_admin_update_8712(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion des user story',
+    'fields' => [
+      'story_id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+      ],
+      'scroll_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+      ],
+      'title_story' => [
+        'type' => 'varchar',
+        'description' => "Title",
+        'length' => 255,
+        'not null' => TRUE,
+      ]
+    ],
+    'primary key' => ['story_id'],
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_user_story', $spec);
+}

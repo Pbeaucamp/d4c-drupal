@@ -1,6 +1,8 @@
 <?php
 
 namespace Drupal\ckan_admin\Utils;
+
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
@@ -11,6 +13,7 @@ use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 use \JsonMachine\JsonMachine;
+use OzdemirBurak\JsonCsv\File\Json;
 
 class ResourceManager {
 
@@ -174,13 +177,20 @@ class ResourceManager {
 
 		$file = File::load($file);
 
-		$file->setPermanent();
-		$file->save();
+		// We remove the save for now as it block the file with the unique uri problem
+		// $file->setPermanent();
+		// $file->save();
 
 		$resourceUrl = $file->createFileUrl(FALSE);
 		
 		Logger::logMessage("TRM: Saving file with URL = " . $resourceUrl . ".");
-		return $resourceUrl;
+		return [$file, $resourceUrl];
+	}
+
+	function cleanResources($file)  {
+		if (isset($file)) {
+			$file->delete();
+		}
 	}
 
 	function getFilePath($resourceUrl) {
@@ -226,16 +236,25 @@ class ResourceManager {
 			$filesize = filesize(self::ROOT . $filePath);
 		} catch (\Exception $e) {
 			$filesize = 0;
-			error_log('Unable to get file size for ' . self::ROOT . $filePath);
+			Logger::logMessage("Impossible de récupérer la taille du fichier pour " . self::ROOT . $filePath . "(" . $e->getMessage() . ")");
 		}
 
 		try {
 			$type = $this->extractFormat($filePath);
+			Logger::logMessage("Found format " . $type);
 		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer le format du fichier (" . $e->getMessage() . ")");
 		}
-		
-		Logger::logMessage("Found format " . $type);
+
+		try {
+			$encoding = isset($encoding) && $encoding != "" ? $encoding : $this->extractEncoding(self::ROOT . $filePath);
+			Logger::logMessage("Found encoding " . $encoding);
+
+			// We need to update the dataset metadata
+			$this->updateDatasetMetadata($datasetId, 'extras', [new D4CMetadata('encoding', $encoding)]);
+		} catch (\Exception $e) {
+			Logger::logMessage("Impossible de récupérer l'encodage du fichier (" . $e->getMessage() . ")");
+		}
 
 		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'PENDING', 'Traitement du fichier ' . $fileName . ' au format ' . $type . '');
 		if ($type == 'csv') {
@@ -251,7 +270,8 @@ class ResourceManager {
 				//Cleaning column name to insert in CKAN and D4C
 				if (($handle = fopen($csvFile, "r")) !== FALSE) {
 
-					$tmpFile = '/tmp/test.csv';
+					// Create a random name for the temporary file
+					$tmpFile = tempnam(sys_get_temp_dir(), 'csv');
 					$fp = fopen($tmpFile, 'w');
 
 					$firstRow = true;
@@ -373,9 +393,9 @@ class ResourceManager {
 				$spreadsheet = $reader->load($xls_file);
 
 				$loadedSheetNames = $spreadsheet->getSheetNames();
-				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-				$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+				// $highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+				// $highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+				// $spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 				
 				// We upload the excel file and we convert it to insert data if we can
 				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true);
@@ -538,6 +558,24 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	function extractEncoding($filePath) {
+		Logger::logMessage("Testing encoding for file '" . $filePath . "'");
+
+		$encodings = "UTF-8,ISO-8859-1,ISO-8859-15,CP1252,UTF-16,UTF-16LE,UTF-16BE";
+
+		$handle = fopen($filePath, "r");
+		$contents = fread($handle, 1000);
+		fclose($handle);
+
+		$detectedEncoding = mb_detect_encoding($contents, $encodings, true);
+
+		if (!$detectedEncoding) {
+			Logger::logMessage("No encoding detected, using Unknown by default");
+		}
+
+		return $detectedEncoding ? $detectedEncoding : "Unknown";
 	}
 
 	/**
@@ -1592,17 +1630,6 @@ class ResourceManager {
 		return $analyseDefault;
 	}
 
-	function defineLinkDatasets($linkDatasets) {
-		$linkDatasetsStr = '';
-		foreach ($linkDatasets as $key => &$val) {
-			if ($val[dt] == 1) {
-				$linkDatasetsStr = $linkDatasetsStr . ';' . $key;
-			}
-		}
-		
-		return substr($linkDatasetsStr, 1);
-	}
-
 	function defineTags($tags) {
 		// Changing method to allow space and accent in tags
 
@@ -2126,31 +2153,36 @@ class ResourceManager {
 				$jsonItems = JsonMachine::fromFile($json, '/features');
 			} catch (\Exception $e) {
 				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
-				return null;
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
 		}
 		else {
 			Logger::logMessage("Creating CSV from GeoJson from String");
 		
-			// If passed a string, turn it into an array
-			if (is_array($json) === false) {
-				
-				$types = JsonMachine::fromFile($json, '/type');
-				$type = iterator_to_array($types)['type'];
+			try {
+				// If passed a string, turn it into an array
+				if (is_array($json) === false) {
+					
+					$types = JsonMachine::fromFile($json, '/type');
+					$type = iterator_to_array($types)['type'];
 
-				if ($type != "FeatureCollection") {
-					return "";
+					if ($type != "FeatureCollection") {
+						return "";
+					}
+
+					$jsonItems = JsonMachine::fromString($json, '/features');
+					// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
 				}
+				else {
+					if ($json['type'] != "FeatureCollection") {
+						return "";
+					}
 
-				$jsonItems = JsonMachine::fromString($json, '/features');
-				// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
-			}
-			else {
-				if ($json['type'] != "FeatureCollection") {
-					return "";
+					$jsonItems = $json['features'];
 				}
-
-				$jsonItems = $json['features'];
+			} catch (\Exception $e) {
+				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
 		}
 
@@ -2269,6 +2301,12 @@ class ResourceManager {
 
 		return true;
 	}
+
+	function buildCSVFromJson($json, $newCSVPath, $isFromPath = false) {
+		$json = new Json($json);
+		$json->convertAndSave($newCSVPath);
+		return true;
+	}
 	
 	function isNumericColumn($json, $colName) {
 		for($i=0; $i< 100; $i++){
@@ -2303,52 +2341,47 @@ class ResourceManager {
 		if ($resnew->success == true) {
 			$idNewData = $resnew->result->id;
 		} 
-		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
+		else if ($resnew->error->name[0] == 'That URL is already in use.' || $resnew->error->name[0] == 'Cette URL est déjà utilisée.') {
 			$coll++;
 			
 			if($coll==1){
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10){
 				$newData[name]=substr($newData[name],0, -3);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -3);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[name] = $newData[name].'_'.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else if($coll>100){
 				$newData[name]=substr($newData[name],0, -4);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -4);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>1000){
 				$newData[name]=substr($newData[name],0, -5);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -5);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10000){
 				$newData[name]=substr($newData[name],0, -6);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -6);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else{
 				$newData[name]=substr($newData[name],0, -2);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -2);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
@@ -2368,8 +2401,9 @@ class ResourceManager {
 
 	/**
 	 * Type can be "visibility", "extras"
+	 * $data is an array of D4CMetadata
 	 */
-	function updateDatasetMetadata($datasetId, $type, $key, $value, $addToData = false) {
+	function updateDatasetMetadata($datasetId, $type, $metadatas) {
 		$result = array();
 
 		$api = new Api;
@@ -2384,40 +2418,48 @@ class ResourceManager {
 			$datasetToUpdate = $dataset["result"];
 			$datasetName = $datasetToUpdate["name"];
 			$title = $datasetToUpdate["title"];
+			$isPrivate = $datasetToUpdate["private"];
 			$description = $datasetToUpdate["notes"];
 			$licence = $datasetToUpdate["license_id"];
 			$organization = $datasetToUpdate["organization"]["name"];
 			if ($type == "visibility") {
-				$isPrivate = $value;
-				$extras = $datasetToUpdate["extras"];
+				foreach ($metadatas as $metadata) {
+					if ($metadata->getKey() == "visibility") {
+						$isPrivate = $metadata->getValue();
+						$extras = $datasetToUpdate["extras"];
+						break;
+					}
+				}
 			}
 			else if ($type == "extras") {
 				$extras = $datasetToUpdate["extras"];
-
-				$hasValue = false;
 				if ($extras != null && count($extras) > 0) {
 					for ($index = 0; $index < count($extras); $index++) {
-						if ($extras[$index]['key'] == $key) {
-							$hasValue = true;
 
-							if ($addToData) {
-								$extrasArray = json_decode($extras[$index]['value'], true);
-								if ($extrasArray == null) {
-									$extrasArray = array();
+						foreach ($metadatas as $metadata) {
+							if ($extras[$index]['key'] == $metadata->getKey()) {
+								if ($metadata->addToData()) {
+									$extrasArray = json_decode($extras[$index]['value'], true);
+									if ($extrasArray == null) {
+										$extrasArray = array();
+									}
+									$extrasArray[] = json_decode($metadata->getValue(), true)[0];
+									$extras[$index]['value'] = json_encode($extrasArray);
 								}
-								$extrasArray[] = json_decode($value, true)[0];
-								$extras[$index]['value'] = json_encode($extrasArray);
-							}
-							else {
-								$extras[$index]['value'] = $value;
+								else {
+									$extras[$index]['value'] = $metadata->getValue();
+								}
+								$metadata->setDefine(true);
 							}
 						}
 					}
 				}
 
-				if (!$hasValue) {
-					$extras[count($extras)]['key'] = $key;
-					$extras[(count($extras) - 1)]['value'] = $value;
+				foreach ($metadatas as $metadata) {
+					if (!$metadata->isDefine()) {
+						$extras[count($extras)]['key'] = $metadata->getKey();
+						$extras[(count($extras) - 1)]['value'] = $metadata->getValue();
+					}
 				}
 			}
 			$tags = $datasetToUpdate["tags"];
@@ -2432,7 +2474,7 @@ class ResourceManager {
 
 	function deleteDataset($datasetId) {
 		$currentUser = \Drupal::currentUser();
-		$this->updateDatasetMetadata($datasetId, "extras", "user-delete", $currentUser->getAccountName());
+		$this->updateDatasetMetadata($datasetId, "extras", [new D4CMetadata("user-delete", $currentUser->getAccountName())]);
 
 		$api = new Api;
 		$dataset = $api->getPackageShow("id=" . $datasetId, true, true, true, true);

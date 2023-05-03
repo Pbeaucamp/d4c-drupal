@@ -24,7 +24,6 @@ SOFTWARE.
 */
 
 $ = jQuery;
-getTableById(false);
 
 $(".btn-preview").click(function (ev) {
 	preview();
@@ -39,14 +38,27 @@ document.addEventListener('DOMContentLoaded', function () {
 	baba();
 }); // end ready  
 
-function getTableById(refresh = true) {
+$.fn.loadDataset = function(datasetId, resourceId) {
+	getTableById(true, datasetId, resourceId);
+};
+
+function getTableById(refresh = true, datasetId = null, resourceId = null) {
 	//$('#edit-table > tbody').val("");
 	$('#edit-table tbody tr').remove();
 
-	$('#edit-selected-data-id').val('');
-	$('#edit-selected-data-id').val($('#selected_data').val());
+	// let param = $('input[name="selected_data"]').val();
 
-	let param = $('#selected_data').val();
+	if (datasetId == null && resourceId == null) {
+		// Checking from url parameters
+		let url = new URL(window.location.href);
+		datasetId = url.searchParams.get("dataset-id");
+		resourceId = url.searchParams.get("resource-id");
+	}
+
+	let param = datasetId != null && resourceId != null ? datasetId + '%' + resourceId : "";
+
+	$('#edit-selected-data-id').val('');
+	$('#edit-selected-data-id').val(param);
 
 	$('#selected_data select').attr("data-drupal-selector", "edit-selected-data");
 	$('#selected_data select').attr("id", "edit-selected-data");

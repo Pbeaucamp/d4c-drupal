@@ -97,6 +97,14 @@ class Tools {
     }
 
     static function sendMail($email, $subject, $content) {
+		$config = include(__DIR__ . "/../../config.php");
+		$enableMail = $config->client->enable_mail == "true";
+
+        if (!$enableMail) {
+            Logger::logMessage("Mail not sent to '" . $email . "' because mail is disabled in config.php.");
+            return;
+        }
+
         // Send email in php drupal
         $mailManager = \Drupal::service('plugin.manager.mail');
 
@@ -105,6 +113,7 @@ class Tools {
         $params['subject'] = $subject;
         $params['body'] = [$content];
         $langcode = \Drupal::currentUser()->getPreferredLangcode();
+        
 
         if ($mailManager->mail('data_bfc', 'smtp-mail', $email, $langcode, $params)) {
             Logger::logMessage("A e-mail has been sent to '" . $email . "' via SMTP. You may want to check the log for any error messages.");

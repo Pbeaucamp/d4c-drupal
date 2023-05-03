@@ -6,7 +6,7 @@ info:
     email: d4c@bpm-conseil.com
   version: 1.0.0
 servers:
-- url: https://databfc-gravitee-gateway.data4citizen.com/data4citizenapi
+- url: https://databfc-gravitee-gateway.data4citizen.com/data4citizen-master-api
 tags:
 - name: datasets
   description: Action sur les jeux de données
