@@ -135,6 +135,7 @@ class Api
 
 		$propertiesHelper = new PropertiesHelper();
 		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD);
+		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME);
 
 		$result = array();
 		$result['isUserConnected'] = $isConnected;
@@ -142,6 +143,7 @@ class Api
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
 		$result['messageRgpd'] = $messageRgpd;
+		$result['typesMime'] = $typesMime;
 
 		
 		$response = new Response();

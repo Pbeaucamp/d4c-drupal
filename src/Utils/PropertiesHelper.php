@@ -8,6 +8,7 @@ class PropertiesHelper {
   const PACKAGE_DOWNLOAD_LIMIT = 'package_download_limit';
   const CO_LINKED_SURVEYS = 'co_linked_surveys';
   const MESSAGE_RGPD = 'message_rgpd';
+  const TYPES_MIME = 'types_mime';
 
   private $properties;
 
