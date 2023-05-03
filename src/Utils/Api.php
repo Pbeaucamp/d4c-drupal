@@ -3999,16 +3999,16 @@ class Api
 		$req = array();
 		// if the $query_params['fields'] field exists, return only the values ​​of these fields from sql request
 		if ($query_params['fields'] != null) {
+			// We need to add double quotes to the fields names
+			$fields = "\"" . str_replace(",", "\",\"", $query_params['fields']) . "\"";
+
 			// We have to check if a column geo_point_2d exists and comes from the concatenation of the columns lat and lon
 			if ($hasVirtualGeoPoint) {
 				// We have to replace the geo_point_2d column by the concatenation of the columns lat and lon
-				$query_params['fields'] = str_replace("geo_point_2d", $fieldCoordinates . " AS geo_point_2d", $query_params['fields']);
+				$fields = str_replace("\"geo_point_2d\"", $fieldCoordinates . " AS geo_point_2d", $fields);
 			}
 
-			// We need to add double quotes to the fields names
-			$fields = str_replace(",", "\",\"", $query_params['fields']);
-
-			$sql = "Select \"" . $fields . "\", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+			$sql = "Select " . $fields . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		} else {
 			$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		}
@@ -4558,7 +4558,7 @@ class Api
 			<a class="d4c-embed-watermark d4c-embed-watermark--' . $tab . '"
                target="_parent"
                href="' . str_replace("/frame/", "/", $request->getUri()) . '">
-                <img class="d4c-embed-watermark__image" ng-src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png" />
+                <img class="d4c-embed-watermark__image" ng-src="' . $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/tab.png" />
             </a>
         
     </div>
