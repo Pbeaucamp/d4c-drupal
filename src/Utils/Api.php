@@ -4005,7 +4005,10 @@ class Api
 				$query_params['fields'] = str_replace("geo_point_2d", $fieldCoordinates . " AS geo_point_2d", $query_params['fields']);
 			}
 
-			$sql = "Select " . $query_params['fields'] . ", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
+			// We need to add double quotes to the fields names
+			$fields = str_replace(",", "\",\"", $query_params['fields']);
+
+			$sql = "Select \"" . $fields . "\", count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		} else {
 			$sql = "Select *, count(*) OVER() AS total_count from \"" . $query_params['resource_id'] . "\"" . $where . $orderby . $limit . $offset;
 		}

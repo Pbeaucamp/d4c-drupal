@@ -393,9 +393,9 @@ class ResourceManager {
 				$spreadsheet = $reader->load($xls_file);
 
 				$loadedSheetNames = $spreadsheet->getSheetNames();
-				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-				$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+				// $highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+				// $highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+				// $spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 				
 				// We upload the excel file and we convert it to insert data if we can
 				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true);
