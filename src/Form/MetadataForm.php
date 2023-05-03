@@ -1099,6 +1099,14 @@ abstract class MetadataForm extends FormBase {
 		return null;
 	}
 
+	function manageResourceUrl($datasetId, $resourceId, $resourceUrl, $resourceName, $description, $format) {
+		$isUpdate = $resourceId != null;
+
+		$api = new Api;
+		$resourceManager = new ResourceManager;
+		return $resourceManager->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
+	}
+
 	function deleteDataset(array &$form, FormStateInterface $form_state) {
 		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
 
@@ -1110,6 +1118,11 @@ abstract class MetadataForm extends FormBase {
 				$form_state->setRedirect('ckan_admin.portail');
 			}
 		}
+	}
+
+	function deleteAllResources($datasetId) {
+		$resourceManager = new ResourceManager();
+		$resourceManager->deleteDatasetResources($datasetId);
 	}
 
 	function redirectToDataset($form_state, $datasetId) {

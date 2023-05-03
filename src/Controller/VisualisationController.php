@@ -2187,15 +2187,30 @@ class VisualisationController extends ControllerBase {
 		$editDatasetUrl = "{{ path('ckan_admin.editMetaDataForm', { 'id': '$datasetId'}) }}";
 		if ($hasDataBfc) {
 			if ($datasetType == 'kpi') {
-				$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_kpi_manage', { 'dataset-id': '$datasetId'}) }}";
+				$route = "data_bfc.manage_dataset.ro_kpi_manage";
+			}
+			else if ($datasetType == 'sftp') {
+				$route = "data_bfc.manage_dataset.ro_sftp_manage";
+			}
+			else if ($datasetType == 'api') {
+				$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
+				$datasetModel = json_decode($datasetModel, true);
+				$serviceType = $datasetModel['service-type'];
+
+				$datasetType = $serviceType != null && $serviceType != '' ? 'geo' : $datasetType;
+				$route = $serviceType != null && $serviceType != '' ? 'data_bfc.manage_dataset.ro_geo_manage' : 'data_bfc.manage_dataset.ro_api_manage';
 			}
 			else {
-				if (isset($datasetEntityId)) {
-					$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType', 'entity-id': '$datasetEntityId' }) }}";
-				}
-				else {
-					$editDatasetUrl = "{{ path('data_bfc.manage_dataset.ro_dataset_manage', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType'}) }}";
-				}
+				$route = "data_bfc.manage_dataset.ro_dataset_manage";
+			}
+			
+			
+			$editDatasetUrl = "{{ path('$route', { 'dataset-id': '$datasetId'}) }}";
+			if (isset($datasetType)) {
+				$editDatasetUrl = "{{ path('$route', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType'}) }}";
+			}
+			if (isset($datasetEntityId)) {
+				$editDatasetUrl = "{{ path('$route', { 'dataset-id': '$datasetId', 'data4citizen-type': '$datasetType', 'entity-id': '$datasetEntityId' }) }}";
 			}
 		}
 
@@ -2253,7 +2268,7 @@ class VisualisationController extends ControllerBase {
 
 		// Part edit data visualization
 		if ($datasetType == 'visualization') {
-			$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');	
+			$entityId = $datasetEntityId;	
 	
 			if (isset($entityId) && $entityId != '') {
 				$api = new Api;
