@@ -9,6 +9,7 @@ class PropertiesHelper {
   const CO_LINKED_SURVEYS = 'co_linked_surveys';
   const MESSAGE_MAIL_RGPD = 'message_mail_rgpd';
   const MESSAGE_RGPD = 'message_rgpd';
+  const TYPES_MIME = 'types_mime';
 
   private $config;
   private $properties;

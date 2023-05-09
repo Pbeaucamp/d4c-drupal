@@ -137,6 +137,7 @@ class Api
 		$callApi = $this->isObservatory();
 		$propertiesHelper = new PropertiesHelper();
 		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD, $callApi);
+		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME);
 
 		$result = array();
 		$result['isUserConnected'] = $isConnected;
@@ -144,6 +145,7 @@ class Api
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
 		$result['messageRgpd'] = $messageRgpd;
+
 		
 		$response = new Response();
 		$response->setContent(json_encode($result));
