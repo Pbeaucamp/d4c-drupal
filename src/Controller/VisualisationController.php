@@ -1051,6 +1051,7 @@ class VisualisationController extends ControllerBase {
 	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
 		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
 		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
+		$encoding = $this->exportExtras($metadataExtras, 'encoding');
 		$isOpenData = $this->isOpenData($keywords);
 		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
 		$extent = $this->exportExtras($metadataExtras, 'extent-name');
@@ -1090,6 +1091,15 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-file"></i>
 					<span class="ms-2">Taille du jeu de données : <b>' . $datasetSize . ' mo</b></span>
+				</div>
+			';
+		}
+
+		if (isset($encoding)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Encodage : <b>' . $encoding . '</b></span>
 				</div>
 			';
 		}
