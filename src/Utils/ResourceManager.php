@@ -24,6 +24,12 @@ class ResourceManager {
 	 */
 	const DATAPUSHER_WAIT_TIME = 120;
 
+	protected $config;
+	protected $urlCkan;
+	protected $protocol;
+	protected $host;
+	protected $port;
+
 	function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
