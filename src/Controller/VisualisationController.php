@@ -1775,6 +1775,7 @@ class VisualisationController extends ControllerBase {
 			$customBounds = 'custom-bounds="' . $bounds . '"';
 		}
 
+		$btnMapFishapp = '';
 		if (sizeof($resources) > 0 ) {
 			foreach($resources as $key=>$value) {
 				$name = $value["name"];
@@ -1785,7 +1786,8 @@ class VisualisationController extends ControllerBase {
 				// $url = strtok($url, '?');
 
 				if ($format == "WMS" || strpos($url, "wms") !== false) {
-					$btnMapFishapp = '<a class="d4c-map-flux-wms" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Editer en mode avancé</span></span></a>';
+					// Disable for now
+					// $btnMapFishapp = '<a class="d4c-map-flux-wms" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Editer en mode avancé</span></span></a>';
 				}
 			}
 		}
