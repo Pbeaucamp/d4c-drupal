@@ -8501,12 +8501,14 @@ class Api
 		$tmpFile = $finfo->file($_FILES['upload_file']['tmp_name']);
 
 		Logger::logMessage("Found format : '" . $tmpFile . "'");
+		// Some CSV can contains html tags and are detected as text/html
 		$fileFormatSearch = array_search(
 			$tmpFile,
 			array(
 				'zip' => 'application/zip',
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
+				'csv' => 'text/html',
 				'text' => 'text/plain',
 				'xml' => 'text/xml',
 				'json' => 'application/json',
