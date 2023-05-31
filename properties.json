@@ -2,5 +2,7 @@
     "package_download_limit": "-1",
     "message_mail_rgpd": "PHA+PHN0cm9uZz5UaGlzIGlzIGEgdGVzdCBtYWlsIHJncGQgbW9kaWZpY2F0aW9uPC9zdHJvbmc+PC9wPg0K",
     "message_rgpd": "Mon message rgpd",
-    "types_mime": ""
+    "types_mime": "",
+    "stockage_alert_threshold": "",
+    "stockage_alert_status": ""
 }

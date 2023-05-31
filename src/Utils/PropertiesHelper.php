@@ -10,6 +10,8 @@ class PropertiesHelper {
 	const MESSAGE_MAIL_RGPD = 'message_mail_rgpd';
 	const MESSAGE_RGPD = 'message_rgpd';
 	const TYPES_MIME = 'types_mime';
+	const STOCKAGE_ALERT_THRESHOLD = 'stockage_alert_threshold';
+	const STOCKAGE_ALERT_STATUS = 'stockage_alert_status';
 
 	private $config;
 	private $properties;

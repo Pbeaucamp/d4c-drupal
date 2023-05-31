@@ -3989,12 +3989,21 @@ class Api
 				return $data_array;
 			}
 
+			$backupResource = null;
 			foreach ($package['result']['resources'] as $value) {
-				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+				// We take the first CSV resource and if not found we take the first XLS resource
+				if ($value['format'] == 'CSV' && $value["datastore_active"] == true) {
 					$resourceCSV = $value['id'];
 					break;
 				}
+				else if (($value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$backupResource = $value['id'];
+				}
 			}
+			if (!isset($resourceCSV)) {
+				$resourceCSV = $backupResource;
+			}
+
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
