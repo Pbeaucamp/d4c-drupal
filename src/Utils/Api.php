@@ -1206,17 +1206,20 @@ class Api
 				}))["value"] ?: null;
 			$dataset["metas"]["custom_view"] = json_decode($dataset["metas"]["custom_view"], true);
 
-			$dataset["metadata_imported"] = $dataset["metadata_modified"];
-			$dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
-					return $f["key"] == "date_moissonnage_last_modification";
-				}))["value"] ?: $dataset["metadata_modified"];
-			$dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
-					return $f["key"] == "date_moissonnage_creation";
-				}))["value"] ?: $dataset["metadata_created"];
+			// $dataset["metadata_imported"] = $dataset["metadata_modified"];
+			// $dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
+			// 		return $f["key"] == "date_moissonnage_last_modification";
+			// 	}))["value"] ?: $dataset["metadata_modified"];
+			// $dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
+			// 		return $f["key"] == "date_moissonnage_creation";
+			// 	}))["value"] ?: $dataset["metadata_created"];
 
 			foreach ($dataset["resources"] as $j => $value) {
 				unset($dataset["resources"][$j]["url"]);	//echo $value["url"];
 			}
+
+			$lastDateModification = $this->extractLastModificationDate($dataset);
+			$dataset["dataset_modification_date"] = $lastDateModification;
 
 			// Checking if the dataset is coming from master and if it is a reference dataset
 			$dataset["is_reference"] = false;
@@ -1279,6 +1282,107 @@ class Api
 		$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
+	}
+
+	function extractLastModificationDate($dataset) {
+		$referenceDate = null;
+
+		// Manage geonetwork
+		$datasetReferenceDateJson = DatasetHelper::extractMetadata($dataset['extras'], "dataset-reference-date");
+		$datasetReferenceDate = json_decode($datasetReferenceDateJson, true);
+		foreach ($datasetReferenceDate as $date) {
+			if ($date['type'] == "creation") {
+				$dateCreation = $date['value'];
+			}
+			else if ($date['type'] == "publication") {
+				$datePublication = $date['value'];
+			}
+			else if ($date['type'] == "revision") {
+				$dateRevision = $date['value'];
+			}
+		}
+
+		$dateIssued = DatasetHelper::extractMetadata($dataset['extras'], "issued");
+		$dateModified = DatasetHelper::extractMetadata($dataset['extras'], "modified");
+
+		// Check if not null, compare them and return the most recent
+		if ($dateCreation != null) {
+			$referenceDate = new \DateTime($dateCreation);
+		}
+
+		if ($datePublication != null) {
+			$datePublication = new \DateTime($datePublication);
+			if ($referenceDate == null || $datePublication > $referenceDate) {
+				$referenceDate = $datePublication;
+			}
+		}
+
+		if ($dateRevision != null) {
+			$dateRevision = new \DateTime($dateRevision);
+			if ($referenceDate == null || $dateRevision > $referenceDate) {
+				$referenceDate = $dateRevision;
+			}
+		}
+
+		if ($dateIssued != null) {
+			$dateIssued = new \DateTime($dateIssued);
+			if ($referenceDate == null || $dateIssued > $referenceDate) {
+				$referenceDate = $dateIssued;
+			}
+		}
+
+		if ($dateModified != null) {
+			$dateModified = new \DateTime($dateModified);
+			if ($referenceDate == null || $dateModified > $referenceDate) {
+				$referenceDate = $dateModified;
+			}
+		}
+
+		if ($referenceDate != null) {
+			return $referenceDate->format('Y-m-d');
+		}
+
+		// If OpenDataSoft not found manage ArcGIS
+		$arcgisDcatIssued = DatasetHelper::extractMetadata($dataset['extras'], "dcat_issued");
+		$arcgisDcatModified = DatasetHelper::extractMetadata($dataset['extras'], "dcat_modified");
+
+		if ($arcgisDcatIssued != null) {
+			$arcgisDcatIssued = new \DateTime($arcgisDcatIssued);
+			if ($referenceDate == null || $arcgisDcatIssued > $referenceDate) {
+				$referenceDate = $arcgisDcatIssued;
+			}
+		}
+
+		if ($arcgisDcatModified != null) {
+			$arcgisDcatModified = new \DateTime($arcgisDcatModified);
+			if ($referenceDate == null || $arcgisDcatModified > $referenceDate) {
+				$referenceDate = $arcgisDcatModified;
+			}
+		}
+
+		$metadataModified = $dataset["metadata_modified"];
+		if ($metadataModified != null) {
+			$metadataModified = new \DateTime($metadataModified);
+			if ($referenceDate == null || $metadataModified > $referenceDate) {
+				$referenceDate = $metadataModified;
+			}
+		}
+
+		foreach ($dataset["resources"] as $j => $value) {
+			$resourceDateModified = $value['last_modified'];
+			if ($resourceDateModified != null) {
+				$resourceDateModified = new \DateTime($resourceDateModified);
+				if ($referenceDate == null || $resourceDateModified > $referenceDate) {
+					$referenceDate = $resourceDateModified;
+				}
+			}
+		}
+
+		// Format date and include the time and convert date to paris timezone
+		if ($referenceDate != null)
+			$referenceDate->setTimezone(new \DateTimeZone('Europe/Paris'));
+
+		return $referenceDate != null ? $referenceDate->format('Y-m-d H:i') : null;
 	}
 
 
@@ -3885,12 +3989,21 @@ class Api
 				return $data_array;
 			}
 
+			$backupResource = null;
 			foreach ($package['result']['resources'] as $value) {
-				if (($value['format'] == 'CSV' || $value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+				// We take the first CSV resource and if not found we take the first XLS resource
+				if ($value['format'] == 'CSV' && $value["datastore_active"] == true) {
 					$resourceCSV = $value['id'];
 					break;
 				}
+				else if (($value['format'] == 'XLS' || $value['format'] == 'XLSX') && $value["datastore_active"] == true) {
+					$backupResource = $value['id'];
+				}
 			}
+			if (!isset($resourceCSV)) {
+				$resourceCSV = $backupResource;
+			}
+
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
@@ -8397,12 +8510,14 @@ class Api
 		$tmpFile = $finfo->file($_FILES['upload_file']['tmp_name']);
 
 		Logger::logMessage("Found format : '" . $tmpFile . "'");
+		// Some CSV can contains html tags and are detected as text/html
 		$fileFormatSearch = array_search(
 			$tmpFile,
 			array(
 				'zip' => 'application/zip',
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
+				'csv' => 'text/html',
 				'text' => 'text/plain',
 				'xml' => 'text/xml',
 				'json' => 'application/json',

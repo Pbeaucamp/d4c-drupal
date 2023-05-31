@@ -71,6 +71,8 @@ abstract class MetadataForm extends FormBase {
 		if (isset($selectedDataset)) {
 			Logger::logMessage("Selected dataset " . $selectedDataset['metas']['id']);
 
+			$organization = $selectedDataset['metas']['organization']['name'];
+
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
 
