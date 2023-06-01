@@ -1109,6 +1109,11 @@ abstract class MetadataForm extends FormBase {
 		return $resourceManager->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $resourceName, "", $description, false, $format);
 	}
 
+	function updateDatasetVanillaMetadata($datasetId, $contractId, $hubId) {
+		$resourceManager = new ResourceManager;
+		$resourceManager->updateDatasetMetadata($datasetId, 'extras', [new D4CMetadata('vanilla_contract', $contractId), new D4CMetadata('vanilla-hub-id', $hubId)]);
+	}
+
 	function deleteDataset(array &$form, FormStateInterface $form_state) {
 		$selectedDatasetId = \Drupal::request()->query->get('dataset-id');
 
