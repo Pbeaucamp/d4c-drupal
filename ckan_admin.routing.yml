@@ -1106,6 +1106,17 @@ ckan_admin.api.removeResource:
     _auth: [ 'basic_auth' ]
   requirements:
     _user_is_logged_in: 'TRUE'
+    
+ckan_admin.api.resource.dictionnary:
+  path: '/d4c/api/v1/dataset/resource/dictionnary'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callResourceDictionnary'
+    _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  methods: [GET, POST, DELETE]
 
 ckan_admin.api.autocomplete.datasets:
   path: '/d4c/api/v1/autocomplete/datasets'

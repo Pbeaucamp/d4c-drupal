@@ -1405,6 +1405,37 @@ class ResourceManager {
 		}
 	}
 
+	function getDictionnary($api, $resourceId) {
+		$callUrl =  $this->urlCkan . "api/action/datastore_search?resource_id=" . $resourceId . "&limit=0";
+
+		$curl = curl_init($callUrl);
+		curl_setopt_array($curl, $api->getStoreOptions());
+		$result = curl_exec($curl);
+		curl_close($curl);
+
+		$result = json_decode($result, true);
+		return $result["result"]["fields"];
+	}
+
+	function updateDictionnary($api, $resourceId, $fields) {
+		$fieldsWithoutId = array();
+		foreach ($fields as $field) {
+			if ($field->id != "_id") {
+				$fieldsWithoutId[] = $field;
+			}
+		}
+
+		$callUrl =  $this->urlCkan . "api/action/datastore_create";
+
+		$data = array();
+		$data["resource_id"] = $resourceId;
+		$data["force"] = true;
+		$data["fields"] = $fieldsWithoutId;
+		$data["uuid"] = uniqid();
+
+		return $api->updateRequest($callUrl, $data, "POST");
+	}
+
 	/**
 	 * This method call the datapusher for a specified resource ID to get the status
 	 * If checkDatapusher is false, this means that the file is not push to the datastore, but we still need the status
