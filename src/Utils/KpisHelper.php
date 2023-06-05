@@ -16,24 +16,24 @@ class KpisHelper {
 		$this->config = include(__DIR__ . "/../../config.php");
     }
 
-    function getDatastoreSpace() {
-        try {
-            // Database data
-            $tableSchema = 'datastore';
-            $database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
-            $query = $database->query("SELECT pg_database_size('$tableSchema')");
-            $result = $query->fetchAssoc();
+    // function getDatastoreSpace() {
+    //     try {
+    //         // Database data
+    //         $tableSchema = 'datastore';
+    //         $database = \Drupal\Core\Database\Database::getConnection('ckan', 'ckan');
+    //         $query = $database->query("SELECT pg_database_size('$tableSchema')");
+    //         $result = $query->fetchAssoc();
 
-            $databaseSize = $result['pg_database_size'];
+    //         $databaseSize = $result['pg_database_size'];
 
-            Logger::logMessage("Datastore database size: $databaseSize");
-            return $databaseSize;
-        } catch (\Exception $e) {
-            Logger::logMessage("Error getting the datastore space: " . $e->getMessage());
-        }
+    //         Logger::logMessage("Datastore database size: $databaseSize");
+    //         return $databaseSize;
+    //     } catch (\Exception $e) {
+    //         Logger::logMessage("Error getting the datastore space: " . $e->getMessage());
+    //     }
 
-        return 0;
-    }
+    //     return 0;
+    // }
 
     function getDatasetFolderSpace() {
         try {
