@@ -145,6 +145,7 @@ class Api
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
 		$result['messageRgpd'] = $messageRgpd;
+		$result['typesMime'] = $typesMime;
 
 		
 		$response = new Response();
