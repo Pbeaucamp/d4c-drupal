@@ -137,7 +137,7 @@ class Api
 		$callApi = $this->isObservatory();
 		$propertiesHelper = new PropertiesHelper();
 		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD, $callApi);
-		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME);
+		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME, $callApi);
 
 		$result = array();
 		$result['isUserConnected'] = $isConnected;
