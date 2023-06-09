@@ -72,6 +72,7 @@ class editMetaDataForm extends HelpFormBase {
         $form['#attached']['library'][] = 'ckan_admin/editMetaDataFormModal.form';
 		$this->config = include(__DIR__ . "/../../config.php");
         $this->urlCkan = $this->config->ckan->url;
+		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
 
         $api = new Api;
 
@@ -228,10 +229,10 @@ class editMetaDataForm extends HelpFormBase {
 
         // fréquence 
         $form['frequence'] = array(
-            '#markup' => '',
-            '#type' => 'textfield',
+			'#type' => 'select',
             '#title' => $this->t('Fréquence de mise à jour:'),
             '#attributes' => array('style' => 'width: 50%;'),
+			'#options' => $this->getListValues($locale, "MD_MaintenanceFrequencyCode", true),
             '#required' => FALSE,
             '#maxlength' => 300
         );
@@ -782,7 +783,18 @@ class editMetaDataForm extends HelpFormBase {
         return $form;
 	}
 
+	private function getListValues($locale, $listId, $addEmptyValue) {
+		$frequencyCodes = $locale["codelists"][$listId];
 
+		$codes = [];
+		if ($addEmptyValue) {
+			$codes[""] = "";
+		}
+		foreach ($frequencyCodes as $code) {
+			$codes[$code["id"]] = $code["value"];
+		}
+		return $codes;
+	}
 
     public function submitForm(array &$form, FormStateInterface $form_state) {
 		$userId = "*" . \Drupal::currentUser()->id() . "*";
@@ -940,7 +952,7 @@ class editMetaDataForm extends HelpFormBase {
 				// $newExtras['source'] = $source;
 				$newExtras['donnees_source'] = $donnees_source;
 				$newExtras['mention_legales'] = $mention_legales;
-				$newExtras['frequence'] = $frequence;
+				$newExtras['frequency-of-update'] = $frequence;
 				$newExtras['displayVersionning'] = $displayVersionning;
 				$newExtras['dataRgpd'] = $dataRgpd;
 				$newExtras['territory'] = $territory;

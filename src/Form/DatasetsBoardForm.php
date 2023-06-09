@@ -103,9 +103,11 @@ class DatasetsBoardForm extends HelpFormBase {
 			"edit" => $this->t(''),
 			"view" => $this->t(''),    
 		);
-		if($isAdmin == true){
-			array_splice($header, 4, 0, array("security" => $this->t("Sécurité")) );
-		}
+
+		// Not used anymore
+		// if($isAdmin == true){
+		// 	array_splice($header, 4, 0, array("security" => $this->t("Sécurité")) );
+		// }
 		
 		$output = array();
 		foreach ($datasets as $row) {
@@ -158,23 +160,24 @@ class DatasetsBoardForm extends HelpFormBase {
 			
 			date_default_timezone_set($saveTimeZone);
 
-			if($isAdmin == true){
-				$dataSecurity = "";
-				foreach($row["extras"] as $ext){
-					if($ext['key'] == 'edition_security') {
-						$dataSecurity = str_replace("*", "", $ext['value']);
-						$dataSecurity = base64_encode($dataSecurity);
-						break;
-					}
-				}
-				array_splice($uirow, 4, 0, array(
-											'data' => new FormattableMarkup('<input type="button" onclick=":action" class="button" style="border-radius: 10px;font-size: 11px;padding: 4px 5px;" value=":name" data-id=":id" data-security=":sec"/>', 
-											[':action' => "openecurityPopup(event)", 
-											':name' => $this->t('Gestion des droits'),
-											':sec' => $dataSecurity,
-											':id' => $row["name"]])
-										));
-			}
+			// Not used anymore
+			// if($isAdmin == true){
+			// 	$dataSecurity = "";
+			// 	foreach($row["extras"] as $ext){
+			// 		if($ext['key'] == 'edition_security') {
+			// 			$dataSecurity = str_replace("*", "", $ext['value']);
+			// 			$dataSecurity = base64_encode($dataSecurity);
+			// 			break;
+			// 		}
+			// 	}
+			// 	array_splice($uirow, 4, 0, array(
+			// 								'data' => new FormattableMarkup('<input type="button" onclick=":action" class="button" style="border-radius: 10px;font-size: 11px;padding: 4px 5px;" value=":name" data-id=":id" data-security=":sec"/>', 
+			// 								[':action' => "openecurityPopup(event)", 
+			// 								':name' => $this->t('Gestion des droits'),
+			// 								':sec' => $dataSecurity,
+			// 								':id' => $row["name"]])
+			// 							));
+			// }
 			
 			$output[] = $uirow;
 		}
@@ -303,29 +306,29 @@ class DatasetsBoardForm extends HelpFormBase {
 		
 		
 		//security popup
-		$form['security'] = [
-			'#type'  => 'container',
-			'#attributes' => array(
-				'style' => "display:none;"
-			)
-		];
-		$form['security']['roles'] = [
-			'#type'  => 'details',
-			'#title' => t('Groupes'),
-			'#open'  => false,
-			/*'#attributes' => array(
-				'style' => "padding:18px;",
-			),*/
-		];
+		// $form['security'] = [
+		// 	'#type'  => 'container',
+		// 	'#attributes' => array(
+		// 		'style' => "display:none;"
+		// 	)
+		// ];
+		// $form['security']['roles'] = [
+		// 	'#type'  => 'details',
+		// 	'#title' => t('Groupes'),
+		// 	'#open'  => false,
+		// 	/*'#attributes' => array(
+		// 		'style' => "padding:18px;",
+		// 	),*/
+		// ];
 		
-		$roles = user_role_names();
-		unset($roles["anonymous"]);
-		unset($roles["authenticated"]);
-		$form['security']['roles']['roles_list'] = array(
-			'#type'          => 'checkboxes',
-		 // '#default_value' => $settings['tynt_roles'],
-			'#options'       => $roles
-		);
+		// $roles = user_role_names();
+		// unset($roles["anonymous"]);
+		// unset($roles["authenticated"]);
+		// $form['security']['roles']['roles_list'] = array(
+		// 	'#type'          => 'checkboxes',
+		//  // '#default_value' => $settings['tynt_roles'],
+		// 	'#options'       => $roles
+		// );
 		
 		//We remove the security by user
 		// $form['security']['users'] = [

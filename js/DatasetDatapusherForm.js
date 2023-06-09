@@ -62,7 +62,7 @@ function openLogPopup(event){
 	}
 	html += "</div>";	
 		
-	$("#question2").append($("<div>", {
+	$("#question2").html($("<div>", {
 		id: "#edit-log",
 		className: 'foobar',
 		html: html

@@ -1659,7 +1659,7 @@ class ResourceManager {
 		$source = $newExtras['source'];
 		$donnees_source = $newExtras['donnees_source'];
 		$mention_legales = $newExtras['mention_legales'];
-		$frequence = $newExtras['frequence'];
+		$frequence = $newExtras['frequency-of-update'];
 		$displayVersionning = $newExtras['displayVersionning'];
 		$dataRgpd = $newExtras['dataRgpd'];
 		$data4citizenType = $newExtras['data4citizenType'];
@@ -1797,7 +1797,7 @@ class ResourceManager {
 				}
 
 				//frequence
-				if ($extras[$index]['key'] == 'frequence') {
+				if ($extras[$index]['key'] == 'frequency-of-update') {
 					$hasFrequence = true;
 					$extras[$index]['value'] = $frequence;
 				}
@@ -1965,7 +1965,7 @@ class ResourceManager {
 		}
 
 		if ($hasFrequence == false) {
-			$extras[count($extras)]['key'] = 'frequence';
+			$extras[count($extras)]['key'] = 'frequency-of-update';
 			$extras[(count($extras) - 1)]['value'] = $frequence;
 		}
 

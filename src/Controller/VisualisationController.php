@@ -326,6 +326,7 @@ class VisualisationController extends ControllerBase {
 							'<div class="d4c-dataset-visualization" ng-class="{\'d4c-dataset-visualization--full-width\': !canAccessData()}">
 								' . $tabs . '
 								' . $disqus . '
+								<span ng-if="loading"><d4c-spinner></d4c-spinner></span>
 							</div>
 						</div>
 					</main>
@@ -534,7 +535,7 @@ class VisualisationController extends ControllerBase {
 				<div class="row">
 					<div class="col-sm-9">
 						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
-						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseigné')) . '
+						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseignée')) . '
 						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
@@ -548,7 +549,7 @@ class VisualisationController extends ControllerBase {
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
 						' . $this->buildCard('Synthèse', $synthese) . '
-						' . $this->buildCard('Contacts', $contacts) . '
+						' . ($contacts != null ? $this->buildCard('Contacts', $contacts) : '') . '
 					</div>
 				</div>
 				
@@ -559,10 +560,22 @@ class VisualisationController extends ControllerBase {
 				<d4c-collapsible ng-if="ctx.dataset.has_records" class="d4c-dataset-visualization__schema">
 					<d4c-collapsible-above-fold>
 						<h3 class="d4c-dataset-visualization__toggle-schema">
-							<span translate>Dataset schema</span>
+							<span translate>Informations techniques</span>
 						</h3>
 					</d4c-collapsible-above-fold>
 					<d4c-collapsible-fold>
+						<h3 class="d4c-dataset-visualization__toggle-schema">
+							<span translate>Limites techniques d\'usage</span>
+						</h3>
+						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
+
+						<br/>
+						<br/>
+						
+						<h3 class="d4c-dataset-visualization__toggle-schema">
+							<span translate>Dataset schema</span>
+						</h3>
+
 						<d4c-dataset-schema context="ctx"></d4c-dataset-schema>
 
 						<h4 translate>JSON Schema</h4>
@@ -825,7 +838,13 @@ class VisualisationController extends ControllerBase {
 		// $: image = getImage($storeMdjs);
 		
 		$image = $this->exportExtras($metadataExtras, 'graphic-preview-file');
-		return $image != null ? $image : '';
+		if ($image != null) {
+			return $image;
+		}
+		else {
+			$image = $this->exportExtras($metadataExtras, 'img_backgr');
+			return $image != null ? $image : '';
+		}
 	}
 
 	function buildWidget($metadataExtras) {
@@ -867,22 +886,31 @@ class VisualisationController extends ControllerBase {
 
 	function buildLimitesUtilisation($metadataExtras) {
 		$useConstraintsPart = '';
+		$useLimitationsPart = '';
 
 		for ($i = 1; $i <= 5; $i++) {
 			$useConstraint = $this->exportExtras($metadataExtras, 'use-constraints-' . $i);
-
-			if ($useConstraint != null) {
+			if ($useConstraint != null && $useConstraint != '') {
 				$useConstraint = json_decode($useConstraint, true);
-				$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
+				if ($useConstraint != null && $useConstraint != '') {
+					$useConstraint = $this->translateValue($this->locale["codelists"]["MD_RestrictionCode"], $useConstraint);
+					$useConstraintsPart .= '<li>' . $useConstraint . '</li>';
+				}
 			}
 		}
 
-		if ($this->isNullOrEmptyString($useConstraintsPart)) {
+		$useLimitation = $this->exportExtras($metadataExtras, 'use-limitation');
+		if ($useLimitation != null && $useLimitation != '') {
+			$useLimitationsPart = '<li>' . $useLimitation . "</li>";
+		}
+
+		if ($this->isNullOrEmptyString($useConstraintsPart) && $this->isNullOrEmptyString($useLimitationsPart)) {
 			return null;
 		}
 
 		return '
 			<ul class="m-0">
+				' . $useLimitationsPart . '
 				' . $useConstraintsPart . '
 			</ul>
 		';
@@ -910,17 +938,23 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if (!$this->isNullOrEmptyString($accessConstraints)) {
-			$accessConstraints = json_decode($accessConstraints, true);
+			if ($this->isJson($accessConstraints)) {
+				$accessConstraints = json_decode($accessConstraints, true);
 
-			if (!empty($accessConstraints)) {
-				$hasValue = true;
-	
-				foreach ($accessConstraints as $value) {	
-					$accessConstraints = '<li>' . $value . '</li>';
+				if (!empty($accessConstraints)) {
+					$hasValue = true;
+		
+					foreach ($accessConstraints as $value) {	
+						$accessConstraints = '<li>' . $value . '</li>';
+					}
+				}
+				else {
+					$accessConstraints = '';
 				}
 			}
 			else {
-				$accessConstraints = '';
+				$accessConstraints = $this->translateValue($this->locale["codelists"]["MD_RestrictionCode"], $accessConstraints);
+				$accessConstraints = '<li>' . $accessConstraints . '</li>';
 			}
 		}
 
@@ -955,12 +989,21 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
+	function isJson($value) {
+		json_decode($value);
+		return json_last_error() === JSON_ERROR_NONE;
+	 }
+
 	function buildSynthese($metadataExtras, $themes, $keywords) {
 		$isOpenData = $this->isOpenData($keywords);
 		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
+		$dateDataset = $this->exportExtras($metadataExtras, 'date_dataset');
+		$dateModification = $this->exportExtras($metadataExtras, 'date_modification');
+		$producer = $this->exportExtras($metadataExtras, 'producer');
+		$organization = $dataset["metas"]["organization"]["title"];
 
 		$synthese = '';
 		if ($isOpenData) {
@@ -984,7 +1027,7 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-clock-o"></i>
-				<span class="ms-2">' . ($frequence != null ? 'Mise à jour ' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) : 'Mise à jour inconnue') . '</span>
+				<span class="ms-2">' . ($frequence != null ? 'Mise à jour <b>' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) . '</b>' : '<b>Mise à jour inconnue</b>') . '</span>
 			</div>
 		';
 
@@ -1000,12 +1043,25 @@ class VisualisationController extends ControllerBase {
 				$displayDate = $date['value'];
 			}
 		}
+
+		$displayDate = $displayDate == null ? $dateDataset : $displayDate;
 		if ($displayDate != null) {
 			$synthese .= '
 				<div class="my-3">
-					<i class="fa fa-pencil"></i>
+					<i class="fa fa-calendar"></i>
 					<span class="ms-2" translate>Publié le </span>
-					<span>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</span>
+					<span><b>\{\{\'' . $displayDate . '\' | formatMeta:\'date\' \}\}</b></span>
+				</div>
+			';
+		}
+
+		// Manage modification date
+		if ($dateModification != null && $dateModification != '') {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-calendar-o"></i>
+					<span class="ms-2" translate>Modifié le </span>
+					<span><b>\{\{\'' . $dateModification . '\' | formatMeta:\'date\' \}\}</b></span>
 				</div>
 			';
 		}
@@ -1019,18 +1075,38 @@ class VisualisationController extends ControllerBase {
 			';
 		}
 
-		$synthese .= '
-			<div class="my-3">
-				<i class="fa fa-tag"></i>
-				<span class="ms-2"><strong>Thèmes</strong></span>';
+		if (isset($producer) && $producer != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-building"></i>
+					<span class="ms-2">Contributeur : <b>' . $producer . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($organization) && $organization != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-building"></i>
+					<span class="ms-2">Propriétaire : <b>' . $organization . '</b></span>
+				</div>
+			';
+		}
+		
+
 		if ($themes != null) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-tag"></i>
+					<span class="ms-2">Thèmes</span>
+			';
 			$synthese .= '	<ul>';
 			foreach ($themes as $theme) {	
 				$synthese .= '		<li>' . $theme["label"] . '</li>';
 			}
 			$synthese .= '	</ul>';
+			$synthese .= '</div>';
 		}
-		$synthese .= '</div>';
 
 		return $synthese;
 	}
@@ -1101,37 +1177,48 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildContacts($metadataExtras) {
-		// TODO
-		// $: {
-		// 	const contacts = converter.getValue($storeMdjs, "dataPointOfContacts") || [];
-		// 	dataPointOfContacts = getContacts(contacts);
-		// }
 
-		$contacts = '<div class="list-unstyled">';
-
+	
+	function buildContacts($loggedIn, $metadataExtras) {
+		$contactsPart = null;
 		//We tried to get the first 5 responsible-organisation
 		for ($i = 1; $i <= 5; $i++) {
 			$organisation = $this->exportExtras($metadataExtras, 'responsible-organisation-' . $i);
-			if ($organisation != null) {
+			if ($organisation != null && $organisation != '') {
 				$organisation = json_decode($organisation, true);
 				$organisationName = $organisation['organisation-name'];
+				$organisationRole = $organisation['organisation-role'];
 
-				
 				$address = $organisation['contact-info']['address'];
 				$postalCode = $organisation['contact-info']['postal-code'];
 				$city = $organisation['contact-info']['city'];
 				$contactEmail = $organisation['contact-info']['email'];
 				$phone = $organisation['contact-info']['phone'];
+				$country = $organisation['contact-info']['country'];
 
+				// Checking if everything is null or empty we continue to the next organization
+				if ($this->isNullOrEmptyString($organisationName) && 
+						$this->isNullOrEmptyString($organisationRole) && 
+						$this->isNullOrEmptyString($address) && 
+						$this->isNullOrEmptyString($postalCode) && 
+						$this->isNullOrEmptyString($city) && 
+						$this->isNullOrEmptyString($contactEmail) && 
+						$this->isNullOrEmptyString($phone) && 
+						$this->isNullOrEmptyString($country)) {
+					continue;
+				}
+
+				$organisationRole = !$this->isNullOrEmptyString($organisationRole) ? '<p class="mb-0">Rôle : ' . $this->translateValue($this->locale["codelists"]["CI_RoleCode"], $organisationRole) . '</p>' : '';
 				$address = !$this->isNullOrEmptyString($address) ? '<p class="mb-0">' . $address . '</p>' : "";
-				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) ? '<p class="mb-0">' . $postalCode . ' ' . $city . '</p>' : '';
+				$postalCodeCity = !$this->isNullOrEmptyString($postalCode) || !$this->isNullOrEmptyString($city) || !$this->isNullOrEmptyString($country) ? '<p class="mb-0">' . $postalCode . ' ' . $city . ' ' . $country . '</p>' : '';
 				$contactEmail = !$this->isNullOrEmptyString($contactEmail) ? '<p class="mb-0"><i class="fa fa-envelope"></i><a href="mailto:' . $contactEmail . '"> contact</a></p>' : '';
 				$phone = !$this->isNullOrEmptyString($phone) ? '<p class="mb-0"><i class="fa fa-mobile"></i> ' . $phone . '</p>' : '';
 
-				$contacts .= '
+				$contactsPart .= '
 					<div class="d-flex align-items-center mt-3">
-						<div class="flex-grow-1 ms-3"><strong id="displayContact1">' . $organisationName . '</strong>
+						<div class="flex-grow-1 ms-3">
+							<strong id="displayContact1">' . $organisationName . '</strong>
+							' . $organisationRole . '
 							' . $address . '
 							' . $postalCodeCity . '
 							' . $contactEmail . '
@@ -1143,8 +1230,14 @@ class VisualisationController extends ControllerBase {
 			}
 		}
 
-		$contacts .= '</div>';
-		return $contacts;
+		if (($contactsPart != null && $contactsPart != "") || $loggedIn) {
+			$contacts = '<div class="list-unstyled">';
+			$contacts .= $contactsPart;
+			$contacts .= '</div>';
+			return $contacts;
+		}
+
+		return null;
 	}
 
 	function manageAdditionnalResources($dataset, $datasetId, $selectedResourceId) {
@@ -1580,7 +1673,6 @@ class VisualisationController extends ControllerBase {
 		}
 
 		$url = $serviceUrlWithoutParams . '?' . $queryString;
-		Logger::logMessage("TRM - Service URL: " . $url);
 
 		// &request=GetMap&layers=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&bbox=1998243.2536231296%2C7226690.428528496%2C2079043.9612258154%2C7324887.552493705&width=631&height=768&srs=EPSG%3A3948&styles=&format=
 		// &request=GetFeature&typeName=cd67%3ACD67_ACTIONS_CULTURELLES_POINT_BR_CC48&maxFeatures=50&outputFormat=
@@ -1630,8 +1722,6 @@ class VisualisationController extends ControllerBase {
 		usort($formats, function($a, $b) {
 			return $a['displayValue'] <=> $b['displayValue'];
 		});
-
-		// Logger::logMessage("TRM - Available formats: " . json_encode($formats));
 
 		return $formats;
 	}
@@ -1956,8 +2046,8 @@ class VisualisationController extends ControllerBase {
 
 	function translateValue($locales, $key) {
 		$translatedValue = current(array_filter($locales, function($elem) use($key){
-			return $elem['value'] == $key;
-		}))["text"];
+			return $elem['id'] == $key;
+		}))["value"];
 
 		return $translatedValue != null && $translatedValue != '' ? $translatedValue : $key;
 	}

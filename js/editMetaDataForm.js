@@ -232,7 +232,7 @@ function clear() {
     // clear producer value
     $('#edit-producteur input').val('');
     // clear frequence value
-    $('#edit-frequence input').val('');
+    $('#edit-frequence').val("");
     // clear source value
     $('#edit-source input').val('');
     // clear donnees source value
@@ -495,9 +495,9 @@ function fillData(data) {
         }
 
         // get frequence value
-        if (data.extras[g].key == 'frequence') {
+        if (data.extras[g].key == 'frequency-of-update') {
             var frequence = data.extras[g].value;
-            $("#edit-frequence input").val(frequence);
+            $('#edit-frequence').val(frequence);
         }
 
         // Disable for now as we set the data url in the source field
