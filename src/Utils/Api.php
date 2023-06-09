@@ -8518,6 +8518,7 @@ class Api
 				'zip' => 'application/zip',
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'xls' => 'application/vnd.ms-excel',
+				'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
 				'csv' => 'text/html',
 				'text' => 'text/plain',
