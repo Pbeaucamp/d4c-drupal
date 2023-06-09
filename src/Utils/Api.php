@@ -845,8 +845,8 @@ class Api
 			$coordmap = $additionnalParameters['coordinates'];
 			$hasCoordinates = isset($coordmap) && $coordmap != "";
 
-			$siret = $additionnalParameters['siret'];
-			$hasSiret = isset($siret) && $siret != "";
+			$siren = $additionnalParameters['siren'];
+			$hasSiren = isset($siren) && $siren != "";
 
 			//We put the coordinates in an array. Very ugly way to do but no time. To remake
 			if ($hasCoordinates) {
@@ -863,7 +863,7 @@ class Api
 
 			Logger::logMessage("Checking if datasets have data filters");
 			Logger::logMessage("Has coordinates : " . $hasCoordinates . " - " . json_encode($coordinates));
-			Logger::logMessage("Has siret : " . $hasSiret . " - " . $siret);
+			Logger::logMessage("Has siren : " . $hasSiren . " - " . $siren);
 
 			$datasets = [];
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
@@ -883,19 +883,19 @@ class Api
 					$fieldCoordinates = $fieldCoordinates != null && sizeof($fieldCoordinates) > 0 ? array_values($fieldCoordinates)[0] : null;
 					$fieldCoordinates = $fieldCoordinates['name'];
 
-					// Filter fields on name siret
-					$fieldSiret = array_filter($fields, function ($field) {
-						return $field['name'] == 'siret';
+					// Filter fields on name siren
+					$fieldSiren = array_filter($fields, function ($field) {
+						return $field['name'] == 'siren';
 					});
-					$fieldSiret = $fieldSiret != null && sizeof($fieldSiret) > 0 ? array_values($fieldSiret)[0] : null;
-					$fieldSiret = $fieldSiret['name'];
+					$fieldSiren = $fieldSiren != null && sizeof($fieldSiren) > 0 ? array_values($fieldSiren)[0] : null;
+					$fieldSiren = $fieldSiren['name'];
 
 					$datasetMatch = true;
 					if ($hasCoordinates && !$this->checkDataCoordinates($dataset['id'], $resourceId, $fieldCoordinates, $coordinates)) {
 						$datasetMatch = false;
 					}
 
-					if ($hasSiret && !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiret, $siret)) {
+					if ($hasSiren && !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiren, $siren)) {
 						$datasetMatch = false;
 					}
 
@@ -1079,11 +1079,11 @@ class Api
 		// Logger::logMessage("TRM - Query params " . json_encode($query_params["fq"]));
 		
 		$additionnalParameters = array();
-		if (array_key_exists('coordReq', $query_params) || array_key_exists('siret', $query_params)) {
+		if (array_key_exists('coordReq', $query_params) || array_key_exists('siren', $query_params)) {
 
-			if (array_key_exists('siret', $query_params)) {
-				$additionnalParameters['siret'] = $query_params['siret'];
-				unset($query_params['siret']);
+			if (array_key_exists('siren', $query_params)) {
+				$additionnalParameters['siren'] = $query_params['siren'];
+				unset($query_params['siren']);
 
 				if ($query_params["fq"] == null) {
 					$query_params["fq"] = "features:(*analyze*)";
