@@ -1791,7 +1791,7 @@ class Api
 				preg_match("/geopoint/i", $value['id']) || preg_match("/geoPoint/i", $value['id']) ||
 				preg_match("/pav_positiont2d/i", $value['id']) || preg_match("/wgs84/i", $value['id']) ||
 				preg_match("/equgpsy_x/i", $value['id']) || preg_match("/geoban/i", $value['id']) ||
-				preg_match("/codegeo/i", $value['id']) || preg_match("/localisation/i", $value['id']) ||
+				preg_match("/codegeo/i", $value['id']) /*|| preg_match("/localisation/i", $value['id'])*/ ||
 				preg_match("/latlon/i", $value['id']) || preg_match("/lat_lon/i", $value['id'])
 			) {
 				// if($geoPointnb == 0) {
