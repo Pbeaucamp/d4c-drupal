@@ -136,6 +136,7 @@ class Api
 
 		$callApi = $this->isObservatory();
 		$propertiesHelper = new PropertiesHelper();
+		$messageMailRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_MAIL_RGPD, $callApi, true);
 		$messageRgpd = $propertiesHelper->getProperty(PropertiesHelper::MESSAGE_RGPD, $callApi);
 		$typesMime = $propertiesHelper->getProperty(PropertiesHelper::TYPES_MIME, $callApi);
 
@@ -144,6 +145,7 @@ class Api
 		$result['isUserAdmin'] = in_array("administrator", $currentUser->getRoles());
 		$result['isUserRo'] = in_array("ro", $currentUser->getRoles());
 		$result['isDataBfc'] = true;
+		$result['messageMailRgpd'] = $messageMailRgpd;
 		$result['messageRgpd'] = $messageRgpd;
 		$result['typesMime'] = $typesMime;
 
