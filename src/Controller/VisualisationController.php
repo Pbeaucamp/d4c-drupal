@@ -505,10 +505,10 @@ class VisualisationController extends ControllerBase {
 		$informationsGeo = $this->buildInformationsGeo($metadataExtras);
 
 		//SYNTHÈSE
-		$synthese = $this->buildSynthese($metadataExtras, $themes, $keywords);
+		$synthese = $this->buildSynthese($dataset, $metadataExtras, $themes, $keywords);
 
 		//CONTACTS
-		$contacts = $this->buildContacts($metadataExtras);
+		$contacts = $this->buildContacts($loggedIn, $metadataExtras);
 
 		//Linked datasets
 		$linkedDataSets = $this->buildLinkedDatasets($metadataExtras);
@@ -994,9 +994,15 @@ class VisualisationController extends ControllerBase {
 		return json_last_error() === JSON_ERROR_NONE;
 	 }
 
-	function buildSynthese($metadataExtras, $themes, $keywords) {
+	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
+		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
+		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
+		$encoding = $this->exportExtras($metadataExtras, 'encoding');
 		$isOpenData = $this->isOpenData($keywords);
 		$frequence = $this->exportExtras($metadataExtras, 'frequency-of-update');
+		$extent = $this->exportExtras($metadataExtras, 'extent-name');
+		$extentBegin = $this->exportExtras($metadataExtras, 'extent-begin');
+		$extentEnd = $this->exportExtras($metadataExtras, 'extent-end');
 		$datasetDates = $this->exportExtras($metadataExtras, 'dataset-reference-date');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 		$isGeo = $representationType == 'grid' || $representationType == 'vector';
@@ -1004,8 +1010,46 @@ class VisualisationController extends ControllerBase {
 		$dateModification = $this->exportExtras($metadataExtras, 'date_modification');
 		$producer = $this->exportExtras($metadataExtras, 'producer');
 		$organization = $dataset["metas"]["organization"]["title"];
+		// $datasetType = $this->getDatasetType($dataset, $metadataExtras);
+		$themeInspire = $this->exportExtras($metadataExtras, 'inspire-theme');
 
 		$synthese = '';
+		// if (isset($datasetType)) {
+		// 	$synthese .= '
+		// 		<div class="my-3">
+		// 			<i class="fa fa-file-code"></i>
+		// 			<span class="ms-2">Type : <b>' . $datasetType . '</b></span>
+		// 		</div>
+		// 	';
+		// }
+
+		if (isset($recordsCount)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Nombre de lignes : <b>' . floatval($recordsCount) . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($datasetSize)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Taille du jeu de données : <b>' . $datasetSize . ' mo</b></span>
+				</div>
+			';
+		}
+
+		if (isset($encoding)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-file"></i>
+					<span class="ms-2">Encodage : <b>' . $encoding . '</b></span>
+				</div>
+			';
+		}
+
 		if ($isOpenData) {
 			$synthese .= '
 				<div class="my-3">
@@ -1031,6 +1075,18 @@ class VisualisationController extends ControllerBase {
 			</div>
 		';
 
+		if (isset($extent) && $extent != '') {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-clock-o"></i>
+					<span class="ms-2">Emprise temporelle : <b>' . $extent . '</b></span>
+					' . (isset($extentBegin) && $extentBegin != '' ? '<br><span class="ms-2">Début : <b>\{\{\'' . $extentBegin . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+					' . (isset($extentEnd) && $extentEnd != '' ? '<br><span class="ms-2">Fin : <b>\{\{\'' . $extentEnd . '\' | formatMeta:\'date\' \}\}</b></span>' : '') . '
+				</div>
+			';
+		}
+
+		// Manage creation or deposit date
 		// [{"type": "creation", "value": "2019-11-12"}, {"type": "edition", "value": ""}, {"type": "publication", "value": "2019-11-12"}]
 		$displayDate = null;
 		$datasetDates = json_decode($datasetDates, true);
@@ -1092,7 +1148,16 @@ class VisualisationController extends ControllerBase {
 				</div>
 			';
 		}
-		
+
+		if (isset($themeInspire) && $themeInspire != '') {
+			$themeInspire = $this->translateValue($this->locale["codelists"]["MD_InspireTopicCategoryCode"], $themeInspire);
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-tag"></i>
+					<span class="ms-2">Thème Inspire : <b>' . $themeInspire . '</b></span>
+				</div>
+			';
+		}		
 
 		if ($themes != null) {
 			$synthese .= '
@@ -1133,6 +1198,8 @@ class VisualisationController extends ControllerBase {
 		// $: dataScaleDenominator = converter.getValue($storeMdjs, "dataScaleDenominator")[0] || "";
 		// $: dataScaleDistance = converter.getValue($storeMdjs, "dataScaleDistance")[0] || "";
 
+
+		$extent = $this->exportExtras($metadataExtras, 'extent');
 		$representationType = $this->exportExtras($metadataExtras, 'spatial-representation-type');
 
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
@@ -1159,6 +1226,7 @@ class VisualisationController extends ControllerBase {
 		return '
 			<div class="row">
 				<div class="col-sm-7">
+					<p><strong>Nom de l\'emprise:</strong> ' . ($extent != null ? $extent : 'non renseignée') . '</p>
 					<p><strong>Type de représentation:</strong> ' . ($representationType != null ? $this->translateValue($this->locale["codelists"]["MD_SpatialRepresentationTypeCode"], $representationType) : 'non renseignée') . '</p>
 					<p><strong>Etendue géographique:</strong></p>
 					<ul>
@@ -1895,12 +1963,40 @@ class VisualisationController extends ControllerBase {
 	}
 	
 	function buildTabAdmin($dataset, $name) {
+		$datasetId = $dataset["metas"]["id"];
+		//Getting current resourceId
+		if ($selectedResourceId == null) {
+			$resources = $dataset["metas"]["resources"];
+			if (sizeof($resources) > 0 ) {
+				$selectedResourceId = $this->getLastDataResource($resources);
+			}
+		}
+
 		$fields = $dataset["fields"];
 
-		$tableHeader = '<tr>';
+		$buttonEditMetadata = '';
+		$buttonEditor = '';
 
-		$displayEditor = false;
-		if (sizeof($fields) > 0 ) {
+		// Part edit metadata
+		$editDatasetUrl = "{{ path('ckan_admin.ManageDatasetForm', { 'dataset-id': '$datasetId'}) }}";
+
+		$buttonEditMetadata = '
+			<a id="btn-edit-data" href="' . $editDatasetUrl . '" target="_self">
+				<img alt="Modifier la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
+				<span>Modifier la connaissance</span>
+			</a>';
+
+		$configureDatasetUrl = "{{ path('ckan_admin.typeColumnsForm', { 'dataset-id': '$datasetId', 'resource-id': '$selectedResourceId'}) }}";
+		$buttonConfigureDataset = '
+			<a id="btn-configure-dataset" href="' . $configureDatasetUrl . '" target="_self">
+				<img alt="Paramétrage de la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/manage_observatoire.png">
+				<span>Paramétrage de la connaissance</span>
+			</a>';
+
+			// Part edit data
+		$tableHeader = '<tr>';
+		if (sizeof($fields) > 0) {
+			$displayEditor = false;
 			foreach($fields as $key=>$value) {
 				$canEdit = false;
 				if (sizeof($value["annotations"]) > 0 ) {
@@ -1925,30 +2021,26 @@ class VisualisationController extends ControllerBase {
 					$tableHeader .= '<th>' . $value["name"] . '</th>';
 				}
 			}
-		}
 
+			if ($displayEditor) {
+				$buttonEditor = '
+					<a id="btn-edit-data" ng-click="editData()">
+						<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+						<span>Editer le jeu de données</span>
+					</a>';
+			}
+		}
 		$tableHeader .= '</tr>';
 
-		$buttonEditor = $displayEditor ? '
-			<a id="btn-edit-data" ng-click="editData()">
-				<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-				<span>Editer le jeu de données</span>
-			</a>' : '';
-
-		$displayValidate = false;
-		$buttonValidateData = $displayValidate ? '
-			<a id="btn-validate-data" ng-click="validateData()">
-				<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/checked.png">
-				<span>Valider les données</span>
-			</a>' : '';
 
 		return '
 			<d4c-pane pane-auto-unload="true" title="Administration" icon="cogs"  translate="title" slug="admin">
 				<details open>
 					<summary>Administration</summary>
 					<div>
+						' . $buttonEditMetadata . '
+						' . $buttonConfigureDataset . '
 						' . $buttonEditor . '
-						' . $buttonValidateData . '
 					</div>
 				</details>
 				<div style="width: 100%;">

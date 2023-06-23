@@ -90,6 +90,18 @@ editMetaDataForm.form:
       css/progress.css: {}
   dependencies:
     - core/jquery
+
+ManageDatasetForm.form:
+  version: VERSION
+  js:
+    js/progress_dataset.js: {}
+    js/progress.js: {}
+  css:
+    base:
+      css/progress.css: {}
+  dependencies:
+    - core/jquery
+
     
 editMetaDataFormModal.form:
   version: VERSION

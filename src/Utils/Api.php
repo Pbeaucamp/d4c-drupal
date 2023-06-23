@@ -417,23 +417,21 @@ class Api
 		$params = $this->retrieveParameters($params);
 		$query_params = $this->proper_parse_str($params);
 		if (array_key_exists('fields', $query_params) || array_key_exists('facet', $query_params)) {
-			$nhits;
+			$nhits = 0;
 			$nhitsTotal = 0;
 			$facet_groups = array();
 
 			$fields = $this->getAllFields($query_params['resource_id']);
 			$fieldCoordinates = "";
-			$fieldGeometries = "";
-			$fieldId = "id";
 			foreach ($fields as $value) {
-				if (preg_match("/id|num|code|siren/i", $value['name'])) {
-					$fieldId = $value['name'];
-					break;
+				if ($value['type'] == "geo_point_2d") {
+					// If the field is created from lat/lon, we need to use the field sql definition
+					if (isset($value['sql'])) {
+						$fieldCoordinates = $value['sql'];
+					} else {
+						$fieldCoordinates = $value['name'];
+					}
 				}
-			}
-			foreach ($fields as $value) {
-				if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
-				if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
 			}
 
 			$filters_init = array();
@@ -480,10 +478,6 @@ class Api
 				}
 			}
 
-
-
-			//echo json_encode($filters_init);
-			//$filters_init = json_decode($query_params['filters']);
 			if (array_key_exists('fields', $query_params)) {
 				$facets = preg_split('/,/', $query_params['fields']);
 			} else if (array_key_exists('facet', $query_params)) {
@@ -493,7 +487,6 @@ class Api
 					$facets = array();
 					$facets[] = $query_params['facet'];
 				}
-				//unset($query_params['facet']);
 			}
 
 			$nhits = 0;
@@ -511,7 +504,6 @@ class Api
 						$query_params['filters'] = json_encode($filters);
 					}
 
-					//echo $query_params['filters'];
 					unset($query_params['limit']);
 
 
@@ -577,7 +569,7 @@ class Api
 
 					$req['sql'] = $sql;
 
-					Logger::logMessage("SQL : " . $sql);
+					// Logger::logMessage("TRM - datastoreApiFacet - SQL : " . $sql);
 
 					//echo $sql;
 					$url2 = http_build_query($req);
@@ -606,6 +598,7 @@ class Api
 						$value['path'] = $value['name'];
 						//$value['count'] = $result2['result']['total'];
 						$value['count'] = $result['result']['records'][$j]['total'];
+
 						$bool = false;
 						foreach ($filters_init as $k => $v) {
 							$v = urldecode($v);
@@ -1297,7 +1290,7 @@ class Api
 		}
 
 		if ($iduser != NULL) {
-			//If we apply security by organizations, we do not apply the user security which is will probably disappear in a future version
+			//If we apply security by organizations, we do not apply the user security which will probably disappear in a future version
 			if (!$applyOrganizationSecurity && !$this->isOrganizationAllowed($selectedOrg, $allowedOrganizations)) {
 				if ($isAdmin) {
 					$req = "-(-edition_security:*administrator* OR edition_security:*)";
@@ -1376,61 +1369,30 @@ class Api
 		$fieldCoordinates = "";
 		$fieldGeometries = "";
 		$fieldId = "_id";
-		/*foreach ($fields as $value) {
-			if(preg_match("/id|num|code|siren/i",$value['name'])){
-				$fieldId = $value['name'];
-				break;
-			} 
-		}*/
-
-		//This is not working we decided to move the geoloc column during csv creation
-		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
-		// $coordinatesAlreadyDefined = false;
-		// foreach ($fields as $value) {
-		// 	foreach($value["annotations"] as $annotation){
-		// 		if($annotation["name"] == "is_geoloc"){
-		// 			$fieldCoordinates = $value['name'];
-		// 			$coordinatesAlreadyDefined = true;
-		// 		}
-		// 	}
-		// }
 
 		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
 		foreach ($fields as $value) {
-			//echo $value['id'];
-			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
-			if($value['id'] == "geo_shape") $fieldGeometries = "cast(geo_shape::json->'type' as text)";
-			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
-			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];
-			if(preg_match("/geometr/i",$value['id'])) $fieldGeometries = $value['id'];*/
 			if (!$coordinatesAlreadyDefined && $value['type'] == "geo_point_2d") {
-				$fieldCoordinates = $value['name'];
+				// If the field is created from lat/lon, we need to use the field sql definition
+				if (isset($value['sql'])) {
+					$fieldCoordinates = $value['sql'];
+				} else {
+					$fieldCoordinates = $value['name'];
+				}
 				$coordinatesAlreadyDefined = true;
 			}
-			//if($value['type'] == "geo_shape") $fieldGeometries = "cast(".$value['name']."::json->'type' as text)";
 			if (!$geometriesAlreadyDefined && $value['type'] == "geo_shape") {
 				$fieldGeometries = $value['name'];
 				$geometriesAlreadyDefined = true;
 			}
 		}
-		Logger::logMessage("Found coordinate " . $fieldCoordinates . "\r\n");
-		Logger::logMessage("Found geometries " . $fieldGeometries . "\r\n");
-
 
 		if (array_key_exists('rows', $query_params)) {
 			$query_params['limit'] = $query_params['rows'];
 			unset($query_params['rows']);
 		}
 		if (array_key_exists('q', $query_params)) {
-			/*if (strpos($query_params['q'], '{') == false) {
-				if (strpos($query_params['q'], ':') != false && substr($query_params['q'], 0, 1 ) != '"') {
-					$ex = explode(':', $query_params['q']);
-					$query_params['q'] = '"'. $ex[0] .'":' .  $ex[1];
-				}
-			    $query_params['q'] = '{'.$query_params['q'].'}';
-			    //echo $query_params['q'];
-			}*/
 			$reqQfilter = $this->constructReqQToSQL($query_params['q']);
 		}
 		foreach ($query_params as $key => $value) {
@@ -1558,7 +1520,7 @@ class Api
 			$req['sql'] = $sql;
 		}
 
-		Logger::logMessage("Query : " . $req['sql']);
+		// Logger::logMessage("TRM - callDatastoreApiBoundingBox - SQL : " . $req['sql']);
 
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -1566,7 +1528,7 @@ class Api
 		curl_setopt_array($curl, $this->getStoreOptions());
 		$result = curl_exec($curl);
 
-		Logger::logMessage("Result query coordinate : " . $result);
+		// Logger::logMessage("Result query coordinate : " . $result);
 
 		curl_close($curl);
 		$result = json_decode($result, true);
@@ -1676,6 +1638,18 @@ class Api
 		$result = curl_exec($curl);
 		curl_close($curl);
 		$result = json_decode($result, true);
+
+		// We check if there is no sortable fields, we put all fields to sortable
+		$allFieldsSortable = true;
+		if ($full) {
+			foreach ($result['result']['fields'] as $value) {
+				$description = $value['info']['notes'];
+				if (preg_match("/<!--.*sortable.*-->/i", $description)) {
+					$allFieldsSortable = false;
+					break;
+				}
+			}
+		}
 
 
 		$geoPointnb = 0;
@@ -1962,24 +1936,6 @@ class Api
 		$fieldGeometries = '';
 
 		$reqQfilter = null;
-		/*foreach ($fields as $value) {
-			if(preg_match("/id|num|code|siren/i",$value['name'])){
-				$fieldId = $value['name'];
-				break;
-			} 
-		}*/
-
-		//This is not working we decided to move the geoloc column during csv creation
-		//We check first if the fields contains a facet is_geoloc which means he is in charge for coordinate
-		// $coordinatesAlreadyDefined = false;
-		// foreach ($fields as $value) {
-		// 	foreach($value["annotations"] as $annotation){
-		// 		if($annotation["name"] == "is_geoloc"){
-		// 			$fieldCoordinates = $value['name'];
-		// 			$coordinatesAlreadyDefined = true;
-		// 		}
-		// 	}
-		// }
 
 		$coordinatesAlreadyDefined = false;
 		$geometriesAlreadyDefined = false;
@@ -3242,10 +3198,10 @@ class Api
 				CURLOPT_SSL_VERIFYHOST =>  0,
 				CURLOPT_POSTFIELDS =>  json_encode($arr)
 			));
-			//curl_setopt_array($curl, $this->getSimpleGetOptions());
+
 			$dataset = curl_exec($curl);
 			curl_close($curl);
-			//echo $dataset . "\r\n";
+
 			$dataset = json_decode($dataset, true);
 			$data_array = array();
 			$clusters = array();
@@ -3254,7 +3210,7 @@ class Api
 				$c = array();
 				$c["clusters"] = array();
 				$c["cluster_center"] = array_reverse($value["geometry"]["coordinates"]);
-				$c["count"] = $value["properties"]["point_count"]; //echo $c["count"]. "\r\n";
+				$c["count"] = $value["properties"]["point_count"];
 				if ($c["count"] == NULL) $c["count"] = 1;
 
 				if (count($ySeries) > 0) {
@@ -3334,26 +3290,15 @@ class Api
 		}
 
 		$query = "idRes=" . $datasetId . "&zoom=" . $clusterPrec . "&minLat=" . $geofilter_bbox[0] . "&minLong=" . $geofilter_bbox[1] . "&maxLat=" . $geofilter_bbox[2] . "&maxLong=" . $geofilter_bbox[3];
-		/*$ckanurl = $this->urlCkan;
-		if(substr($ckanurl, -1) == "/"){
-			$ckanurl = substr($ckanurl, 0, -1);
-		}
-		$callUrl =  "http://192.168.2.223:1337/cluster?".$query;
-		//$callUrl =  "https://anfr2.data4citizen.com:1337/cluster?".$query;*/
-
-		// Logger::logMessage("TRM - Calling cluster");
 
 		$callUrl = $this->config->cluster->url . "cluster?" . $query;
 
-		//echo $callUrl . "\r\n";
+
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getSimpleGetOptions());
 		$dataset = curl_exec($curl);
 		curl_close($curl);
 
-		// Logger::logMessage("TRM - Cluster called");
-
-		//echo $dataset . "\r\n";
 		$dataset = json_decode($dataset, true);
 		if (empty($dataset["features"])) {
 			if ($clusterPrec < 20 && $nbOfTries < 40) {
@@ -3386,16 +3331,11 @@ class Api
 			$query_params['resource_id'] = $resourceCSV;
 
 			$fields = $this->getAllFields($query_params['resource_id']);
-			//echo json_encode($fields);
 			$fieldId = "_id";
-			/*foreach ($fields as $value) {
-				if(preg_match("/id|num|code|siren/i",$value['name']) && $value['name'] != "_id"){
-					$fieldId = $value['name'];
-					break;
-				} 
-			}*/
 			foreach ($fields as $value) {
-				if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
+				if ($value['type'] == "geo_point_2d") {
+					$fieldCoordinates = $value['name'];
+				}
 			}
 
 			//series
@@ -3625,13 +3565,13 @@ class Api
 			$limit = " limit " . $query_params['rows'];
 		}
 
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 		$req = array();
 		// $sql = "Select cast(".$fieldGeometries."::json->'type' as text) as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$sql = "Select  " . $fieldsMapDisplayQuery . $fieldColor . $fieldGeometries . " as geo from \"" . $query_params['resource_id'] . "\"" . $where . $limit;
 		$req['sql'] = $sql;
 
-		Logger::logMessage("Geopreview query : " . $req['sql']);
+		// Logger::logMessage("Geopreview query : " . $req['sql']);
 
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -3725,8 +3665,8 @@ class Api
 		$data_array["attachments"] = "";
 		$data_array["alternative_exports"] = "";
 		$data_array["features"] = array("timeserie", "analyse", "geo");
-		
 		$resourceCSV = null;
+
 		foreach ($result['result']['resources'] as $value) {
 			if (isset($resourceId) && $resourceId != "") {
 				if ($resourceId == $value['id']) {
@@ -4065,6 +4005,7 @@ class Api
 
 	public function getDatastoreRecord_v2($params)
 	{
+
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
@@ -4120,12 +4061,6 @@ class Api
 		foreach ($fields as $value) {
 			if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
 		}
-		/*foreach ($fields as $value) {
-			if(preg_match("/id|num|code|siren/i",$value['name'])){
-				$fieldId = $value['name'];
-				break;
-			} 
-		}*/
 
 		foreach ($query_params as $key => $value) {
 			if (preg_match($patternRefine, $key)) {
@@ -4652,7 +4587,7 @@ class Api
 		return $response;
 	}
 
-	public function getSQLWhereRecordsDownload($params)
+	public function getSQLWhereRecordsDownload($params, $resourceId)
 	{
 
 		$patternId = '/id|num|code|siren/i';
@@ -4664,7 +4599,7 @@ class Api
 		$filters_init = array();
 		$query_params = $this->proper_parse_str($params);
 
-		$fields = $this->getAllFields($query_params['resource_id']);
+		$fields = $this->getAllFields($resourceId);
 		//echo json_encode($fields);
 		$fieldId = "id";
 		$reqFields = "";
@@ -4678,9 +4613,6 @@ class Api
 			}
 		}
 		foreach ($fields as $value) {
-			/*if($value['id'] == "geo_point_2d") $fieldCoordinates = $value['id'];
-			if(preg_match("/coordin/i",$value['id'])) $fieldCoordinates = $value['id'];
-			if(preg_match("/coordon/i",$value['id'])) $fieldCoordinates = $value['id'];*/
 			if ($value['type'] == "geo_point_2d") $fieldCoordinates = $value['name'];
 			if ($value['type'] == "geo_shape") $fieldGeometries = $value['name'];
 		}
@@ -5176,7 +5108,7 @@ class Api
 		}
 */
 		$where = "";
-		$where = $this->getSQLWhereRecordsDownload($params);
+		$where = $this->getSQLWhereRecordsDownload($params, $query_params['resource_id']);
 
 		if (array_key_exists("maxpoints", $query_params) && $query_params['maxpoints'] != "") {
 			$limit = " limit " . $query_params['maxpoints'];
@@ -5201,7 +5133,7 @@ class Api
 		curl_close($curl);
 		//echo $result . "\r\n";
 
-		error_log('ttt' . $result);
+		// error_log('ttt' . $result);
 
 		$result = json_decode($result, true);
 
@@ -5376,7 +5308,7 @@ class Api
 
 	public function getMaps($idUser, $idMap)
 	{
-		Logger::logMessage("Getting maps for user : " . $idUser . "\r\n");
+		Logger::logMessage("Getting maps for user : " . $idUser . " with map id : " . $idMap . "");
 
 		$table = "d4c_maps";
 		$query = \Drupal::database()->select($table, 'map');
@@ -5539,15 +5471,11 @@ class Api
 			$tile = json_decode($_POST["json"], true);
 		}
 
-		$content2 = $_POST["json"];
-
-		error_log(json_encode($content2));
-
 		$mapLayers = $this->getMapLayersFromFile();
 
 		$exists = false;
 		foreach ($mapLayers['map_tiles'] as &$layer) {
-			if ($layer->name == $tile["name"]) {
+			if ($layer['name'] == $tile["name"]) {
 				$layer = $tile;
 				$exists = true;
 				break;
@@ -5570,13 +5498,15 @@ class Api
 
 		$arr = array();
 		foreach ($mapLayers['map_tiles'] as $layer) {
-			if ($layer->name != $idLayer) {
+			if ($layer['name'] != $idLayer) {
 				$arr[] = $layer;
 			}
 		}
-		$mapLayers['map_tiles'] = $arr;
+
+		$newLayers = array();
+		$newLayers['map_tiles'] = $arr;
 		
-		$this->saveMapLayersFromFile($mapLayers);
+		$this->saveMapLayersFromFile($newLayers);
 
 		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
@@ -6225,11 +6155,6 @@ class Api
 			}
 
 			array_push($result, $dataset);
-
-			//resource_show
-
-
-
 		}
 
 
@@ -7542,7 +7467,6 @@ class Api
 						mkdir($uploaddir, 0777, true);
 					}
 					$uploadfile = $uploaddir . basename($_FILES['file']['name']);
-					//error_log( "eeeeeeeee :: ".$uploadfile);
 
 					if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
 						error_log("Le fichier est valide, et a été téléchargé avec succès. Voici plus d'informations :\n");
@@ -8938,10 +8862,13 @@ class Api
 			array(
 				'zip' => 'application/zip',
 				'xls' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+				'xls' => 'application/vnd.ms-excel',
+				'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 				'csv' => 'text/csv',
+				'csv' => 'text/html',
 				'text' => 'text/plain',
 				'xml' => 'text/xml',
-				'xml' => 'application/json',
+				'json' => 'application/json',
 			),
 			true
 		)) {
@@ -9016,8 +8943,7 @@ class Api
 		return $result;
 	}
 
-	public function callRemoveResource()
-	{
+	public function callRemoveResource() {
 		$resourceId = $_POST['resource_id'];
 
 		try {

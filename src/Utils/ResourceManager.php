@@ -1,6 +1,8 @@
 <?php
 
 namespace Drupal\ckan_admin\Utils;
+
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
@@ -10,6 +12,7 @@ use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
 use \PhpOffice\PhpSpreadsheet\Writer\Csv;
 use \JsonMachine\JsonMachine;
+use OzdemirBurak\JsonCsv\File\Json;
 
 class ResourceManager {
 
@@ -21,12 +24,18 @@ class ResourceManager {
 	const DATAPUSHER_WAIT_TIME = 120;
 	const DATAPUSHER_WAIT_TIME_BY_API = 1800;
 
+	protected $config;
+	protected $urlCkan;
+	protected $protocol;
+	protected $host;
+	protected $port;
+
 	function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->urlCkan = $this->config->ckan->url;
 		$this->protocol = isset($this->config->client->protocol) ? $this->config->client->protocol . '://' : 'https://';
 		$this->host = $this->config->client->host;
-		$this->port = isset($this->config->client->port) ? ':' . $this->config->client->port : '';
+		$this->port = isset($this->config->client->port) && $this->config->client->port != '' ? ':' . $this->config->client->port : '';
 	}
 
 	function getRoutingPrefix($includePreSlash) {
@@ -44,7 +53,7 @@ class ResourceManager {
 	}
 
 	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
-		Logger::logMessage("Create new dataset with name '" . $datasetName . "'");
+		Logger::logMessage("Create new dataset with name '" . $datasetName . "' and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
 
 		//We update the description if empty or equals to default.description
@@ -86,7 +95,7 @@ class ResourceManager {
 	}
 
 	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
-		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId);
+		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
 		
 		$datasetToUpdate[title] = $title;
@@ -102,6 +111,7 @@ class ResourceManager {
 		$api = new Api;
         $callUrl = $this->urlCkan . "api/action/package_update";
 		$result = $api->updateRequest($callUrl, $datasetToUpdate, "POST");
+
 		$result = json_decode($result);
 		if ($result->success == true) {
 			$currentOrganization = $datasetToUpdate[organization][id];
@@ -109,10 +119,7 @@ class ResourceManager {
 
 			if ($currentOrganization != $organization) {
 				Logger::logMessage("Updating organization.");
-			
-				$callUrl = $this->urlCkan . "api/action/package_owner_org_update";
-				$result = $api->updateRequest($callUrl, ["id" => $datasetToUpdate[id], "organization_id" => $organization], "POST");
-				$result = json_decode($result);
+				$result = $this->changeDatasetOrganization($datasetToUpdate[id], $organization);
 				if ($result->success != true) {
 					$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
@@ -126,6 +133,13 @@ class ResourceManager {
 			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
 		}
+	}
+
+	function changeDatasetOrganization($datasetId, $newOrganization) {
+		$api = new Api;
+		$callUrl = $this->urlCkan . "api/action/package_owner_org_update";
+		$result = $api->updateRequest($callUrl, ["id" => $datasetId, "organization_id" => $newOrganization], "POST");
+		return json_decode($result);
 	}
 
 	function manageFile($file) {
@@ -170,9 +184,18 @@ class ResourceManager {
 		else {
 			$newPath = urldecode($this->nettoyage2($filePath));
 		}
-		rename(self::ROOT . urldecode($filePath), self::ROOT . $newPath); 
+		
+		$tempDirectory = \Drupal::service('file_system')->getTempDirectory();
+		// If file is contains in tempDirectory, we move it to the dataset folder
+		if (strpos($filePath, $tempDirectory) !== false) {
+			Logger::logMessage("Rename " . urldecode($filePath) . " to " . self::ROOT . $newPath);
+			rename(urldecode($filePath), self::ROOT . $newPath);
+		}
+		else {
+			Logger::logMessage("Rename " . self::ROOT . urldecode($filePath) . " to " . self::ROOT . $newPath);
+			rename(self::ROOT . urldecode($filePath), self::ROOT . $newPath); 
+		}
 		$filePath = $newPath;
-		Logger::logMessage("File has been renamed to " . $filePath);
 
 		$resourceUrl = $this->protocol . $host . $this->port . $filePath;
 		Logger::logMessage("File resource " . $resourceUrl);
@@ -182,20 +205,22 @@ class ResourceManager {
 			$filesize = filesize(self::ROOT . $filePath);
 		} catch (\Exception $e) {
 			$filesize = 0;
-			error_log('Unable to get file size for ' . self::ROOT . $filePath);
+			Logger::logMessage("Impossible de récupérer la taille du fichier pour " . self::ROOT . $filePath . "(" . $e->getMessage() . ")");
 		}
 
 		try {
 			$type = $this->extractFormat($filePath);
+			Logger::logMessage("Found format " . $type);
 		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer le format du fichier (" . $e->getMessage() . ")");
 		}
-		
-		Logger::logMessage("Found format " . $type);
 
 		try {
 			$encoding = isset($encoding) && $encoding != "" ? $encoding : $this->extractEncoding(self::ROOT . $filePath);
 			Logger::logMessage("Found encoding " . $encoding);
+
+			// We need to update the dataset metadata
+			$this->updateDatasetMetadata($datasetId, 'extras', [new D4CMetadata('encoding', $encoding)]);
 		} catch (\Exception $e) {
 			Logger::logMessage("Impossible de récupérer l'encodage du fichier (" . $e->getMessage() . ")");
 		}
@@ -337,9 +362,9 @@ class ResourceManager {
 				$spreadsheet = $reader->load($xls_file);
 
 				$loadedSheetNames = $spreadsheet->getSheetNames();
-				$highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
-				$highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
-				$spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
+				// $highestRow = $spreadsheet->getActiveSheet()->getHighestRow(); // e.g. 10
+				// $highestColumn = $spreadsheet->getActiveSheet()->getHighestColumn(); // e.g 'F'
+				// $spreadsheet->getActiveSheet()->getStyle('A1:' . $highestColumn . $highestRow)->getNumberFormat()->setFormatCode('###.##');
 				
 				// We upload the excel file and we convert it to insert data if we can
 				$result = $this->manageFileWithPath($datasetId, false, false, $resourceId, $resourceUrl, '', $encoding, false, false, false, null, true, $checkDatapusherTime);
@@ -489,12 +514,13 @@ class ResourceManager {
 					//We create the clusters
 					$results[] = $this->createClusters($datasetId, $resourceId, ',', 'UTF-8', 'geo_point_2d', ',', $fileName);
 				}
-
-				return $results;
 			}
 
-			$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', "Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
-			throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
+			return $results;
+
+			// Don't throw an error if the file is null
+			// $this->updateDatabaseStatus(false, $datasetId, $datasetId, 'MANAGE_FILE', 'ERROR', "Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
+			// throw new \Exception("Le fichier '" . $fileName . "' ne peut pas être converti en CSV pour être intégré à l\'application.");
 		}
 		else {
 			// We upload the file as resource
@@ -1097,10 +1123,10 @@ class ResourceManager {
 
 	//convert text file to csv
 	function convertTextFileToCsv($filepath, $isShapeFile, $new_extension, $color_array) {
-
-		// get content of text file
+		// Get content of text file
 		$filepathContent = file_get_contents($filepath);
 
+    	// Update file extension
 		$pathinfo = pathinfo($filepath);
 		$pathinfo["extension"] = $new_extension;
 
@@ -1117,7 +1143,7 @@ class ResourceManager {
 			}
 		}
 
-		//create a new csv files contains the same content of text file
+		// Create a new csv file with the same content as the text file
 		file_put_contents($newfile, $filepathContent);
 
 		if ($isShapeFile) {
@@ -1254,6 +1280,9 @@ class ResourceManager {
 		}
 	
 		if ($isUpdate) {
+
+			Logger::logMessage("TRM - Update resource on CKAN : " . $resourceId . " - " . $resourceUrl . " - " . $fileName . " - " . $type . " - " . $description . " - " . $pushToDataspusher . " - " . $format . " - " . $customName . " - " . $checkDatapusherTime);
+
 			$resource = [
 				"id" => $resourceId,
 				"url" => $resourceUrl,
@@ -1267,7 +1296,6 @@ class ResourceManager {
 				"uuid" => uniqid()
 			];
 
-			// Logger::logMessage("Update request for resource: " . json_encode($resource));
 			Logger::logMessage("Keeping dictionnary backup.");
 			// Get dictionnary for dataset
 			$result = $api->getAllFieldsForTableParam($resourceId);
@@ -1277,6 +1305,8 @@ class ResourceManager {
 			Logger::logMessage("Updating the resource.");
 			$callUrl =  $this->urlCkan . "api/action/resource_update";
 			$return = $api->updateRequest($callUrl, $resource, "POST");
+
+			Logger::logMessage("TRM - Return result of update : " . json_encode($return));
 
 			$fieldsWithoutId = array();
 			foreach ($fields as $field) {
@@ -1342,9 +1372,9 @@ class ResourceManager {
 			$return = json_decode($return);
 			
 			if ($return->success == true) {
+				$resourceId = $return->result->id;
 			
 				$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'UPLOAD_CKAN', 'SUCCESS', 'Le fichier \'' .  $fileName . '\' a été ajouté à CKAN');
-				$resourceId = $return->result->id;
 				$api->addResourceVersion($datasetId, $resourceId, $resourceUrl);
 				
 				if ($type == 'csv' || $type == 'xls'/* The datapusher does not support xlsx anymore || $type == 'xlsx'*/) {
@@ -1539,7 +1569,7 @@ class ResourceManager {
 			$url_t = parse_url($file->createFileUrl(FALSE));
 			$url_pict = $url_t["path"];
 
-			return $url_pict;
+			return $this->protocol . $this->host . $this->port . $url_pict;
 		}
 		return null;
 	}
@@ -2136,21 +2166,7 @@ class ResourceManager {
 		if ($isFromPath) {
 			Logger::logMessage("Creating CSV from GeoJson with path : " . $json);
 
-			$types = JsonMachine::fromFile($json, '/type');
-			$type = iterator_to_array($types)['type'];
-
-			if ($type != "FeatureCollection") {
-				return "";
-			}
-
-			$jsonItems = JsonMachine::fromFile($json, '/features');
-		}
-		else {
-			Logger::logMessage("Creating CSV from GeoJson from String");
-		
-			// If passed a string, turn it into an array
-			if (is_array($json) === false) {
-				
+			try {
 				$types = JsonMachine::fromFile($json, '/type');
 				$type = iterator_to_array($types)['type'];
 
@@ -2158,15 +2174,39 @@ class ResourceManager {
 					return "";
 				}
 
-				$jsonItems = JsonMachine::fromString($json, '/features');
-				// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
+				$jsonItems = JsonMachine::fromFile($json, '/features');
+			} catch (\Exception $e) {
+				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
-			else {
-				if ($json['type'] != "FeatureCollection") {
-					return "";
-				}
+		}
+		else {
+			Logger::logMessage("Creating CSV from GeoJson from String");
+		
+			try {
+				// If passed a string, turn it into an array
+				if (is_array($json) === false) {
+					
+					$types = JsonMachine::fromFile($json, '/type');
+					$type = iterator_to_array($types)['type'];
 
-				$jsonItems = $json['features'];
+					if ($type != "FeatureCollection") {
+						return "";
+					}
+
+					$jsonItems = JsonMachine::fromString($json, '/features');
+					// $json = json_decode($json, true, 512, JSON_UNESCAPED_UNICODE);
+				}
+				else {
+					if ($json['type'] != "FeatureCollection") {
+						return "";
+					}
+
+					$jsonItems = $json['features'];
+				}
+			} catch (\Exception $e) {
+				Logger::logMessage("Error while reading GeoJson file : " . $e->getMessage());
+				return $this->buildCSVFromJson($json, $newCSVPath, $isFromPath);
 			}
 		}
 
@@ -2285,6 +2325,12 @@ class ResourceManager {
 
 		return true;
 	}
+
+	function buildCSVFromJson($json, $newCSVPath, $isFromPath = false) {
+		$json = new Json($json);
+		$json->convertAndSave($newCSVPath);
+		return true;
+	}
 	
 	function isNumericColumn($json, $colName) {
 		for($i=0; $i< 100; $i++){
@@ -2319,52 +2365,47 @@ class ResourceManager {
 		if ($resnew->success == true) {
 			$idNewData = $resnew->result->id;
 		} 
-		else if($resnew->error->name[0]=='Cette URL est déjà utilisée.'){
+		else if ($resnew->error->name[0] == 'That URL is already in use.' || $resnew->error->name[0] == 'Cette URL est déjà utilisée.') {
 			$coll++;
 			
 			if($coll==1){
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10){
 				$newData[name]=substr($newData[name],0, -3);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -3);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[name] = $newData[name].'_'.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else if($coll>100){
 				$newData[name]=substr($newData[name],0, -4);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -4);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>1000){
 				$newData[name]=substr($newData[name],0, -5);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -5);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10000){
 				$newData[name]=substr($newData[name],0, -6);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -6);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else{
 				$newData[name]=substr($newData[name],0, -2);
 				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -2);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData[title] = $newData[title];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
@@ -2381,6 +2422,79 @@ class ResourceManager {
 
         return array('0'=>$coll, '1'=>$idNewData);
     }
+
+	/**
+	 * Type can be "visibility", "extras"
+	 * $data is an array of D4CMetadata
+	 */
+	function updateDatasetMetadata($datasetId, $type, $metadatas) {
+		$result = array();
+
+		$api = new Api;
+		$dataset = $api->getPackageShow("id=" . $datasetId, true, true, true, true);
+		if ($dataset == null) {
+			// Meaning the dataset is not allowed for the user
+			$result["status"] = "error";
+			$result["result"] = "Dataset not found";
+		}
+		else {
+			$uniqId = -1;
+			$datasetToUpdate = $dataset["result"];
+			$datasetName = $datasetToUpdate["name"];
+			$title = $datasetToUpdate["title"];
+			$isPrivate = $datasetToUpdate["private"];
+			$description = $datasetToUpdate["notes"];
+			$licence = $datasetToUpdate["license_id"];
+			$organization = $datasetToUpdate["organization"]["name"];
+			if ($type == "visibility") {
+				foreach ($metadatas as $metadata) {
+					if ($metadata->getKey() == "visibility") {
+						$isPrivate = $metadata->getValue();
+						$extras = $datasetToUpdate["extras"];
+						break;
+					}
+				}
+			}
+			else if ($type == "extras") {
+				$extras = $datasetToUpdate["extras"];
+				if ($extras != null && count($extras) > 0) {
+					for ($index = 0; $index < count($extras); $index++) {
+
+						foreach ($metadatas as $metadata) {
+							if ($extras[$index]['key'] == $metadata->getKey()) {
+								if ($metadata->addToData()) {
+									$extrasArray = json_decode($extras[$index]['value'], true);
+									if ($extrasArray == null) {
+										$extrasArray = array();
+									}
+									$extrasArray[] = json_decode($metadata->getValue(), true)[0];
+									$extras[$index]['value'] = json_encode($extrasArray);
+								}
+								else {
+									$extras[$index]['value'] = $metadata->getValue();
+								}
+								$metadata->setDefine(true);
+							}
+						}
+					}
+				}
+
+				foreach ($metadatas as $metadata) {
+					if (!$metadata->isDefine()) {
+						$extras[count($extras)]['key'] = $metadata->getKey();
+						$extras[(count($extras) - 1)]['value'] = $metadata->getValue();
+					}
+				}
+			}
+			$tags = $datasetToUpdate["tags"];
+
+			$this->updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, null);
+
+			$result["status"] = "success";
+		}
+
+		return $result;
+	}
 
 
 
@@ -2429,7 +2543,10 @@ class ResourceManager {
 		$str = str_replace("?", "", $str);
 		$str = str_replace("`", "_", $str);
 		$str = str_replace("'", "_", $str);
+		$str = str_replace('’', "_", $str);
 		// $str = str_replace("-", "_", $str);
+		// Replace non-breaking space with an underscore
+		$str = str_replace(" ", "_", $str);
 		$str = str_replace(" ", "_", $str);
 		$str = str_replace(",", "", $str);
 		$str = str_replace("%", "", $str);
@@ -2465,7 +2582,6 @@ class ResourceManager {
 
 		//We set the value to 63 characters as it is the limit of the database
 		$str = substr($str, 0, 62);
-
 		return $str;
 	}
 
