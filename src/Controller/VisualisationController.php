@@ -495,6 +495,9 @@ class VisualisationController extends ControllerBase {
 		//LIMITES ET CONDITIONS D'UTILISATION
 		$limitesUtilisation = $this->buildLimitesUtilisation($metadataExtras);
 
+		// SOURCES
+		$sources = $this->buildSource($dataset, $metadataExtras);
+
 		//LIMITES ET CONDITIONS D'UTILISATION
 		$conditionsUtilisation = $this->buildConditionsUtilisation($metadataExtras);
 
@@ -536,7 +539,6 @@ class VisualisationController extends ControllerBase {
 					<div class="col-sm-9">
 						' . ($rgpdPart != null ? $this->buildCard('RGPD', $rgpdPart) : '') . '
 						' . $this->buildCard('Description', ($description != null && $description != '' ? $description : 'Aucune description des données renseignée')) . '
-						' . $this->buildCard('Limites techniques d\'usage', (!$this->isNullOrEmptyString($limitesUtilisation) ? $limitesUtilisation : 'Aucune limite technique d\'usage des données renseignée')) . '
 						' . ($conditionsUtilisation != null ? $this->buildCard('Licences et conditions d\'utilisation', $conditionsUtilisation) : '') . '
 						' . ($methodeProductionEtQualite != null ? $this->buildCard('Méthode de production et qualité', $methodeProductionEtQualite) : '') . '
 						' . ($informationsGeo != null ? $this->buildCard('Informations géographiques', $informationsGeo) : '') . '
@@ -571,7 +573,15 @@ class VisualisationController extends ControllerBase {
 
 						<br/>
 						<br/>
-						
+
+						<h3 class="d4c-dataset-visualization__toggle-schema">
+							<span translate>Référence</span>
+						</h3>
+						' . $this->buildCard('', (!$this->isNullOrEmptyString($sources) ? $sources : 'Aucune source renseignée')) . '
+
+						<br/>
+						<br/>
+
 						<h3 class="d4c-dataset-visualization__toggle-schema">
 							<span translate>Dataset schema</span>
 						</h3>
@@ -916,6 +926,20 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
+	function buildSource($dataset, $metadataExtras) {
+		$source = $dataset["metas"]["url"];
+		$donneesSource = $this->exportExtras($metadataExtras, 'donnees_source');
+
+		return '
+			<div class="row">
+				<div class="col-sm-7">
+					<p><strong>Source:</strong> ' . ($source != null ? $source : 'non renseignée') . '</p>
+					<p><strong>Données source:</strong> ' . ($donneesSource != null ? $donneesSource : 'non renseignée') . '</p>
+				</div>
+			</div>
+		';
+	}
+
 	function buildConditionsUtilisation($metadataExtras) {
 		$licence = $this->exportExtras($metadataExtras, 'licence');
 		$accessConstraints = $this->exportExtras($metadataExtras, 'access_constraints');
@@ -1071,7 +1095,7 @@ class VisualisationController extends ControllerBase {
 		$synthese .= '
 			<div class="my-3">
 				<i class="fa fa-clock-o"></i>
-				<span class="ms-2">' . ($frequence != null ? 'Mise à jour <b>' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) . '</b>' : '<b>Mise à jour inconnue</b>') . '</span>
+				<span class="ms-2">' . ($frequence != null ? 'Fréquence de mise à jour <b>' . $this->translateValue($this->locale["codelists"]["MD_MaintenanceFrequencyCode"], $frequence) . '</b>' : '<b>Fréquence de mise à jour inconnue</b>') . '</span>
 			</div>
 		';
 

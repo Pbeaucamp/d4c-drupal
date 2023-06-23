@@ -1670,7 +1670,7 @@ class ResourceManager {
 	/**
 	 * We put every extras in an array to be able to add more later
 	 */
-	function defineExtras($extras, $newExtras) {
+	function defineExtras($extras, $newExtras, $generalMetadata = null, $inspireMetadata = null) {
 		$picto = $newExtras['picto'];
 		$imgBackground = $newExtras['imgBackground'];
 		$removeBackground = $newExtras['removeBackground'];
@@ -1688,19 +1688,14 @@ class ResourceManager {
 		$producer = $newExtras['producer'];
 		$source = $newExtras['source'];
 		$donnees_source = $newExtras['donnees_source'];
-		$mention_legales = $newExtras['mention_legales'];
-		$frequence = $newExtras['frequency-of-update'];
 		$displayVersionning = $newExtras['displayVersionning'];
 		$dataRgpd = $newExtras['dataRgpd'];
 		$data4citizenType = $newExtras['data4citizenType'];
 		$entityId = $newExtras['entityId'];
 		$territory = $newExtras['territory'];
 		$contactMail = $newExtras['contactMail'];
-		$bbox_east_longb = $newExtras['bbox_east_longb'];
-		$bbox_north_lat = $newExtras['bbox_north_lat'];
-		$bbox_south_lat = $newExtras['bbox_south_lat'];
-		$bbox_west_long = $newExtras['bbox_west_long'];
-		$spatial = $newExtras['spatial'];
+		$dateDeposit = $newExtras['dateDeposit'];
+		$uploader = $newExtras['uploader'];
 
 		if ($extras == null) {
 			$extras = array();
@@ -1721,7 +1716,6 @@ class ResourceManager {
 		$hasDisableFieldsEmpty = false;
 		$hasSecurity = false;
 		$hasProducer = false;
-		$hasFrequence = false;
 		$hasSource = false;
 		$hasDonneesSource = false;
 		$hasMentionLegales = false;
@@ -1729,13 +1723,10 @@ class ResourceManager {
 		$hasDataRgpd = false;
 		$hasData4citizenType = false;
 		$hasEntityId = false;
+		$hasDateDeposit = false;
+		$hasUsername = false;
 		$hasTerritory = false;
 		$hasContactMail = false;
-		$hasBboxEastLongb = false;
-		$hasBboxNorthLat = false;
-		$hasBboxSouthLat = false;
-		$hasBboxWestLong = false;
-		$hasSpatial = false;
 
 		
 		if ($extras != null && count($extras) > 0) {
@@ -1826,12 +1817,6 @@ class ResourceManager {
 					$extras[$index]['value'] = $producer;
 				}
 
-				//frequence
-				if ($extras[$index]['key'] == 'frequency-of-update') {
-					$hasFrequence = true;
-					$extras[$index]['value'] = $frequence;
-				}
-
 				// source
 				if ($extras[$index]['key'] == 'source') {
 					$hasSource = true;
@@ -1842,12 +1827,6 @@ class ResourceManager {
 				if ($extras[$index]['key'] == 'donnees_source') {
 					$hasDonneesSource = true;
 					$extras[$index]['value'] = $donnees_source;
-				}
-
-				// mention legales
-				if ($extras[$index]['key'] == 'mention_legales') {
-					$hasMentionLegales = true;
-					$extras[$index]['value'] = $mention_legales;
 				}
 	
 				if ($extras[$index]['key'] == 'disable_fields_empty') {
@@ -1886,6 +1865,16 @@ class ResourceManager {
 					$hasEntityId  = true;
 					$extras[$index]['value'] = $entityId;
 				}
+				
+				if ($extras[$index]['key'] == 'date_deposit') {
+					$hasDateDeposit = true;
+					$extras[$index]['value'] = $dateDeposit;
+				}
+
+				if ($extras[$index]['key'] == 'uploader') {
+					$hasUsername = true;
+					$extras[$index]['value'] = $uploader;
+				}
 
 				if ($extras[$index]['key'] == 'territory') {
 					$hasTerritory = true;
@@ -1897,29 +1886,22 @@ class ResourceManager {
 					$extras[$index]['value'] = $contactMail;
 				}
 
-				if ($extras[$index]['key'] == 'bbox-east-long') {
-					$hasBboxEastLongb = true;
-					$extras[$index]['value'] = $bbox_east_longb;
+				if (isset($generalMetadata)) {
+					foreach ($generalMetadata as $meta) {
+						if ($extras[$index]['key'] == $meta->getKey()) {
+							$meta->setDefine(true);
+							$extras[$index]['value'] = $meta->getValue();
+						}
+					}
 				}
 
-				if ($extras[$index]['key'] == 'bbox-north-lat') {
-					$hasBboxNorthLat = true;
-					$extras[$index]['value'] = $bbox_north_lat;
-				}
-
-				if ($extras[$index]['key'] == 'bbox-south-lat') {
-					$hasBboxSouthLat = true;
-					$extras[$index]['value'] = $bbox_south_lat;
-				}
-
-				if ($extras[$index]['key'] == 'bbox-west-long') {
-					$hasBboxWestLong = true;
-					$extras[$index]['value'] = $bbox_west_long;
-				}
-
-				if ($extras[$index]['key'] == 'spatial') {
-					$hasSpatial = true;
-					$extras[$index]['value'] = $spatial;
+				if (isset($inspireMetadata)) {
+					foreach ($inspireMetadata as $meta) {
+						if ($extras[$index]['key'] == $meta->getKey()) {
+							$meta->setDefine(true);
+							$extras[$index]['value'] = $meta->getValue();
+						}
+					}
 				}
 			}
 		}
@@ -1994,11 +1976,6 @@ class ResourceManager {
 			$extras[(count($extras) - 1)]['value'] = $producer;
 		}
 
-		if ($hasFrequence == false) {
-			$extras[count($extras)]['key'] = 'frequency-of-update';
-			$extras[(count($extras) - 1)]['value'] = $frequence;
-		}
-
 		if ($hasSource == false) {
 			$extras[count($extras)]['key'] = 'source';
 			$extras[(count($extras) - 1)]['value'] = $source;
@@ -2007,11 +1984,6 @@ class ResourceManager {
 		if ($hasDonneesSource == false) {
 			$extras[count($extras)]['key'] = 'donnees_source';
 			$extras[(count($extras) - 1)]['value'] = $donnees_source;
-		}
-
-		if ($hasMentionLegales == false) {
-			$extras[count($extras)]['key'] = 'mention_legales';
-			$extras[(count($extras) - 1)]['value'] = $mention_legales;
 		}
 
 		if ($hasDisableFieldsEmpty  == false) {
@@ -2049,6 +2021,16 @@ class ResourceManager {
 			$extras[(count($extras) - 1)]['value'] = $entityId;
 		}
 
+		if ($hasDateDeposit == false) {
+			$extras[count($extras)]['key'] = 'date_deposit';
+			$extras[(count($extras) - 1)]['value'] = $dateDeposit;
+		}
+
+		if ($hasUsername == false) {
+			$extras[count($extras)]['key'] = 'uploader';
+			$extras[(count($extras) - 1)]['value'] = $uploader;
+		}
+
 		if ($hasTerritory == false) {
 			$extras[count($extras)]['key'] = 'territory';
 			$extras[(count($extras) - 1)]['value'] = $territory;
@@ -2059,29 +2041,22 @@ class ResourceManager {
 			$extras[(count($extras) - 1)]['value'] = $contactMail;
 		}
 
-		if ($hasBboxEastLongb == false) {
-			$extras[count($extras)]['key'] = 'bbox-east-long';
-			$extras[(count($extras) - 1)]['value'] = $bbox_east_longb;
+		if (isset($generalMetadata)) {
+			foreach ($generalMetadata as $meta) {
+				if (!$meta->isDefine()) {
+					$extras[count($extras)]['key'] = $meta->getKey();
+					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+				}
+			}
 		}
 
-		if ($hasBboxNorthLat == false) {
-			$extras[count($extras)]['key'] = 'bbox-north-lat';
-			$extras[(count($extras) - 1)]['value'] = $bbox_north_lat;
-		}
-
-		if ($hasBboxSouthLat == false) {
-			$extras[count($extras)]['key'] = 'bbox-south-lat';
-			$extras[(count($extras) - 1)]['value'] = $bbox_south_lat;
-		}
-
-		if ($hasBboxWestLong == false) {
-			$extras[count($extras)]['key'] = 'bbox-west-long';
-			$extras[(count($extras) - 1)]['value'] = $bbox_west_long;
-		}
-
-		if ($hasSpatial == false) {
-			$extras[count($extras)]['key'] = 'spatial';
-			$extras[(count($extras) - 1)]['value'] = $spatial;
+		if (isset($inspireMetadata)) {
+			foreach ($inspireMetadata as $meta) {
+				if (!$meta->isDefine()) {
+					$extras[count($extras)]['key'] = $meta->getKey();
+					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+				}
+			}
 		}
 
 		return $extras;

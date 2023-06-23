@@ -73,6 +73,7 @@ abstract class MetadataForm extends FormBase {
 
 			$organizationId = $selectedDataset['metas']['organization']['id'];
 			$organization = $selectedDataset['metas']['organization']['name'];
+			$source = $selectedDataset['metas']['url'];
 
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
@@ -87,6 +88,7 @@ abstract class MetadataForm extends FormBase {
 			$dataRgpd = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_rgpd") == '1';
 			$dataInterop = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_interop") == '1';
 			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
+			$donneesSource = DatasetHelper::extractMetadata($selectedDataset["extras"], "donnees_source");
 			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
 			$selectedThemes = json_decode($selectedThemes, true);
 
@@ -158,8 +160,7 @@ abstract class MetadataForm extends FormBase {
 			$selectedOrg = '';
 			foreach ($orgs as &$value) {
 				$orgOptions[$value['id']] = $value['display_name'];
-	
-				Logger::logMessage("TRM - Checking if " . $organizationId . " == " . $value['id'] . "");
+
 				if ($selectedDataset && $organizationId == $value['id']) {
 					$selectedOrg = $value['id'];
 				}
@@ -235,6 +236,18 @@ abstract class MetadataForm extends FormBase {
 			'#type' => 'textarea',
 			'#title' => $this->t('Description'),
 			'#default_value' => $selectedDataset != null ? $selectedDataset['description'] : '',
+		];
+
+		$form['integration_option']['source'] = [
+			'#type' => 'textfield',
+			'#title' => $this->t('Source'),
+			'#default_value' => $selectedDataset != null ? $source : '',
+		];
+
+		$form['integration_option']['donnees_source'] = [
+			'#type' => 'textfield',
+			'#title' => $this->t('Données source'),
+			'#default_value' => $selectedDataset != null ? $donneesSource : '',
 		];
 
 		// Add date field and set default value to today
@@ -859,6 +872,14 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue(['integration_option','dataset_data_validation']);
 	}
 
+	public function getSource(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','source']);
+	}
+
+	public function getDonneesSource(FormStateInterface $form_state) {
+		return $form_state->getValue(['integration_option','donnees_source']);
+	}
+
 	public function getGeneratedUniqId(FormStateInterface $form_state) {
         return $form_state->getValue('generated_task_id');
 	}
@@ -1069,14 +1090,13 @@ abstract class MetadataForm extends FormBase {
 		$dateDeposit = $this->getDatasetDepositDate($form_state);
 		$username = $this->getDatasetUsername($form_state);
 		$dataRgpd = $this->getDatasetRgpd($form_state);
-		$dataValidation = $this->getDataValidation($form_state);
+		// $dataValidation = $this->getDataValidation($form_state);
 		$themes = $this->getThemes($form_state);
+        $source = $this->getSource($form_state);
+        $donneesSource = $this->getDonneesSource($form_state);
 
 		$generalMetadata = $this->getGeneralMetadata($form_state);
 		$inspireMetadata = $this->getInspireMetadata($form_state);
-
-		$mention_legales = "";
-		$source = "";
 
 		$datasetVignette = $this->getDatasetVignette($form_state, $resourceManager);
 		$datasetVignetteDeletion = $this->getDatasetVignetteDeletion($form_state);
@@ -1085,8 +1105,20 @@ abstract class MetadataForm extends FormBase {
 		$security = $resourceManager->defineSecurity($userId, $users);
 
 		try {
+			// Define an array with all the metadata
+			$newExtras = array();
+			$newExtras['imgBackground'] = $datasetVignette;
+			$newExtras['removeBackground'] = $datasetVignetteDeletion;
+			$newExtras['themes'] = $themes;
+			$newExtras['dateDataset'] = $dateDataset;
+			$newExtras['security'] = $security;
+			$newExtras['producer'] = $contributor;
+			$newExtras['dataRgpd'] = $dataRgpd;
+			$newExtras['dateDeposit'] = $dateDeposit;
+			$newExtras['uploader'] = $username;
+			$newExtras['donnees_source'] = $donneesSource;
+
 			$generatedTaskId = $this->getGeneratedUniqId($form_state);
-			Logger::logMessage("TRM - Found generatedTaskId : " . $generatedTaskId);
 			if ($generatedTaskId == null || !isset($generatedTaskId)) {
 				$generatedTaskId = uniqid();
 			}
@@ -1097,9 +1129,7 @@ abstract class MetadataForm extends FormBase {
 
 				//Update extras
 				$extras = $datasetToUpdate[extras];
-				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
-					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
+				$extras = $resourceManager->defineExtras($extras, $newExtras, $generalMetadata, $inspireMetadata);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
@@ -1107,9 +1137,7 @@ abstract class MetadataForm extends FormBase {
 			}
 			else {
 				// We build extras
-				$extras = $resourceManager->defineExtras(null, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, null, 
-					null,  $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
-					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
+				$extras = $resourceManager->defineExtras(null, $newExtras, $generalMetadata, $inspireMetadata);
 
 				Logger::logMessage("Create dataset " . $datasetName);
 				Logger::logMessage(" with extras " . json_encode($extras));
