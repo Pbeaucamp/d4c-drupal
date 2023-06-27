@@ -2625,9 +2625,11 @@ class Api
 		$result = '';
 
 		if ($callCkan) {
+			$datasetid = filter_var($datasetid, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
 			// $query_params = $this->proper_parse_str($params);
 			//$callUrl =  $this->urlCkan . "api/action/package_show?" . $params . "&id=" . $datasetid;
-			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetid; //temporaire
+			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . urlencode($datasetid); //temporaire
 
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions(true));

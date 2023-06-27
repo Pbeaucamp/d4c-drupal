@@ -89,7 +89,7 @@ class VisualisationController extends ControllerBase {
 								context="ctx"
 								ctx-urlsync="true"
 								ctx-dataset-schema="' . $ctx . '"
-								ctx-selected-resource-id="' . $resourceId . '">
+								ctx-selected-resource-id="' . htmlspecialchars($resourceId) . '">
 							<div class="d4c-dataset-visualization__header">
 								<h1 class="d4c-dataset-visualization__dataset-title">
 									<div class="box_3">
@@ -100,7 +100,7 @@ class VisualisationController extends ControllerBase {
 									</div>
 								</h1>
 								<div class="d4c-error-404">
-									<span>La resource avec l\'ID \'' . $id . '\' n\'existe pas ou n\'est pas disponible.</span>
+									<span>La resource avec l\'ID \'' . htmlspecialchars($id) . '\' n\'existe pas ou n\'est pas disponible.</span>
 								</div>
 							</div>
 						</div>
@@ -2110,7 +2110,7 @@ class VisualisationController extends ControllerBase {
 		
 				mod.factory("config", [function() {
 					return {
-						ID_DATASET: "'.$id.'",
+						ID_DATASET: "'.htmlspecialchars($id).'",
 						HOST: "'.$this->config->client->domain.'"
 					}
 				}]);
