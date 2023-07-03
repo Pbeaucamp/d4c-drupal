@@ -506,6 +506,8 @@ class ResourceManager {
 			if ($csvGenerated) {
 				$resourceUrl = $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/' . $datasetFolder . '/' . $name;
 				
+				Logger::logMessage("Uploading CSV from GeoFile with name '" . $name . "' and custom name '" . $customName . "'");
+
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, false, $customName, true, $checkDatapusherTime);
 				$resourceId = $this->array_key_first($result[0]);
 				$results = array_merge($results, $result);
@@ -1131,7 +1133,7 @@ class ResourceManager {
 		$pathinfo["extension"] = $new_extension;
 
 		$pathfiles = explode("/", $filepath);
-		$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"] . "." . $new_extension; 
+		$pathfiles[sizeof($pathfiles) -1] = $pathinfo["filename"] . "." . $new_extension;
 
 		$newfile = "";
 		foreach ($pathfiles as $key => $value) {
@@ -1147,94 +1149,71 @@ class ResourceManager {
 		file_put_contents($newfile, $filepathContent);
 
 		if ($isShapeFile) {
-			$csv_data = array();
-			$row = 1;
-			if (($handle = fopen($newfile, 'r')) !== FALSE) {
-				while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
-					$csv_data[] = $data;
-					$row++;
-				}
-				fclose($handle);
-			}
-	
-			$extra_columns = array('geo_point_2d' => null, 'geoshape' => null, 'route_color' => null);
+			$csv_data = array_map('str_getcsv', file($newfile));
 
-			$latIndex = "";
-			$lngIndex = "";
-			$shapeIdIndex = "";
-			$Routes = [];
-	
+			$extra_columns = array('geo_point_2d' => null, 'geo_shape' => null, 'route_color' => null);
+
+			// Find indices of shape_pt_lat, shape_pt_lon, and shape_id columns
+			$latIndex = array_search('shape_pt_lat', $csv_data[0]);
+			$lngIndex = array_search('shape_pt_lon', $csv_data[0]);
+			$shapeIdIndex = array_search('shape_id', $csv_data[0]);
+
+			$shape_ids = array(); // Initialize an empty array to store the different shape IDs
+
+			// Loop through each line in the file
 			foreach ($csv_data as $i => $data) {
-				foreach ($data as $key => $value) {
-					if($value == "shape_pt_lat") {
-						$latIndex = $key;
-					}
-					
-					if($value == "shape_pt_lon") {
-						$lngIndex = $key;
-					}
-					
-					if($value == "shape_id") {
-						$shapeIdIndex = $key;
-					}
+				if ($i == 0) {
+					continue;
 				}
-					
-				if ($i!=0) {
-					if($i+1 < sizeof($csv_data)) {
-						$data2 = $csv_data[$i+1];
-						if ($data[$shapeIdIndex] != $data2[$shapeIdIndex] ) {
-							array_push($Routes, $i);
-						}
-					}
+
+				$shape_id = $data[$shapeIdIndex]; // Get the value of the shape_id column
+				$coordinate = array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+
+				// If the shape_id is not already in the array, add it
+				if (!in_array($shape_id, $shape_ids)) {
+					$shape_ids[$shape_id][] = $coordinate;
+				}
+				else {
+					// If the shape_id is already in the array, add the coordinate to the array
+					array_push($shape_ids[$shape_id], $coordinate);
 				}
 			}
-			$routesvalue=[];
+			
+			$routesvalue = [];
+			foreach ($shape_ids as $key => $value) {
+				$routesvalue[$key] = json_encode(array('type' => "LineString",'coordinates' => $value));
+			}
+			
+			Logger::logMessage("TRM - Routes " . json_encode($routesvalue));
 	
 			array_unshift($color_array,"");
 			unset($color_array[0]);
-			foreach ($Routes as $key => $value) {
-				if($key == 0) {
-					$firstindex = 1;
-				}
-				else {
-					$firstindex = $Routes[$key -1 ] + 1;
-				}
-	
-				$array2 =array();
-				$array3=[];
-				for ($i=$firstindex; $i <=$value ; $i++) {
-					$array2 =array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
-					$array3[] = $array2;
-				}
-				
-				$routesvalue[$key+1] = json_encode(array('type' => "LineString",'coordinates' => $array3));
-			}
 	
 			foreach ($csv_data as $i => $data) {
-				if ($i == 0) {
-					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
-					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
+				$shapeId = $data[$shapeIdIndex];
+
+				if (array_key_exists($shapeId, $routesvalue)) {
+
+					Logger::logMessage("TRM - Found Shape ID " . $shapeId);
+
+					$geo_shape = $routesvalue[$shapeId];
+					if ($color_array[$i]["color_route"] != null) {
+						$color = $color_array[$i]["color_route"];
+					}
+					else {
+						$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+						$keycolor = array_search($random_color, array_column($color_array, 'color_route'));
+						if ($keycolor ==false) {
+							$color = $random_color;
+						}
+					}
+
+					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);	
+					$csv_data[$i] = $data = array_merge($data, $extra_columns);
 				}
 				else {
-					if (array_key_exists($i,$routesvalue)) {
-						$geo_shape = $routesvalue[$i];
-						if ($color_array[$i]["color_route"] != null) {
-							$color = $color_array[$i]["color_route"];
-						}
-						else {
-							$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
-							$keycolor = array_search($random_color, array_column($color_array, 'color_route'));
-							if($keycolor ==false) {
-								$color = $random_color;
-							}
-						}
-						
-						$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);			
-					} 
-					else {
-						$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => "");
-					}
-					$csv_data[$i] = $data = array_merge($data, $extra_columns);
+					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
+					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
 				}
 			}
 	

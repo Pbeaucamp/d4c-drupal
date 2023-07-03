@@ -1057,11 +1057,11 @@ class DataSet {
            
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-					$url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'http://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 				}
 				else{
-					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
-					$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
                 }
             
 				if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -1254,11 +1254,11 @@ class DataSet {
            
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-					$url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'http://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 				}
 				else{
-					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
-					$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
                 }
             
 				if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -1738,11 +1738,11 @@ class DataSet {
            
             if($_SERVER['HTTP_HOST']=='192.168.2.217'){
                 $root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-                $url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+                $url_res = 'http://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
             }
             else{
-                $root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
-                $url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+                $root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
+                $url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 			}
                
 			$filepathN = $site_search.'/resource/'.$id_dataset_gouv.'.csv';
@@ -1876,11 +1876,11 @@ class DataSet {
 			   
 				if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 					$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
-					$url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'http://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 				}
 				else{
-					$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
-					$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+					$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
+					$url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
                 }
             
 				if($res->format == 'CSV' || $res->format == 'XLS' || $res->format == 'XLSX' || $res->format == 'csv' || $res->format == 'xls' || $res->format == 'xlsx'){
@@ -2362,8 +2362,8 @@ class DataSet {
 					}
 				}
 				
-				$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
-				$url = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
+				$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
+				$url = 'https://'.$_SERVER['HTTP_HOST'] . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.geojson';
 				 
 				$url_resource = $site_search.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=geojson';
 				$arr = Query::callSolrServer($url_resource);
@@ -2484,8 +2484,8 @@ class DataSet {
 				$data_csv[] = strtolower(implode($cols, ";"));
 				$data_csv = array_merge($data_csv, $rows);
 				$resname = $fileName . "_" . uniqid();
-				$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
-				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
+				$rootCsv='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
+				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 				
 				file_put_contents($rootCsv, implode($data_csv, "\n"));
 		
@@ -2541,8 +2541,8 @@ class DataSet {
 					}
 				}
 				
-				$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
-				$url = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
+				$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
+				$url = 'https://'.$_SERVER['HTTP_HOST'] . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.json';
 				
 				$url_resource = $site_search.'/query?where=1%3D1&text=&objectIds=&time=&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&relationParam=&outFields=*&returnGeometry=true&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&returnDistinctValues=false&resultOffset=&resultRecordCount=&queryByDistance=&returnExtentsOnly=false&datumTransformation=&parameterValues=&rangeValues=&f=json';
 				$arr = file($url_resource);
@@ -2742,7 +2742,7 @@ class DataSet {
 			Logger::logMessage(" -> Checking resource '" . $res->title . "' \r\n");
 			
 			$editId = null;
-			$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+			$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 			$host = $_SERVER['HTTP_HOST'];
 
 			Logger::logMessage(" -> Resource format is '" . $res->format . "' \r\n");
@@ -2758,7 +2758,7 @@ class DataSet {
 				$filepathN =urldecode($filepathN);  
 				$filepathN = strtolower($filepathN);
 
-				$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';    
+				$url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';    
 
 				if( $res->format == 'XLS' || $res->format == 'XLSX'  || $res->format == 'xls' || $res->format == 'xlsx') {
 					
@@ -2996,9 +2996,9 @@ class DataSet {
 
 			// We create a CSV
 			$name = $label;
-			$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
-			$rootJson='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name.'.geojson';
-			$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
+			$rootCsv='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
+			$rootJson='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$name.'.geojson';
+			$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/'.$name . "_" . uniqid().'.csv';
 			if($geo_res["geojson"] != null){
 				$url = $geo_res["geojson"];
 				$json = Query::callSolrServer($url);
@@ -3152,21 +3152,22 @@ class DataSet {
     
     
     function join2csv($url1, $url2, $nameFile, $columns_data, $columns_data2){
+		$api = new Api();
     
 		if($_SERVER['HTTP_HOST']=='192.168.2.217'){
 			$root='/home/bpm/drupal-8.6.15/sites/default/files/dataset/';
 		}
 		else{
-			$root='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+			$root='/home/user-client/drupal-d4c' . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 		}
     
 		$host = $_SERVER['HTTP_HOST'];
 		if($_SERVER['HTTP_HOST']=='192.168.2.217'){
                 
-			 $url_res = 'http://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+			 $url_res = 'http://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 		}
 		else{
-			$url_res = 'https://'.$host . $this->config->client->routing_prefix . '/sites/default/files/dataset/';
+			$url_res = 'https://'.$host . $api->getConfig()->client->routing_prefix . '/sites/default/files/dataset/';
 		} 
          
         $url_res = $url_res.$nameFile. "_" . uniqid().'.csv';       

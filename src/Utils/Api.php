@@ -77,7 +77,7 @@ class Api
 
 		$this->d4cUrl = (isset($this->config->client->protocol) ? $this->config->client->protocol : "https") . '://' . $this->config->client->domain;
 		$this->urlDataFolder = $this->config->client->routing_prefix . '/sites/default/files/dataset/';
-		$this->dataFolder = self::ROOT . $this->urlDataFolder;
+		$this->dataFolder = $this->config->client->drupal_root . $this->urlDataFolder;
 
 		// Testing if map_tiles file exist and copy from model if not
 		$mapTilesExist = file_exists(__DIR__ . "/../../map_tiles.json");
@@ -5630,8 +5630,7 @@ class Api
 			$idCSV = null;
 			$urlCSV = null;
 
-			// TODO: Deactivated for now, we set hasXLSX to true even if the file doesn't exist
-			$hasXLSX = true;
+			$hasXLSX = false;
 			$urlXLSX = null;
 
 			$hasJSON = false;
@@ -5848,13 +5847,21 @@ class Api
 	}
 
 	function generateXLSX($inputPath, $outputFolder) {
-		$outputPath = tempnam($outputFolder, 'output_convert_geo_file_');
+		$outputPath = tempnam($outputFolder, 'xlsx_convertion');
+		rename($outputPath, $outputPath .= '.xlsx');
+		$outputPath = $outputPath . '.xlsx';
+
+		// $reader = ReaderEntityFactory::createCSVReader();
+		// $writer = WriterEntityFactory::createXLSXWriter();
+
+		// $reader->open($inputPath);
+		// $writer->openToFile($outputPath); // write data to a file or to a PHP stream
 
 		$reader = ReaderEntityFactory::createCSVReader();
-		$writer = WriterEntityFactory::createXLSXWriter();
-
 		$reader->open($inputPath);
-		$writer->openToFile($outputPath); // write data to a file or to a PHP stream
+
+		$writer = WriterEntityFactory::createXLSXWriter();
+		$writer->openToFile($outputPath);
 
 		foreach ($reader->getSheetIterator() as $sheet) {
 			foreach ($sheet->getRowIterator() as $row) {
