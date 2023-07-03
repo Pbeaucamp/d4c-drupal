@@ -3045,6 +3045,10 @@ class Api
 			$data_array["metas"]["records_count"] = $records_result["nhits"];
 		}*/
 
+		if (isset($data_array["extra_metas"]["records_count"])) {
+			$data_array["metas"]["records_count"] = $data_array["extra_metas"]["records_count"];
+		}
+
 		return $data_array;
 	}
 
