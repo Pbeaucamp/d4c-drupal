@@ -534,3 +534,21 @@ function ckan_admin_update_8709(&$sandbox) {
     $schema = Database::getConnection()->schema();
     $schema->addField('d4c_dataset_visualization', 'publish_dataset_id', $spec);
 }
+
+function ckan_admin_update_8710(&$sandbox) {
+  $spec = [
+    'description' => 'Gestion des proprietes',
+    'fields' => [
+      'key' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'value' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable('d4c_properties', $spec);
+}

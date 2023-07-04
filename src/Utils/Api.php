@@ -8981,6 +8981,55 @@ class Api
 
 		return $response;
 	}
+	
+	function callResourceDictionnary() {
+		$userId = \Drupal::currentUser()->id();
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		if (!$isConnected) {
+			$response = new Response();
+			$response->setStatusCode(503);
+			$response->headers->set('Content-Type', 'application/json');
+
+			return $response;
+		}
+
+		$method = $_SERVER['REQUEST_METHOD'];
+
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+
+		$resourceManager = new ResourceManager();
+
+		switch ($method) {
+		case 'GET':
+			$resourceId = \Drupal::request()->query->get('resourceId');
+
+			$fields = $resourceManager->getDictionnary($this, $resourceId);
+
+			$result = array(
+				"status" => "success",
+				"result" => $fields
+			);
+			$response->setContent(json_encode($result));
+			break;
+		case 'POST':
+			$request_body = file_get_contents('php://input');
+			$data = json_decode($request_body);
+
+			$resourceId = $data->resourceId;
+			$fields = $data->fields;
+
+			$result = $resourceManager->updateDictionnary($this, $resourceId, $fields);
+			$response->setContent($result);
+			break;
+		case 'DELETE':
+			// To implement
+			break;
+		}
+
+		return $response;
+	}
+
 
 	/**
 	 * This method add a version for a specified resource
