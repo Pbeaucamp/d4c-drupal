@@ -536,6 +536,8 @@ function ckan_admin_update_8709(&$sandbox) {
 }
 
 function ckan_admin_update_8710(&$sandbox) {
+  $table_name = 'd4c_properties';
+
   $spec = [
     'description' => 'Gestion des proprietes',
     'fields' => [
@@ -550,5 +552,7 @@ function ckan_admin_update_8710(&$sandbox) {
     ]
   ]; 
   $schema = Database::getConnection()->schema();
-  $schema->createTable('d4c_properties', $spec);
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['key']);
 }

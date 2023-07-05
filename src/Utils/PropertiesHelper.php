@@ -14,6 +14,8 @@ class PropertiesHelper {
 	const TYPES_MIME = 'types_mime';
 	const STOCKAGE_ALERT_THRESHOLD = 'stockage_alert_threshold';
 	const STOCKAGE_ALERT_STATUS = 'stockage_alert_status';
+	const RESERVED_COLUMNS_GEOPOINT = 'reserved_columns_geopoint';
+	const RESERVED_COLUMNS_GEOSHAPE = 'reserved_columns_geoshape';
 
 	private $config;
 
@@ -77,9 +79,7 @@ class PropertiesHelper {
 			return null;
 		}
 
-		$value = $data[0]['value'];
-
-		Logger::logMessage("TRM - PropertiesHelper - extractProperty - key : " . $key . " - value : " . $value);
+		$value = $data[0]->value;
 
 		if ($decodeBase64)
 			$value = base64_decode($value);
@@ -89,8 +89,6 @@ class PropertiesHelper {
 	public function setProperty($key, $value, $encodeBase64 = false) {
 		if ($encodeBase64)
 			$value = base64_encode($value);
-
-		Logger::logMessage("TRM - PropertiesHelper - setProperty - key : " . $key . " - value : " . $value);
 
 		$database = \Drupal::database();
 		$query = $database->upsert(self::DATABASE_TABLE)

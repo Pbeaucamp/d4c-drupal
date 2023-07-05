@@ -946,6 +946,14 @@ ckan_admin.userstory:
   requirements:
     _permission: 'administer site configuration'
 
+ckan_admin.admin_properties:
+  path: '/admin/config/properties'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\ManageD4CPropertiesForm'
+    _title: 'Configuration du site'
+  requirements:
+    _permission: 'administer site configuration'
+
 ckan_admin.callTaskStatus:
   path: '/d4c/api/taskStatus/{id}'
   defaults:
@@ -1135,3 +1143,15 @@ ckan_admin.datasets.visualization:
   requirements:
     _permission: 'access content'
   methods: [POST, PUT, DELETE]
+    
+ckan_admin.api.properties:
+  path: '/d4c/api/v1/properties/{params}'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callProperties'
+    _title: ''
+    params: ''
+  options:
+    _auth: [ 'basic_auth' ]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  methods: [GET]

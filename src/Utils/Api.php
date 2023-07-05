@@ -1758,30 +1758,54 @@ class Api
 				$field['label'] = $field['name'];
 			}
 
+			$valueId = $value['id'];
 
-			if (
-				preg_match("/geoloc/i", $value['id']) || preg_match("/geo_point/i", $value['id']) ||
-				preg_match("/coordin/i", $value['id']) || preg_match("/coordon/i", $value['id']) ||
-				preg_match("/geopoint/i", $value['id']) || preg_match("/geoPoint/i", $value['id']) ||
-				preg_match("/pav_positiont2d/i", $value['id']) || preg_match("/wgs84/i", $value['id']) ||
-				preg_match("/equgpsy_x/i", $value['id']) || preg_match("/geoban/i", $value['id']) ||
-				preg_match("/codegeo/i", $value['id']) /*|| preg_match("/localisation/i", $value['id'])*/ ||
-				preg_match("/latlon/i", $value['id']) || preg_match("/lat_lon/i", $value['id'])
-			) {
-				// if($geoPointnb == 0) {
+			$propertiesHelper = new PropertiesHelper();
+
+			$reservedColumnsGeopoint = $propertiesHelper->getProperty(PropertiesHelper::RESERVED_COLUMNS_GEOPOINT);
+			if (empty($reservedColumnsGeopoint)) {
+				$reservedColumnsGeopoint = 'geoloc,geo_point,coordin,coordon,geopoint,geoPoint,pav_positiont2d,wgs84,equgpsy_x,geoban,codegeo,latlon,lat_lon';
+			}
+			$reservedColumnsGeopoint = explode(',', $reservedColumnsGeopoint);
+
+			$isGeopoint = false;
+			foreach ($reservedColumnsGeopoint as $pattern) {
+				if (preg_match('/' . $pattern . '/i', $valueId)) {
+					$isGeopoint = true;
+					break;
+				}
+			}
+
+			$reservedColumnsGeoshape = $propertiesHelper->getProperty(PropertiesHelper::RESERVED_COLUMNS_GEOSHAPE);
+			if (empty($reservedColumnsGeoshape)) {
+				$reservedColumnsGeoshape = 'geo_shape,geome,geojson';
+			}
+			$reservedColumnsGeoshape = explode(',', $reservedColumnsGeoshape);
+
+			$isGeoshape = false;
+			foreach ($reservedColumnsGeoshape as $pattern) {
+				if (preg_match('/' . $pattern . '/i', $valueId)) {
+					$isGeoshape = true;
+					break;
+				}
+			}
+
+			if ($isGeopoint) {
 				$field['type'] = "geo_point_2d";
-				$geoPointnb = 1;
-				// }
-				//$field['type'] = "geo_point_2d";
-			} else if (preg_match("/geo_shape/i", $value['id']) || preg_match("/geome/i", $value['id']) || preg_match("/geojson/i", $value['id'])) {
-				$field['type'] = "geo_shape";
-			} else if ($value['type'] == "timestamp") {
+			}
+			else if ($isGeoshape) {
+				$field['type'] = 'geo_shape';
+			}
+			else if ($value['type'] == "timestamp") {
 				$field['type'] = "datetime";
-			} else if ($value['type'] == "numeric") {
+			}
+			else if ($value['type'] == "numeric") {
 				$field['type'] = "double";
-			} else if ($isFile) {
+			}
+			else if ($isFile) {
 				$field['type'] = "file";
-			} else {
+			}
+			else {
 				$field['type'] = $value['type'];
 			}
 
@@ -9560,5 +9584,19 @@ class Api
 	function isConnectedUserAdmin() {
 		$current_user = \Drupal::currentUser();
 		return in_array("administrator", $current_user->getRoles());
+	}
+
+	function callProperties($params) {
+		$propertiesHelper = new PropertiesHelper();
+		$property = $propertiesHelper->getProperty($params, false, false);
+
+		$result = array();
+		$result["result"] = $property;
+		$result["status"] = "success";
+		
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		$response->setContent(json_encode($result));
+		return $response;
 	}
 }
