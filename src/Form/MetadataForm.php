@@ -844,7 +844,7 @@ abstract class MetadataForm extends FormBase {
 	}
 
 	public function getDatasetOrganisation(FormStateInterface $form_state) {
-		return $form_state->getValue(['integration_option','dataset_organisation']);
+		return $form_state->getValue('dataset_organization');
 	}
 
 	public function getDatasetContributor(FormStateInterface $form_state) {
