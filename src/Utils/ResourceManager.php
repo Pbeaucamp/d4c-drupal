@@ -460,8 +460,9 @@ class ResourceManager {
 			}
 		}
 		else if ($type == 'json' || $type == 'geojson' || $type == 'kml' || $type == 'shp' || $type == 'gml') {
+
 			// We upload the geojson file as resource except if it is a shp or kml file
-			if ($type != 'kml' && $type != 'shp' && $type != 'gml') {
+			if (!$createCSV || ($type != 'kml' && $type != 'shp' && $type != 'gml')) {
 				$result = $this->uploadResourceToCKAN($api, $datasetId, $isUpdate, $resourceId, $resourceUrl, $fileName, $type, $description, false, null, $customName, $checkDatapusherTime);
 				$results[] = $result;
 			}
