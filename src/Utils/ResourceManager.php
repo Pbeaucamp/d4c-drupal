@@ -7,6 +7,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\Component\Utility\Random;
 use ZipArchive;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
 use \PhpOffice\PhpSpreadsheet\Reader\Xls;
@@ -534,6 +535,40 @@ class ResourceManager {
 		}
 
 		return $results;
+	}
+
+	function manageWFS($urlWFS, $layerName) {
+		// $urlWFS = "https://data.agglo-saintdizier.fr/geoserver/public/ows";
+		// $layerName = "public:base_adresse_locale_saint_dizier";
+
+		try {
+			$selectedFormat = WfsManager::getSelectedFormat($urlWFS);
+
+			$cleanLayerName = $this->nettoyage2($layerName);
+			$fileInputPath = tempnam(sys_get_temp_dir(), $cleanLayerName . '_');
+
+			$extension = "geosjon";
+			if ($selectedFormat == 'application%2Fjson' || $selectedFormat == 'application%2Fjson;%20subtype=geojson') {
+				$extension = "geojson";
+			}
+			else if ($selectedFormat == 'GML3') {
+				$extension = "gml";
+			}
+
+			rename($fileInputPath, $fileInputPath .= '.' . $extension);
+			$fileInputPath = $fileInputPath . '.' . $extension;
+
+			Logger::logMessage("Getting WFS data from '" . $urlWFS . "' and layer '" . $layerName . "' to file '" . $fileInputPath . "'");
+			
+			$manager = new WfsManager();
+			return $manager->retrieveJSONFromWFS($fileInputPath, $urlWFS, $layerName, $selectedFormat);
+		} catch (\Exception $e) {
+			Logger::logMessage("Error while creating temporary file for WFS");
+			Logger::logMessage($e->getMessage());
+			return false;
+		}
+		
+		  return null;
 	}
 
 	function extractEncoding($filePath) {

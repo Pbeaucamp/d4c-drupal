@@ -69,6 +69,14 @@ ckan_admin.ManageDatasetForm:
     _title: 'Création et modification jeu de données'
   requirements:
     _permission: 'access dataset'
+
+ckan_admin.ManageGeoDatasetForm:
+  path: '/admin/config/data4citizen/manageGeoDatasetForm'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\ManageDatasetForm'
+    _title: ''
+  requirements:
+    _permission: 'access dataset'
     
 ckan_admin.organizationsManagementForm:
   path: '/admin/config/data4citizen/organizationsManagementForm'

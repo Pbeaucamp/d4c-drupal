@@ -89,3 +89,14 @@ extension_package.tab_harvest:
   weight: 20
 
 
+# Tab to manage dataset
+manage_dataset.tab_dataset:
+  route_name: ckan_admin.ManageDatasetForm
+  title: 'Création d''un jeu de données'
+  base_route: ckan_admin.ManageDatasetForm
+  
+manage_dataset.tab_geo:
+  route_name: ckan_admin.ManageGeoDatasetForm
+  title: 'Collecte GEO'
+  base_route: ckan_admin.ManageDatasetForm
+  weight: 4

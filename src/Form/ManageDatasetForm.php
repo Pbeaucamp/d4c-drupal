@@ -512,18 +512,33 @@ class ManageDatasetForm extends MetadataForm
 				parent::redirectToDataset($form_state, $datasetId);
 				return;
 			}
-			else if ($type == 'geo' && $isWMS) {
-				// TODO: Manage multiples resources
-				// For now we only manage one resource and delete the previous one if it has changed
-				if ($modifyIntegration) {
-					parent::deleteAllResources($datasetId);
+			else if ($type == 'geo') {
+				if ($isWMS) {
+					// TODO: Manage multiples resources
+					// For now we only manage one resource and delete the previous one if it has changed
+					if ($modifyIntegration) {
+						parent::deleteAllResources($datasetId);
+					}
+	
+					parent::manageResourceUrl($datasetId, null, $item, $layerName, "", $typeService);
+					
+					$this->cleanResources($file);
+					parent::redirectToDataset($form_state, $datasetId);
+					return;
 				}
+				else {
+					// TODO: Manage multiples resources
+					// For now we only manage one resource and delete the previous one if it has changed
+					if ($modifyIntegration) {
+						parent::deleteAllResources($datasetId);
+					}
 
-				parent::manageResourceUrl($datasetId, null, $item, $layerName, "", $typeService);
-				
-				$this->cleanResources($file);
-				parent::redirectToDataset($form_state, $datasetId);
-				return;
+					$this->manageWFS($api, $organization, $datasetId, $datasetName, $item, $layerName, false, $isUpdate, '', null, false);
+					
+					$this->cleanResources($file);
+					parent::redirectToDataset($form_state, $datasetId);
+					return;
+				}
 			}
 			else {
 				try {
@@ -585,13 +600,25 @@ class ManageDatasetForm extends MetadataForm
 		}
 		return $lastResource;
 	}
-	
-	function manageResource($api, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $unzipZip = true) {
-		$validataResources = array();
 
+	function manageWFS($api, $organization, $datasetId, $datasetName, $urlWFS, $layerName, $generateColumns, $isUpdate, $description, $encoding, $unzipZip = true) {
+		$resourceManager = new ResourceManager();
+		$fileWFS = $resourceManager->manageWFS($urlWFS, $layerName);
+
+		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, null, $fileWFS, $description, $encoding, $unzipZip);
+
+		$this->displayResult($api, $datasetId, $datasetName, $organization, $resourceManager, $results);
+	}
+
+	function manageResource($api, $organization, $datasetId, $datasetName, $resourceId, $resourceUrl, $generateColumns, $isUpdate, $description, $encoding, $unzipZip = true) {
 		$resourceManager = new ResourceManager();
 		$results = $resourceManager->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, $description, $encoding, $unzipZip);
-      
+
+		$this->displayResult($api, $datasetId, $datasetName, $organization, $resourceManager, $results);
+	}
+	
+	function displayResult($api, $datasetId, $datasetName, $organization, $resourceManager, $results) {
+		$validataResources = array();
 		foreach ($results as &$result) {
 
 			foreach ($result as $key => $value) {
@@ -673,7 +700,7 @@ class ManageDatasetForm extends MetadataForm
 		else if (strpos($currentPath, '/databfc/ro/datasets/manage/api') !== false) {
 			return 'api';
 		}
-		else if (strpos($currentPath, '/databfc/ro/datasets/manage/geo') !== false) {
+		else if (strpos($currentPath, '/admin/config/data4citizen/manageGeoDatasetForm') !== false) {
 			return 'geo';
 		}
 		else {
