@@ -7,6 +7,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\HarvestManager;
 use Drupal\file\Entity\File;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\WFSManager;
 use Drupal\Component\Utility\Random;
 use ZipArchive;
 use \PhpOffice\PhpSpreadsheet\Reader\Xlsx;
