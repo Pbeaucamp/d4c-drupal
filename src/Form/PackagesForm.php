@@ -46,7 +46,9 @@ class PackagesForm extends HelpFormBase {
 		$option_org=array();
 		
 		// pagination
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+		
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -221,7 +223,7 @@ class PackagesForm extends HelpFormBase {
 		); 
 
 		// intialize pagination
-		pager_default_initialize($result["count"], $num_per_page);
+		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
 		
 		//  create table header
 		$header =  array(

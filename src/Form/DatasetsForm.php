@@ -73,7 +73,9 @@ abstract class DatasetsForm extends FormBase {
 		$currentUser = \Drupal::currentUser();
 		$currentUserId = $currentUser->id();
 
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+		$page = $pager_parameters->findPage(0);
+
 		$offset = self::NUM_PER_PAGE * $page;
 		$query = 'include_private=true&rows=' . self::NUM_PER_PAGE . '&start=' . $offset . $filterQuery;
 		
@@ -83,8 +85,8 @@ abstract class DatasetsForm extends FormBase {
         return json_decode($result, true)[result];
 	}
 
-	public function buildDatasetsForm(array $form, FormStateInterface $form_state, $count, $headers, $rows) {			   
-		pager_default_initialize($count, self::NUM_PER_PAGE);
+	public function buildDatasetsForm(array $form, FormStateInterface $form_state, $count, $headers, $rows) {
+		\Drupal::service('pager.manager')->createPager($count, self::NUM_PER_PAGE)->getCurrentPage();
 		
 		$form['grid']['table'] = array(
 			'#type' => 'table',

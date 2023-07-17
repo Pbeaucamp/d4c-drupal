@@ -47,7 +47,9 @@ class DatasetsBoardForm extends HelpFormBase {
 
         $option_org=array();
 		
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -90,8 +92,8 @@ class DatasetsBoardForm extends HelpFormBase {
         $result = json_decode($result, true)[result];
         $datasets = $result[results];
 		
-		pager_default_initialize($result["count"], $num_per_page);
-		
+		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
+
 		$header =  array(
 			"name" => $this->t('Nom'),
 			"orga" => $this->t('Organisation'),

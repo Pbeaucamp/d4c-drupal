@@ -54,7 +54,10 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		$option_org=array();
 		
 		// pagination
-		$page = pager_find_page();
+
+		$pager_parameters = \Drupal::service('pager.parameters');
+		$page = $pager_parameters->findPage(0);
+
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 		
@@ -220,7 +223,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 		); 
 
 		// intialize pagination
-		pager_default_initialize($result["count"], $num_per_page);
+		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
 		
 		//  create table header
 		$header =  array(
@@ -426,7 +429,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 							$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
 						}
 					}
-					drupal_set_message("Le jeu de données '" . $datasetName ."' a été créé.");
+					\Drupal::messenger()->addMessage(t("Le jeu de données '" . $datasetName ."' a été créé."), 'status');
 							
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					
@@ -456,23 +459,23 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						drupal_set_message("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage(t("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données."), 'status');
 					}
 					else if ($value['type'] == 'CLUSTER') {
-						drupal_set_message("Les clusters ont été générés.");
+						\Drupal::messenger()->addMessage(t("Les clusters ont été générés."), 'status');
 					}
 				}
 				else if ($value['status'] == 'pending') {
 					$validataResources[] = $value['resourceUrl'];
 
-					drupal_set_message("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier.", 'warning');
+					\Drupal::messenger()->addMessage(t("La ressource '" . $value['filename'] ."' est en cours d'insertion dans l'application, le processus peut durer quelques minutes en fonction de la taille du fichier."), 'warning');
 				}
 				else if ($value['status'] == 'error') {
 					if ($value['type'] == 'DATAPUSHER') {
-						drupal_set_message("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")", 'error');
+						\Drupal::messenger()->addMessage(t("Une erreur est survenue lors de l'ajout de '" . $value['filename'] . "' (" . $value['message'] . ")"), 'error');
 					}
 					else if ($value['type'] == 'CLUSTER') {
-						drupal_set_message("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")", 'error');
+						\Drupal::messenger()->addMessage(t("Une erreur est survenue lors de la création des clusters (" . $value['message'] . ")"), 'error');
 					}
 				}
 			}
@@ -490,7 +493,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 					$errorsValid = $validataResult[report][tables][0][errors];
 					for ($i = 0; $i < count($errorsValid); $i++) {
 						
-						drupal_set_message(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
 						
 						if($i>5){
 							break;
@@ -498,7 +501,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 					}
 				} 
 				else if ($validataResult[report][valid] == true) {
-					drupal_set_message('Les données ont été validées');
+					\Drupal::messenger()->addMessage(t('Les données ont été validées'), 'status');
 				}
 			}
 		}

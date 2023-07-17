@@ -37,8 +37,6 @@ class selectionForm extends HelpFormBase {
 		$results = json_decode($query);
 		
 		$organisations = array();
-		
-		drupal_get_messages('status');
 			
 		foreach ($results->result as $orga){
 			$organisations[$orga->id]=$orga->title;

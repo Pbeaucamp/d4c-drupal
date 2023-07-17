@@ -49,7 +49,9 @@ class ReusesForm extends HelpFormBase {
         $option_org=array();
         $option_ds=array();
 		
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -65,7 +67,8 @@ class ReusesForm extends HelpFormBase {
         $result = $api->getReuses($orga, $dataset, $queryParam, $status, $num_per_page, $offset);
 		$result = json_decode(json_encode($result), true);
 		$reuses = $result["reuses"];
-		pager_default_initialize($result["nhits"], $num_per_page);
+
+		\Drupal::service('pager.manager')->createPager($result["nhits"], $num_per_page)->getCurrentPage();
 		
 		$header =  array(
 			"name" => $this->t('Nom'),

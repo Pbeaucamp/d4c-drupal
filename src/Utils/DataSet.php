@@ -34,7 +34,6 @@ class DataSet {
 		$names = array();
 		$datasets = array();
 		
-		//$file_path = drupal_realpath('public://').'/api/portail_anfr';
 		//$file_name = "liste_autocomplete.json";
 		//if(!file_exists("$file_path/$file_name"))
 		//{	
@@ -116,7 +115,9 @@ class DataSet {
 		$names = array();
 		$datasets = array();
 		
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		if(!file_exists("$file_path/$file_name"))
 		{	
@@ -664,8 +665,10 @@ class DataSet {
 		$pos = strpos($header, "filename=");
 		$file_name = substr($header, $pos+9);
 		$file_name = str_replace('"', '', $file_name);
-		$file_name = trim($file_name);			
-		$file_path = drupal_realpath('public://').'/tmp';
+		$file_name = trim($file_name);
+		
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/tmp';
 		$file = file_put_contents("$file_path/$file_name", $body);
 		$resource['upload'] = curl_file_create("$file_path/$file_name");
 		
@@ -723,7 +726,8 @@ class DataSet {
 		}
 		
 		$config->set('json',null)->save();
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", "");
 	}
@@ -775,7 +779,8 @@ class DataSet {
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$json = $config->get('json');
 		$json_string = json_encode($json);
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", $json_string);
 	}
@@ -811,7 +816,8 @@ class DataSet {
 		
 		$config->set('json',$json);
 		$json_string = json_encode($json);
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", $json_string);
 		\Drupal::messenger()->addMessage($file,'status');

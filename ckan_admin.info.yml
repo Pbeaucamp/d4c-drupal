@@ -3,3 +3,4 @@ core: 8.x
 type: module
 package: 'Open Data'
 description: Plateforme Open Data D4C (Data4Citizen)
+core_version_requirement: ^8 || ^9

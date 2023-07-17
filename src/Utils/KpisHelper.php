@@ -1,7 +1,5 @@
 <?php
 
-use Drupal\ckan_admin\Utils\Logger;
-
 namespace Drupal\ckan_admin\Utils;
 
 use FilesystemIterator;

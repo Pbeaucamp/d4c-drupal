@@ -14,6 +14,7 @@ use Drupal\ckan_admin\Utils\Export;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\NutchApi;
+use Drupal\Core\Database\Database;
 use Drupal\data_bfc\Utils\KeycloakManager;
 use finfo;
 use SplFileObject;
@@ -5293,7 +5294,8 @@ class Api
 	}
 
 	function getMapLayersFromFile() {
-		$publicPath = \Drupal::service('file_system')->realpath(file_default_scheme() . '://');
+		$fileDefaultScheme = \Drupal::config('system.file')->get('default_scheme');
+		$publicPath = \Drupal::service('file_system')->realpath($fileDefaultScheme . '://');
 		
 		// Testing if map_tiles file exist and copy from model if not
 		$mapTilesExist = file_exists($publicPath . "/map_tiles.json");
@@ -5304,7 +5306,8 @@ class Api
 	}
 
 	function saveMapLayersFromFile($mapLayers) {
-		$publicPath = \Drupal::service('file_system')->realpath(file_default_scheme() . '://');
+		$fileDefaultScheme = \Drupal::config('system.file')->get('default_scheme');
+		$publicPath = \Drupal::service('file_system')->realpath($fileDefaultScheme . '://');
 		file_put_contents($publicPath . "/map_tiles.json", json_encode($mapLayers, JSON_PRETTY_PRINT));
 	}
 
@@ -9195,7 +9198,7 @@ class Api
 			$query->condition('dataset_id', $itemId);
 		}
 		if (isset($queryName)) {
-			$query->condition('name', '%' . db_like($queryName) . '%', 'LIKE');
+			$query->condition('name', '%' . Database::getConnection()->escapeLike($queryName) . '%', 'LIKE');
 		}
 		if (isset($type)) {
 			$query->condition('type', $type);
