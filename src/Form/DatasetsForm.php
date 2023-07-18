@@ -82,7 +82,7 @@ abstract class DatasetsForm extends FormBase {
 		$api = new Api;
         $result = $api->callPackageSearch_public_private($query, $currentUserId, $organisme, true);
         $result = $result->getContent();
-        return json_decode($result, true)[result];
+        return json_decode($result, true)['result'];
 	}
 
 	public function buildDatasetsForm(array $form, FormStateInterface $form_state, $count, $headers, $rows) {

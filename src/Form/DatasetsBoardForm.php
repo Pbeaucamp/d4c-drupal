@@ -89,8 +89,8 @@ class DatasetsBoardForm extends HelpFormBase {
 							   
         $result = $result->getContent();
 		
-        $result = json_decode($result, true)[result];
-        $datasets = $result[results];
+        $result = json_decode($result, true)['result'];
+        $datasets = $result['results'];
 		
 		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
 
@@ -111,9 +111,9 @@ class DatasetsBoardForm extends HelpFormBase {
 		foreach ($datasets as $row) {
 			
 			//$default_chart
-			 for ($j = 0; $j < count($row[extras]); $j++) {
-				 if ($row[extras][$j]['key'] == 'analyse_default') {
-					 $default_chart = $row[extras][$j]['value'];
+			 for ($j = 0; $j < count($row['extras']); $j++) {
+				 if ($row['extras'][$j]['key'] == 'analyse_default') {
+					 $default_chart = $row['extras'][$j]['value'];
 					 break;
 				 }
 			 }

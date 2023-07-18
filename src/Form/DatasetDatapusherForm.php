@@ -43,10 +43,10 @@ class DatasetDatapusherForm extends HelpFormBase {
 		// Extracts ressources from dataset
 		$api = new Api();
         $result = $api->getPackageShow("id=".$datasetId);
-        $result = $result[result];
+        $result = $result['result'];
 
-		$datasetName = $result[title];
-        $resources = $result[resources];
+		$datasetName = $result['title'];
+        $resources = $result['resources'];
 		
 		$header =  array(
 			"name" => $this->t('Ressource'),

@@ -56,8 +56,8 @@ class CubeForm extends HelpFormBase {
 
 		$organizationList = array();
 
-		for ($i = 0; $i < count($orgs[result]); $i++) {
-			$organizationList[$orgs[result][$i][name]] = $orgs[result][$i][display_name];
+		for ($i = 0; $i < count($orgs['result']); $i++) {
+			$organizationList[$orgs['result'][$i]['name']] = $orgs['result'][$i]['display_name'];
 		}
 		
         $form = parent::buildForm($form, $form_state);

@@ -80,8 +80,8 @@ class controDataslForm extends HelpFormBase {
         
 $organizationList = array();
  
-        for ($i = 0; $i < count($orgs[result]); $i++) {
-            $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
+        for ($i = 0; $i < count($orgs['result']); $i++) {
+            $organizationList[$orgs['result'][$i]['id']] = $orgs['result'][$i]['display_name'];
         }        
         
         $optioons_site =array();
@@ -164,8 +164,8 @@ $organizationList = array();
         
 $organizationList = array();
  
-        for ($i = 0; $i < count($orgs[result]); $i++) {
-            $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][id];
+        for ($i = 0; $i < count($orgs['result']); $i++) {
+            $organizationList[$orgs['result'][$i]['id']] = $orgs['result'][$i]['id'];
         }        
         
         

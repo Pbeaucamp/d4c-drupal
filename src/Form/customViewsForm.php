@@ -68,7 +68,7 @@ class customViewsForm extends HelpFormBase {
         
 		$organizationList = array();
         foreach ($orgs as &$value) {
-            $organizationList[$value[name]] = $value[display_name];
+            $organizationList[$value['name']] = $value['display_name'];
         }
 
 		$form['filtr_org'] = array(
@@ -204,7 +204,7 @@ class customViewsForm extends HelpFormBase {
                 
             $dataSet = $dataSet->getContent();
             $dataSet = json_decode($dataSet, true);
-            $dataSet = $dataSet[result][results];
+            $dataSet = $dataSet['result']['results'];
             
             uasort($dataSet, function($a, $b) {
                 $res =  strcasecmp($a['title'], $b['title']);
@@ -212,7 +212,7 @@ class customViewsForm extends HelpFormBase {
             });
 
             for ($i = 0; $i < count($dataSet); $i++){
-                $ids[$dataSet[$i][id]] = $dataSet[$i][title];
+                $ids[$dataSet[$i]['id']] = $dataSet[$i]['title'];
             }
         }
 

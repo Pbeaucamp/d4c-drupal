@@ -322,20 +322,20 @@ class Api
 		//q=lyon
 		//TODO améliorer boucle avec parenthèses
 		$res = "";
-		if (count(explode(" AND ", $value)) > 1) {
+		if (Tools::count(explode(" AND ", $value)) > 1) {
 			//$res = " and (";
 			foreach (explode(" AND ", $value) as $item) {
 				$res .= $this->constructReqQToSQL($item, " and ");
 			}
 			$res = substr($res, 5);
-		} else if (count(explode(" OR ", $value)) > 1) {
+		} else if (Tools::count(explode(" OR ", $value)) > 1) {
 			//$res = " and (";
 			foreach (explode(" OR ", $value) as $item) {
 				$res .= $this->constructReqQToSQL($item, " or ");
 			}
 			$res = substr($res, 4);
 		} else {
-			if (count(explode(" TO ", $value)) > 1) {
+			if (Tools::count(explode(" TO ", $value)) > 1) {
 				$field = explode(":", $value)[0];
 				$datas = substr(explode(":", $value, 2)[1], 1, -1);
 				$d1 = explode(" TO ", $datas)[0];
@@ -345,7 +345,7 @@ class Api
 				} else {
 					$res .=  $field . " >= '" . $d1 . "' and " . $field . " <= '" . $d2 . "'";
 				}
-			} else if (count(explode(":", $value)) == 2) {
+			} else if (Tools::count(explode(":", $value)) == 2) {
 				$field = explode(":", $value)[0];
 				$data = explode(":", $value)[1];
 				if (strpos($field, "_id") !== false || is_numeric($data)) {
@@ -365,9 +365,9 @@ class Api
 					}
 					$res .= "CAST(" . $field . " AS TEXT)" . " ilike '%" . $data . "%'";
 				}
-			} else if (count(explode(">=", $value)) > 1 || count(explode("<=", $value)) > 1 || count(explode("=", $value)) > 1 || count(explode(">", $value)) > 1 || count(explode("<", $value)) > 1) {
+			} else if (Tools::count(explode(">=", $value)) > 1 || Tools::count(explode("<=", $value)) > 1 || Tools::count(explode("=", $value)) > 1 || Tools::count(explode(">", $value)) > 1 || Tools::count(explode("<", $value)) > 1) {
 
-				if (count(explode(">=", $value)) > 1) {
+				if (Tools::count(explode(">=", $value)) > 1) {
 					$field = explode(">=", $value)[0];
 					$data = explode(">=", $value)[1];
 					if (is_numeric($data)) {
@@ -376,7 +376,7 @@ class Api
 						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
 						$res .=  $field . " >= '" . $data . "'";
 					}
-				} else if (count(explode("<=", $value)) > 1) {
+				} else if (Tools::count(explode("<=", $value)) > 1) {
 					$field = explode("<=", $value)[0];
 					$data = explode("<=", $value)[1];
 					if (is_numeric($data)) {
@@ -385,7 +385,7 @@ class Api
 						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
 						$res .=  $field . " <= '" . $data . "'";
 					}
-				} else if (count(explode(">", $value)) > 1) {
+				} else if (Tools::count(explode(">", $value)) > 1) {
 					$field = explode(">", $value)[0];
 					$data = explode(">", $value)[1];
 					if (is_numeric($data)) {
@@ -394,7 +394,7 @@ class Api
 						if (substr($data, 0, 1) == '"') $data = substr($data, 1, -1);
 						$res .=  $field . " > '" . $data . "'";
 					}
-				} else if (count(explode("<", $value)) > 1) {
+				} else if (Tools::count(explode("<", $value)) > 1) {
 					$field = explode("<", $value)[0];
 					$data = explode("<", $value)[1];
 					if (is_numeric($data)) {
@@ -413,7 +413,7 @@ class Api
 						$res .=  $field . " = '" . $data . "'";
 					}
 				}
-			} else if (count(explode("NOT #null(", $value)) > 1) {
+			} else if (Tools::count(explode("NOT #null(", $value)) > 1) {
 				$field = substr(explode("NOT #null(", $value)[1], 0, -1);
 				$res .=  $field . " not in ('', ',')";
 			} else {
@@ -519,11 +519,11 @@ class Api
 			$nhits = 0;
 			if (!array_key_exists('rows', $query_params) || $query_params["rows"] == 0) {
 
-				for ($i = 0; $i < count($facets); ++$i) {
+				for ($i = 0; $i < Tools::count($facets); ++$i) {
 					$group = array();
 					$query_params['fields'] = $facets[$i];
 					$query_params['distinct'] = "true";
-					if (count($filters_init) > 0) {
+					if (Tools::count($filters_init) > 0) {
 						$filters = array_merge(array(), $filters_init);
 						if (in_array($facets[$i], $disj)) {
 							unset($filters[$facets[$i]]);
@@ -562,7 +562,7 @@ class Api
 					$nhitsRefined = 0;
 					$values = array();
 
-					for ($j = 0; $j < count($result['result']['records']); ++$j) {
+					for ($j = 0; $j < Tools::count($result['result']['records']); ++$j) {
 
 						$value = array();
 						$value['name'] = $result['result']['records'][$j][$facets[$i]];
@@ -603,7 +603,7 @@ class Api
 					}
 
 					//echo count($values)." ". $nhitsTotal; 
-					if (count($values) > ($nhitsTotal - 5 * $nhitsTotal / 100)) { //protection interface
+					if (Tools::count($values) > ($nhitsTotal - 5 * $nhitsTotal / 100)) { //protection interface
 						$values = array_slice($values, 0, 500);
 					}
 					$group['name'] = $facets[$i];
@@ -660,7 +660,7 @@ class Api
 					$coord = explode(',', $value);
 					$lat = $coord[0];
 					$long = $coord[1];
-					if (count($coord) > 2) {
+					if (Tools::count($coord) > 2) {
 						$dist = $coord[2];
 						$where .= "circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $fieldCoordinates . ") and ";
 					} else {
@@ -738,10 +738,10 @@ class Api
 
 
 		$result["result"]["metadata_imported"] = $result["result"]["metadata_modified"];
-		$result["result"]["metadata_modified"] = current(array_filter($result["result"]["extras"], function ($f) {
+		$result["result"]["metadata_modified"] = current(Tools::array_filter($result["result"]["extras"], function ($f) {
 			return $f["key"] == "date_moissonnage_last_modification";
 		}))["value"] ?: $result["result"]["metadata_modified"];
-		$result["result"]["metadata_created"] = current(array_filter($result["result"]["extras"], function ($f) {
+		$result["result"]["metadata_created"] = current(Tools::array_filter($result["result"]["extras"], function ($f) {
 			return $f["key"] == "date_moissonnage_creation";
 		}))["value"] ?: $result["result"]["metadata_created"];
 
@@ -809,7 +809,7 @@ class Api
 
 		$result = json_decode($result, true);
 
-		Logger::logMessage("Found " . count($result["result"]["results"]) . " datasets");
+		Logger::logMessage("Found " . Tools::count($result["result"]["results"]) . " datasets");
 
 		// Go through the results and add missing informations
 		foreach ($result["result"]["results"] as &$dataset) {
@@ -858,7 +858,7 @@ class Api
 				$coordmap = str_replace('%2C', ',', $coordmap);
 				$coordinates = explode("),", $coordmap);
 	
-				for ($i = 0; $i < count($coordinates); ++$i) {
+				for ($i = 0; $i < Tools::count($coordinates); ++$i) {
 					$coordinates[$i] = str_replace('(', '', $coordinates[$i]);
 					$coordinates[$i] = str_replace(')', '', $coordinates[$i]);
 				}
@@ -879,7 +879,7 @@ class Api
 					$fields = $this->getAllFields($resourceId);
 
 					// Filter fields on type geo_point_2d
-					$fieldCoordinates = array_filter($fields, function ($field) {
+					$fieldCoordinates = Tools::array_filter($fields, function ($field) {
 						return $field['type'] == 'geo_point_2d';
 					});
 
@@ -887,7 +887,7 @@ class Api
 					$fieldCoordinates = $fieldCoordinates['name'];
 
 					// Filter fields on name siren
-					$fieldSiren = array_filter($fields, function ($field) {
+					$fieldSiren = Tools::array_filter($fields, function ($field) {
 						return $field['name'] == 'siren';
 					});
 					$fieldSiren = $fieldSiren != null && sizeof($fieldSiren) > 0 ? array_values($fieldSiren)[0] : null;
@@ -935,7 +935,7 @@ class Api
 			$lat = $coord[0];
 			$long = $coord[1];
 
-			if (count($coord) > 2) {
+			if (Tools::count($coord) > 2) {
 				$dist = $coord[2];
 
 				$sql = "Select count(*), min((point(" . $fieldCoordinates . "))[0]) as minLat, max((point(" . $fieldCoordinates . "))[0]) as maxLat, min((point(" . $fieldCoordinates . "))[1]) as minLong, max((point(" . $fieldCoordinates . "))[1]) as maxLong from \"" . $resourceId . "\"";
@@ -1125,7 +1125,7 @@ class Api
 
 			$orgs_private = [];
 			$orgsPrivateIndex = [];
-			for ($i = 0; $i <= count($orgs["result"]); $i++) {
+			for ($i = 0; $i <= Tools::count($orgs["result"]); $i++) {
 				$org = $orgs["result"][$i];
 				foreach ($org["extras"] as $extra) {
 					if ($extra["key"] == "private") {
@@ -1145,7 +1145,7 @@ class Api
 				$nbRemove = $nbRemove + 1;
 			}
 
-			if (count($orgs_private) > 0) {
+			if (Tools::count($orgs_private) > 0) {
 				$queryOrgs = implode($orgs_private, " OR ");
 				$req = "-organization:(" . $queryOrgs . ")";
 
@@ -1189,12 +1189,12 @@ class Api
 		unset($result["help"]);
 		foreach ($result["result"]["results"] as &$dataset) {
 			$dataset["metas"] = array();
-			$dataset["metas"]["records_count"] = current(array_filter($dataset["extras"], function ($f) {
+			$dataset["metas"]["records_count"] = current(Tools::array_filter($dataset["extras"], function ($f) {
 					return $f["key"] == "records_count";
 				}))["value"] ?: 0;
 			$dataset["metas"]["records_count"] = floatval($dataset["metas"]["records_count"]);
 
-			$dataset["metas"]["features"] = current(array_filter($dataset["extras"], function ($f) {
+			$dataset["metas"]["features"] = current(Tools::array_filter($dataset["extras"], function ($f) {
 					return $f["key"] == "features";
 				}))["value"] ?: null;
 			$dataset["metas"]["features"] = explode(",", $dataset["metas"]["features"]);
@@ -1205,16 +1205,16 @@ class Api
 				$themes[] = $dataset["metas"]["themes"];
 			}
 
-			$dataset["metas"]["custom_view"] = current(array_filter($dataset["extras"], function ($f) {
+			$dataset["metas"]["custom_view"] = current(Tools::array_filter($dataset["extras"], function ($f) {
 					return $f["key"] == "custom_view";
 				}))["value"] ?: null;
 			$dataset["metas"]["custom_view"] = json_decode($dataset["metas"]["custom_view"], true);
 
 			// $dataset["metadata_imported"] = $dataset["metadata_modified"];
-			// $dataset["metadata_modified"] = current(array_filter($dataset["extras"], function ($f) {
+			// $dataset["metadata_modified"] = current(Tools::array_filter($dataset["extras"], function ($f) {
 			// 		return $f["key"] == "date_moissonnage_last_modification";
 			// 	}))["value"] ?: $dataset["metadata_modified"];
-			// $dataset["metadata_created"] = current(array_filter($dataset["extras"], function ($f) {
+			// $dataset["metadata_created"] = current(Tools::array_filter($dataset["extras"], function ($f) {
 			// 		return $f["key"] == "date_moissonnage_creation";
 			// 	}))["value"] ?: $dataset["metadata_created"];
 
@@ -1802,7 +1802,7 @@ class Api
 
 				$field['description'] = $description;
 
-				if (count($annotations) > 0) {
+				if (Tools::count($annotations) > 0) {
 					$field['annotations'] = $annotations;
 				}
 				if ($value['info']['label'] != "") {
@@ -1927,7 +1927,7 @@ class Api
 		// Sort fields by poids if not null
 		$sort = array();
 
-		$fieldsSize = count($fields);
+		$fieldsSize = Tools::count($fields);
 		$index = $fieldsSize;
 		foreach ($fields as $key => $value) {
 			$sort['poids'][$key] = isset($value['info']['poids']) && $value['info']['poids'] != "" ? ($value['info']['poids'] + $fieldsSize) : $index;
@@ -1973,7 +1973,7 @@ class Api
 			$allFields[] = "geo_point_2d";
 		}
 
-		if (count($res) > 0) {
+		if (Tools::count($res) > 0) {
 			return $res;
 		} else {
 			return $allFields;
@@ -2002,7 +2002,7 @@ class Api
 			if ($value['id'] == "_id") continue;
 			$allFields[] =  $value['id'];
 		}
-		if (count($res) > 0) {
+		if (Tools::count($res) > 0) {
 			return $res;
 		} else {
 			return $allFields;
@@ -2758,7 +2758,7 @@ class Api
 			$data_array['fields'] = array();
 		} else {
 			$visu['table_fields'] = $this->getTableFields($resourcesid); //["code_insee","en_service","mutualisation_public","sup_id","mutualisation","nom_reg","nom_com","nom_dept"]
-			if (count($visu['map_tooltip_fields']) == 0) {
+			if (Tools::count($visu['map_tooltip_fields']) == 0) {
 				$visu['map_tooltip_fields'] = $this->getMapTooltipFields($resourcesid); // ["emr_lb_systeme","emr_dt_service","generation","coord","nom_com","nom_dept","nom_reg"]fields
 				$visu['map_tooltip_title'] = $visu['map_tooltip_fields'][0];
 			}
@@ -2779,7 +2779,7 @@ class Api
 		//$data_array['features'][] = "timeline"; //tab timeline 
 		//$data_array['features'][] = "timeserie"; //unknown tab
 
-		if (count($data_array['fields']) > 0) {
+		if (Tools::count($data_array['fields']) > 0) {
 			$colStart = null;
 			$colEnd = null;
 			$colWordCount = null;
@@ -2920,18 +2920,19 @@ class Api
 		$data_array['has_records'] = true;
 		$data_array['metas'] = $result['result'];
 
+		$dateMoissonnageLastModification = null;
+		if (is_array($result["result"]["extras"])) {
+			$dateMoissonnageLastModification = current(Tools::array_filter($result["result"]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"];
+		}
+
 		$data_array["metas"]["domain"] = "";
 		$data_array["metas"]["language"] = "fr";
 		//$data_array["metas"]["title"]=$result["result"]["name"];
 		$desc = str_replace(PHP_EOL, '<br>', $result["result"]["notes"]);
 		$data_array["metas"]["description"] = $desc;
-		$data_array["metas"]["modified"] = $this->findMostRecentDate(current(array_filter($result["result"]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_last_modification";
-		}))["value"], $result["result"]["metadata_modified"]);
+		$data_array["metas"]["modified"] = $this->findMostRecentDate($dateMoissonnageLastModification, $result["result"]["metadata_modified"]);
 		$data_array["metas"]["visibility"] = "domain";
-		$data_array["metas"]["metadata_processed"] = current(array_filter($result["result"]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_last_modification";
-		}))["value"];
+		$data_array["metas"]["metadata_processed"] = $dateMoissonnageLastModification;
 		$data_array["metas"]["license"] = $data_array["metas"]["license_title"];
 		//$data_array["metas"]["data_processed"]="2018-07-05T12:07:03+00:00";
 		$data_array["metas"]["publisher"] = $data_array["metas"]["organization"]["title"];
@@ -2949,13 +2950,17 @@ class Api
 				$data_array['metas']["producer"] = $value["value"];
 			}
 		}
+
+		$dateMoissonnageLastModification = null;
+		$dateMoissonnageCreation = null;
+		if (is_array($result["result"]["results"][$i]["extras"])) {
+			$dateMoissonnageLastModification = current(Tools::array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"];
+			$dateMoissonnageCreation = current(Tools::array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"];
+		}
+
 		$result["result"]["results"][$i]["metadata_imported"] = $result["result"]["results"][$i]["metadata_modified"];
-		$result["result"]["results"][$i]["metadata_modified"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_last_modification";
-		}))["value"] ?: $result["result"]["results"][$i]["metadata_modified"];
-		$result["result"]["results"][$i]["metadata_created"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_creation";
-		}))["value"] ?: $result["result"]["results"][$i]["metadata_created"];
+		$result["result"]["results"][$i]["metadata_modified"] = $dateMoissonnageLastModification ?: $result["result"]["results"][$i]["metadata_modified"];
+		$result["result"]["results"][$i]["metadata_created"] = $dateMoissonnageCreation ?: $result["result"]["results"][$i]["metadata_created"];
 		//        foreach($data_array['metas']['extras'] as $value){
 		//			if($value["key"] == "LinkedDataSet"){
 		//                
@@ -2977,7 +2982,7 @@ class Api
 		//                
 		//			}
 		//		}
-		if (count($data_array["metas"]["tags"]) > 0) {
+		if (is_array($data_array["metas"]["tags"]) && Tools::count($data_array["metas"]["tags"]) > 0) {
 			$data_array["metas"]["keyword"] = array_column($data_array["metas"]["tags"], "display_name");
 		} else {
 			$data_array["metas"]["keyword"] = array();
@@ -3161,7 +3166,7 @@ class Api
 				$c["count"] = $value["properties"]["point_count"];
 				if ($c["count"] == NULL) $c["count"] = 1;
 
-				if (count($ySeries) > 0) {
+				if (Tools::count($ySeries) > 0) {
 					$c["series"] = array();
 					$serFilteredValues = array();
 					if ($c["count"] > 1) {
@@ -3181,8 +3186,8 @@ class Api
 						switch ($func) {
 							case "AVG":
 								$f = 0;
-								if (count($colValues)) {
-									$f = array_sum($colValues) / count($colValues);
+								if (Tools::count($colValues)) {
+									$f = array_sum($colValues) / Tools::count($colValues);
 								}
 								break;
 							case "MIN":
@@ -3193,11 +3198,11 @@ class Api
 								break;
 							case "STDDEV":
 								$f = 0;
-								if (count($colValues) > 1) {
+								if (Tools::count($colValues) > 1) {
 									$rr = function ($x, $mean) {
 										return pow($x - $mean, 2);
 									};
-									$f = sqrt(array_sum(array_map($rr, $colValues, array_fill(0, count($colValues), (array_sum($colValues) / count($colValues))))) / (count($colValues) - 1));
+									$f = sqrt(array_sum(array_map($rr, $colValues, array_fill(0, Tools::count($colValues), (array_sum($colValues) / Tools::count($colValues))))) / (Tools::count($colValues) - 1));
 								}
 								break;
 							case "SUM":
@@ -3261,7 +3266,7 @@ class Api
 		$array_filter_id;
 		$result2;
 
-		if (count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0) {
+		if (Tools::count($filters_init) > 0 || $reqQfilter != "" || Tools::count($ySeries) > 0) {
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $datasetId;
 			$curl = curl_init($callUrl);
 			curl_setopt_array($curl, $this->getStoreOptions());
@@ -3288,7 +3293,7 @@ class Api
 
 			//series
 			$series = "";
-			if (count($ySeries) > 0) {
+			if (Tools::count($ySeries) > 0) {
 				foreach ($ySeries as $y) {
 					if ($y["expr"] == NULL) {
 						$y["expr"] = "*";
@@ -3367,7 +3372,7 @@ class Api
 				$ids[] = $v;
 			}
 
-			if (count($filters_init) > 0 || $reqQfilter != "" || count($ySeries) > 0) {
+			if (Tools::count($filters_init) > 0 || $reqQfilter != "" || Tools::count($ySeries) > 0) {
 
 				//$array = array_intersect($array_filter_id, $ids);
 				$index = array_flip($array_filter_id);
@@ -3377,7 +3382,7 @@ class Api
 				$array = array_flip($x);
 
 				//$array_filter_id = array_diff($array_filter_id, $ids);							  
-				$c["count"] = count($array); //echo $c["count"]. "\r\n";
+				$c["count"] = Tools::count($array); //echo $c["count"]. "\r\n";
 				if ($c["count"] == 1) {
 					$id = array_values($array)[0];
 					$req = array();
@@ -3400,7 +3405,7 @@ class Api
 					$c["cluster_center"] = array_map('floatval', explode(',', $record["result"]["records"][0]["coord"]));
 				}
 
-				if (count($ySeries) > 0) {
+				if (Tools::count($ySeries) > 0) {
 					$c["series"] = array();
 					foreach ($ySeries as $y) {
 						$serAllValues = explode(",", $result2["result"]["records"][0][$y["name"]]);
@@ -3409,8 +3414,8 @@ class Api
 						switch ($func) {
 							case "AVG":
 								$f = 0;
-								if (count($serFilteredValues)) {
-									$f = array_sum($serFilteredValues) / count($serFilteredValues);
+								if (Tools::count($serFilteredValues)) {
+									$f = array_sum($serFilteredValues) / Tools::count($serFilteredValues);
 								}
 								break;
 							case "MIN":
@@ -3438,7 +3443,7 @@ class Api
 								$rr = function ($x, $mean) {
 									return pow($x - $mean, 2);
 								};
-								$f = sqrt(array_sum(array_map($rr, $serFilteredValues, array_fill(0, count($serFilteredValues), (array_sum($serFilteredValues) / count($serFilteredValues))))) / (count($serFilteredValues) - 1));
+								$f = sqrt(array_sum(array_map($rr, $serFilteredValues, array_fill(0, Tools::count($serFilteredValues), (array_sum($serFilteredValues) / Tools::count($serFilteredValues))))) / (Tools::count($serFilteredValues) - 1));
 								break;
 							case "SUM":
 								$f = array_sum($serFilteredValues);
@@ -3758,7 +3763,7 @@ class Api
 					$fac[] = preg_replace($patternRefine, "", $key);
 				}
 			}
-			if (count($fac) > 0) {
+			if (Tools::count($fac) > 0) {
 				$reqFacet = "[";
 				foreach ($fac as $f) {
 					$reqFacet .= '"' . $f . '",';
@@ -3792,7 +3797,7 @@ class Api
 		$facet_groups = array();
 		$result = json_decode($result, true);
 		foreach ($result["result"]["results"] as $value) {
-			if ($rows != null && count($datasets) >= $rows) {
+			if ($rows != null && Tools::count($datasets) >= $rows) {
 				break;
 			}
 
@@ -4060,7 +4065,7 @@ class Api
 			}
 			if (preg_match($patternDistance, $key)) {
 
-				if (count(explode(',', $query_params[$key])) == 3) { //distance + meters
+				if (Tools::count(explode(',', $query_params[$key])) == 3) { //distance + meters
 					$args = explode(',', $query_params[$key]);
 					$filters_init["geofilter.bbox"] =  $this->getBbox($args[0], $args[1], $args[2]);
 				} else { //distance precision
@@ -4111,7 +4116,7 @@ class Api
 		}
 
 		$orderby = "";
-		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
+		if ((is_array($query_params["sort"]) && Tools::count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
 			foreach (explode(',', $query_params["sort"]) as $sort) {
 				if (substr($sort, 0, 1) == "-") {
@@ -4190,7 +4195,7 @@ class Api
 		}
 		$data_array["records"] = $records;
 		//$data_array["nhits"] = count($records);
-		if (count($records) == 0) {
+		if (Tools::count($records) == 0) {
 			$data_array["nhits"] = 0;
 		} else {
 			$data_array["nhits"] = $result["result"]["records"][0]["total_count"];
@@ -4802,6 +4807,8 @@ class Api
 			$query_params['resource_id'] = $resourceCSV;
 		}
 
+		Logger::logMessage("TRM - Parameters " . json_encode($query_params));
+
 		$ySeries = array();
 		foreach ($query_params as $key => $value) {
 			if (preg_match($patternSerie, $key)) {
@@ -4901,7 +4908,7 @@ class Api
 		//}
 		//$xSeries = array_unique($xSeries);
 		$groupby = "";
-		if (count($query_params["x"]) > 0) {
+		if (Tools::count($query_params["x"]) > 0) {
 			$groupby = " group by ";
 			$fields .= ",";
 			if (is_array($query_params["x"])) {
@@ -4952,7 +4959,7 @@ class Api
 
 		$orderby = "";
 
-		if ((is_array($query_params["sort"]) && count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
+		if ((is_array($query_params["sort"]) && Tools::count($query_params["sort"]) > 0) || $query_params["sort"] != "") {
 			$orderby = " order by ";
 			foreach (explode(',', $query_params["sort"]) as $sort) {
 				if (preg_match('/serie1-/i', $sort)) {
@@ -4991,6 +4998,9 @@ class Api
 		//error_log($sql);
 
 		$req['sql'] = $sql;
+
+		Logger::logMessage("TRM - SQL : " . $sql);
+
 		//echo $sql;
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
@@ -5015,7 +5025,7 @@ class Api
 
 					$key = str_replace("y.", "", $key);
 					if ($cumul == "true") {
-						$row[$key] = $data_array[count($data_array) - 1][$key] + $val;
+						$row[$key] = $data_array[Tools::count($data_array) - 1][$key] + $val;
 					} else {
 						if (strpos($key, ".") !== FALSE) {
 							$row[explode('.', $key)[0]][explode('.', $key)[1]] = $val;
@@ -5034,7 +5044,7 @@ class Api
 						$row["x"][explode('.', $key)[1]] = $val;
 						/*}*/
 					} else {
-						if (is_array($query_params["x"]) && count($query_params["x"]) > 1) {
+						if (is_array($query_params["x"]) && Tools::count($query_params["x"]) > 1) {
 							$row["x"][$key] = $val;
 						} else {
 							$row["x"] = $val;
@@ -5042,7 +5052,7 @@ class Api
 					}
 				}
 			}
-			if (count(array_keys($row)) == 1 && array_keys($row)[0] == "x") continue;
+			if (Tools::count(array_keys($row)) == 1 && array_keys($row)[0] == "x") continue;
 			$data_array[] = $row;
 		}
 
@@ -5086,8 +5096,8 @@ class Api
 				$name = str_replace(" ", "-", strtolower($data["title"]));
 
 				$res = $this->getMaps($idUser, $name);
-				if (count($res) > 0) {
-					$name .= (count($res) + 1);
+				if (Tools::count($res) > 0) {
+					$name .= (Tools::count($res) + 1);
 				}
 				$data["persist_id"] = $name;
 
@@ -5265,8 +5275,8 @@ class Api
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-		if (count($res) > 0) {
-			$cv = $res[count($res) - 1];
+		if (Tools::count($res) > 0) {
+			$cv = $res[Tools::count($res) - 1];
 
 			$table = "d4c_custom_views_html";
 			$query = \Drupal::database()->select($table, 'map');
@@ -5567,8 +5577,8 @@ class Api
 			$arr = array();
 			$a = 15;
 
-			if (count($arr1) < 15) {
-				$a = count($arr1);
+			if (Tools::count($arr1) < 15) {
+				$a = Tools::count($arr1);
 			}
 
 			for ($i = 0; $i < $a; $i++) {
@@ -5612,7 +5622,7 @@ class Api
 			foreach ($delimiters as $delimiter) {
 				$regExp = '/[' . $delimiter . ']/';
 				$fields = preg_split($regExp, $line);
-				if (count($fields) > 1) {
+				if (Tools::count($fields) > 1) {
 					if (!empty($results[$delimiter])) {
 						$results[$delimiter]++;
 					} else {
@@ -5733,7 +5743,7 @@ class Api
 					),
 				);
 
-				for ($i = 0; $i < count($dataset->resources); $i++) {
+				for ($i = 0; $i < Tools::count($dataset->resources); $i++) {
 
 					$callUrl = $val . $this->config->client->routing_prefix . "/d4c/datasets/update/getresourcebyid/" . $dataset->resources[$i]->id;
 					$res = Query::callSolrServer($callUrl);
@@ -5769,14 +5779,14 @@ class Api
 		$t = json_decode($t);
 
 		Logger::logMessage("callD4c - Search on " . $params[0] . " with params = " . $params[1]);
-		Logger::logMessage("Found " . count($t->result->results) . " results.");
+		Logger::logMessage("Found " . Tools::count($t->result->results) . " results.");
 
 		foreach ($t->result->results as &$dataset) {
 			$dataset->siteOfDataset = $params[0];
 			$dataset->url = 'https://' . $params[0] . $this->config->client->routing_prefix . '/visualisation/table/?id=' . $dataset->id;
 
 
-			for ($i = 0; $i < count($dataset->resources); $i++) {
+			for ($i = 0; $i < Tools::count($dataset->resources); $i++) {
 
 				if ($_SERVER['HTTP_HOST'] == '192.168.2.217') {
 
@@ -5953,7 +5963,7 @@ class Api
 		$result = curl_exec($curl);
 		curl_close($curl);
 
-		Logger::logMessage("ckanSearchCall - Found " . count(json_decode($result)->result->results) . " datasets");
+		Logger::logMessage("ckanSearchCall - Found " . Tools::count(json_decode($result)->result->results) . " datasets");
 
 		$response = new Response();
 		$response->setContent($result);
@@ -5989,8 +5999,8 @@ class Api
 		}
 
 
-		if (count($res) > 0) {
-			$cv = $res[count($res) - 1];
+		if (Tools::count($res) > 0) {
+			$cv = $res[Tools::count($res) - 1];
 
 			$table = "d4c_custom_views_html";
 			$query = \Drupal::database()->select($table, 'map');
@@ -6100,7 +6110,7 @@ class Api
 		$result = $this->getPackageShow("id=" . $dataseId);
 		$keyExists = false;
 		$index = 0;
-		for ($i = 0; $i < count($result['result']['extras']); $i++) {
+		for ($i = 0; $i < Tools::count($result['result']['extras']); $i++) {
 
 			if ($result['result']['extras'][$i]['key'] == $keyToUpdate) {
 				$keyExists = true;
@@ -6422,7 +6432,7 @@ class Api
 		$dataJson = $datasetList->getContent();
 		//echo "$dataJson" ;
 		$data = json_decode($datasetList->getContent());
-		for ($i = 0; $i < count($data->result->results); $i++) {
+		for ($i = 0; $i < Tools::count($data->result->results); $i++) {
 			$id = $data->result->results[$i]->id;
 			$title = $data->result->results[$i]->title;
 			$key_found = false;
@@ -6460,7 +6470,7 @@ class Api
                 }
                 
             }*/
-			for ($j = 0; $j < count($data->result->results[$i]->extras); $j++) {
+			for ($j = 0; $j < Tools::count($data->result->results[$i]->extras); $j++) {
 				if ($data->result->results[$i]->extras[$j]->key == "nb_download") {
 					$nb_download = $data->result->results[$i]->extras[$j]->value;
 				}
@@ -6489,14 +6499,14 @@ class Api
 
 		$listbyKey = $this->getdatasetListByKey("theme");
 
-		for ($l = 0; $l < count($listbyKey); $l++) {
+		for ($l = 0; $l < Tools::count($listbyKey); $l++) {
 
 			$tmp = explode(',', $listbyKey[$l]["theme"]);
-			for ($n = 0; $n < count($tmp); $n++) {
+			for ($n = 0; $n < Tools::count($tmp); $n++) {
 				$tmp[$n] = trim($tmp[$n]);
 			}
 
-			for ($k = 0; $k < count($tmp); $k++) {
+			for ($k = 0; $k < Tools::count($tmp); $k++) {
 				if (!in_array(trim($tmp[$k]), $themeList)) {
 					$themeList[] = $tmp[$k];
 				}
@@ -6524,14 +6534,14 @@ class Api
 		$list = array();
 		//var_dump($theme);
 		//($dataset);
-		for ($i = 0; $i < count($theme); $i++) {
+		for ($i = 0; $i < Tools::count($theme); $i++) {
 
 			$list[$i] = array(
 				"theme" => $theme[$i],
 				"nb_download" => 0
 			);
 
-			for ($j = 0; $j < count($dataset); $j++) {
+			for ($j = 0; $j < Tools::count($dataset); $j++) {
 
 				if ($dataset[$j]['theme'] != null) {
 					$tmp = explode(',', $dataset[$j]['theme']);
@@ -6566,10 +6576,10 @@ class Api
 		$dataset_list = json_decode($datasetList)->result->results;
 
 		$selectedDataset = array();
-		for ($i = 0; $i < count($dataset_list); $i++) {
+		for ($i = 0; $i < Tools::count($dataset_list); $i++) {
 
 			$theme_found = false;
-			for ($j = 0; $j < count($dataset_list[$i]->extras); $j++) {
+			for ($j = 0; $j < Tools::count($dataset_list[$i]->extras); $j++) {
 
 				if ($dataset_list[$i]->extras[$j]->key == "theme") {
 					$dataset_theme = $dataset_list[$i]->extras[$j]->value;
@@ -6601,7 +6611,7 @@ class Api
 	function trim_array($array)
 	{
 		$res = array();
-		for ($n = 0; $n < count($array); $n++) {
+		for ($n = 0; $n < Tools::count($array); $n++) {
 			$res[] = trim($array[$n]);
 		}
 		return $res;
@@ -6741,7 +6751,7 @@ class Api
 			Logger::logMessage("Found ressource with id " . $resourcesId . " with record count = " . $records_count . " and file size " . $fileSize . "mo at file path " . $filePath);
 		}
 
-		if (count($fields) > 0) {
+		if (Tools::count($fields) > 0) {
 			Logger::logMessage("Search features");
 
 			$colStart = null;
@@ -6852,28 +6862,28 @@ class Api
 			}
 		}
 		if (!$foundCount) {
-			$extras[count($extras)]['key'] = 'records_count';
-			$extras[(count($extras) - 1)]['value'] = $records_count;
+			$extras[Tools::count($extras)]['key'] = 'records_count';
+			$extras[(Tools::count($extras) - 1)]['value'] = $records_count;
 		}
 		if (!$foundFeat) {
-			$extras[count($extras)]['key'] = 'features';
-			$extras[(count($extras) - 1)]['value'] = implode(",", $features);
+			$extras[Tools::count($extras)]['key'] = 'features';
+			$extras[(Tools::count($extras) - 1)]['value'] = implode(",", $features);
 		}
 		if (!$foundCV && $customView != null) {
-			$extras[count($extras)]['key'] = 'custom_view';
+			$extras[Tools::count($extras)]['key'] = 'custom_view';
 			$cv = array();
 			$cv["title"] = $customView->cv_title;
 			$cv["slug"] = $customView->cv_name;
 			$cv["icon"] = $customView->cv_icon;
-			$extras[(count($extras) - 1)]['value'] = json_encode($cv);
+			$extras[(Tools::count($extras) - 1)]['value'] = json_encode($cv);
 		}
 		if (!$foundLM) {
-			$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-			$extras[(count($extras) - 1)]['value'] = $dataset["metadata_modified"];
+			$extras[Tools::count($extras)]['key'] = 'date_moissonnage_last_modification';
+			$extras[(Tools::count($extras) - 1)]['value'] = $dataset["metadata_modified"];
 		}
 		if (!$foundSize) {
-			$extras[count($extras)]['key'] = 'dataset_size';
-			$extras[(count($extras) - 1)]['value'] = $fileSize;
+			$extras[Tools::count($extras)]['key'] = 'dataset_size';
+			$extras[(Tools::count($extras) - 1)]['value'] = $fileSize;
 		}
 		$dataset["extras"] = $extras;
 		//error_log(json_encode($fields));
@@ -7305,7 +7315,7 @@ class Api
 		$query->range();
 		$nhits = $query->countQuery()->execute()->fetchField();
 
-		if (count($res) > 0) {
+		if (Tools::count($res) > 0) {
 			$data = array();
 			$data["nhits"] = $nhits;
 
@@ -7374,8 +7384,8 @@ class Api
 		while ($enregistrement = $prep->fetch()) {
 			array_push($res, $enregistrement);
 		}
-		if (count($res) > 0) {
-			$reu = $res[count($res) - 1];
+		if (Tools::count($res) > 0) {
+			$reu = $res[Tools::count($res) - 1];
 			$row = array();
 			$row['id'] = $reu->reu_id;
 			$row['dataset_id'] = $reu->reu_dataset_id;
@@ -8214,8 +8224,8 @@ class Api
 		$generatedTaskId = uniqid();
 		try {
 			if (!$datasetId) {
-				if ($extras != null && count($extras) > 0) {
-					for ($index = 0; $index < count($extras); $index++) {
+				if ($extras != null && Tools::count($extras) > 0) {
+					for ($index = 0; $index < Tools::count($extras); $index++) {
 						if ($extras[$index]['key'] == 'edition_security') {
 							$hasSecurity = true;
 							break;
@@ -8224,8 +8234,8 @@ class Api
 				}
 		
 				if ($hasSecurity == false) {
-					$extras[count($extras)]['key'] = 'edition_security';
-					$extras[(count($extras) - 1)]['value'] = json_encode($security);
+					$extras[Tools::count($extras)]['key'] = 'edition_security';
+					$extras[(Tools::count($extras) - 1)]['value'] = json_encode($security);
 				}
 				
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
@@ -8245,15 +8255,15 @@ class Api
 					$value = $meta['value'];
 
 					$keyAlreadyAdd[] = $key;
-					$updatedExtras[count($updatedExtras)]['key'] = $key;
+					$updatedExtras[Tools::count($updatedExtras)]['key'] = $key;
 
 					// Checking if value exist in extras
-					$extraValue = array_filter($extras, function ($f) use ($key) {
+					$extraValue = Tools::array_filter($extras, function ($f) use ($key) {
 						return $f["key"] == $key;
 					});
 
-					$value = isset($extraValue) && count($extraValue) > 0 ? array_values($extraValue)[0]["value"] : $value;
-					$updatedExtras[(count($updatedExtras) - 1)]['value'] = $value;
+					$value = isset($extraValue) && Tools::count($extraValue) > 0 ? array_values($extraValue)[0]["value"] : $value;
+					$updatedExtras[(Tools::count($updatedExtras) - 1)]['value'] = $value;
 				}
 
 				foreach ($extras as $meta) {
@@ -8265,8 +8275,8 @@ class Api
 						continue;
 					}
 
-					$updatedExtras[count($updatedExtras)]['key'] = $key;
-					$updatedExtras[(count($updatedExtras) - 1)]['value'] = $value;
+					$updatedExtras[Tools::count($updatedExtras)]['key'] = $key;
+					$updatedExtras[(Tools::count($updatedExtras) - 1)]['value'] = $value;
 				}
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $updatedExtras);

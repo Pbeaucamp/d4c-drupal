@@ -42,7 +42,7 @@ class GeolocForm extends HelpFormBase
 
 		$organizationList = array();
         foreach ($orgs as &$value) {
-            $organizationList[$value[name]] = $value[display_name];
+            $organizationList[$value['name']] = $value['display_name'];
 		}
 
 		$form['text_message1'] = [

@@ -122,4 +122,29 @@ class Tools {
             Logger::logMessage("There was a problem sending a mail to '" . $email . "'.");
         }
     }
+
+    /**
+     * Helper method to count an array which can be null or not an array - Simulate the count function of PHP prior to 8
+     */
+    static function count($array) {
+        // Logger::logMessage("TRM - Trying to count array: " . json_encode($array));
+
+        if (is_null($array)) {
+            return 0;
+        }
+        if (!is_array($array)) {
+            return 1;
+        }
+        return count($array);
+    }
+
+    /**
+     * Helper method to flter an array which can be null or not an array
+     */
+    static function array_filter($array, $callback) {
+        if (is_null($array) || !is_array($array)) {
+            return array();
+        }
+        return array_filter($array, $callback);
+    }
 }
