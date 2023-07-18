@@ -70,7 +70,7 @@ class organizationsManagementForm extends HelpFormBase
 
 		$organizationList = array();
 		$organizationList["new"] = "Créer une organisation";
-        for ($i = 0; $i < count($orgs[result]); $i++) {
+        for ($i = 0; $i < (is_countable($orgs[result]) ? count($orgs[result]) : 0); $i++) {
             $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
         }
         
@@ -153,7 +153,7 @@ class organizationsManagementForm extends HelpFormBase
 		$api = new Api;
 		$this->urlCkan = $this->config->ckan->url;
 		$selected_org = $form_state->getValue('selected_org');		
-		for ($i = 0; $i < count($this->orgas[result]); $i++) {
+		for ($i = 0; $i < (is_countable($this->orgas[result]) ? count($this->orgas[result]) : 0); $i++) {
 			if($this->orgas[result][$i][id] == $selected_org) {
 				$this->org = $this->orgas[result][$i];
 				break;

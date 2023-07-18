@@ -88,7 +88,7 @@ class Export{
     }
 
 	static function getCSVfromJson($json) {
-		if($json == null || count($json) == 0){
+		if($json == null || (is_countable($json) ? count($json) : 0) == 0){
 			return "";
 		}
 		
@@ -146,7 +146,7 @@ class Export{
 	
 	static function createCSVfromGeoJSON($json) {
 		$start = microtime(true);
-		if($json == null || count($json) == 0){
+		if($json == null || (is_countable($json) ? count($json) : 0) == 0){
 			return "";
 		}
 		

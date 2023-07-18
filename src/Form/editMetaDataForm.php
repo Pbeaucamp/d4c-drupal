@@ -888,7 +888,7 @@ class editMetaDataForm extends HelpFormBase {
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
 
 					// Manage other resources
-					for ($i = 1; $i <= count($table_data); $i++) {
+					for ($i = 1; $i <= (is_countable($table_data) ? count($table_data) : 0); $i++) {
 						$datasetName = $table_data[$i]['name'];
 						$resourceDescription = $table_data[$i]['description'];
 						$needToBeDelete = $table_data[$i]['status'][1];
@@ -991,7 +991,7 @@ class editMetaDataForm extends HelpFormBase {
 
 				if ($validataResult['report']['valid'] == false) {
 					$errorsValid = $validataResult['report']['tables'][0]['errors'];
-					for ($i = 0; $i < count($errorsValid); $i++) {
+					for ($i = 0; $i < (is_countable($errorsValid) ? count($errorsValid) : 0); $i++) {
 						
 						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i]['code'] . ' | Message:' . $errorsValid[$i]['message']), 'warning');
 						

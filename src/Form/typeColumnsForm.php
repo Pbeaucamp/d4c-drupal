@@ -570,7 +570,7 @@ class typeColumnsForm extends HelpFormBase {
         
         //array_push($json["fields"], $fields[result][fields][0]);
 
-        for( $i=1; $i<count($fields['result']['fields']); $i++){
+        for( $i=1; $i<(is_countable($fields['result']['fields']) ? count($fields['result']['fields']) : 0); $i++){
             
             $notes='';
             $title='';
@@ -825,8 +825,8 @@ class typeColumnsForm extends HelpFormBase {
 			}
 		}
 		if(!$found){
-			$extras[count($extras)]['key'] = 'tooltip';
-			$extras[(count($extras) - 1)]['value'] = $json;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'tooltip';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $json;
 		}
 
 		//Couleur des points
@@ -854,8 +854,8 @@ class typeColumnsForm extends HelpFormBase {
 		if(!$found && !($selectedFieldColor == '' || $selectedFieldColor == '----')) {
 			Logger::logMessage("Setting field color " . $selectedFieldColor);
 			
-			$extras[count($extras)]['key'] = 'FieldColor';
-			$extras[(count($extras) - 1)]['value'] = $selectedFieldColor;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FieldColor';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedFieldColor;
 		}
 
 		//Predefined filters
@@ -881,8 +881,8 @@ class typeColumnsForm extends HelpFormBase {
 			}
 		}
 		if(!$found && !($predefinedFilters == '')) {
-			$extras[count($extras)]['key'] = 'PredefinedFilters';
-			$extras[(count($extras) - 1)]['value'] = $predefinedFilters;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'PredefinedFilters';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $predefinedFilters;
 		}
 		
 		$oldDataset["extras"] = $extras;

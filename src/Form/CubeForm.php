@@ -56,7 +56,7 @@ class CubeForm extends HelpFormBase {
 
 		$organizationList = array();
 
-		for ($i = 0; $i < count($orgs['result']); $i++) {
+		for ($i = 0; $i < (is_countable($orgs['result']) ? count($orgs['result']) : 0); $i++) {
 			$organizationList[$orgs['result'][$i]['name']] = $orgs['result'][$i]['display_name'];
 		}
 		

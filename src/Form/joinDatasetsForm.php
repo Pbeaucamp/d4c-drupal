@@ -426,7 +426,7 @@ class joinDatasetsForm extends HelpFormBase
 
 		$urlRes = $this->urlCkan . "/dataset/" . $jdd1['name'] . '_' . $jdd2['name'];
 
-		$extras[count($extras)]['key'] = 'FTP_API';
+		$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
 		$extras[(count($extras) - 1)]['value'] = 'FTP';
 
 		###### security #######
@@ -523,7 +523,7 @@ class joinDatasetsForm extends HelpFormBase
 		}
 
 		if ($controlEx == false) {
-			$dataForUpdateDatasets[count($dataForUpdateDatasets)] = [
+			$dataForUpdateDatasets[is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0] = [
 				"id_org" => $org_new,
 				"name_org" => $org_name,
 				"datasets" => [$dataset_conf],
@@ -830,7 +830,7 @@ class joinDatasetsForm extends HelpFormBase
 		$result = json_decode($result, true);
 
 		$res_arr = array();
-		if (count($result["result"]["records"]) > 0) {
+		if ((is_countable($result["result"]["records"]) ? count($result["result"]["records"]) : 0) > 0) {
 			$nome_column_new = array_merge(array_values($cols1), array_values($cols2));
 
 			$res_arr[0] = $nome_column_new;

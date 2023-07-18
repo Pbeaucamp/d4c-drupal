@@ -57,13 +57,13 @@ class addThemeInDatasetForm extends HelpFormBase {
         $ids=array();
         $ids[$dataSet[$i]["0"]]="---";
         
-        for($i=0; $i<count($dataSet); $i++){
+        for($i=0; $i<(is_countable($dataSet) ? count($dataSet) : 0); $i++){
             
           
             $label_theme = 'Default';
             $theme = 'default';
             
-            for($j=0; $j<count($dataSet[$i]['extras']);$j++){
+            for($j=0; $j<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0);$j++){
                 
                 if($dataSet[$i]['extras'][$j]['key']=='theme'){
                $theme = $dataSet[$i]['extras'][$j]['value'];
@@ -88,7 +88,7 @@ class addThemeInDatasetForm extends HelpFormBase {
         $themes = json_decode($t);
         $valuesForSelect=array();  
         
-        for($i=0; $i<count($themes); $i++){
+        for($i=0; $i<(is_countable($themes) ? count($themes) : 0); $i++){
             $valuesForSelect[$themes[$i]->title.'%'.$themes[$i]->label]=$themes[$i]->label;  
         }
         
@@ -143,19 +143,19 @@ class addThemeInDatasetForm extends HelpFormBase {
         $dataSet = $dataSet['result']['results'];
         $callUrl = $this->urlCkan . "/api/action/package_update";
         
-        for($i=0; $i<count($dataSet); $i++){
+        for($i=0; $i<(is_countable($dataSet) ? count($dataSet) : 0); $i++){
             
             
             
             if($dataSet[$i]['id']==$selectData){
                 
-                $cout_extras =count($dataSet[$i]['extras']);
+                $cout_extras =is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0;
 
                 if($cout_extras!=0){
                     
                     $themEx=false;
                     $them_label_ex = false;
-                    for($j=0; $j<count($dataSet[$i]['extras']); $j++){
+                    for($j=0; $j<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0); $j++){
                         
                         if($dataSet[$i]['extras'][$j]['key']=='theme'){
                             $themEx=true;
@@ -178,15 +178,15 @@ class addThemeInDatasetForm extends HelpFormBase {
                     }
                     
                     if($them_label_ex==false){
-                    $dataSet[$i]['extras'][count($dataSet[$i]['extras'])]['key']='label_theme';
-                    $dataSet[$i]['extras'][count($dataSet[$i]['extras'])-1]['value']=$label_them;
+                    $dataSet[$i]['extras'][is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0]['key']='label_theme';
+                    $dataSet[$i]['extras'][(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0)-1]['value']=$label_them;
                     $return = $api->updateRequest($callUrl,$dataSet[$i],"POST" ); 
                     }
                     
                     if($themEx==false){
                         
-                    $dataSet[$i]['extras'][count($dataSet[$i]['extras'])]['key']='theme';
-                    $dataSet[$i]['extras'][count($dataSet[$i]['extras'])-1]['value']=$selectThem;
+                    $dataSet[$i]['extras'][is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0]['key']='theme';
+                    $dataSet[$i]['extras'][(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0)-1]['value']=$selectThem;
                     $return = $api->updateRequest($callUrl,$dataSet[$i],"POST" ); 
                                  
                                                }

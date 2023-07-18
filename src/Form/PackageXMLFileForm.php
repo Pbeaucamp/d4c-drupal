@@ -491,7 +491,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
 				if ($validataResult[report][valid] == false) {
 					$errorsValid = $validataResult[report][tables][0][errors];
-					for ($i = 0; $i < count($errorsValid); $i++) {
+					for ($i = 0; $i < (is_countable($errorsValid) ? count($errorsValid) : 0); $i++) {
 						
 						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
 						

@@ -50,7 +50,7 @@ class PackageManager {
     }
 
 	public function createPackageZip($datasets) {
-		if (count($datasets) == 0) {
+		if ((is_countable($datasets) ? count($datasets) : 0) == 0) {
 			return json_encode(array('status' => 'error', 'code' => 0, 'message' => "Pas de connaissances à télécharger"));
 		}
 

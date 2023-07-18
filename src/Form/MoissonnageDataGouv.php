@@ -156,10 +156,10 @@ class MoissonnageDataGouv extends HelpFormBase {
 
        
         $organizationList = array();
-        for ($i = 0; $i < count($orgs[result]); $i++) {
+        for ($i = 0; $i < (is_countable($orgs[result]) ? count($orgs[result]) : 0); $i++) {
             $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
         }
-		if(isset($this->config->sitesSearch) && count($this->config->sitesSearch) > 0){
+		if(isset($this->config->sitesSearch) && (is_countable($this->config->sitesSearch) ? count($this->config->sitesSearch) : 0) > 0){
 			$form['domaine'] = array(
 				'#markup' => '<div id="domaine">'. $this->config->client->domain .'</div>',
 				'#type' => 'container',
@@ -282,7 +282,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
                 $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
                 $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);   
-                $count_datas=count($dataForUpdateDatasets);
+                $count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 
 
                 $value= explode("|", $value);
@@ -301,7 +301,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$ex_dmlm=false;
 				$ex_dmc=false;
 				$ex_sec=false;
-                for($i= 0; $i<count($extras); $i++ ){
+                for($i= 0; $i<(is_countable($extras) ? count($extras) : 0); $i++ ){
                     if($extras[$i]->key == 'FTP_API'){
                         $ex_Ftp=true;
                         $extras[$i]->value  == $value[1]."visualisation/?id=".$value[0]; 
@@ -319,20 +319,20 @@ class MoissonnageDataGouv extends HelpFormBase {
                 }
                 
                 if($ex_Ftp==false){
-                    $extras[count($extras)]['key'] = 'FTP_API';
-                    $extras[(count($extras) - 1)]['value'] = $value[1]."visualisation/?id=".$value[0];
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
+                    $extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $value[1]."visualisation/?id=".$value[0];
                 }
 				if($ex_dmlm==false){
-                    $extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-					$extras[(count($extras) - 1)]['value'] = $results->metadata_modified;
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $results->metadata_modified;
                 }
 				if($ex_dmc==false){
-                    $extras[count($extras)]['key'] = 'date_moissonnage_creation';
-					$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_creation';
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $results->metadata_created;
                 }
 				if ($ex_sec == false) {
-					$extras[count($extras)]['key'] = 'edition_security';
-					$extras[(count($extras) - 1)]['value'] = $security;
+					$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'edition_security';
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $security;
 				}
 
                 $newData = [
@@ -500,7 +500,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
                 $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
                 $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
-                $count_datas=count($dataForUpdateDatasets);
+                $count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
                 
                 $jsonValue = json_decode($value, true);
 				if(substr($jsonValue["url"], -1) === "/"){
@@ -515,7 +515,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $ex_Ftp=false;
 				$ex_dmlm=false;
 				$ex_dmc=false;
-                for($i= 0; $i<count($extras); $i++ ){
+                for($i= 0; $i<(is_countable($extras) ? count($extras) : 0); $i++ ){
                     if($extras[$i]->key == 'FTP_API'){
                         $ex_Ftp=true;
                         $extras[$i]->value  == $jsonValue["url"]."/visualisation/?id=".$jsonValue["id"]; 
@@ -529,20 +529,20 @@ class MoissonnageDataGouv extends HelpFormBase {
                 }
                 
                 if($ex_Ftp==false){
-                    $extras[count($extras)]['key'] = 'FTP_API';
-                    $extras[(count($extras) - 1)]['value'] = $jsonValue["url"]."/visualisation/?id=".$jsonValue["id"];
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
+                    $extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $jsonValue["url"]."/visualisation/?id=".$jsonValue["id"];
                 }
 				if($ex_dmlm==false){
-                    $extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-					$extras[(count($extras) - 1)]['value'] = $results->metadata_modified;
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $results->metadata_modified;
                 }
 				if($ex_dmc==false){
-                    $extras[count($extras)]['key'] = 'date_moissonnage_creation';
-					$extras[(count($extras) - 1)]['value'] = $results->metadata_created;
+                    $extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_creation';
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $results->metadata_created;
                 }				
 				
-				$extras[count($extras)]['key'] = 'edition_security';
-				$extras[(count($extras) - 1)]['value'] = $security;
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'edition_security';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $security;
            
                 $newData = [
 					"name" => $results->name,
@@ -791,7 +791,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 				$dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
 				$dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
-				$count_datas=count($dataForUpdateDatasets);
+				$count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 				
 				$query = Query::callSolrServer("https://www.data.gouv.fr/api/1/datasets/".$value."/");
 				$results = json_decode($query);
@@ -810,12 +810,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$label = preg_replace('@[^a-zA-Z0-9_]@','',$label);
 				$urlRes = $this->urlCkan ."/dataset/".$label;
 				$tagsData = array();
-				if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+				if ($results->tags == '' || (is_countable($results->tags) ? count($results->tags) : 0)==0 || !$results->tags) {
 					$tagsData = [];
 				} 
 				else {
 					$tags = $results->tags;
-					for ($j = 0; $j < count($tags); $j++) {
+					for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 						if($tags[$j]!=''){
 							$val = $this->nettoyage($tags[$j]);
 							array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1223,7 +1223,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 				$dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
 				$dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
-				$count_datas=count($dataForUpdateDatasets);
+				$count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 
 				$jsonValue = json_decode($value, true);
 				
@@ -1265,12 +1265,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 			
 				$tagsData = array();
                 
-				if ($results->keyword == '' || count($results->keyword)==0 || !$results->keyword) {
+				if ($results->keyword == '' || (is_countable($results->keyword) ? count($results->keyword) : 0)==0 || !$results->keyword) {
 					$tagsData = [];
 				} 
 				else {
 					$tags = $results->keyword;
-					for ($j = 0; $j < count($tags); $j++) {
+					for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 						if($tags[$j]!=''){
 							$val = $this->nettoyage($tags[$j]);
 							array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1415,7 +1415,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
                 $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
                 $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);  
-                $count_datas=count($dataForUpdateDatasets);
+                $count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 				
 				$jsonValue = json_decode($value, true);
 
@@ -1454,12 +1454,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[(count($extras) - 1)]['value'] = $security;
 				
                 $tagsData = array();
-                if ($results->keyword == '' || count($results->keyword)==0 || !$results->keyword) {
+                if ($results->keyword == '' || (is_countable($results->keyword) ? count($results->keyword) : 0)==0 || !$results->keyword) {
 					$tagsData = [];
 				} 
                 else {
 					$tags = $results->keyword;
-					for ($j = 0; $j < count($tags); $j++) {
+					for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 						if($tags[$j]!=''){
 							$val = $this->nettoyage($tags[$j]);
 							array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1601,7 +1601,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 				$dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
 				$dataForUpdateDatasets = json_decode($dataForUpdateDatasets);   
-				$count_datas=count($dataForUpdateDatasets); 
+				$count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0; 
 			 
 				$value= explode("|", $value);  
 				//$query = Query::callSolrServer($value[1]."/api/views/".$value[0].".json");
@@ -1641,12 +1641,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 				
 				$tagsData = array();
 				
-				if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+				if ($results->tags == '' || (is_countable($results->tags) ? count($results->tags) : 0)==0 || !$results->tags) {
                     $tagsData = [];
 				} 
 				else {
 					$tags = $results->tags;
-					for ($j = 0; $j < count($tags); $j++) {
+					for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
                         if($tags[$j]!=''){
 							$val = $this->nettoyage($tags[$j]);
 							array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1805,7 +1805,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
 				$dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
 				$dataForUpdateDatasets = json_decode($dataForUpdateDatasets);
-				$count_datas=count($dataForUpdateDatasets);
+				$count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 				   
 				$value= explode("|", $value);
 				//error_log(json_encode($value));
@@ -1852,12 +1852,12 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$extras[(count($extras) - 1)]['value'] = $security;
 				
 				$tagsData = array();
-				if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+				if ($results->tags == '' || (is_countable($results->tags) ? count($results->tags) : 0)==0 || !$results->tags) {
 					$tagsData = [];
 				} 
 				else {
 					$tags = $results->tags;
-					for ($j = 0; $j < count($tags); $j++) {
+					for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 						if($tags[$j]!=''){
 							array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $tags[$j]->name, "name" => $tags[$j]->name]);
 						}
@@ -2137,7 +2137,7 @@ class MoissonnageDataGouv extends HelpFormBase {
                 $config = \Drupal::service('config.factory')->getEditable('ckan_admin.moissonnage_data_gouv_form');
                 $dataForUpdateDatasets = $config->get('dataForUpdateDatasets'); 
                 $dataForUpdateDatasets = json_decode($dataForUpdateDatasets);  
-                $count_datas=count($dataForUpdateDatasets);
+                $count_datas=is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0;
 
                 $value= explode("|", $value);   
                 $site_search_url = $value[1]."/".$value[0];
@@ -2334,7 +2334,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 								$url_attach = $site_search_url . "/".$feat["id"]."/attachments?f=pjson";
 								$res = Query::callSolrServer($url_attach);
 								$res = json_decode($res, true);
-								if(count($res["attachmentInfos"]) > $nb_att){
+								if((is_countable($res["attachmentInfos"]) ? count($res["attachmentInfos"]) : 0) > $nb_att){
 									
 									$cols[] = "attachment_" . $nb_att . "_name";
 									$cols[] = "attachment_" . $nb_att . "_url";
@@ -2343,7 +2343,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 								preg_match('/attachment_([\d]+)_name/i',$col, $matches);
 								$c = floatval($matches[1]);
 								//error_log(json_encode($c));
-								if(count($res["attachmentInfos"]) > $c){ 
+								if((is_countable($res["attachmentInfos"]) ? count($res["attachmentInfos"]) : 0) > $c){ 
 									$att = $res["attachmentInfos"][$c];
 									//error_log(json_encode($att));
 									$name = $att["name"];

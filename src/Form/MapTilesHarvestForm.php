@@ -132,12 +132,12 @@ class MapTilesHarvestForm extends HelpFormBase {
 				$params = substr($url, strpos($url, "?"), strlen($url)-1);
 				
 				if(strpos(strtolower($params), "service") === false){
-					$url .= (count($params) > 0)? "&service=WMS" : "service=WMS";
+					$url .= ((is_countable($params) ? count($params) : 0) > 0)? "&service=WMS" : "service=WMS";
 					$params .= "service=WMS";
 					$form['url']["#value"] = $url;
 				}	
 				if(strpos(strtolower($params), "request") === false){
-					$url .= (count($params) > 0)? "&request=GetCapabilities" : "request=GetCapabilities";
+					$url .= ((is_countable($params) ? count($params) : 0) > 0)? "&request=GetCapabilities" : "request=GetCapabilities";
 					$params .= "request=GetCapabilities";
 					$form['url']["#value"] = $url;
 				}	
@@ -253,7 +253,7 @@ class MapTilesHarvestForm extends HelpFormBase {
 								//$lay->registerXPathNamespace('ows', 'http://www.opengis.net/ows/1.1');
 								$jsonLay = json_decode(json_encode($lay), true);
 								
-								for($i=0; $i<count($matches[0])-3;$i++){
+								for($i=0; $i<(is_countable($matches[0]) ? count($matches[0]) : 0)-3;$i++){
 									$val = $this->array_key_value_r($matches[1][$i], $jsonLay, $lay);
 									//error_log("m: ".$matches[1][$i]. " - v: ". $val);
 									if($val != null){

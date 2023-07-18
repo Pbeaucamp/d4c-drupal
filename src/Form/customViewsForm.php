@@ -211,7 +211,7 @@ class customViewsForm extends HelpFormBase {
                 return $res;
             });
 
-            for ($i = 0; $i < count($dataSet); $i++){
+            for ($i = 0; $i < (is_countable($dataSet) ? count($dataSet) : 0); $i++){
                 $ids[$dataSet[$i]['id']] = $dataSet[$i]['title'];
             }
         }

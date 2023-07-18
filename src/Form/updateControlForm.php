@@ -76,7 +76,7 @@ class updateControlForm extends HelpFormBase {
 
     $orgs = $api->getAllOrganisations(true, true);
     $option_org=array();
-    for ($i = 0; $i < count($orgs); $i++) {
+    for ($i = 0; $i < (is_countable($orgs) ? count($orgs) : 0); $i++) {
       $option_org[$orgs[$i][id]]=$orgs[$i][display_name];
     }
       
@@ -188,10 +188,10 @@ class updateControlForm extends HelpFormBase {
 
       if($org!=''|| $org!=null) {
         foreach($table as &$res) {
-            for ($i = 0; $i<count($dataForUpdate); $i++) {
+            for ($i = 0; $i<(is_countable($dataForUpdate) ? count($dataForUpdate) : 0); $i++) {
                 if($dataForUpdate[$i]->id_org == $org){
                     $datasets = $dataForUpdate[$i]->datasets;
-                    for($j = 0; $j<count($datasets); $j++){
+                    for($j = 0; $j<(is_countable($datasets) ? count($datasets) : 0); $j++){
                         
                         if($datasets[$j]->id_data == $res[name][2]) {
                             if($res[valuedetails_span] != null || $res[valuedetails_span] != "" ) {

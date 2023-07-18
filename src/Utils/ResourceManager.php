@@ -444,7 +444,7 @@ class ResourceManager {
 				$resources = $dataset['result']['resources'];
 
 				//We check if the zip was previously unzip by counting the resources
-				$unzipZip = count($resources) > 1;
+				$unzipZip = (is_countable($resources) ? count($resources) : 0) > 1;
 
 				foreach($resources as $resource){
 					if (strpos($resource['name'], 'zip') !== false) {
@@ -952,7 +952,7 @@ class ResourceManager {
 				$resources = $contentdataset["result"]["resources"];
 
 				//We retrieve the new CSV resource
-				for($i=0; $i<count($resources); $i++){
+				for($i=0; $i<(is_countable($resources) ? count($resources) : 0); $i++){
 					if ($resources[$i]['format'] == 'CSV') {
 						$resourceId = $resources[$i]['id'];   
 						break;
@@ -1505,7 +1505,7 @@ class ResourceManager {
 		$contentdataset = json_decode($dataset->getContent(), true);
 		$resources = $contentdataset["result"]["resources"];
 
-		for($i=0; $i<count($resources); $i++) {
+		for($i=0; $i<(is_countable($resources) ? count($resources) : 0); $i++) {
 			$this->deleteResource($resources[$i]['id']);
 		}
 	}
@@ -1727,9 +1727,9 @@ class ResourceManager {
 		$hasDatasetModel = false;
 		$hasDataValidation = false;
 		
-		if ($extras != null && count($extras) > 0) {
+		if ($extras != null && (is_countable($extras) ? count($extras) : 0) > 0) {
 	
-			for ($index = 0; $index < count($extras); $index++) {
+			for ($index = 0; $index < (is_countable($extras) ? count($extras) : 0); $index++) {
 
 				if ($extras[$index]['key'] == 'Picto') {
 					$hasPicto = true;
@@ -1911,23 +1911,23 @@ class ResourceManager {
 		}
 
 		if ($hasPicto == false) {
-			$extras[count($extras)]['key'] = 'Picto';
-			$extras[(count($extras) - 1)]['value'] = $picto;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'Picto';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $picto;
 		}
 
 		if ($hasBackground == false && $imgBackground && $imgBackground != null && $imgBackground != '') {
-			$extras[count($extras)]['key'] = 'img_backgr';
-			$extras[(count($extras) - 1)]['value'] = $imgBackground;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'img_backgr';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $imgBackground;
 		}
 			
 		if ($hasLinkDatasets == false) {		
-			$extras[count($extras)]['key'] = 'LinkedDataSet';
-			$extras[(count($extras) - 1)]['value'] = $linkDatasets;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'LinkedDataSet';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $linkDatasets;
 		}
 
 		if ($hasThemes == false) {
-			$extras[count($extras)]['key'] = 'themes';
-			$extras[(count($extras) - 1)]['value'] = $themes;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'themes';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $themes;
 		}
 
 		// if ($hasTheme == false) {
@@ -1941,120 +1941,120 @@ class ResourceManager {
 		// }
 
 		if ($hasTypeMap == false && $selectedTypeMap != null && $selectedTypeMap != '') {
-			$extras[count($extras)]['key'] = 'type_map';
-			$extras[(count($extras) - 1)]['value'] = $selectedTypeMap;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'type_map';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedTypeMap;
 		}
 
 		if ($hasOverlays == false && $selectedOverlays != null && $selectedOverlays != ""){
-			$extras[count($extras)]['key'] = 'overlays';
-			$extras[(count($extras) - 1)]['value'] = $selectedOverlays;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'overlays';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedOverlays;
 		}
 
 		if ($hasVisualizeTab == false) {
-			$extras[count($extras)]['key'] = 'dont_visualize_tab';
-			$extras[(count($extras) - 1)]['value'] = $dont_visualize_tab;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'dont_visualize_tab';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dont_visualize_tab;
 		}
 
 		if ($hasFTP == false) {
-			$extras[count($extras)]['key'] = 'FTP_API';
-			$extras[(count($extras) - 1)]['value'] = 'FTP';
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = 'FTP';
 		}
 
 		if ($hasWidgets == false && $widgets != null && $widgets != '') {
-			$extras[count($extras)]['key'] = 'widgets';
-			$extras[(count($extras) - 1)]['value'] = $widgets;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'widgets';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $widgets;
 		}
 
 		if ($hasVisu == false) {
-			$extras[count($extras)]['key'] = 'default_visu';
-			$extras[(count($extras) - 1)]['value'] = $visu;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'default_visu';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $visu;
 		}
 
 		if ($hasDate == false) {
-			$extras[count($extras)]['key'] = 'date_dataset';
-			$extras[(count($extras) - 1)]['value'] = $dateDataset;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_dataset';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dateDataset;
 		}
 
 		if ($hasProducer == false) {
-			$extras[count($extras)]['key'] = 'producer';
-			$extras[(count($extras) - 1)]['value'] = $producer;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'producer';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $producer;
 		}
 
 		if ($hasFrequence == false) {
-			$extras[count($extras)]['key'] = 'frequence';
-			$extras[(count($extras) - 1)]['value'] = $frequence;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'frequence';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $frequence;
 		}
 
 		if ($hasSource == false) {
-			$extras[count($extras)]['key'] = 'source';
-			$extras[(count($extras) - 1)]['value'] = $source;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'source';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $source;
 		}
 
 		if ($hasDonneesSource == false) {
-			$extras[count($extras)]['key'] = 'donnees_source';
-			$extras[(count($extras) - 1)]['value'] = $donnees_source;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'donnees_source';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $donnees_source;
 		}
 
 		if ($hasDisableFieldsEmpty  == false) {
-			$extras[count($extras)]['key'] = 'disable_fields_empty';
-			$extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'disable_fields_empty';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $disableFieldsEmpty;
 		}
 		
 		if ($hasAnalyse == false && $analyseDefault != '') {
-			$extras[count($extras)]['key'] = 'analyse_default';
-			$extras[(count($extras) - 1)]['value'] = $analyseDefault; 
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'analyse_default';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $analyseDefault; 
 		}
 
 		if ($hasSecurity == false) {
-			$extras[count($extras)]['key'] = 'edition_security';
-			$extras[(count($extras) - 1)]['value'] = json_encode($security);
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'edition_security';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = json_encode($security);
 		}
 
 		if ($hasDisplayVersionning == false) {
-			$extras[count($extras)]['key'] = 'display_versionning';
-			$extras[(count($extras) - 1)]['value'] = $displayVersionning;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'display_versionning';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $displayVersionning;
 		}
 
 		if ($hasDataRgpd == false) {
-			$extras[count($extras)]['key'] = 'data_rgpd';
-			$extras[(count($extras) - 1)]['value'] = $dataRgpd;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data_rgpd';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dataRgpd;
 		}
 
 		if ($hasData4citizenType == false) {
-			$extras[count($extras)]['key'] = 'data4citizen-type';
-			$extras[(count($extras) - 1)]['value'] = $data4citizenType;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data4citizen-type';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $data4citizenType;
 		}
 
 		if ($hasEntityId == false) {
-			$extras[count($extras)]['key'] = 'data4citizen-entity-id';
-			$extras[(count($extras) - 1)]['value'] = $entityId;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data4citizen-entity-id';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $entityId;
 		}
 
 		if ($hasDateDeposit == false) {
-			$extras[count($extras)]['key'] = 'date_deposit';
-			$extras[(count($extras) - 1)]['value'] = $dateDeposit;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_deposit';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dateDeposit;
 		}
 
 		if ($hasUsername == false) {
-			$extras[count($extras)]['key'] = 'uploader';
-			$extras[(count($extras) - 1)]['value'] = $uploader;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'uploader';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $uploader;
 		}
 
 		if ($hasDatasetModel == false && isset($datasetModel)) {
-			$extras[count($extras)]['key'] = 'dataset-model';
-			$extras[(count($extras) - 1)]['value'] = $datasetModel;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'dataset-model';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $datasetModel;
 		}
 
 		if ($hasDataValidation == false) {
-			$extras[count($extras)]['key'] = 'data_validation';
-			$extras[(count($extras) - 1)]['value'] = $dataValidation;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data_validation';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dataValidation;
 		}
 
 		if (isset($generalMetadata)) {
 			foreach ($generalMetadata as $meta) {
 				if (!$meta->isDefine()) {
-					$extras[count($extras)]['key'] = $meta->getKey();
-					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+					$extras[is_countable($extras) ? count($extras) : 0]['key'] = $meta->getKey();
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $meta->getValue();
 				}
 			}
 		}
@@ -2062,8 +2062,8 @@ class ResourceManager {
 		if (isset($inspireMetadata)) {
 			foreach ($inspireMetadata as $meta) {
 				if (!$meta->isDefine()) {
-					$extras[count($extras)]['key'] = $meta->getKey();
-					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+					$extras[is_countable($extras) ? count($extras) : 0]['key'] = $meta->getKey();
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $meta->getValue();
 				}
 			}
 		}
@@ -2441,8 +2441,8 @@ class ResourceManager {
 			}
 			else if ($type == "extras") {
 				$extras = $datasetToUpdate["extras"];
-				if ($extras != null && count($extras) > 0) {
-					for ($index = 0; $index < count($extras); $index++) {
+				if ($extras != null && (is_countable($extras) ? count($extras) : 0) > 0) {
+					for ($index = 0; $index < (is_countable($extras) ? count($extras) : 0); $index++) {
 
 						foreach ($metadatas as $metadata) {
 							if ($extras[$index]['key'] == $metadata->getKey()) {
@@ -2465,8 +2465,8 @@ class ResourceManager {
 
 				foreach ($metadatas as $metadata) {
 					if (!$metadata->isDefine()) {
-						$extras[count($extras)]['key'] = $metadata->getKey();
-						$extras[(count($extras) - 1)]['value'] = $metadata->getValue();
+						$extras[is_countable($extras) ? count($extras) : 0]['key'] = $metadata->getKey();
+						$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $metadata->getValue();
 					}
 				}
 			}

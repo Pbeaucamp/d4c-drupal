@@ -1389,7 +1389,7 @@ class VisualisationController extends ControllerBase {
 					$details .= '<span><strong>Nombre de lignes conformes:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>';
 				}
 
-				$nbColumnsWithError = count($schemaValidation->columnsWithError);
+				$nbColumnsWithError = is_countable($schemaValidation->columnsWithError) ? count($schemaValidation->columnsWithError) : 0;
 
 				$schemaResult .= '
 					<div class="row schema-data-validation">
@@ -2059,7 +2059,7 @@ class VisualisationController extends ControllerBase {
 		$additionnalResources .= '</ul>';
 
 		if (isset($wmsURL) || isset($wfsURL)) {
-			if (isset($availableFormatsWMS) && count($availableFormatsWMS) > 0) {
+			if (isset($availableFormatsWMS) && (is_countable($availableFormatsWMS) ? count($availableFormatsWMS) : 0) > 0) {
 				$optionsWMS = '<optgroup label="WMS">';
 
 				foreach ($availableFormatsWMS as $format) {
@@ -2069,7 +2069,7 @@ class VisualisationController extends ControllerBase {
 				$optionsWMS .= '</optgroup>';
 			}
 
-			if (isset($availableFormatsWFS) && count($availableFormatsWFS) > 0) {
+			if (isset($availableFormatsWFS) && (is_countable($availableFormatsWFS) ? count($availableFormatsWFS) : 0) > 0) {
 				$optionsWFS = '<optgroup label="WFS">';
 
 				foreach ($availableFormatsWFS as $format) {
