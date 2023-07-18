@@ -3027,34 +3027,18 @@ class Api
 				$data_array['metas']["producer"] = $value["value"];
 			}
 		}
+
+		$dateMoissonnageLastModification = null;
+		$dateMoissonnageCreation = null;
+		if (is_array($result["result"]["results"][$i]["extras"])) {
+			$dateMoissonnageLastModification = current(array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_last_modification";}))["value"];
+			$dateMoissonnageCreation = current(array_filter($result["result"]["results"][$i]["extras"], function($f){ return $f["key"] == "date_moissonnage_creation";}))["value"];
+		}
+
 		$result["result"]["results"][$i]["metadata_imported"] = $result["result"]["results"][$i]["metadata_modified"];
-		$result["result"]["results"][$i]["metadata_modified"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_last_modification";
-		}))["value"] ?: $result["result"]["results"][$i]["metadata_modified"];
-		$result["result"]["results"][$i]["metadata_created"] = current(array_filter($result["result"]["results"][$i]["extras"], function ($f) {
-			return $f["key"] == "date_moissonnage_creation";
-		}))["value"] ?: $result["result"]["results"][$i]["metadata_created"];
-		//        foreach($data_array['metas']['extras'] as $value){
-		//			if($value["key"] == "LinkedDataSet"){
-		//                
-		//                
-		//                
-		//				//$data_array['metas']["LinkedDataSet"] = str_replace(";", "; ", $value["value"]);
-		//                
-		//                $name_id =explode(";", $value["value"]);
-		//                     
-		//                for($t=0; $t < count($name_id); $t++){
-		//                    
-		//                    $a = (":", $name_id[$i]);
-		//                    
-		//                    $data_array['metas']["LinkedDataSet"][$a[0]]=$data_array['metas']["LinkedDataSet"][$a[1]];
-		//                    
-		//                 
-		//                }
-		//                 
-		//                
-		//			}
-		//		}
+		$result["result"]["results"][$i]["metadata_modified"] = $dateMoissonnageLastModification ?: $result["result"]["results"][$i]["metadata_modified"];
+		$result["result"]["results"][$i]["metadata_created"] = $dateMoissonnageCreation ?: $result["result"]["results"][$i]["metadata_created"];
+
 		if (count($data_array["metas"]["tags"]) > 0) {
 			$data_array["metas"]["keyword"] = array_column($data_array["metas"]["tags"], "display_name");
 		} else {
@@ -4963,6 +4947,8 @@ class Api
 			unset($query_params['dataset']);
 			$query_params['resource_id'] = $resourceCSV;
 		}
+		
+		Logger::logMessage("TRM - Parameters " . json_encode($query_params));
 
 		$ySeries = array();
 		foreach ($query_params as $key => $value) {
@@ -5153,7 +5139,9 @@ class Api
 		//error_log($sql);
 
 		$req['sql'] = $sql;
-		//echo $sql;
+
+		Logger::logMessage("TRM - SQL : " . $sql);
+
 		$url2 = http_build_query($req);
 		$callUrl =  $this->urlCkan . "api/action/datastore_search_sql?" . $url2;
 		//echo $callUrl . "\r\n";
