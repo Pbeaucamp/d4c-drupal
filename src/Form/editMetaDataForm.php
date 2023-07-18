@@ -20,6 +20,7 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Drupal\Core\Url;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -811,7 +812,7 @@ class editMetaDataForm extends HelpFormBase {
         $selectedTypeMap = $form_state->getValue('selected_type_map');
 		$selectedOverlays = "";
 		if ($form_state->getValue('authorized_overlays_map') != NULL) {
-			$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+			$selectedOverlays = Tools::implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
 		}
 
 		// Define link dataset

@@ -19,6 +19,9 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 class VanillaForm extends HelpFormBase {
 
 
+	private $config;
+	private $urlCkan;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -162,16 +165,16 @@ class VanillaForm extends HelpFormBase {
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
         $dataSet = json_decode($dataSet, true);
-        $dataSet = $dataSet[result][results];
+        $dataSet = $dataSet['result']['results'];
 
 		error_log($dataSet);
 		
         foreach ($dataSet as &$value) {
 
-            $form['Dataset_lies_table'][$value[name] . ':' . $value[id]]['dt'] = array(
-                '#prefix' => '<div id="id_row_'.$value[id].'" >',
+            $form['Dataset_lies_table'][$value['name'] . ':' . $value['id']]['dt'] = array(
+                '#prefix' => '<div id="id_row_'.$value['id'].'" >',
                 '#type' => 'checkbox',
-                '#title' => $this->t($value[title]),
+                '#title' => $this->t($value['title']),
                 '#suffix' => '</div>',
 
             );
@@ -195,7 +198,7 @@ class VanillaForm extends HelpFormBase {
 		$string_dataset_lies = '';
 		
 		foreach ($Dataset_lies_table as $key => &$val) {
-			if ($val[dt] == 1) {
+			if ($val['dt'] == 1) {
 				$string_dataset_lies = $string_dataset_lies . ';' . substr($key, strrpos($key, ':') + 1, strlen($key)-1);
 			}
 		}

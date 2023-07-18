@@ -98,14 +98,14 @@ class ResourceManager {
 		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
 		
-		$datasetToUpdate[title] = $title;
-		$datasetToUpdate[notes] = $description;
-		$datasetToUpdate[license_id] = $licence;
+		$datasetToUpdate['title'] = $title;
+		$datasetToUpdate['notes'] = $description;
+		$datasetToUpdate['license_id'] = $licence;
 		$datasetToUpdate['private'] = $isPrivate;
-		$datasetToUpdate[extras] = $extras;
+		$datasetToUpdate['extras'] = $extras;
 		$datasetToUpdate["tags"] = $tags;
 		if ($source != null) {
-			$datasetToUpdate[url] = $source;
+			$datasetToUpdate['url'] = $source;
 		}
 
 		$api = new Api;
@@ -114,12 +114,12 @@ class ResourceManager {
 
 		$result = json_decode($result);
 		if ($result->success == true) {
-			$currentOrganization = $datasetToUpdate[organization][id];
+			$currentOrganization = $datasetToUpdate['organization']['id'];
 			Logger::logMessage("Comparing current organization '" . $currentOrganization . "' with selected organization '" . $organization . "'");
 
 			if ($currentOrganization != $organization) {
 				Logger::logMessage("Updating organization.");
-				$result = $this->changeDatasetOrganization($datasetToUpdate[id], $organization);
+				$result = $this->changeDatasetOrganization($datasetToUpdate['id'], $organization);
 				if ($result->success != true) {
 					$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
@@ -201,7 +201,7 @@ class ResourceManager {
 
 	function getFilePath($resourceUrl) {
 		$fileName = parse_url($resourceUrl);
-		$filePath = $fileName[path];
+		$filePath = $fileName['path'];
 
 		// Remove first slash if exists
 		if (substr($filePath, 0, 1) == "/") {
@@ -217,8 +217,8 @@ class ResourceManager {
 		$fileName = parse_url($resourceUrl);
 		$datasetFolder = $this->generateDatasetFolder($datasetId);
 
-		$host = isset($this->host) ? $this->host : $fileName[host];
-		$fileName = $fileName[path];
+		$host = isset($this->host) ? $this->host : $fileName['host'];
+		$fileName = $fileName['path'];
 		$filePath = $fileName;
 
 		$fileName = $this->cleanFileName($fileName);
@@ -869,7 +869,7 @@ class ResourceManager {
 		}
 
 		fclose($fp);
-		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
+		$this->updateDatabaseStatus(false, null, null, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \' Unknown \'');
 
 		return $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/xmlfile/' . $fileName;
 	}
@@ -880,7 +880,7 @@ class ResourceManager {
 		$fileName = parse_url($resourceUrl);
 
 		$host = isset($this->host) ? $this->host : $fileName['host'];
-		$fileName = $fileName[path];
+		$fileName = $fileName['path'];
 		$filePath = $fileName;
 
 		$fileName = $this->cleanFileName($fileName);
@@ -1602,14 +1602,14 @@ class ResourceManager {
 		$widget_html='';
 		$hasWidget = false;
         foreach($widget as $key =>$val){
-            if ($val[name] != '' && $val[widget] != ''){
+            if ($val['name'] != '' && $val['widget'] != ''){
 				$off = '';  
-				if($val[offWidjet] == 1) {
+				if($val['offWidjet'] == 1) {
 					$off = '<.off.>'; 
 				}
 
 				$hasWidget = true;
-				$widget_html = $widget_html .$val[name].'<.info.>'.$val[description].'<.info.> '.$val[widget].' '.$off.'<.explode.>';            
+				$widget_html = $widget_html .$val['name'].'<.info.>'.$val['description'].'<.info.> '.$val['widget'].' '.$off.'<.explode.>';            
 			} 
         }
         
@@ -2318,7 +2318,7 @@ class ResourceManager {
 	
 	function isNumericColumn($json, $colName) {
 		for($i=0; $i< 100; $i++){
-			$val = $json["features"][$i]["properties"][$col];
+			$val = $json["features"][$i]["properties"][$colName];
 			if( !is_numeric ($val)){
 				return false;
 			} 
@@ -2353,43 +2353,43 @@ class ResourceManager {
 			$coll++;
 			
 			if($coll==1){
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10){
-				$newData[name]=substr($newData[name],0, -3);
-				$newData[name] = $newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -3);
+				$newData['name'] = $newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else if($coll>100){
-				$newData[name]=substr($newData[name],0, -4);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -4);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>1000){
-				$newData[name]=substr($newData[name],0, -5);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -5);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10000){
-				$newData[name]=substr($newData[name],0, -6);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -6);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else{
-				$newData[name]=substr($newData[name],0, -2);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -2);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
@@ -2497,7 +2497,7 @@ class ResourceManager {
 		$response = $api->updateRequest($callUrl, $delDataset, "POST");
 		
 		$response = json_decode($response, true);
-		if ($response[success] == true) {
+		if ($response['success'] == true) {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
 

@@ -14,6 +14,7 @@ use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\ckan_admin\Utils\Tools;
 
 /**
  * Implements an example form.
@@ -813,7 +814,7 @@ class joinDatasetsForm extends HelpFormBase
 		foreach ($cols2 as $key => $value2) {
 			$fields[] = "b." . $key . " as " . $value2;
 		}
-		$fieldreq = implode(", ", $fields);
+		$fieldreq = Tools::implode(", ", $fields);
 		//error_log(json_encode($fields));
 		$sql = "Select " . $fieldreq . " from \"" . $url1 . "\" as a full join \"" . $url2 . "\" as b on cast(a." . $columns_data . " as varchar) = cast(b." . $columns_data2 . " as varchar)";
 		$req['sql'] = $sql;

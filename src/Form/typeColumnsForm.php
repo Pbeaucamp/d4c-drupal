@@ -25,8 +25,10 @@ use Drupal\Core\Ajax\InvokeCommand;
  */
 class typeColumnsForm extends HelpFormBase {
 
-
+	private $config;
+	private $urlCkan;
 	protected $datasets;
+
 	/**
 	 * {@inheritdoc}
 	 */

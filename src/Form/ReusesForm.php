@@ -25,7 +25,9 @@ use Drupal\Component\Render\FormattableMarkup;
  * Implements an example form.
  */
 class ReusesForm extends HelpFormBase {
-	
+
+	private $config;
+	private $urlCkan;
 
 	/**
 	 * {@inheritdoc}
@@ -133,8 +135,8 @@ class ReusesForm extends HelpFormBase {
 		$datasets = $api->callPackageSearch_public_private($req, \Drupal::currentUser()->id());
 		$datasets = $datasets->getContent();
 		
-        $datasets = json_decode($datasets, true)[result];
-        $datasets = $datasets[results];
+        $datasets = json_decode($datasets, true)['result'];
+        $datasets = $datasets['results'];
 		foreach ($datasets as $value) {
             $option_ds[$value["id"]] = $value["title"];
         }

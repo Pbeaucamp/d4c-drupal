@@ -24,6 +24,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\InsertCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
 use Drupal\Core\Url;
 
 /**
@@ -56,7 +57,8 @@ SOFTWARE.
 class MoissonnageDataGouv extends HelpFormBase {
 	
 
-    
+	private $config;
+    private $urlCkan;
     
 
 	/**
@@ -156,8 +158,8 @@ class MoissonnageDataGouv extends HelpFormBase {
 
        
         $organizationList = array();
-        for ($i = 0; $i < (is_countable($orgs[result]) ? count($orgs[result]) : 0); $i++) {
-            $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
+        for ($i = 0; $i < (is_countable($orgs['result']) ? count($orgs['result']) : 0); $i++) {
+            $organizationList[$orgs['result'][$i]['id']] = $orgs['result'][$i]['display_name'];
         }
 		if(isset($this->config->sitesSearch) && (is_countable($this->config->sitesSearch) ? count($this->config->sitesSearch) : 0) > 0){
 			$form['domaine'] = array(
@@ -271,7 +273,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
            
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
 
             $selectedDatasets = array_filter($form_state->getValue('ids'));
 
@@ -492,7 +494,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             $orgs = curl_exec($curlOrg);
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
             $selectedDatasets = array_filter($form_state->getValue('ids'));
 
             foreach($selectedDatasets as &$value){
@@ -715,9 +717,9 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$org_id='';
 				$org_name='';
         
-				if($org[success]==true){
-					$org_id=$org[result][id];
-					$org_name = $org[result][title];
+				if($org['success']==true){
+					$org_id=$org['result']['id'];
+					$org_name = $org['result']['title'];
 						  
 					$context =[
 						 
@@ -756,7 +758,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 					$return = $api->updateRequest($callUrl, $context, "POST");
             
 					$return = json_decode($return, true);    
-					$org_id=$return[result][id];   
+					$org_id=$return['result']['id'];   
 				}
 			}
             else{
@@ -778,7 +780,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 				$orgs = curl_exec($curlOrg);
 				curl_close($curlOrg);
 				$org = json_decode($orgs, true);
-				$org_name = $org[result][title];
+				$org_name = $org['result']['title'];
            
             }
         
@@ -1215,7 +1217,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             $orgs = curl_exec($curlOrg);
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
             $selectedDatasets = array_filter($form_state->getValue('ids'));
        
             foreach($selectedDatasets as &$value){
@@ -1406,7 +1408,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             $orgs = curl_exec($curlOrg);
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
 
             $selectedDatasets = array_filter($form_state->getValue('ids'));
 
@@ -1593,7 +1595,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 			$orgs = curl_exec($curlOrg);
 			curl_close($curlOrg);
 			$org = json_decode($orgs, true);
-			$org_name = $org[result][title]; 
+			$org_name = $org['result']['title']; 
 			$selectedDatasets = array_filter($form_state->getValue('ids'));
 
 			foreach($selectedDatasets as &$value){
@@ -1795,7 +1797,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
 
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
 
             $selectedDatasets = array_filter($form_state->getValue('ids'));
        
@@ -2127,7 +2129,7 @@ class MoissonnageDataGouv extends HelpFormBase {
             $orgs = curl_exec($curlOrg);
             curl_close($curlOrg);
             $org = json_decode($orgs, true);
-            $org_name = $org[result][title];
+            $org_name = $org['result']['title'];
 
             $selectedDatasets = array_filter($form_state->getValue('ids'));
 			$tz = date_default_timezone_get();
@@ -2383,20 +2385,20 @@ class MoissonnageDataGouv extends HelpFormBase {
 						if(count($row) < count($cols)){
 							$row = array_pad($row, count($cols), "");
 						}
-						$row = implode($row, ";");
+						$row = Tools::implode(";", $row);
 					}
 					
-					$data_csv[] = strtolower(implode($cols, ";"));
+					$data_csv[] = strtolower(Tools::implode(";", $cols));
 					$data_csv = array_merge($data_csv, $rows);
 					$fileName = $fileName . "_" . uniqid();
 					$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 					$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 					//$data_csv = mb_convert_encoding( $data_csv, 'Windows-1252', 'UTF-8');
 					
-					//$string = iconv('ASCII', 'UTF-8//IGNORE', implode($data_csv, "\n"));
+					//$string = iconv('ASCII', 'UTF-8//IGNORE', Tools::implode($data_csv, "\n"));
 					//error_log(mb_detect_encoding($string));
-					// file_put_contents($rootCsv, utf8_encode(implode($data_csv, "\n")));
-					$res = iconv("UTF-8", "Windows-1252//TRANSLIT", (implode($data_csv, "\n")));
+					// file_put_contents($rootCsv, utf8_encode(Tools::implode($data_csv, "\n")));
+					$res = iconv("UTF-8", "Windows-1252//TRANSLIT", (Tools::implode("\n", $data_csv)));
 					file_put_contents($rootCsv, $res);
 					
 					
@@ -2488,58 +2490,58 @@ class MoissonnageDataGouv extends HelpFormBase {
 			$coll++;
 			
 			if($coll==1){
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 				$NewName = $NewData[3];
 			}
 			else if($coll>10){
-				$newData[name]=substr($newData[name],0, -3);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -3);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=substr($newData['name'],0, -3);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=substr($newData['title'],0, -3);
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 				$NewName = $NewData[3];
 			}
 			else if($coll>100){
-				$newData[name]=substr($newData[name],0, -4);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -4);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=substr($newData['name'],0, -4);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=substr($newData['title'],0, -4);
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];  
 				$NewName = $NewData[3];  
 			}
 			else if($coll>1000){
-				$newData[name]=substr($newData[name],0, -5);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -5);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=substr($newData['name'],0, -5);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=substr($newData['title'],0, -5);
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2]; 
 				$NewName = $NewData[3];   
 			}
 			else if($coll>10000){
-				$newData[name]=substr($newData[name],0, -6);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -6);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=substr($newData['name'],0, -6);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=substr($newData['title'],0, -6);
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 				$NewName = $NewData[3];
 			}
 			else{
-				$newData[name]=substr($newData[name],0, -2);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title]=substr($newData[title],0, -2);
-				$newData[title]=$newData[title].' '.$coll;
+				$newData['name']=substr($newData['name'],0, -2);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title']=substr($newData['title'],0, -2);
+				$newData['title']=$newData['title'].' '.$coll;
 				$NewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
@@ -2547,7 +2549,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 			}
 		} 
 		else {
-			\Drupal::messenger()->addMessage('Le jeu de données '.$newData[title].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
+			\Drupal::messenger()->addMessage('Le jeu de données '.$newData['title'].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
 		}
         
         return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle, '3'=>$NewName);

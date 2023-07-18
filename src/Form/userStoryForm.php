@@ -20,6 +20,11 @@ use Drupal\Core\Url;
 
 class userStoryForm extends HelpFormBase
 {
+
+    private $config;
+    private $urlCkan;
+    private $orgas;
+
     /**
      * {@inheritdoc}
      */

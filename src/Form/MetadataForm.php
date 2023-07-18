@@ -14,7 +14,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\DatasetHelper;
-
+use Drupal\ckan_admin\Utils\Tools;
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
 abstract class MetadataForm extends FormBase {
@@ -76,7 +76,7 @@ abstract class MetadataForm extends FormBase {
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
 
-			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
+			$tags = $selectedDataset['keyword'] ? $tags = Tools::implode(",", $selectedDataset['keyword']) : '';
 
 			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
@@ -1049,10 +1049,10 @@ abstract class MetadataForm extends FormBase {
 			if (isset($selectedDatasetId)) {
 				$datasetToUpdate = $api->findDataset($selectedDatasetId);
 
-				$datasetName = $datasetToUpdate[name];
+				$datasetName = $datasetToUpdate['name'];
 
 				//Update extras
-				$extras = $datasetToUpdate[extras];
+				$extras = $datasetToUpdate['extras'];
 				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
 					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
 					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);

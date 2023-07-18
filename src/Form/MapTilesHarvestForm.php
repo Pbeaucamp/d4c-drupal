@@ -15,8 +15,7 @@ use Drupal\Core\Render\Element;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\SettingsCommand;
 use Drupal\ckan_admin\Utils\HelpFormBase;
-
-
+use Drupal\ckan_admin\Utils\Tools;
 
 /**
  * Implements an example form.
@@ -353,7 +352,7 @@ class MapTilesHarvestForm extends HelpFormBase {
 					$split2 = explode("/", $servName);
 					if($split[count($split)-1] == $split2[0]){
 						unset($split2[0]);
-						$servName = implode("/", $split2);
+						$servName = Tools::implode("/", $split2);
 						$servUrl = $url . "/" . $servName . "/" . $servType;
 					} else {
 						$servUrl = $url . "/" . $servName . "/" . $servType;

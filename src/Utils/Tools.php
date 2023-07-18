@@ -147,4 +147,14 @@ class Tools {
         }
         return array_filter($array, $callback);
     }
+
+    /**
+     * Helper method to implode an array which can be null or not an array
+     */
+    static function implode($separator, $array) {
+        if (is_null($array) || !is_array($array)) {
+            return "";
+        }
+        return implode($separator, $array);
+    }
 }

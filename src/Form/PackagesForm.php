@@ -20,6 +20,9 @@ use Exception;
  */
 class PackagesForm extends HelpFormBase {
 	
+	private $config;
+	private $urlCkan;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -86,10 +89,10 @@ class PackagesForm extends HelpFormBase {
         $result = $api->callPackageSearch_public_private($query);
 
         $result = $result->getContent();
-        $result = json_decode($result, true)[result];
+        $result = json_decode($result, true)['result'];
 
         // get datasets
-        $datasets = $result[results];
+        $datasets = $result['results'];
 		
         //-------------------- Filter form ---------------------------
 		$form['top'] = [
@@ -197,7 +200,7 @@ class PackagesForm extends HelpFormBase {
             '#markup' => '',
             '#type' => 'textfield',
             '#attributes' => array('style' => 'width: 50%;'),
-			'display' => none,
+			'display' => 'none',
 			'#maxlength' => 300
 		);
 

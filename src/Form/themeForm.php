@@ -45,6 +45,9 @@ SOFTWARE.
 
 class themeForm extends HelpFormBase {
 
+	private $config;
+	private $urlCkan;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -370,22 +373,22 @@ class themeForm extends HelpFormBase {
 			
 			$dataSet = $dataSet->getContent();
 			$dataSet = json_decode($dataSet,true);
-			$dataSet = $dataSet[result][results];
+			$dataSet = $dataSet['result']['results'];
 			$callUrl = $this->urlCkan . "/api/action/package_update";
         
 			for($i=0; $i<(is_countable($dataSet) ? count($dataSet) : 0); $i++){  
 				$them_label_ex = false;
-				if($dataSet[$i][extras]){
-					$cout_extras =is_countable($dataSet[$i][extras]) ? count($dataSet[$i][extras]) : 0;
+				if($dataSet[$i]['extras']){
+					$cout_extras =is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0;
 					if($cout_extras!=0){
-						for($j=0; $j<(is_countable($dataSet[$i][extras]) ? count($dataSet[$i][extras]) : 0); $j++){
-							if($dataSet[$i][extras][$j]['key']=='theme' && $dataSet[$i][extras][$j]['value']==$them_old){
-								$dataSet[$i][extras][$j]['value']=$themeValid;
+						for($j=0; $j<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0); $j++){
+							if($dataSet[$i]['extras'][$j]['key']=='theme' && $dataSet[$i]['extras'][$j]['value']==$them_old){
+								$dataSet[$i]['extras'][$j]['value']=$themeValid;
 								
-								for($jj=0; $jj<(is_countable($dataSet[$i][extras]) ? count($dataSet[$i][extras]) : 0); $jj++){
-									if($dataSet[$i][extras][$jj]['key']=='label_theme'){
+								for($jj=0; $jj<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0); $jj++){
+									if($dataSet[$i]['extras'][$jj]['key']=='label_theme'){
 										$them_label_ex = true;
-										$dataSet[$i][extras][$jj]['value']=$theme_label;
+										$dataSet[$i]['extras'][$jj]['value']=$theme_label;
 									} 
 								}
 								$return = $api->updateRequest($callUrl,$dataSet[$i],"POST");
@@ -393,8 +396,8 @@ class themeForm extends HelpFormBase {
 							}
 						}
 						if($them_label_ex==false){
-							$dataSet[$i][extras][is_countable($dataSet[$i][extras]) ? count($dataSet[$i][extras]) : 0]['key'] = 'label_theme';
-							$dataSet[$i][extras][((is_countable($dataSet[$i][extras]) ? count($dataSet[$i][extras]) : 0)-1)]['value']=$theme_label;
+							$dataSet[$i]['extras'][is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0]['key'] = 'label_theme';
+							$dataSet[$i]['extras'][((is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0)-1)]['value']=$theme_label;
 						}
 					}
 				}								   

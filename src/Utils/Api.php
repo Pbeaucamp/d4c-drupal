@@ -689,10 +689,10 @@ class Api
 
 					if (is_array($value)) {
 						if ($fieldType != null && $fieldType == "double") {
-							$value = implode(',', $value);
+							$value = Tools::implode(',', $value);
 						}
 						else {
-							$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+							$value = Tools::implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
 						}
 						$value = urldecode($value);
 						$where .= $key . " in (" . $value . ") and ";
@@ -1146,7 +1146,7 @@ class Api
 			}
 
 			if (Tools::count($orgs_private) > 0) {
-				$queryOrgs = implode($orgs_private, " OR ");
+				$queryOrgs = Tools::implode(" OR ", $orgs_private);
 				$req = "-organization:(" . $queryOrgs . ")";
 
 				if ($query_params["fq"] == null) {
@@ -1900,8 +1900,6 @@ class Api
 		//$response->setContent(json_encode($result));
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
-
-		return $result;
 	}
 
 
@@ -3321,7 +3319,7 @@ class Api
 					if (is_numeric($value) && $key != "insee_com" && $key != "code_insee") {
 						$where .= $key . "=" . $value . " and ";
 					} else if (is_array($value)) {
-						$value = implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
+						$value = Tools::implode(',', array_map(array($this, 'quotesArrayValue'), str_replace("'", "''", $value)));
 						$value = urldecode($value);
 						$where .= $key . " in (" . $value . ") and ";
 					} else {
@@ -3549,7 +3547,7 @@ class Api
 			try {
 				// Logger::logMessage("Found geo  : " . $value["geo"]);
 				$res['geometry'] = json_decode($value["geo"], true);
-			} catch (Exception $e) {
+			} catch (\Exception $e) {
 				// Logger::logMessage("Found geo with cast error : " . $value["geo"]);
 				$res['geometry'] = $value["geo"];
 			}
@@ -3698,7 +3696,7 @@ class Api
 					$refineFeatures = array();
 					$refineFeatures[] = $query_params["refine.features"];
 				}
-				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineFeatures) . "*)";
+				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . Tools::implode("* OR *", $refineFeatures) . "*)";
 				unset($query_params[$key]);
 			} else if ($key == "refine.themes") {
 				if (is_array($query_params["refine.themes"])) {
@@ -3707,7 +3705,7 @@ class Api
 					$refineThemes = array();
 					$refineThemes[] = $query_params["refine.themes"];
 				}
-				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . implode("* OR *", $refineThemes) . "*)";
+				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . Tools::implode("* OR *", $refineThemes) . "*)";
 				unset($query_params[$key]);
 			} else if (preg_match($patternRefine, $key)) {
 				$filters[preg_replace($patternRefine, "", $key)] =  $value;
@@ -3815,7 +3813,7 @@ class Api
 			$dataset["attachments"] = "";
 			$dataset["alternative_exports"] = "";
 
-			$resourceCSV;
+			$resourceCSV = null;
 
 			foreach ($value['resources'] as $v) {
 				if (($v['format'] == 'CSV' || $v['format'] == 'XLS' || $v['format'] == 'XLSX') && $v["datastore_active"] == true) {
@@ -4084,7 +4082,7 @@ class Api
 			}
 			//$query_params['sort'] TODO 
 			if (array_key_exists('facet', $query_params)) {
-				$query_params['fields'] = implode(",", $query_params['facet']);
+				$query_params['fields'] = Tools::implode(",", $query_params['facet']);
 			}
 			if ($key == "q") {
 				$reqQfilter = $this->constructReqQToSQL($value);
@@ -4220,7 +4218,7 @@ class Api
 		$init_params = array_merge(array(), $query_params);
 		$datasetId = "";
 		if (!array_key_exists("resource_id", $query_params) && array_key_exists("dataset", $query_params)) {
-			$resourceCSV;
+			$resourceCSV = null;
 			$datasetId = $query_params['dataset'];
 			$callUrl =  $this->urlCkan . "api/action/package_show?id=" . $query_params['dataset'];
 			$curl = curl_init($callUrl);
@@ -4263,7 +4261,7 @@ class Api
 		}
 		//$query_params['sort'] TODO 
 		if (array_key_exists('facet', $query_params)) {
-			$query_params['fields'] = implode(",", $query_params['facet']);
+			$query_params['fields'] = Tools::implode(",", $query_params['facet']);
 		}
 
 
@@ -4310,7 +4308,7 @@ class Api
 		$records = array();
 
 		foreach ($result["result"]["records"] as $value) {
-			$rec;
+			$rec = array();
 			$rec["datasetid"] = $datasetId;
 			//$rec["recordid"]=$value["_id"];
 			$rec["recordid"] = "";
@@ -5510,7 +5508,6 @@ class Api
 
 		echo json_encode($data);
 		$response = new Response();
-		$response->setContent();
 		$response->headers->set('Content-Type', 'application/json');
 		return $response;
 	}
@@ -6842,7 +6839,7 @@ class Api
 				$foundCount = true;
 			}
 			else if ($e["key"] == "features") {
-				$e["value"] = implode(",", $features);
+				$e["value"] = Tools::implode(",", $features);
 				$foundFeat = true;
 			}
 			else if ($e["key"] == "custom_view" && $customView != null) {
@@ -6867,7 +6864,7 @@ class Api
 		}
 		if (!$foundFeat) {
 			$extras[Tools::count($extras)]['key'] = 'features';
-			$extras[(Tools::count($extras) - 1)]['value'] = implode(",", $features);
+			$extras[(Tools::count($extras) - 1)]['value'] = Tools::implode(",", $features);
 		}
 		if (!$foundCV && $customView != null) {
 			$extras[Tools::count($extras)]['key'] = 'custom_view';
@@ -6909,7 +6906,7 @@ class Api
 			$params .= $key . "=" . $value . "&";
 		}
 		$params = substr($params, 0, -1);
-		//$params = implode("&",$query_params);
+		//$params = Tools::implode("&",$query_params);
 		//$params = http_build_query($query_params);
 
 		$result = $this->getExtendedPackageSearch($params);
@@ -7275,7 +7272,7 @@ class Api
 			foreach ($datasets as $row) {
 				$ids[] = $row["name"];
 			}
-			//$ids = implode(",", $ids);
+			//$ids = Tools::implode(",", $ids);
 			$query->condition('reu_dataset_id', $ids, "IN");
 		}
 
@@ -7691,13 +7688,13 @@ class Api
 
 	function updatewidget($widget)
 	{
-		$story_id = $story["story_id"];
+		$story_id = $widget["story_id"];
 		$query = \Drupal::database()->update('d4c_user_story');
 		$query->fields([
-			'widget_label' => $story["label_widget"],
-			'widget' => $story["widget"],
-			'scroll_time' => (int)$story["scrolling_time"],
-			'image' => $story["img_widget"]
+			'widget_label' => $widget["label_widget"],
+			'widget' => $widget["widget"],
+			'scroll_time' => (int)$widget["scrolling_time"],
+			'image' => $widget["img_widget"]
 		]);
 
 		$query->condition('story_id', $story_id);
@@ -8047,7 +8044,7 @@ class Api
 		curl_close($curl);
 
 		$dataset = json_decode($dataset, true);
-		return $dataset[result];
+		return $dataset['result'];
 	}
 
 	public function callFindDataset()
@@ -8090,7 +8087,7 @@ class Api
 		curl_close($curl);
 
 		$dataset = json_decode($dataset, true);
-		return $dataset[result];
+		return $dataset['result'];
 	}
 
 	public function updateDatasetVisibility() {
@@ -8224,6 +8221,7 @@ class Api
 		$generatedTaskId = uniqid();
 		try {
 			if (!$datasetId) {
+				$hasSecurity = false;
 				if ($extras != null && Tools::count($extras) > 0) {
 					for ($index = 0; $index < Tools::count($extras); $index++) {
 						if ($extras[$index]['key'] == 'edition_security') {
@@ -8243,9 +8241,9 @@ class Api
 			else {
 				$datasetToUpdate = $this->findDataset($datasetId);
 
-				$datasetName = $datasetToUpdate[name];
+				$datasetName = $datasetToUpdate['name'];
 
-				$existingMetadata = $datasetToUpdate[extras];
+				$existingMetadata = $datasetToUpdate['extras'];
 
 				$keyAlreadyAdd = array();
 
@@ -8543,6 +8541,7 @@ class Api
 				'text' => 'text/plain',
 				'xml' => 'text/xml',
 				'json' => 'application/json',
+				'csv' => 'application/csv',
 			),
 			true
 		);

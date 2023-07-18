@@ -20,12 +20,16 @@ use Drupal\file\Entity\File;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Drupal\Component\Render\FormattableMarkup; 
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
 use Exception;
 
 /**
  * Implements an example form.
  */
 class PackageXMLFileForm extends HelpFormBase {
+
+	private $config;
+	private $urlCkan;
 	
 	protected $tiles;
 	/**
@@ -95,10 +99,10 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $result = $api->callPackageSearch_public_private($query);
 
         $result = $result->getContent();
-        $result = json_decode($result, true)[result];
+        $result = json_decode($result, true)['result'];
 
         // get datasets
-        $datasets = $result[results];
+        $datasets = $result['results'];
 		
         //-------------------- Filter form ---------------------------
 		$form['top'] = [
@@ -201,7 +205,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
             '#markup' => '',
             '#type' => 'textfield',
             '#attributes' => array('style' => 'width: 50%;'),
-			'display' => nona,
+			'display' => 'none',
 			'#maxlength' => 300
 		);
 
@@ -335,7 +339,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$resourceUrl = str_replace('http://' . $_SERVER['HTTP_HOST'],$_SERVER['DOCUMENT_ROOT'], $resourceUrl);
 
 				if (file_exists(urldecode($resourceUrl))) {
-					$str=implode("\n",file(urldecode($resourceUrl)));
+					$str=Tools::implode("\n",file(urldecode($resourceUrl)));
 					$fp=fopen(urldecode($resourceUrl),'w');
 					$str=str_replace('&','??',$str);
 					$str=str_replace(':','',$str);
@@ -376,7 +380,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 
 					$selectedOverlays = "";
 					if ($selectedTypeMap != NULL) {
-						$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+						$selectedOverlays = Tools::implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
 					}
 					$private = 0;
 					if ($private == '1') {
@@ -489,18 +493,18 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 				$validataUrl = "https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=" . $validataResources[$v];
 				$validataResult = $resourceManager->validateData($validataUrl);
 
-				if ($validataResult[report][valid] == false) {
-					$errorsValid = $validataResult[report][tables][0][errors];
+				if ($validataResult['report']['valid'] == false) {
+					$errorsValid = $validataResult['report']['tables'][0]['errors'];
 					for ($i = 0; $i < (is_countable($errorsValid) ? count($errorsValid) : 0); $i++) {
 						
-						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i]['code'] . ' | Message:' . $errorsValid[$i]['message']), 'warning');
 						
 						if($i>5){
 							break;
 						}
 					}
 				} 
-				else if ($validataResult[report][valid] == true) {
+				else if ($validataResult['report']['valid'] == true) {
 					\Drupal::messenger()->addMessage(t('Les données ont été validées'), 'status');
 				}
 			}

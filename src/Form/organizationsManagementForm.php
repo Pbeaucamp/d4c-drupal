@@ -21,6 +21,12 @@ use Drupal\ckan_admin\Utils\CSWManager;
 
 class organizationsManagementForm extends HelpFormBase
 {
+
+    private $config;
+    private $urlCkan;
+    private $orgas;
+    private $org;
+
     /**
      * {@inheritdoc}
      */
@@ -70,8 +76,8 @@ class organizationsManagementForm extends HelpFormBase
 
 		$organizationList = array();
 		$organizationList["new"] = "Créer une organisation";
-        for ($i = 0; $i < (is_countable($orgs[result]) ? count($orgs[result]) : 0); $i++) {
-            $organizationList[$orgs[result][$i][id]] = $orgs[result][$i][display_name];
+        for ($i = 0; $i < (is_countable($orgs['result']) ? count($orgs['result']) : 0); $i++) {
+            $organizationList[$orgs['result'][$i]['id']] = $orgs['result'][$i]['display_name'];
         }
         
 		$form['selected_org'] = array(
@@ -153,18 +159,18 @@ class organizationsManagementForm extends HelpFormBase
 		$api = new Api;
 		$this->urlCkan = $this->config->ckan->url;
 		$selected_org = $form_state->getValue('selected_org');		
-		for ($i = 0; $i < (is_countable($this->orgas[result]) ? count($this->orgas[result]) : 0); $i++) {
-			if($this->orgas[result][$i][id] == $selected_org) {
-				$this->org = $this->orgas[result][$i];
+		for ($i = 0; $i < (is_countable($this->orgas['result']) ? count($this->orgas['result']) : 0); $i++) {
+			if($this->orgas['result'][$i]['id'] == $selected_org) {
+				$this->org = $this->orgas['result'][$i];
 				break;
 			}
         }
 		
-		if($this->org[package_count] > 0) {
+		if($this->org['package_count'] > 0) {
 			\Drupal::messenger()->addMessage('Cette organisation contient des jeux de données. Ils doivent être supprimés avant de pouvoir supprimer cette organisation.','error');
 		}
 		else {
-			$context[id]=$this->org[id];
+			$context['id']=$this->org['id'];
 			$callUrlUpdate = $this->urlCkan . "/api/action/organization_delete";
 			$return = $api->updateRequest($callUrlUpdate, $context, "POST");
 		}
@@ -217,7 +223,7 @@ class organizationsManagementForm extends HelpFormBase
 				$file = File::load($form_file[0]);
 				$file->setPermanent();
 				$file->save();
-				$context[image_url]= $file->createFileUrl(FALSE);
+				$context['image_url']= $file->createFileUrl(FALSE);
 			}
             
             $callUrlCreate = $this->urlCkan . "/api/action/organization_create";
@@ -225,7 +231,7 @@ class organizationsManagementForm extends HelpFormBase
 
             $return = json_decode($return, true);
             
-            if ($return[success] == true) {
+            if ($return['success'] == true) {
                 //We manage CSW Node
                 $cswManager = new CSWManager;
                 $cswManager->buildCSWNode($id, $title);
@@ -233,7 +239,7 @@ class organizationsManagementForm extends HelpFormBase
 				\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			}
             else {
-				\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées! '.$return[error][name][0]), 'error');
+				\Drupal::messenger()->addMessage(t('les données n`ont pas été ajoutées! '.$return['error']['name'][0]), 'error');
                 $context =[
 					'id'=>$id,
 					'state'=>'active',//'active'/ 'deleted' /draft
@@ -244,7 +250,7 @@ class organizationsManagementForm extends HelpFormBase
 			} 
         }
         else{
-            $context[id]=$selected_org;
+            $context['id']=$selected_org;
             
             if (isset($form_file[0]) && !empty($form_file[0])) {
 				$file = File::load($form_file[0]);
@@ -252,13 +258,13 @@ class organizationsManagementForm extends HelpFormBase
 				$file->save();
 				$url_t = parse_url($file->createFileUrl(FALSE));
 				$url_pict = $url_t["path"];
-				$context[image_url]=$file->createFileUrl(FALSE);
+				$context['image_url']=$file->createFileUrl(FALSE);
 			}
             
             $callUrlUpdate = $this->urlCkan . "/api/action/organization_update";
             $return = $api->updateRequest($callUrlUpdate, $context, "POST");
             $return = json_decode($return, true);
-            if ($return[success] == true) {
+            if ($return['success'] == true) {
 				\Drupal::messenger()->addMessage('Les données ont été sauvegardées');
 			}
             else {

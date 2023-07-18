@@ -18,6 +18,8 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
  */
 class VanilaForm extends HelpFormBase {
 
+    private $config;
+    private $urlCkan;
 
 	/**
 	 * {@inheritdoc}

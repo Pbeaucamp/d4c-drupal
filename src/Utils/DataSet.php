@@ -16,6 +16,8 @@ use Drupal\ckan_admin\Utils\Logger;
 
 class DataSet {
 
+	private $config;
+
 	static function checkConnexion()
 	{
 		$config = include(__DIR__ . "/../../config.php");
@@ -977,7 +979,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras2 = $result2[extras];
+			$extras2 = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1048,7 +1050,7 @@ class DataSet {
 				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
@@ -1174,7 +1176,7 @@ class DataSet {
         
             $result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras2 = $result2[extras];
+			$extras2 = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1246,7 +1248,7 @@ class DataSet {
 				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
             
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
@@ -1388,7 +1390,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_processed;
 			
@@ -1440,7 +1442,7 @@ class DataSet {
             }
 			
 			$idNewData=$id_dataset;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 
 
             //resources//
@@ -1537,7 +1539,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_processed;
 			
@@ -1589,7 +1591,7 @@ class DataSet {
             }
 
 			$idNewData=$id_dataset;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			
             //resources//
 
@@ -1678,7 +1680,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->updatedAt;
 			
@@ -1732,7 +1734,7 @@ class DataSet {
     
              /////////////////////resources////////////    
             $host = $_SERVER['HTTP_HOST']; 
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			
 			$editId = null;
 			foreach($old_resources as $oldRes){
@@ -1814,7 +1816,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1866,7 +1868,7 @@ class DataSet {
             }
     
 			$add_tres = false;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			/// resources update
 			foreach($results->resources as &$res){
 				
@@ -2484,16 +2486,16 @@ class DataSet {
 					if(count($row) < count($cols)){
 						$row = array_pad($row, count($cols), "");
 					}
-					$row = implode($row, ";");
+					$row = Tools::implode(";", $row);
 				}
 				
-				$data_csv[] = strtolower(implode($cols, ";"));
+				$data_csv[] = strtolower(Tools::implode(";", $cols));
 				$data_csv = array_merge($data_csv, $rows);
 				$resname = $fileName . "_" . uniqid();
 				$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 				
-				file_put_contents($rootCsv, implode($data_csv, "\n"));
+				file_put_contents($rootCsv, Tools::implode("\n", $data_csv));
 		
 				
 				if($editId == null){
@@ -2620,7 +2622,7 @@ class DataSet {
 		
 		$result2 = $api->getPackageShow("id=".$id_dataset);		
 		$result2 = $result2["result"];
-		$extras = $result2[extras];
+		$extras = $result2['extras'];
 		
 		$lastmod = $results->last_modified;
 		$externalDatasetLastModificationLog = date('m/d/Y H:i:s', strtotime($lastmod));
@@ -2739,7 +2741,7 @@ class DataSet {
 		$query = DataSet::updatePackage($name, $id_org, $description, $results->license, $tags, $id_dataset, $extras);
 
 		$idNewData = $id_dataset;
-		$old_resources = $result2[resources];
+		$old_resources = $result2['resources'];
 		$add_tres = false;
 		$geo_res = array();
 		/////////////////////resources////////////
@@ -3357,11 +3359,11 @@ class DataSet {
 				
 				//Getting harvest's URL
                 $datasetInfos = $api->getPackageShow2($dataset->id_data, "");
-                $met = $datasetInfos[metas][extras];
+                $met = $datasetInfos['metas']['extras'];
 				for($i=0; $i < (is_countable($met) ? count($met) : 0); $i++){
                     if($met[$i]['key']=='FTP_API'){
-						if($met[$i][value]!='FTP'){
-                        	$dataset->siteUrl =  $met[$i][value];
+						if($met[$i]['value']!='FTP'){
+                        	$dataset->siteUrl =  $met[$i]['value'];
                         } 
 					}
 				}

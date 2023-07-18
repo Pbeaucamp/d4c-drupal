@@ -1369,8 +1369,8 @@ class VisualisationController extends ControllerBase {
 		$schemaResult = '';
 		foreach ($dataValidation->schemaValidationResults as $schemaValidation) {
 
-			$columnsWithError = implode(', ', $schemaValidation->columnsWithError);
-			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
+			$columnsWithError = Tools::implode(', ', $schemaValidation->columnsWithError);
+			$rulesWithError = Tools::implode(', ', $schemaValidation->rulesWithError);
 
 			if ($schemaValidation->schema == 'rgpd_schema' || $schemaValidation->schema == 'interop_schema') {
 				$type = $schemaValidation->schema == 'rgpd_schema' ? 'RGPD' : 'INTEROP';
@@ -2340,7 +2340,7 @@ class VisualisationController extends ControllerBase {
 
 						if (sizeof($supSchemas) > 0) {
 							// Comma separated list of schemas
-							$schemas = implode(',', $supSchemas);
+							$schemas = Tools::implode(',', $supSchemas);
 							$buttonValidateDataSchemas = '
 								<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\', \'' . $schemas . '\')">
 									<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
