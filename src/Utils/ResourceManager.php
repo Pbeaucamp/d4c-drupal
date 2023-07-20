@@ -2246,6 +2246,8 @@ class ResourceManager {
 		// Writing the header
 		fputcsv($fp, $colNames, ',');
 
+		$index = 0;
+		
 		// $rows = array();
 		$colsTypes = array();
 		foreach($jsonItems as $feat) {
@@ -2279,7 +2281,7 @@ class ResourceManager {
 				}	
 				else {
 					$value = $feat["properties"][$col];
-					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !$this->isNumericColumn($json,$col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !$this->isNumericColumn($jsonItems, $col)){
 						//We replace " by "" to escape them
 						$value = str_replace('"', "\"\"", $value);
 
@@ -2303,6 +2305,8 @@ class ResourceManager {
 			// though CSV stands for "comma separated value"
 			// in many countries (including France) separator is ";"
 			fputcsv($fp, $row, ',');
+
+			$index++;
 		}
 
 		fclose($fp);
@@ -2316,10 +2320,15 @@ class ResourceManager {
 		return true;
 	}
 	
-	function isNumericColumn($json, $colName) {
-		for($i=0; $i< 100; $i++){
-			$val = $json["features"][$i]["properties"][$colName];
-			if( !is_numeric ($val)){
+	function isNumericColumn($jsonItems, $colName) {
+		$index = 0;
+		foreach($jsonItems as $feat) {
+			if ($index > 100) {
+				break;
+			}
+			$index++;
+			$val = $feat["properties"][$colName];
+			if (!is_numeric($val)){
 				return false;
 			} 
 		}

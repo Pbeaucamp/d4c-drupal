@@ -21,7 +21,7 @@ use SplFileObject;
 use ZipArchive;
 
 ini_set('memory_limit', '4G'); // or you could use 1G
-ini_set('max_execution_time', 200);
+ini_set('max_execution_time', 2000);
 
 /*
  *
