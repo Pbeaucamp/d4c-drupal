@@ -73,7 +73,7 @@ class typeColumnsForm extends HelpFormBase {
 				'event' => 'change',
 				'progress' => [
 					'type' => 'throbber',
-					'message' => $this->t('Chargement des connaissances...'),
+					'message' => $this->t('Chargement des jeux de données...'),
 				],
 			],
 		];
@@ -81,7 +81,7 @@ class typeColumnsForm extends HelpFormBase {
 		$selectedOrganization = $form_state->getValue(['filter_organisation']);
 		$form['selected_data'] = [
 			'#type' => 'textfield',
-			'#title' => t('Choix de la connaissance'),
+			'#title' => t('Choix du jeu de données'),
 			'#autocomplete_route_name' => 'ckan_admin.api.autocomplete.datasets',
 			'#autocomplete_route_parameters' => ['organization' => $selectedOrganization],
 			'#required' => TRUE,

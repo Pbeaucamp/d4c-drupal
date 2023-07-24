@@ -19,7 +19,7 @@ class portailController extends ControllerBase {
 		//$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$config = include(__DIR__ . "/../../config.php");
 
-		$title = 'Connaissances';
+		$title = 'Jeux de données';
 		$visualisations = '
 			<h3> Visualisations</h3>
 			<ul id="list-visu" class="list-group"></ul>
@@ -140,7 +140,7 @@ class portailController extends ControllerBase {
 								
 								<form id="search-form">
 									<div class="input-group" id="barreRecherche">
-										<input id="search_bar" type="text"  class="form-control" aria-label="recherche" placeholder="Rechercher une connaissance...">
+										<input id="search_bar" type="text"  class="form-control" aria-label="recherche" placeholder="Rechercher un jeu de données...">
 										<div class="input-group-btn">
 											<button class="btn-filter btn btn-default" type="submit">
 											<i class="glyphicon glyphicon-search"></i>
@@ -172,7 +172,7 @@ class portailController extends ControllerBase {
 								<ul id="list-tag" class="list-group"></ul>
 								' . $themes . '
 
-								<h2>Télécharger la liste des connaissances</h2>
+								<h2>Télécharger la liste des jeux de donnéess</h2>
 								<ul id="list-cat" class="list-group">
 									<li class="list-item" data-cat="csv"><i class="fa fa-file" aria-hidden="true"></i>CSV <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>
 									<li class="list-item" data-cat="xls"><i class="fa fa-file" aria-hidden="true"></i>XLS <span class="number_element"><i class="fa fa-download" aria-hidden="true"></i></span></li>

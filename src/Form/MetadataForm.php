@@ -176,7 +176,7 @@ abstract class MetadataForm extends FormBase {
 		// Add helper text for users
 		// $form['integration']['help'] = [
 		// 	'#type' => 'markup',
-		// 	'#markup' => $this->t('Les métadonnées sont des informations sur les connaissances. Elles sont utilisées pour décrire les connaissances et les rendre plus facilement accessibles. Elles sont également utilisées pour décrire les connaissances lors de leur publication sur l\'observatoire.'),
+		// 	'#markup' => $this->t('Les métadonnées sont des informations sur les jeux de donnéess. Elles sont utilisées pour décrire les jeux de donnéess et les rendre plus facilement accessibles. Elles sont également utilisées pour décrire les jeux de donnéess lors de leur publication sur l\'observatoire.'),
 		// 	// Add style to make the text bigger and a padding
 		// 	'#attributes' => [
 		// 		'style' => 'font-size: 1.2em; padding: 1em;',
@@ -185,7 +185,7 @@ abstract class MetadataForm extends FormBase {
 
 		$form['dataset_name'] = [
 			'#type' => 'textfield',
-			'#title' => $this->t('Nom de la connaissance'),
+			'#title' => $this->t('Nom du jeu de données'),
 			'#required' => TRUE,
 			'#default_value' => $selectedDataset != null ? $selectedDataset['title'] : ($datasetTitle != null ? $datasetTitle : ''),
 		];
@@ -308,7 +308,7 @@ abstract class MetadataForm extends FormBase {
 
 		$form['integration_option']['dataset_vignette'] = array(
             '#type' => 'managed_file',
-            '#title' => t("Vignette de la connaissance"),
+            '#title' => t("Vignette du jeu de données"),
             '#upload_location' => 'public://datasets',
             '#upload_validators' => array(
                 'file_validate_extensions' => array('jpeg png jpg svg gif WebP PNG JPG JPEG SVG GIF'),
@@ -1133,7 +1133,7 @@ abstract class MetadataForm extends FormBase {
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
-				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mise à jour.");
+				\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mise à jour.");
 			}
 			else {
 				// We build extras
@@ -1154,7 +1154,7 @@ abstract class MetadataForm extends FormBase {
 
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
-				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
+				\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
 			}
 
 			return $datasetId;
@@ -1163,10 +1163,10 @@ abstract class MetadataForm extends FormBase {
 
 			// If error contains "That URL is already in use"
 			if (strpos($e->getMessage(), "That URL is already in use") !== false) {
-				\Drupal::messenger()->addMessage("Le nom de la connaissance est déjà utilisé. Veuillez en choisir un autre.", 'error');
+				\Drupal::messenger()->addMessage("Le nom du jeu de données est déjà utilisé. Veuillez en choisir un autre.", 'error');
 			}
 			else {
-				\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création de la connaissance (" . t($e->getMessage()) . ").", 'error');
+				\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création du jeu de données (" . t($e->getMessage()) . ").", 'error');
 			}
 		}
 

@@ -3,8 +3,8 @@ access dictionnary:
  description: 'Typage des propriétés des colonnes et configuration des infobulles'
  
 access dataset:
- title: 'Création et modification connaissance'
- description: 'Création et modification connaissance'
+ title: 'Création et modification jeu de données'
+ description: 'Création et modification jeu de données'
  
 access organization:
  title: 'Création et modification organisations'
@@ -35,8 +35,8 @@ access view custom:
  description: 'Vues personnalisées'
 
 access dataset_board:
- title: 'Tableau de contrôle des connaissances'
- description: 'Tableau de contrôle des connaissances'
+ title: 'Tableau de contrôle des jeux de données'
+ description: 'Tableau de contrôle des jeux de données'
 
 administer site configuration:
  title: 'Configuration administration'

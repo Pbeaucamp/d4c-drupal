@@ -39,7 +39,7 @@ class ManageDatasetForm extends MetadataForm
 		$includeScheduler = $type == 'limesurvey' || $type == 'api' || $type == 'sftp' || $type == 'geo';
 		$selectedDataset = parent::loadDataset($selectedDatasetId);
 
-		$form['text']['#markup'] = t(isset($selectedDataset) ? '<h1>Modifier ' . $selectedDataset['metas']['title'] . '</h1>' : '<h1>Création d\'une connaissance</h1>');
+		$form['text']['#markup'] = t(isset($selectedDataset) ? '<h1>Modifier ' . $selectedDataset['metas']['title'] . '</h1>' : '<h1>Création d\'un jeu de données</h1>');
 
 		$form = parent::buildMetadataForm($form, $form_state, $selectedDataset, $includeSchemas, $includeScheduler, true);
 		
@@ -73,7 +73,7 @@ class ManageDatasetForm extends MetadataForm
 				'#maxlength' => 1024,
 				'#required' => TRUE,
 				'#default_value' => isset($item) ? $item : '',
-				'#description' => t('URL de l\'API à utiliser pour la connaissance'),
+				'#description' => t('URL de l\'API à utiliser pour le jeu de données'),
 			);
 
 			// Add format selection
@@ -228,7 +228,7 @@ class ManageDatasetForm extends MetadataForm
 
 		$form['actions']['submit'] = [
 			'#type' => 'submit',
-			'#value' => isset($selectedDatasetId) ? $this->t('Modifier la connaissance') : $this->t('Créer la connaissance'),
+			'#value' => isset($selectedDatasetId) ? $this->t('Modifier le jeu de données') : $this->t('Créer le jeu de données'),
 			'#attributes' => [
 				'onclick' => 'generateTaskUniqueId(); checkProgress();',
 			],
@@ -237,12 +237,12 @@ class ManageDatasetForm extends MetadataForm
 		if (isset($selectedDatasetId)) {
 			$form['actions']['delete'] = [
 				'#type' => 'submit',
-				'#value' => $this->t('Supprimer la connaissance'),
+				'#value' => $this->t('Supprimer le jeu de données'),
 				'#submit' => ['::deleteDataset'],
 				'#limit_validation_errors' => [],
 				'#attributes' => [
 					'class' => ['btn', 'btn-danger'],
-					'onclick' => 'if (!confirm("Voulez vous vraiment supprimer cette connaissance ?")) { return false; }'
+					'onclick' => 'if (!confirm("Voulez vous vraiment supprimer cet jeu de données ?")) { return false; }'
 				],
 			];
 		}
@@ -487,7 +487,7 @@ class ManageDatasetForm extends MetadataForm
 					$isUpdate = true;
 				}
 			} catch (\Exception $e) {
-				\Drupal::messenger()->addMessage(t('Une erreur est survenue lors de la création ou modification de la connaissance. (Erreur: '. $e->getMessage() . ')'), 'error');
+				\Drupal::messenger()->addMessage(t('Une erreur est survenue lors de la création ou modification du jeu de données. (Erreur: '. $e->getMessage() . ')'), 'error');
 				$this->cleanResources($file);
 				return;
 			}
@@ -570,7 +570,7 @@ class ManageDatasetForm extends MetadataForm
 						return;
 					}
 				} catch (\Exception $e) {
-					\Drupal::messenger()->addMessage(t('Une erreur est survenue lors de la génération du processus de création de connaissance. (Erreur: '. $e->getMessage() . ')'), 'error');
+					\Drupal::messenger()->addMessage(t('Une erreur est survenue lors de la génération du processus de création du jeu de données. (Erreur: '. $e->getMessage() . ')'), 'error');
 					$this->cleanResources($file);
 					return;
 				}

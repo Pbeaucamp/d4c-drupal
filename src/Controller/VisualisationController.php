@@ -1549,7 +1549,7 @@ class VisualisationController extends ControllerBase {
 			$messageRgpd = "Ce jeu de données nécessite d'être connectée pour être consulté car il contient des données RGPD.";
 		}
 		else {
-			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur le jeu de données sont enregistrées.";
+			$messageRgpd = "Ce jeu de données contient des données RGPD. Les actions sur le jeu de données sont enregistrées.";
 		}
 
 		return '
@@ -2006,15 +2006,15 @@ class VisualisationController extends ControllerBase {
 
 		$buttonEditMetadata = '
 			<a id="btn-edit-data" href="' . $editDatasetUrl . '" target="_self">
-				<img alt="Modifier la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
-				<span>Modifier la connaissance</span>
+				<img alt="Modifier le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit_meta.png">
+				<span>Modifier le jeu de données</span>
 			</a>';
 
 		$configureDatasetUrl = "{{ path('ckan_admin.typeColumnsForm', { 'dataset-id': '$datasetId', 'resource-id': '$selectedResourceId'}) }}";
 		$buttonConfigureDataset = '
 			<a id="btn-configure-dataset" href="' . $configureDatasetUrl . '" target="_self">
-				<img alt="Paramétrage de la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/manage_observatoire.png">
-				<span>Paramétrage de la connaissance</span>
+				<img alt="Paramétrage du jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/manage_observatoire.png">
+				<span>Paramétrage du jeu de données</span>
 			</a>';
 
 			// Part edit data
