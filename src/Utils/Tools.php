@@ -132,7 +132,7 @@ class Tools {
         if (is_null($array)) {
             return 0;
         }
-        if (!is_array($array)) {
+        if (!is_countable($array)) {
             return 1;
         }
         return count($array);
