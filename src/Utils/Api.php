@@ -2315,12 +2315,13 @@ class Api
 			if ($hasVirtualGeoPoint) {
 				foreach ($data as $key => $value) {
 					$data[$key]["geo_point_2d"] = $value[$fieldLatitude] . "," . $value[$fieldLongitude];
+
 					// If the lat and lon columns are not required, we have to remove them
-					if (!in_array($fieldLatitude, $reqFields)) {
+					if (!in_array($fieldLatitude, $reqFieldsArray)) {
 						unset($data[$key][$fieldLatitude]);
 					}
 
-					if (!in_array($fieldLongitude, $reqFields)) {
+					if (!in_array($fieldLongitude, $reqFieldsArray)) {
 						unset($data[$key][$fieldLongitude]);
 					}
 				}

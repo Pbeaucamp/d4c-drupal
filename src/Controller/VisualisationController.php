@@ -2245,7 +2245,7 @@ class VisualisationController extends ControllerBase {
 			$displayEditor = false;
 			foreach($fields as $key=>$value) {
 				$canEdit = false;
-				if (sizeof($value["annotations"]) > 0 ) {
+				if (isset($value["annotations"]) && sizeof($value["annotations"]) > 0 ) {
 					foreach($value["annotations"] as $key2=>$annotation) {
 						if ($annotation["name"] == "can_edit") {
 							$canEdit = true;
