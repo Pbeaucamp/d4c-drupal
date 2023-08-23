@@ -459,7 +459,7 @@ class VisualisationController extends ControllerBase {
 				}
 
 				if ($isAdmin || $isUserRO) {
-					$tabAdmin = $this->buildTabAdmin($dataset, $name);
+					$tabAdmin = $this->buildTabAdmin($dataset, $name, $selectedResourceId);
 				}
 			}
 		}
@@ -1986,7 +1986,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 	
-	function buildTabAdmin($dataset, $name) {
+	function buildTabAdmin($dataset, $name, $selectedResourceId) {
 		$datasetId = $dataset["metas"]["id"];
 		//Getting current resourceId
 		if ($selectedResourceId == null) {

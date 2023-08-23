@@ -6,6 +6,7 @@
 
 namespace Drupal\ckan_admin\Form;
 
+use Drupal\ckan_admin\Model\D4CMetadata;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\Query;
@@ -374,7 +375,7 @@ class editMetaDataForm extends HelpFormBase {
 		
         $form['selected_visu'] = array(
             '#type' => 'select',
-            '#title' => t('*Visuallisation par défaut :'),
+            '#title' => t('*Visualisation par défaut :'),
             '#options' => array('Informations', 'Tableau', 'Analyse', 'Carte', 'Vues personalisées', 'Frise', 'Calendrier', 'Nuage de mots'),
             '#attributes' => array('style' => 'width: 50%;'),
         );
@@ -952,7 +953,6 @@ class editMetaDataForm extends HelpFormBase {
 				// $newExtras['source'] = $source;
 				$newExtras['donnees_source'] = $donnees_source;
 				$newExtras['mention_legales'] = $mention_legales;
-				$newExtras['frequency-of-update'] = $frequence;
 				$newExtras['displayVersionning'] = $displayVersionning;
 				$newExtras['dataRgpd'] = $dataRgpd;
 				$newExtras['territory'] = $territory;
@@ -963,9 +963,14 @@ class editMetaDataForm extends HelpFormBase {
 				$newExtras['bbox_west_long'] = $bbox_west_long;
 				$newExtras['spatial'] = $spatial;
 
+				$inspireMetadata = array();
+				if (isset($frequence) && $frequence != "") {
+					$inspireMetadata[] = new D4CMetadata("frequency-of-update", $frequence);
+				}
+
 				if ($datasetId == 'new') {
 					// We build extras
-					$extras = $resourceManager->defineExtras(null, $newExtras);
+					$extras = $resourceManager->defineExtras(null, $newExtras, null, $inspireMetadata);
 
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 

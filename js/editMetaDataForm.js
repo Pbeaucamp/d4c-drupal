@@ -547,7 +547,7 @@ function fillData(data) {
             //Setting default value
             var selected = "default";
             $('#edit-selected-themes input').each(function (index, cb) {
-                if (selected.indexOf(cb.defaultValue) != -1) {
+                if (selected === cb.defaultValue) {
                     cb.checked = true;
                 }
             });
@@ -564,7 +564,7 @@ function fillData(data) {
 
             $('#edit-selected-themes input').each(function (index, cb) {
                 for (var i=0; i < values.length; i++) {
-                    if (values[i].indexOf(cb.defaultValue) != -1) {
+                    if (values[i] === cb.defaultValue) {
                         cb.checked = true;
                         break;
                     }

@@ -77,6 +77,14 @@ abstract class MetadataForm extends FormBase {
 
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
+			
+			//Removing HTML tags
+			// $Parsedown = new Parsedown();
+			// $description = $Parsedown->text($dataset["metas"]["notes"]);
+
+			// We remove html tags and &quot; as it breaks json
+			$description = strip_tags($selectedDataset["description"]);
+			$description = str_replace(array('&quot;'), array("'"), $description);
 
 			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
 
@@ -235,7 +243,8 @@ abstract class MetadataForm extends FormBase {
 		$form['integration_option']['dataset_description'] = [
 			'#type' => 'textarea',
 			'#title' => $this->t('Description'),
-			'#default_value' => $selectedDataset != null ? $selectedDataset['description'] : '',
+			'#default_value' => $selectedDataset != null ? $description : '',
+			'#description' => $this->t('Vous pouvez utiliser le format <a href="https://fr.wikipedia.org/wiki/Markdown">Markdown</a> pour mettre en forme votre texte.'),
 		];
 
 		$form['integration_option']['source'] = [
