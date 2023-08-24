@@ -1002,7 +1002,7 @@ class editMetaDataForm extends HelpFormBase {
 					//Update extras
 					$extras = $datasetToUpdate[extras];
 
-					$extras = $resourceManager->defineExtras($extras, $newExtras);
+					$extras = $resourceManager->defineExtras($extras, $newExtras, null, $inspireMetadata);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");

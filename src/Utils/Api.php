@@ -7352,7 +7352,7 @@ class Api
 			$reader->close();
 			$writer->close();
 
-			unlink($fileInput);
+			unlink($pathInput);
 
 			header('Content-Length: ' . filesize($pathOutput));
 			readfile($pathOutput);
