@@ -42,6 +42,7 @@ class VisualisationController extends ControllerBase {
 
 	private $config;
 	private $locale;
+	private $noIndex;
     
 	public function __construct(){
 		$this->config = include(__DIR__ . "/../../config.php");
@@ -250,7 +251,7 @@ class VisualisationController extends ControllerBase {
 		);
 		$element['#attached']['library'][] = 'ckan_admin/visu.angular';
 
-		if ($isPrivate || $isRgpd) {
+		if ($this->noIndex || $isPrivate || $isRgpd) {
 			$noindex = [
 				'#tag' => 'meta',
 				'#attributes' => [
@@ -2510,6 +2511,22 @@ class VisualisationController extends ControllerBase {
 				$visualizationPart = '';
 				$widgetPart = '';
 				if (isset($visualization)) {
+					// We need to check if the associated dataset has rgpd data so we can set noIndex to true
+
+					try {
+						$datasetId = $visualization["dataset_id"];
+						if (isset($datasetId)) {
+							$dataset = $api->getPackageShow2($datasetId, "", true, false, null, true);
+	
+							$metadata = $dataset["metas"];
+							$metadataExtras = $metadata["extras"];
+							$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
+							if ($isRgpd) {
+								$this->noIndex = true;
+							}
+						}
+					} catch (\Exception $e) { }
+
 					$iframeUrl = $visualization['share_url'];
 					$widget = $visualization["widget"];
 					$widget = str_replace(array("'"), array("\'"), $widget);
