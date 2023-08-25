@@ -929,6 +929,14 @@ ckan_admin.userstory:
   requirements:
     _permission: 'administer site configuration'
 
+ckan_admin.admin_properties:
+  path: '/admin/config/properties'
+  defaults:
+    _form: 'Drupal\ckan_admin\Form\ManageD4CPropertiesForm'
+    _title: 'Configuration du site'
+  requirements:
+    _permission: 'administer site configuration'
+
 ckan_admin.callTaskStatus:
   path: '/d4c/api/taskStatus/{id}'
   defaults:

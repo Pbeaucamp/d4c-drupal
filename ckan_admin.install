@@ -603,3 +603,25 @@ function ckan_admin_update_8712(&$sandbox) {
   $schema = Database::getConnection()->schema();
   $schema->createTable('d4c_user_story', $spec);
 }
+
+function ckan_admin_update_8713(&$sandbox) {
+  $table_name = 'd4c_properties';
+
+  $spec = [
+    'description' => 'Gestion des proprietes',
+    'fields' => [
+      'key' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'value' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['key']);
+}

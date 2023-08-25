@@ -4,6 +4,8 @@ namespace Drupal\ckan_admin\Utils;
 
 class PropertiesHelper {
 
+	const DATABASE_TABLE = 'd4c_properties';
+
 	// Create constants for the keys of the properties we want to use.
 	const PACKAGE_DOWNLOAD_LIMIT = 'package_download_limit';
 	const CO_LINKED_SURVEYS = 'co_linked_surveys';
@@ -12,13 +14,13 @@ class PropertiesHelper {
 	const TYPES_MIME = 'types_mime';
 	const STOCKAGE_ALERT_THRESHOLD = 'stockage_alert_threshold';
 	const STOCKAGE_ALERT_STATUS = 'stockage_alert_status';
+	const RESERVED_COLUMNS_GEOPOINT = 'reserved_columns_geopoint';
+	const RESERVED_COLUMNS_GEOSHAPE = 'reserved_columns_geoshape';
 
 	private $config;
-	private $properties;
 
 	public function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
-		$this->properties = json_decode(file_get_contents(__DIR__ . "/../../properties.json"), true);
 	}
 
 	private function getApiOptions() {
@@ -64,7 +66,21 @@ class PropertiesHelper {
 	}
 
 	private function extractProperty($key, $decodeBase64) {
-		$value = $this->properties[$key];
+		$query = \Drupal::database()->select(self::DATABASE_TABLE, "properties");
+		$query->fields('properties', [
+			'value'
+		]);
+		$query->condition('key', $key);
+
+		$prep = $query->execute();
+        $data = $prep->fetchAll();
+
+		if (empty($data)) {
+			return null;
+		}
+
+		$value = $data[0]->value;
+
 		if ($decodeBase64)
 			$value = base64_decode($value);
 		return $value;
@@ -73,7 +89,19 @@ class PropertiesHelper {
 	public function setProperty($key, $value, $encodeBase64 = false) {
 		if ($encodeBase64)
 			$value = base64_encode($value);
-		$this->properties[$key] = $value;
-		file_put_contents(__DIR__ . "/../../properties.json", json_encode($this->properties, JSON_PRETTY_PRINT));
+
+			$database = \Drupal::database();
+			$query = $database->upsert(self::DATABASE_TABLE)
+				->fields([
+					'key',
+					'value',
+				])
+				->values([
+					$key,
+					$value,
+				])
+				->key('key');
+	
+			$query->execute();
 	}
 }
