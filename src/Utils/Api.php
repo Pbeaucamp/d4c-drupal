@@ -3985,7 +3985,6 @@ class Api
 
 	public function getDatastoreRecord_v2($params)
 	{
-
 		//dataset q lang rows start sort facet refine exclude geofilter.distance geofilter.polygon timezone
 		$patternRefine = '/refine./i';
 		$patternExclude = '/exclude./i';
@@ -8977,7 +8976,7 @@ class Api
 			// Check connected user is allowed to see this private dataset
 			// User must be ad or ro to see private datasets
 			$current_user = \Drupal::currentUser();
-			
+
 			// If the user is an admin, we do not filter by organisation
 			if (!isset($current_user) || (!in_array("administrator", $current_user->getRoles()) && !in_array("ro", $current_user->getRoles()))) {
 				return false;

@@ -401,6 +401,8 @@ ckan_admin.api3.ods:
     _controller: '\Drupal\ckan_admin\Utils\Api::callDatastoreApi_v2'
     params: ''
     _title: ''
+  options:
+    _auth: [ 'basic_auth' ]
   requirements:
     _permission: 'access content'
 
