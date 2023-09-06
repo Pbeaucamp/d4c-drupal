@@ -39,6 +39,7 @@ return (object) array(
 		'master_api_login' => getenv('MASTER_API_LOGIN'),
 		'master_api_password' => getenv('MASTER_API_PASSWORD'),
 		'drupal_root' => getenv('DRUPAL_ROOT'),
+		'shapefile_projection' => getenv('CLIENT_SHAPEFILE_PROJECTION'),
 	),
 	'sitesSearch' => (object) array(
 		'https://yyy.data4citizen.com/',

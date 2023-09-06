@@ -625,3 +625,13 @@ function ckan_admin_update_8713(&$sandbox) {
 
   Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['key']);
 }
+
+function ckan_admin_update_8714(&$sandbox) {
+  $spec = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'description' => "Ordre des vues personnalisees",
+  ); 
+  $schema = Database::getConnection()->schema();
+  $schema->addField('d4c_custom_views_html', 'cvh_order', $spec);
+}

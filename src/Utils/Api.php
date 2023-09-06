@@ -2528,6 +2528,8 @@ class Api
 				$command = $scriptPath . " 2>&1 '" . $typeConvert . "' " . $pathOutput . " " . $pathInput . " " . $projection . " " . $filename;
 				$message = shell_exec($command);
 
+				Logger::logMessage("OGR2OGR - Output message : " . $message);
+
 				if ($format == "kml") {
 					header('Content-Length: ' . filesize($pathOutput));
 					readfile($pathOutput);
