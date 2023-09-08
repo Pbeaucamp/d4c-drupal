@@ -635,3 +635,28 @@ function ckan_admin_update_8714(&$sandbox) {
   $schema = Database::getConnection()->schema();
   $schema->addField('d4c_custom_views_html', 'cvh_order', $spec);
 }
+
+function ckan_admin_update_8715(&$sandbox) {
+  $table_name = 'd4c_dataset_password';
+
+  $spec = [
+    'description' => 'Gestion des mots de passe pour dataset',
+    'fields' => [
+      'dataset_id'=>array(
+        'type' => 'text',
+        'description' => "Dataset ID",
+        'not null' => TRUE,
+      ),
+      'password' => [
+        'type' => 'varchar',
+        'description' => "Password",
+        'length' => 255,
+        'not null' => TRUE,
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['dataset_id']);
+}

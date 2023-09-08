@@ -1154,6 +1154,15 @@ ckan_admin.datasets.visualization:
     _permission: 'access content'
   methods: [POST, PUT, DELETE]
     
+ckan_admin.datasets.visualization_unlock:
+  path: '/d4c/api/v1/visualization/unlock'
+  defaults:
+    _controller: '\Drupal\ckan_admin\Utils\Api::callVisualizationUnlock'
+    _title: ''
+  requirements:
+    _permission: 'access content'
+  methods: [POST]
+    
 ckan_admin.api.properties:
   path: '/d4c/api/v1/properties/{params}'
   defaults:

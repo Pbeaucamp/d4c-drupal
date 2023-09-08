@@ -1654,25 +1654,28 @@ class VisualisationController extends ControllerBase {
 		$apiManager = new Api();
 
 		$dataset = $apiManager->getPackageShow2($datasetId, "", true, false, null, true);
-		$organization = $dataset['metas']['organization']['name'];
+		// Dataset does not exist or the user does not have the right to see it
+		if (isset($dataset["metas"]["id"])) {
+			$organization = $dataset['metas']['organization']['name'];
 
-		if ($organization != $observatory) {
-			// We need to get the organization url if it exist
-			$organization = $apiManager->getOrganization("id=" . $organization);
-			$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
-			if (isset($organizationUrl)) {
-				// Check if contains http
-				if (strpos($organizationUrl, 'http') === false) {
-					$organizationUrl = "https://" . $organizationUrl;
+			if ($organization != $observatory) {
+				// We need to get the organization url if it exist
+				$organization = $apiManager->getOrganization("id=" . $organization);
+				$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
+				if (isset($organizationUrl)) {
+					// Check if contains http
+					if (strpos($organizationUrl, 'http') === false) {
+						$organizationUrl = "https://" . $organizationUrl;
+					}
+				}
+				else {
+					// We put the url of the master organization
+					$organizationUrl = $masterUrl;
 				}
 			}
-			else {
-				// We put the url of the master organization
-				$organizationUrl = $masterUrl;
-			}
-		}
 
-		$datasetUrl = $organizationUrl . "/visualisation?id=" . $datasetId;
+			$datasetUrl = $organizationUrl . "/visualisation?id=" . $datasetId;
+		}
 		return '
 			<div class="col-sm-9 download-item">
 				<i class="fa fa-gauge-high inline download-img" fa-4x></i>
@@ -2518,12 +2521,21 @@ class VisualisationController extends ControllerBase {
 						if (isset($datasetId)) {
 							$dataset = $api->getPackageShow2($datasetId, "", true, false, null, true);
 	
-							$metadata = $dataset["metas"];
-							$metadataExtras = $metadata["extras"];
-							$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
-							if ($isRgpd) {
-								$this->noIndex = true;
+							if (isset($dataset["metas"]["id"])) {
+								$metadata = $dataset["metas"];
+								$metadataExtras = $metadata["extras"];
+								$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
+								if ($isRgpd) {
+									$this->noIndex = true;
+								}
+								$isVisualizationAvailable = true;
 							}
+							else {
+								$isVisualizationAvailable = false;
+							}
+						}
+						else {
+							$isVisualizationAvailable = true;
 						}
 					} catch (\Exception $e) { }
 
@@ -2541,8 +2553,23 @@ class VisualisationController extends ControllerBase {
 						</div>
 					';
 				}
-				else {
-					$visualizationPart = 'La visualisation n\'est pas disponible';
+
+				$hasPassword = true;
+				if ($hasPassword) {
+					// Had a text field and a button to validate password
+					$visualizationPart = '
+						<div>					
+							<d4c-pass context="ctx" visualization-id="' . $entityId . '"/>
+						</div>
+						<div>
+							<iframe id="visualizationFrame" frameborder="0" width="100%" height="600px"></iframe>
+						</div>
+					';
+					$widgetPart = '';
+				}
+				else if (!$isVisualizationAvailable) {
+					$visualizationPart = 'La visualisation n\'est pas disponible ou vous n\'avez pas les droits pour la consulter';
+					$widgetPart = '';
 				}
 		
 				return '

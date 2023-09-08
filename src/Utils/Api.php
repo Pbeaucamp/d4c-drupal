@@ -4837,8 +4837,6 @@ class Api
 			$query_params['resource_id'] = $resourceCSV;
 		}
 
-		Logger::logMessage("TRM - Parameters " . json_encode($query_params));
-
 		$ySeries = array();
 		foreach ($query_params as $key => $value) {
 			if (preg_match($patternSerie, $key)) {
@@ -9192,6 +9190,34 @@ class Api
 		$query->execute();
 	}
 
+	function callVisualizationUnlock() {
+		$request_body = file_get_contents('php://input');
+		$data = json_decode($request_body);
+
+		$datasetId = $data->datasetId;
+		$visualizationId = $data->visualizationId;
+		$password = $data->password;
+
+		$passwordMatch = false;
+		$iframeUrl = "";
+
+		if ($this->checkDatasetPassword($datasetId, $password)) {
+			$visualization = $this->getVisualization($visualizationId);
+			$iframeUrl = $visualization['share_url'];
+
+			$passwordMatch = true;
+		}
+
+		$result = array();
+		$result["status"] = $passwordMatch ? "success" : "error";
+		$result["iframeUrl"] = $iframeUrl;
+
+		$response = new Response();
+		$response->setContent(json_encode($result));
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
+
 	function callGlobalVisualizations() {
 		echo $this->getVisualizations();
 		$response = new Response();
@@ -9374,4 +9400,76 @@ class Api
 		$response->setContent(json_encode($result));
 		return $response;
 	}
+
+	// Create a method to manage a dataset and insert it in DB the table d4c_dataset_password
+	// The password must be hash before insertion
+	function manageDatasetPassword($datasetId, $password) {
+
+		Logger::logMessage("Adding password for dataset '" . $datasetId . "'");
+		$table = "d4c_dataset_password";
+		
+		$this->deleteDatasetPassword($datasetId);
+
+		if (isset($password) && $password != '') {
+			// Hash password
+			$pwdHashed = password_hash($password, PASSWORD_DEFAULT);
+
+			$query = \Drupal::database()->insert($table);
+			$query->fields([
+				'dataset_id',
+				'password'
+			]);
+			$query->values([
+				$datasetId,
+				$pwdHashed
+			]);
+	
+			$query->execute();
+		}
+	}
+
+	function deleteDatasetPassword($datasetId) {
+		$table = "d4c_dataset_password";
+
+		// We remove the password set for this dataset
+		$query = \Drupal::database()->delete($table);
+		$query->condition('dataset_id', $datasetId);
+		$query->execute();
+	}
+
+	function checkDatasetPassword($datasetId, $password) {
+		$table = "d4c_dataset_password";
+		$query = \Drupal::database()->select($table, 'dataset_password');
+
+		$query->fields('dataset_password', [
+			'password'
+		]);
+		$query->condition('dataset_id', $datasetId);
+
+		$prep = $query->execute();
+        $data = $prep->fetchAll();
+
+		if (empty($data)) {
+			return null;
+		}
+
+		$pwd_peppered = $data[0]->password;
+		return password_verify($password, $pwd_peppered);
+	}
+
+	function hasDatasetPassword($datasetId) {
+		$table = "d4c_dataset_password";
+		$query = \Drupal::database()->select($table, 'dataset_password');
+
+		$query->fields('dataset_password', [
+			'password'
+		]);
+		$query->condition('dataset_id', $datasetId);
+
+		$prep = $query->execute();
+        $data = $prep->fetchAll();
+
+		return !empty($data);
+	}
+
 }

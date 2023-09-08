@@ -52,7 +52,7 @@ abstract class MetadataForm extends FormBase {
 		return array_values($datasetModel)[0]["value"];
 	}
 
-	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false) {
+	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false, $type = null) {
 		$config = include(__DIR__ . "/../../config.php");
 		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
 
@@ -69,9 +69,12 @@ abstract class MetadataForm extends FormBase {
         $api = new Api;
 
 		if (isset($selectedDataset)) {
-			Logger::logMessage("Selected dataset " . $selectedDataset['metas']['id']);
+			$datasetId = $selectedDataset['metas']['id'];
+			Logger::logMessage("Selected dataset " . $datasetId);
 
 			$organization = $selectedDataset['metas']['organization']['name'];
+
+			$hasPassword = $api->hasDatasetPassword($datasetId);
 
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
@@ -189,6 +192,22 @@ abstract class MetadataForm extends FormBase {
 			'#required' => TRUE,
 			'#default_value' => $selectedDataset != null && $selectedDataset['private'] == 1 ? 1 : 0,
         );
+
+		// For now we only allow to create a password with type dataset = 'tdb' or 'visualization'
+		if ($type == 'visualization' || $type = 'tdb') {
+			$form['dataset_password'] = array(
+				'#type' => 'textfield',
+				'#title' => t('Mot de passe :'),
+				'#description' => t('Il est possible d\'ajouter un mot de passe pour les visualisations publiques. Ce mot de passe sera demandé aux utilisateurs qui souhaitent accéder à la visualisation.'),
+				'#required' => FALSE,
+				'#default_value' => $hasPassword ? '****' : '',
+				'#states' => array(
+					'invisible' => array(
+						':input[name="dataset_private"]' => array('value' => 1),  
+					),
+				),
+			);
+		}
 
 		$form['integration_option'] = [
 			'#type' => 'details',
@@ -774,6 +793,10 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue('dataset_private') == '1';
 	}
 
+	public function getDatasetPassword(FormStateInterface $form_state) {
+		return $form_state->getValue('dataset_password');
+	}
+
 	public function getDescription(FormStateInterface $form_state) {
 		return $form_state->getValue(['integration_option','dataset_description']);
 	}
@@ -1025,6 +1048,7 @@ abstract class MetadataForm extends FormBase {
         $tags = $this->getTags($form_state);
         $licence = $this->getDatasetLicence($form_state);
         $isPrivate = $this->getDatasetIsPrivate($form_state);
+		$password = $this->getDatasetPassword($form_state);
 		$contributor = $this->getDatasetContributor($form_state);
 		$dateDeposit = $this->getDatasetDepositDate($form_state);
 		$username = $this->getDatasetUsername($form_state);
@@ -1059,6 +1083,7 @@ abstract class MetadataForm extends FormBase {
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
 					$licence, $organization, $isPrivate, $tags, $extras, null);
+
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mise à jour.");
 			}
 			else {
@@ -1083,6 +1108,11 @@ abstract class MetadataForm extends FormBase {
 				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
+			}
+
+			// If password does not equal to default value
+			if ($password != '****') {
+				$api->manageDatasetPassword($datasetId, $password);
 			}
 
 			return $datasetId;
