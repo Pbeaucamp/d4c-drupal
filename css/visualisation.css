@@ -27,3 +27,5 @@ SOFTWARE.
 .d4c-tabs__tab.table{width:auto!important;}
 .leaflet-draw {display: initial !important;}
 #disqus_thread{margin-top: 20px;padding: 0 20px;background-color: white;box-shadow: 0 8px 20px #CCC;border-radius:3px;}
+
+.d4c-chart-controls_background-color-border { border: 1px solid lightgrey; }
