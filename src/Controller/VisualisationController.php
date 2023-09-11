@@ -332,7 +332,7 @@ class VisualisationController extends ControllerBase {
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected, $visualization);
+		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected, $visualization);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -472,11 +472,11 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected, $visualization = null) {
+	function buildTabs($api, $tab, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected, $visualization = null) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 		$data4citizenType = $this->exportExtras($metadataExtras, 'data4citizen-type');
 
-		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
+		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
 		if (!$rgpdNonConnected) {
 
 			if ($data4citizenType == 'visualization') {
@@ -536,7 +536,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
+	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
 		// $source = $sources[1];
@@ -560,7 +560,7 @@ class VisualisationController extends ControllerBase {
 		$dataValidation = $this->buildDataValidation($metadataExtras);
 
 		//SYNTHÈSE
-		$synthese = $this->buildSynthese($dataset, $metadataExtras, $themes, $keywords);
+		$synthese = $this->buildSynthese($dataset, $licence, $metadataExtras, $themes, $keywords);
 
 		//CONTACTS
 		$contacts = $this->buildContacts($loggedIn, $metadataExtras);
@@ -1049,7 +1049,7 @@ class VisualisationController extends ControllerBase {
 		return json_last_error() === JSON_ERROR_NONE;
 	 }
 
-	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
+	function buildSynthese($dataset, $licence, $metadataExtras, $themes, $keywords) {
 		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
 		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
 		$encoding = $this->exportExtras($metadataExtras, 'encoding');
@@ -1101,6 +1101,15 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-file"></i>
 					<span class="ms-2">Encodage : <b>' . $encoding . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($licence)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-unlock"></i>
+					<span class="ms-2">Licence : <b>' . $licence . '</b></span>
 				</div>
 			';
 		}
