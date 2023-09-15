@@ -480,10 +480,10 @@ class VisualisationController extends ControllerBase {
 		if (!$rgpdNonConnected) {
 
 			if ($data4citizenType == 'visualization') {
-				$tabVisualization = $this->buildTabVisualization($api, $metadataExtras);
+				$tabVisualization = $this->buildTabVisualization($api, $id, $metadataExtras);
 			}
 			else if ($data4citizenType == 'tdb') {
-				$tabVisualization = $this->buildTabTDB($api, $metadataExtras);
+				$tabVisualization = $this->buildTabTDB($api, $id, $metadataExtras);
 			}
 			else {
 				$tabTable = $this->buildTabTable($loggedIn, $visualization);
@@ -2505,7 +2505,7 @@ class VisualisationController extends ControllerBase {
 	}
 
 	/* Other types of dataset */
-	function buildTabVisualization($api, $metadataExtras) {
+	function buildTabVisualization($api, $visualizationDatasetId, $metadataExtras) {
 		$type = $this->exportExtras($metadataExtras, 'data4citizen-type');
 		$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
 
@@ -2563,7 +2563,7 @@ class VisualisationController extends ControllerBase {
 					';
 				}
 
-				$hasPassword = true;
+				$hasPassword = $api->hasDatasetPassword($visualizationDatasetId);
 				if ($hasPassword) {
 					// Had a text field and a button to validate password
 					$visualizationPart = '
@@ -2595,10 +2595,30 @@ class VisualisationController extends ControllerBase {
 	}
 
 	/* Other types of dataset */
-	function buildTabTDB($api, $metadataExtras) {
+	function buildTabTDB($api, $visualizationDatasetId, $metadataExtras) {
 		$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
 		$datasetModel = json_decode($datasetModel, true);
 		$tdbUrl = $datasetModel['item'];
+
+
+		// Work in progress
+		// $hasPassword = $api->hasDatasetPassword($visualizationDatasetId);
+		// if ($hasPassword) {
+		// 	// Had a text field and a button to validate password
+		// 	$visualizationPart = '
+		// 		<div>					
+		// 			<d4c-pass context="ctx" visualization-id="' . $entityId . '"/>
+		// 		</div>
+		// 		<div>
+		// 			<iframe id="visualizationFrame" frameborder="0" width="100%" height="600px"></iframe>
+		// 		</div>
+		// 	';
+		// 	$widgetPart = '';
+		// }
+		// else if (!$isVisualizationAvailable) {
+		// 	$visualizationPart = 'La visualisation n\'est pas disponible ou vous n\'avez pas les droits pour la consulter';
+		// 	$widgetPart = '';
+		// }
 
 		$visualizationPart = '';
 		if (isset($tdbUrl)) {

@@ -194,7 +194,7 @@ abstract class MetadataForm extends FormBase {
         );
 
 		// For now we only allow to create a password with type dataset = 'tdb' or 'visualization'
-		if ($type == 'visualization' || $type = 'tdb') {
+		if ($type == 'visualization') {
 			$form['dataset_password'] = array(
 				'#type' => 'textfield',
 				'#title' => t('Mot de passe :'),
