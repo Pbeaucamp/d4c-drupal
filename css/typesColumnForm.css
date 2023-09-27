@@ -6,6 +6,9 @@ html{font-size:16px!important;}
 }
 #shared-lists{
     position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
 }
 #empty-col{
 	color: rgb(153, 153, 153);
