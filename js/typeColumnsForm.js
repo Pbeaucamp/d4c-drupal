@@ -417,11 +417,37 @@ function loadTooltip(idDataset, dataFields) {
 						}
 					});
 					list1.options.onRemove(null);
-					new Sortable(right, {
+					var list2 = new Sortable(right, {
 						group: 'shared',
 						animation: 150,
-						sort: false
+						sort: false,
+						getData: function (/**Event*/evt) {
+							text = $("#list-right")[0].innerText;
+							if (text == "") {
+								return [];
+							} else {
+								return text.split("\n");
+							}
+
+						},
+						onRemove: function (/**Event*/evt) {
+							if (list2.options.getData().length == 0) {
+								$("#shared-lists").append("<div id='empty-col-right' class='col-md-6'>Veuillez déposer les items ici</div>");
+							}
+							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
+							$("#edit-fields").val(list2.options.getData().join(','));
+						},
+						onAdd: function (/**Event*/evt) {
+							if (list2.options.getData().length == 1) {
+								//$('#empty-col').outerHTML="";
+								$('#empty-col-right').remove();
+							}
+							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
+							$("#edit-fields").val(list2.options.getData().join(','));
+						}
 					});
+					list2.options.onRemove(null);
+
 
 					if (edit && config.type == "html") {
 						$("#edit-template").val(config.value);
