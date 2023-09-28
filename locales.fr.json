@@ -653,6 +653,136 @@
             "id": "4979",
             "value": "WGS84 – 3D (EPSG:4979)",
             "search": "4979"
+        }],
+
+        "MD_FormatGeoExportWMS": [{
+            "value": "image%2Fpng",
+            "text": "PNG"
+        }, {
+            "value": "application%2Fatom%2Bxml",
+            "text": "AtomPub"
+        }, {
+            "value": "application%2Fjson%3Btype%3Dutfgrid",
+            "text": "Table texte"
+        }, {
+            "value": "application%2Fpdf",
+            "text": "PDF"
+        }, {
+            "value": "application%2Frss%2Bxml",
+            "text": "GeoRSS"
+        }, {
+            "value": "application%2Fvnd.google-earth.kml%2Bxml",
+            "text": "KML (plain)"
+        }, {
+            "value": "application%2Fvnd.google-earth.kml%2Bxml%3Bmode%3Dnetworklink",
+            "text": "KML (lien réseau)"
+        }, {
+            "value": "application%2Fvnd.google-earth.kmz",
+            "text": "KML (compressé)"
+        }, {
+            "value": "application%2Fx-sqlite3",
+            "text": "MBTiles"
+        }, {
+            "value": "image%2Fbil",
+            "text": "BIL"
+        }, {
+            "value": "image%2Fdds",
+            "text": "DDS"
+        }, {
+            "value": "image%2Fgeotiff",
+            "text": "GeoTiff"
+        }, {
+            "value": "image%2Fgeotiff8",
+            "text": "GeoTiff 8-bits"
+        }, {
+            "value": "image%2Fgif",
+            "text": "GIF"
+        }, {
+            "value": "image%2Fjpeg",
+            "text": "JPEG"
+        }, {
+            "value": "image%2Fpng%3B+mode%3D8bit",
+            "text": "PNG 8bit"
+        }, {
+            "value": "image%2Fsvg%2Bxml",
+            "text": "SVG"
+        }, {
+            "value": "image%2Ftiff",
+            "text": "Tiff"
+        }, {
+            "value": "image%2Ftiff8",
+            "text": "Tiff 8-bits"
+        }, {
+            "value": "image%2Fvnd.jpeg-png",
+            "text": "JPEG-PNG"
+        }, {
+            "value": "image%2Fvnd.jpeg-png8",
+            "text": "JPEG-PNG8"
+        }, {
+            "value": "text%2Fhtml%3B+subtype%3Dopenlayers",
+            "text": "OpenLayers"
+        }, {
+            "value": "text%2Fhtml%3B+subtype%3Dopenlayers2",
+            "text": "OpenLayers 2"
+        }, {
+            "value": "text%2Fhtml%3B+subtype%3Dopenlayers3",
+            "text": "OpenLayers 3"
+        }],
+
+        "MD_FormatGeoExportWFS": [{
+            "value": "text%2Fxml%3B+subtype%3Dgml%2F3.1.1",
+            "text": "GML 3.1"
+        }, {
+            "value": "DXF",
+            "text": "DXF (plain)"
+        }, {
+            "value": "DXF-ZIP",
+            "text": "DXF (Compressed)"
+        }, {
+            "value": "GML2",
+            "text": "GML 2"
+        }, {
+            "value": "KML",
+            "text": "KML"
+        }, {
+            "value": "SHAPE-ZIP",
+            "text": "Shapefile"
+        }, {
+            "value": "application%2Fgml%2Bxml%3B+version%3D3.2",
+            "text": "GML 3.2"
+        }, {
+            "value": "application%2Fjson",
+            "text": "GeoJSON"
+        }, {
+            "value": "application%2Fvnd.google-earth.kml+xml",
+            "text": "KML"
+        }, {
+            "value": "application%2Fvnd.google-earth.kml%2Bxml",
+            "text": "KML (plain)"
+        }, {
+            "value": "csv",
+            "text": "CSV"
+        }, {
+            "value": "excel",
+            "text": "Excel (.xls)"
+        }, {
+            "value": "excel2007",
+            "text": "Excel 2007 (.xslx)"
+        }, {
+            "value": "gml3",
+            "text": "GML 3"
+        }, {
+            "value": "gml32",
+            "text": "GML 3.2"
+        }, {
+            "value": "json",
+            "text": "GeoJSON"
+        }, {
+            "value": "text%2Fxml%3B+subtype%3Dgml%2F2.1.2",
+            "text": "GML 2"
+        }, {
+            "value": "text%2Fxml%3B+subtype%3Dgml%2F3.2",
+            "text": "GML 3.2"
         }]
     }
 }

@@ -26,6 +26,11 @@ class Tools {
 		return $params;
     }
 
+    static function extractParameterFromURL($url, $paramName) {
+        $params = Tools::parseQueryString($url);
+        return $params[$paramName];
+    }
+
     // Générer queryString à partir d'un dictionnaire clé/valeur
     // Inverse de parseQueryString()
     static function getQueryString($params) {

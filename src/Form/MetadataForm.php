@@ -138,7 +138,8 @@ abstract class MetadataForm extends FormBase {
 			$bboxSouthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-south-lat");
 			$bboxWestLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-west-long");
 
-			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution);
+			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution)
+				|| isset($bboxEastLong) || isset($bboxNorthLat) || isset($bboxSouthLat) || isset($bboxWestLong);
 		}
 
 		$licences = $api->getLicenses();

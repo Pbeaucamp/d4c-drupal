@@ -281,6 +281,7 @@ class ResourceManager {
 
 					$firstRow = true;
 					$existingCols = array();
+					$index = 0;
 					while (($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
 
 						$num = count($data);
@@ -304,6 +305,22 @@ class ResourceManager {
 							fputcsv($fp, $existingCols);
 						}
 						else {
+							// Replace pattern which can be in json data and break CSV files
+							for ($c=0; $c < $num; $c++) {
+								$item = $data[$c];
+
+								$target = '\\""';
+								if (strpos($item, $target) !== false) {
+									$data[$c] = str_replace($target, '', $item);
+								}
+
+								$target = '\\"';
+								if (strpos($item, $target) !== false) {
+									$data[$c] = str_replace($target, '', $item);
+								}
+							}
+
+							$index++;
 							fputcsv($fp, $data);
 						}
 						$firstRow = false;
@@ -2538,12 +2555,6 @@ class ResourceManager {
 			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
 		}
 		
-		//We remove whitespaces at the beggining and end of the label
-		$str = trim($str);
-		//We remove - or _ at the beggining
-		$str = ltrim($str, '_');
-		$str = ltrim($str, '-');
-		
 		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
                             'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
                             'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
@@ -2590,6 +2601,12 @@ class ResourceManager {
 		if (!$isDatasetName) {
 			$str = str_replace("-", "_", $str);
 		}
+		
+		//We remove whitespaces at the beggining and end of the label
+		$str = trim($str);
+		//We remove - or _ at the beggining
+		$str = ltrim($str, '_');
+		$str = ltrim($str, '-');
 
 		//We set the value to 63 characters as it is the limit of the database
 		$str = substr($str, 0, 62);

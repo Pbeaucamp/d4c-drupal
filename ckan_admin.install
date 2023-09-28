@@ -660,3 +660,13 @@ function ckan_admin_update_8715(&$sandbox) {
 
   Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['dataset_id']);
 }
+
+function ckan_admin_update_9001(&$sandbox) {
+  $spec = array(
+    'type' => 'text',
+    'not null' => FALSE
+  ); 
+  $schema = Database::getConnection()->schema();
+  $schema->dropField('d4c_reuses', 'reu_image');
+  $schema->addField('d4c_reuses', 'reu_image', $spec);
+}

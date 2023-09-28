@@ -1922,18 +1922,27 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildServiceUrl($metadataExtras, $serviceUrl, $type, $layerName, $maxFeatures) {
+		// Extract version from url
+		$version = Tools::extractParameterFromURL($serviceUrl, "version");
+
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
 		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
 		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
 		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
-
-		$bbox = $bboxWestLong . "," . $bboxSouthLat . "," . $bboxEastLong . "," . $bboxNorthLat;
 
 		$width = "1024";
 		$height = "1024";
 
 		//Not used for now
 		// $maxFeatures = '&maxFeatures=' . $maxFeatures;
+
+		$versionIs130 = isset($version) && $version == "1.3.0";
+		if ($versionIs130) {
+			$bbox = $bboxSouthLat . "," . $bboxWestLong . "," . $bboxNorthLat . "," . $bboxEastLong;
+		}
+		else {
+			$bbox = $bboxWestLong . "," . $bboxSouthLat . "," . $bboxEastLong . "," . $bboxNorthLat;
+		}
 
 		// Default projection
 		$srs = "EPSG%3A4326";
@@ -1943,13 +1952,14 @@ class VisualisationController extends ControllerBase {
 		
 		if ($type == "WMS") {
 			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
-			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", isset($version) ? $version : '1.1.0');
 			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetMap');
 			$queryString = Tools::updateQueryStringParameter($queryString, "layers", $layerName);
 			$queryString = Tools::updateQueryStringParameter($queryString, "bbox", $bbox);
 			$queryString = Tools::updateQueryStringParameter($queryString, "width", $width);
 			$queryString = Tools::updateQueryStringParameter($queryString, "height", $height);
-			$queryString = Tools::updateQueryStringParameter($queryString, "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, $versionIs130 ? "crs" : "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, "styles", '');
 			$queryString = Tools::updateQueryStringParameter($queryString, "format", '');
 			
 			// $url = $serviceUrl . '?service=' . $type . '&version=1.3.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
@@ -1979,7 +1989,7 @@ class VisualisationController extends ControllerBase {
 
 		$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
 		$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetCapabilities');
-		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+		// $queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
 		$url = $serviceUrlWithoutParams . '?' . $queryString;
 
 		$xml = simplexml_load_file($url);
@@ -2038,13 +2048,19 @@ class VisualisationController extends ControllerBase {
 					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
 					$availableFormatsWMS = $this->getAvailableFormats($url, "WMS");
 
+					$hasMapstore = false;
+					$mapStoreButton = '';
+					if ($hasMapstore) {
+						$mapStoreButton = '<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>';								
+					}
+
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
-								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
+								' . $mapStoreButton . '
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
 						</li>

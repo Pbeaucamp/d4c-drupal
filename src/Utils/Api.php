@@ -3807,15 +3807,22 @@ class Api
 			$query_params["facet.field"] = $reqFacet;
 		}
 
+		// If the dataset has been flagged rgpd, we only show if the user is connected
+		$isConnected = \Drupal::currentUser()->isAuthenticated();
+		if ($this->config->client->check_rgpd && !$isConnected) {
+			if ($query_params["fq"] == null) {
+				$query_params["fq"] = "-data_rgpd:(1)";
+			}
+			else {
+				$query_params["fq"] .= " AND -data_rgpd:(1)";
+			}
+		}
+
 		//echo json_encode($query_params);
 		$url2 = http_build_query($query_params);
 
-
 		//$callUrl =  $this->urlCkan . "api/action/package_search";
 		$callUrl =  $this->urlCkan . "api/action/package_search?" . $url2;
-		/*if(!is_null($params)){
-			$callUrl .= "?" . $params;
-		} */
 
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions());
