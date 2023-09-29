@@ -373,7 +373,7 @@ function loadTooltip(idDataset, dataFields) {
 						}
 					}
 
-					$("#tooltip-standard").html(`<div style="width:60%">
+					$("#tooltip-standard").html(`<div style="width:65%">
 						<div id="shared-lists" class="row">
 							<div class="col-md-6 area-label">Champs affichés</div>
 							<div class="col-md-6 area-label">Champs disponibles</div>
@@ -383,6 +383,8 @@ function loadTooltip(idDataset, dataFields) {
 							<div id="list-right" class="list-group col-md-6">
 								`+ l2 + `
 							</div>
+							<div id='empty-col-container' class='col-md-6'><div id='empty-col'class='col-md-12'></div></div>
+							<div id='empty-col-right-container' class='col-md-6'><div id='empty-col-right'class='col-md-12'></div></div>
 						</div>
 					</div>`);
 
@@ -402,7 +404,7 @@ function loadTooltip(idDataset, dataFields) {
 						},
 						onRemove: function (/**Event*/evt) {
 							if (list1.options.getData().length == 0) {
-								$("#shared-lists").append("<div id='empty-col' class='col-md-6'>Veuillez déposer les items ici</div>");
+								$("#empty-col").html("Veuillez ajouter un item ici")
 							}
 							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
 							$("#edit-fields").val(list1.options.getData().join(','));
@@ -410,7 +412,7 @@ function loadTooltip(idDataset, dataFields) {
 						onAdd: function (/**Event*/evt) {
 							if (list1.options.getData().length == 1) {
 								//$('#empty-col').outerHTML="";
-								$('#empty-col').remove();
+								$("#empty-col").html("");
 							}
 							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
 							$("#edit-fields").val(list1.options.getData().join(','));
@@ -432,17 +434,14 @@ function loadTooltip(idDataset, dataFields) {
 						},
 						onRemove: function (/**Event*/evt) {
 							if (list2.options.getData().length == 0) {
-								$("#shared-lists").append("<div id='empty-col-right' class='col-md-6'>Veuillez déposer les items ici</div>");
+								$("#empty-col-right").html("Veuillez ajouter un item ici")
 							}
-							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
 							$("#edit-fields").val(list2.options.getData().join(','));
 						},
 						onAdd: function (/**Event*/evt) {
 							if (list2.options.getData().length == 1) {
-								//$('#empty-col').outerHTML="";
-								$('#empty-col-right').remove();
+								$("#empty-col-right").html("");
 							}
-							//$("#edit-tooltip").attr("value",list1.options.getData().join(','));
 							$("#edit-fields").val(list2.options.getData().join(','));
 						}
 					});

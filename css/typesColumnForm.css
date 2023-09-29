@@ -1,8 +1,12 @@
 html{font-size:16px!important;}
-#list-left{
+#list-left,#list-right{
 	min-height: 100px;
     display: inline-block;
     position: relative;
+    z-index: 20;
+    padding-top: 10px;
+    padding-left: 25px;
+    padding-right: 25px;
 }
 #shared-lists{
     position: relative;
@@ -10,22 +14,25 @@ html{font-size:16px!important;}
     flex-wrap: wrap;
     align-items: stretch;
 }
+#empty-col-container,#empty-col-right-container{
+    z-index: 10;
+    position: absolute;
+	top:20px;
+    height:100%;
+    display: block;
+}
+#empty-col-right-container{
+    right:0;
+}
 #empty-col,#empty-col-right{
 	color: rgb(153, 153, 153);
     font-size: 20px;
     text-align: center;
 	border-radius: 5px;
     border-width: thin;
-    display: block;
     border: dashed;
     line-height: 100px;
-    z-index: -1;
-    position: absolute;
-	top:20px;
     height:100%;
-}
-#empty-col-right{
-    right:0;
 }
 .title{margin-top:50px;}
 .area-label{
