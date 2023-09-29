@@ -85,7 +85,7 @@ class customViewsForm extends HelpFormBase {
         );
 
         $ids = array();
-		$ids["new"] = "Сréer un jeu de données";
+		$ids["new"] = "Сréer une connaissance";
         // $form['selected_Data'] = array(
         
         //     '#type' => 'select',

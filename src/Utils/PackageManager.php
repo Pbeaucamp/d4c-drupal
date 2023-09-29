@@ -467,7 +467,7 @@ class PackageManager {
 		$metadata->appendChild($hierarchyLevel);
 
 		/*$hierarchyLevelName = $doc->createElement("gmd:hierarchyLevelName");
-		$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "jeu de données");
+		$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "connaissance");
 		$hierarchyLevelName->appendChild($gcoCharacterString);
 		$metadata->appendChild($hierarchyLevelName);*/	
 

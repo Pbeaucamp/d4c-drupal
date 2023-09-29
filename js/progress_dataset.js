@@ -52,29 +52,29 @@ function worker(datasetId) {
                 var serverMessage = data.message;
                 if (data.action == 'CREATE_DATASET') {
                     if (data.status == 'PENDING') {
-                        message = 'Le jeu de données est en cours de création.';
+                        message = 'La connaissance est en cours de création.';
                         percentile = 1;
                     }
                     else if (data.status == 'ERROR') {
-                        message = 'Le jeu de données n\'a pas pu être créé car une erreur est survenue.';
+                        message = 'La connaissance n\'a pas pu être créé car une erreur est survenue.';
                         percentile = 15;
                     }
                     else if (data.status == 'SUCCESS') {
-                        message = 'Le jeu de données a été créé.';
+                        message = 'La connaissance a été créé.';
                         percentile = 15;
                     }
                 }
                 else if (data.action == 'UPDATE_DATASET') {
                     if (data.status == 'PENDING') {
-                        message = 'Le jeu de données est en cours de mise à jour.';
+                        message = 'La connaissance est en cours de mise à jour.';
                         percentile = 1;
                     }
                     else if (data.status == 'ERROR') {
-                        message = 'Le jeu de données n\'a pas pu être mis à jour car une erreur est survenue.';
+                        message = 'La connaissance n\'a pas pu être mis à jour car une erreur est survenue.';
                         percentile = 15;
                     }
                     else if (data.status == 'SUCCESS') {
-                        message = 'Le jeu de données a été mis à jour.';
+                        message = 'La connaissance a été mis à jour.';
                         percentile = 15;
                     }
                 }

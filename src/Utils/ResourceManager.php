@@ -54,7 +54,7 @@ class ResourceManager {
 
 	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "' and licence = " . $licence);
-		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
+		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création de la connaissance \'' . $datasetName . '\'');
 
 		//We update the description if empty or equals to default.description
 		if (isset($description) && strpos($description, 'default.description') !== false) {
@@ -90,13 +90,13 @@ class ResourceManager {
 		$datasetId = $datasetId[1];
 
 		Logger::logMessage("New dataset has been saved with id '" . $datasetId . "'");
-		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', 'Le jeu de données \'' . $datasetName . '\' a été créé');
+		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été créé');
 		return $datasetId;
 	}
 
 	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
 		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
-		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
+		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour de la connaissance \'' . $datasetName . '\'');
 		
 		$datasetToUpdate['title'] = $title;
 		$datasetToUpdate['notes'] = $description;
@@ -126,12 +126,12 @@ class ResourceManager {
 				}
 			}
 
-			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', 'Le jeu de données \'' . $datasetName . '\' a été mis à jour');
+			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été mis à jour');
 			return $datasetId;
 		}
 		else {
-			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
-			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
+			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "La connaissance ne peut pas être mis à jour (" . $result->error->message . ").");
+			throw new \Exception("La connaissance ne peut pas être mis à jour (" . $result->error->message . ").");
 		}
 	}
 
@@ -2421,12 +2421,12 @@ class ResourceManager {
 			}
 		}
 		else {
-			Logger::logMessage("Impossible de créer un nouveau jeu de données (" . json_encode($resnew) . ")");
+			Logger::logMessage("Impossible de créer une nouvelle connaissance (" . json_encode($resnew) . ")");
 			if ($resnew->error->message) {
-				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error->message) . ")");
+				throw new \Exception("Impossible de créer une nouvelle connaissance (" . json_encode($resnew->error->message) . ")");
 			}
 			else {
-				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error) . ")");
+				throw new \Exception("Impossible de créer une nouvelle connaissance (" . json_encode($resnew->error) . ")");
 			}
 		}
 

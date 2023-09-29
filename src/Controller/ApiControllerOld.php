@@ -61,7 +61,7 @@ class ApiControllerOld extends ControllerBase {
         	</div>
             <!-- ngRepeat: service in services --><div ng-class="{\'service-box\': true, \'active\': activeBox == service}" ng-repeat="service in services1" class="ng-scope service-box">
                <div class="service-header clearfix" ng-click="toggleActiveBox(service)">
-                    <span class="service-label ng-binding">Lister les jeux de données</span>
+                    <span class="service-label ng-binding">Lister les connaissances</span>
                     <div class="service-techinfo">
                         <span class="service-method ng-binding">GET</span>
                         <span class="service-url ng-binding">/api/action/package_search</span>
@@ -256,7 +256,7 @@ class ApiControllerOld extends ControllerBase {
             </div><!-- end ngRepeat: service in services --><div ng-class="{\'service-box\': true, \'active\': activeBox == service}" ng-repeat="service in services2" class="ng-scope service-box active">
             	
                 <div class="service-header clearfix" ng-click="toggleActiveBox(service)">
-                     <span class="service-label ng-binding">Consulter un jeu de données</span>
+                     <span class="service-label ng-binding">Consulter une connaissance</span>
                      <div class="service-techinfo">
                          <span class="service-method ng-binding">GET</span>
                          <span class="service-url ng-binding">' . $config->client->routing_prefix . '/d4c/api/datasets/1.0/DATASETID/</span>
@@ -361,7 +361,7 @@ class ApiControllerOld extends ControllerBase {
 			                                <!-- ngSwitchDefault:  --><input ng-switch-default="" type="text" id="records_search-dataset" delayed-apply-model="api.parameters[param.name]" placeholder="" ng-readonly="param.readonly" class="d4c-form__control d4c-form__control--fluid ng-scope"><!-- end ngSwitchWhen: -->
 			                            </div><!-- end ngSwitchWhen: -->
 			                        </div>
-			                        <span class="d4c-form__help-text ng-binding" ng-show="param.helptext">ID du jeu de données</span>
+			                        <span class="d4c-form__help-text ng-binding" ng-show="param.helptext">ID de la connaissance</span>
 			                    </div>
 			                </div><!-- end ngRepeat: param in service.parameters --><div class="d4c-form__group d4c-form__group--horizontal ng-scope" >
 			                    <label for="records_search-q" class="d4c-form__label ng-binding">
@@ -611,14 +611,14 @@ class ApiControllerOld extends ControllerBase {
                 return [
                     {
                         id: \'dataset_search\',
-                        label: \'Lister les jeux de données\',
+                        label: \'Lister les connaissances\',
                         url: \'/api/action/package_search\',
                         method: \'GET\',
                         parameters: DatasetsSearchParameters
                     },
                     {
                         id: \'dataset_lookup\',
-                        label: \'Consulter un jeu de données\',
+                        label: \'Consulter une connaissance\',
                         url: \'/api/action/package_show\',
                         parameters: DatasetsLookupParameters,
                         method: \'GET\'

@@ -430,10 +430,10 @@ abstract class MetadataForm extends FormBase {
 			'#default_value' => isset($frequence) ? $frequence : '',
 		];
 		
-		// Emprise temporelle du jeu de données with description field and two date fields
+		// Emprise temporelle de la connaissance with description field and two date fields
 		$form['inspire_option']['temporal_extent_description'] = [
 			'#type' => 'textfield',
-			'#title' => $this->t('Emprise temporelle du jeu de données'),
+			'#title' => $this->t('Emprise temporelle de la connaissance'),
 			'#default_value' => isset($extentName) ? $extentName : '',
 		];
 
@@ -547,12 +547,12 @@ abstract class MetadataForm extends FormBase {
 			'#tree' => FALSE,
 		);
 
-		//Emprise du jeu de données - Nom : extentName (epci)
+		//Emprise de la connaissance - Nom : extentName (epci)
 		$form['inspire_option']['technicaldescription']['extentName'] = array(
 			'#type' => 'textfield',
 			'#name' => 'extentName',
 			'#title' => t('Nom'),
-			'#description' => t('Nom de l\'emprise du jeu de données (epci)'),
+			'#description' => t('Nom de l\'emprise de la connaissance (epci)'),
 			'#default_value' => isset($extent) ? $extent : '',
 		);
 
@@ -1151,7 +1151,7 @@ abstract class MetadataForm extends FormBase {
 		if ($selectedDatasetId) {
 			$resourceManager = new ResourceManager();
 			if ($resourceManager->deleteDataset($selectedDatasetId)) {
-				\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+				\Drupal::messenger()->addMessage(t('La connaissance a été supprimé!'), 'warning');
 
 				$form_state->setRedirect('ckan_admin.portail');
 			}

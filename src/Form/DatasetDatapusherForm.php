@@ -122,11 +122,11 @@ class DatasetDatapusherForm extends HelpFormBase {
         );
 
 		$form['visuHelp'] = array(
-			'#markup' => '<p class="tooltip">'.t('Cette fonction permet de régénerer les icones de visualisation sur la page d\'affichage des jeux de données si un problème est survenu.').'</h2>',
+			'#markup' => '<p class="tooltip">'.t('Cette fonction permet de régénerer les icones de visualisation sur la page d\'affichage des connaissances si un problème est survenu.').'</h2>',
 		);
 
 		$form['T2'] = array(
-			'#markup' => '<h2 class="title">'.t('Gestion du datastore du jeu de données').'</h2>',
+			'#markup' => '<h2 class="title">'.t('Gestion du datastore de la connaissance').'</h2>',
 		);
 
 		$form['table'] = array(

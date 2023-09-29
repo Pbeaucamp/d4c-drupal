@@ -95,7 +95,7 @@ class addThemeInDatasetForm extends HelpFormBase {
        
         $form['selected_data'] = array(
        '#type' => 'select',
-       '#title' => t('Sélectionner un jeu de données'),
+       '#title' => t('Sélectionner une connaissance'),
        '#options' => $ids,
             '#attributes' => array( 
                 'onchange' => 'select_theme()'),

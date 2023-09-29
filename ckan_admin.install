@@ -228,7 +228,7 @@ function ckan_admin_schema() {
   );
  
   $schema['d4c_dataset_subscription'] = array(
-    'description' => 'Gestion des abonnements aux jeux de données',
+    'description' => 'Gestion des abonnements aux connaissances',
     'fields' => array(
       'id'=>array(
         'type'=>'serial',
@@ -456,7 +456,7 @@ function ckan_admin_update_8706(&$sandbox) {
 
 function ckan_admin_update_8707(&$sandbox) {
   $spec = [
-    'description' => 'Gestion des abonnements aux jeux de données',
+    'description' => 'Gestion des abonnements aux connaissances',
     'fields' => [
       'id' => [
         'type' => 'serial',

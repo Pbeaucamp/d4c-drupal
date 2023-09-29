@@ -657,10 +657,10 @@ function checkDatasetResources(event) {
     if (nonRes == true) {
 
         if (massage.split(';').length > 1) {
-            var conf = confirm("Les jeu de données suivants: " + massage.substring(1) + " comportent les types des fichiers différents parmi lesquels il n'y a pas de .csv ou .xls. Voulez-vous continuer?");
+            var conf = confirm("Les connaissances suivants: " + massage.substring(1) + " comportent les types des fichiers différents parmi lesquels il n'y a pas de .csv ou .xls. Voulez-vous continuer?");
         } else {
 
-            var conf = confirm("Le jeu de données " + massage.substring(1) + " comporte les types des fichiers différents parmi lesquels il n y a pas de .csv ou .xls. Voulez-vous continuer?");
+            var conf = confirm("La connaissance " + massage.substring(1) + " comporte les types des fichiers différents parmi lesquels il n y a pas de .csv ou .xls. Voulez-vous continuer?");
 
         }
 

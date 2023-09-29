@@ -134,7 +134,7 @@ function confirm(event){
 	});*/
 	//var position = event.srcElement.getBoundingClientRect();
 	//$(".modal").css({top: position.y, left: position.x});
-	$("#question").html("<p>Êtes-vous sûrs de passer le statut du jeu de données <strong>" + id + "</strong> de " + labelOld + " à <strong>" + labelNew + "</strong> ?</p>" );
+	$("#question").html("<p>Êtes-vous sûrs de passer le statut de la connaissance <strong>" + id + "</strong> de " + labelOld + " à <strong>" + labelNew + "</strong> ?</p>" );
 	//$("#cancel").attr("root", id);
 	$("#edit-selected-type").val(selectedType);
 	$("#edit-selected-id").val(id);

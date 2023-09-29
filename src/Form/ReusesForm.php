@@ -74,7 +74,7 @@ class ReusesForm extends HelpFormBase {
 		
 		$header =  array(
 			"name" => $this->t('Nom'),
-			"dataset" => $this->t('Jeu de données'),
+			"dataset" => $this->t('Connaissance'),
 			"author" => $this->t("Créateur"),
 			"date" => $this->t("Date ajout"),
 			"type" => $this->t("Type"),

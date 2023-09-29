@@ -168,7 +168,7 @@ class CubeForm extends HelpFormBase {
 
 		$form['selected_dataset'] = array(
 			'#type' => 'select',
-			'#title' => t('Jeu de données :'),
+			'#title' => t('Connaissance :'),
 			'#attributes' => array(
 				'onchange' => 'loadFields("' . $this->urlCkan . '")'
 			),

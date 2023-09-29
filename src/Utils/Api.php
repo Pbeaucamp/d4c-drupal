@@ -2428,7 +2428,7 @@ class Api
 		if ($oneColumnIsHidden && ($reqFields == null || $reqFields == "")) {
 			$actual_link = $_SERVER['HTTP_REFERER'];
 
-			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de ce jeu de données.');window.location.replace('$actual_link');</script>";
+			echo "<script type='text/javascript'>alert('L\'administrateur du site a limité les téléchargements de cette connaissance.');window.location.replace('$actual_link');</script>";
 		} else {
 			$resource = $this->getResource($query_params['resource_id'], true);
 			$resourceName = $resource['result']['name'];
@@ -7240,7 +7240,7 @@ class Api
 					array('@sitename' => $sitename, '@name' => $name, '@author' => $data["author_email"])
 				);
 				$params['message'][] = t('Titre de la réutilisation : @name', array('@name' => $name));
-				$params['message'][] = t('Jeu de données concerné : @name', array('@name' => $data["dataset_title"]));
+				$params['message'][] = t('Connaissance concernée : @name', array('@name' => $data["dataset_title"]));
 				$params['message'][] = t('Traiter la réutilisation : @url', array('@url' => "https://" . $_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . "/admin/config/data4citizen/reusesManagement"));
 				$params['message'][] = t("Cordialement.");
 				$params['subject'] = t('Nouvelle réutilisation à valider');

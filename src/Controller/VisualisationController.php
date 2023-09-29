@@ -439,9 +439,9 @@ class VisualisationController extends ControllerBase {
 
 		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
-				<p>Jeu de données affiché : </p>
+				<p>Connaissance affichée : </p>
 				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $pageId . '\', selectedItem)">
-					<option value="" ng-if="false">Choix du jeu de données</option>
+					<option value="" ng-if="false">Choix de la connaissance</option>
 		';
 
 		if (sizeof($resources) > 0 ) {
@@ -599,7 +599,7 @@ class VisualisationController extends ControllerBase {
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
 						' . ($referencePart != null ? $this->buildCard('Connaissances de référence', $referencePart) : '') . '
-						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
+						' . ($linkedDataSets != null ? $this->buildCard('Connaissances liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
@@ -1091,7 +1091,7 @@ class VisualisationController extends ControllerBase {
 			$synthese .= '
 				<div class="my-3">
 					<i class="fa fa-file"></i>
-					<span class="ms-2">Taille du jeu de données : <b>' . $datasetSize . ' mo</b></span>
+					<span class="ms-2">Taille de la connaissance : <b>' . $datasetSize . ' mo</b></span>
 				</div>
 			';
 		}
@@ -1726,10 +1726,10 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if ($rgpdNonConnected) {
-			$messageRgpd = "Ce jeu de données nécessite d'être connectée pour être consulté car il contient des données RGPD.";
+			$messageRgpd = "Cette connaissance nécessite d'être connectée pour être consulté car il contient des données RGPD.";
 		}
 		else {
-			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur le jeu de données sont enregistrées.";
+			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur la connaissance sont enregistrées.";
 		}
 
 		return '
@@ -2300,8 +2300,8 @@ class VisualisationController extends ControllerBase {
 			if ($displayEditor) {
 				$buttonEditor = '
 					<a id="btn-edit-data" ng-click="editData()">
-						<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-						<span>Editer le jeu de données</span>
+						<img alt="Editer la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+						<span>Editer la connaissance</span>
 					</a>';
 			}
 		}

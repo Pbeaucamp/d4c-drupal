@@ -67,6 +67,7 @@ class ChartController extends ControllerBase {
 							</div>
 							 <d4c-notification-handler></d4c-notification-handler>
 						</div>
+						
 						<div class="col-md-6 ng-cloak">
 							<div advanced-chart-controls
 									
