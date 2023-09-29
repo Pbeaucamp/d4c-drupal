@@ -2184,7 +2184,7 @@ class VisualisationController extends ControllerBase {
 			<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
 				' . $apiGeo . '
 			
-				<h3>API Data4Citizen</h3>
+				<h3>API</h3>
 				<d4c-dataset-api-console context="ctx" service-url="' . $this->config->gravitee->url . '" service-header-key="' . $this->config->gravitee->header_key . '" service-api-key="' . $this->config->gravitee->api_key . '"></d4c-dataset-api-console>
 			</d4c-pane>
 		';
