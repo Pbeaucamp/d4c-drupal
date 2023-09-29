@@ -167,7 +167,7 @@ class organizationsManagementForm extends HelpFormBase
         }
 		
 		if($this->org['package_count'] > 0) {
-			\Drupal::messenger()->addMessage('Cette organisation contient des jeux de données. Ils doivent être supprimés avant de pouvoir supprimer cette organisation.','error');
+			\Drupal::messenger()->addMessage('Cette organisation contient des connaissances. Elles doivent être supprimées avant de pouvoir supprimer cette organisation.','error');
 		}
 		else {
 			$context['id']=$this->org['id'];

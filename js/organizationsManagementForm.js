@@ -28,7 +28,7 @@ function addData(data) {
                     $('#org_img').append('<span id="img" style=" background-image: url(' + data[i].image_display_url + '); margin-top: 0px;  display: inline-block; width: 8em; height: 8em; background-repeat: no-repeat; background-size: contain; vertical-align: middle; margin-left: 20em; margin-top: -4em;"></span>');
                 }
                 
-                $('#org_img').append('<div id="count_package"><label>Jeux de données:' + data[i].package_count + '</label></div>');
+                $('#org_img').append('<div id="count_package"><label>Connaissances:' + data[i].package_count + '</label></div>');
                 
 				var isPublic = true;
                 var coordinates = '';
@@ -109,7 +109,7 @@ function buildWidgetCode(selectedOrganisation) {
         content += '\n';
         content += '    <div id="main" class="widget-opendata">\n';
         content += '        <div id="filter" class="col-md-2 content-body">\n';
-        content += '            <h1><span id="nb_jeux">0</span> Jeux de données</h1>\n';
+        content += '            <h1><span id="nb_jeux">0</span> Connaissances</h1>\n';
         content += '            <!-- Keep input for CSS -->\n';
         content += '            <input id="input-tag" type="text" class="hidden-filter">\n';
         content += '            <div class="form-group">\n';
@@ -139,7 +139,7 @@ function buildWidgetCode(selectedOrganisation) {
         content += '\n';
         content += '            <form id="search-form">\n';
         content += '                <div class="input-group" id="barreRecherche">\n';
-        content += '                    <input aria-label="recherche" class="form-control" id="search_bar" placeholder="Rechercher un jeu de données..." type="text" />\n';
+        content += '                    <input aria-label="recherche" class="form-control" id="search_bar" placeholder="Rechercher une connaissance..." type="text" />\n';
         content += '                    <div class="input-group-btn">\n';
         content += '                        <button class="btn btn-default" type="submit"></button>\n';
         content += '                    </div>\n';

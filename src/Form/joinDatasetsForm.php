@@ -132,7 +132,7 @@ class joinDatasetsForm extends HelpFormBase
 			$selected_org = $form_state->getUserInput()['org1'];
 			$idss = array();
 
-			//$ids["new"] = "Сréer un jeu de données";
+			//$ids["new"] = "Сréer une connaissance";
 			if ($selected_org == '') {
 				foreach ($this->datasets as $ds) {
 					$idss[$ds['id']] = $ds['title'];
@@ -147,7 +147,7 @@ class joinDatasetsForm extends HelpFormBase
 
 			$form['selected_data'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $idss,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -164,7 +164,7 @@ class joinDatasetsForm extends HelpFormBase
 		} else {
 			$form['selected_data'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $ids,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -275,7 +275,7 @@ class joinDatasetsForm extends HelpFormBase
 			$selected_org = $form_state->getUserInput()['org2'];
 			$idss = array();
 
-			//$ids["new"] = "Сréer un jeu de données";
+			//$ids["new"] = "Сréer une connaissance";
 			if ($selected_org == '') {
 				foreach ($this->datasets as $ds) {
 					$idss[$ds['id']] = $ds['title'];
@@ -290,7 +290,7 @@ class joinDatasetsForm extends HelpFormBase
 			//error_log("gg-".json_encode($idss));
 			$form['selected_data2'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $idss,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -307,7 +307,7 @@ class joinDatasetsForm extends HelpFormBase
 		} else {
 			$form['selected_data2'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données 2'),
+				'#title' => t('Sélectionner une connaissance 2'),
 				'#options' => $ids,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -458,7 +458,7 @@ class joinDatasetsForm extends HelpFormBase
 		if ($jdd1['tags'] == null) $jdd1['tags'] = array();
 		if ($jdd2['tags'] == null) $jdd2['tags'] = array();
 
-		$description = 'Ce DataSet a été créé par la jointure entre les jeux de données: "' . $jdd1['title'] . '" et "' . $jdd2['title'] . '". </br>'
+		$description = 'Ce DataSet a été créé par la jointure entre les connaissances: "' . $jdd1['title'] . '" et "' . $jdd2['title'] . '". </br>'
 			. $description . '</br>'
 			. "[" . $jdd1['notes'] . ']</br>'
 			. "[" . $jdd2['notes'] . ']</br>';

@@ -469,9 +469,9 @@ class typeColumnsForm extends HelpFormBase {
 		
 		$form['tooltip']["html"]["help"] = array(
 			'#markup' => '<div class="col-md-4 col-xs-12 help"><p>Ce code html peut être dynamique, écrit en syntaxe AngularJs. De la même manière que les widget et vues personnalisées.</p>
-						<p>La variable <code>record</code> est disponible et contient les champs : <ul> <li><code>record.fields</code> (liste des valeurs de l\'enregistrement)</li> <li><code>records.recordid</code> (identifiant de l\'enregistrement concerné)</li> <li><code>record.datasetid</code> (identifiant du jeu de données)</li></ul></p>
-						<p>Tout widget, lié ou non au jeu de données, peut être intégré à l\'infobulle.</p>
-						<p>Note : les rapports Vanilla liés au jeu de données seront automatiquement intégrés en fin de l\'infobulle.</p></div></div>'
+						<p>La variable <code>record</code> est disponible et contient les champs : <ul> <li><code>record.fields</code> (liste des valeurs de l\'enregistrement)</li> <li><code>records.recordid</code> (identifiant de l\'enregistrement concerné)</li> <li><code>record.datasetid</code> (identifiant de la connaissance)</li></ul></p>
+						<p>Tout widget, lié ou non à la connaissance, peut être intégré à l\'infobulle.</p>
+						<p>Note : les rapports Vanilla liés à la connaissance seront automatiquement intégrés en fin de l\'infobulle.</p></div></div>'
 		);
 
 		// Couleur des points sur la carte en fonction d'un champ

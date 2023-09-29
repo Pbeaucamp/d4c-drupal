@@ -379,7 +379,7 @@ class DatasetsBoardForm extends HelpFormBase {
 		if($visibility != ""){
 			$oldDataset["private"] = ($visibility == "private" ? true : false);
 			
-			\Drupal::messenger()->addMessage('Le jeu de données '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
+			\Drupal::messenger()->addMessage('La connaissance '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
 		} 
 		if($security != ""){
 			$exists = false;
@@ -397,7 +397,7 @@ class DatasetsBoardForm extends HelpFormBase {
 				$oldDataset["extras"][((is_countable($oldDataset["extras"]) ? count($oldDataset["extras"]) : 0) - 1)]['value'] = $security;
 			}
 			
-			\Drupal::messenger()->addMessage('La sécurité sur le jeu de données '. $oldDataset["title"] . ' a été modifiée');
+			\Drupal::messenger()->addMessage('La sécurité sur la connaissance '. $oldDataset["title"] . ' a été modifiée');
 		}
 		
 		$callUrl = $this->urlCkan . "/api/action/package_update";

@@ -2481,7 +2481,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 		$NewName = $resnew->result->name;
                            
 		if ($resnew->success == true) {
-			\Drupal::messenger()->addMessage('Le jeu de données '.$resnew->result->title.' a bien été créé');
+			\Drupal::messenger()->addMessage('La connaissance '.$resnew->result->title.' a bien été créé');
 			$idNewData = $resnew->result->id;
 			$NewTitle = $resnew->result->title;
 			$NewName = $resnew->result->name;
@@ -2549,7 +2549,7 @@ class MoissonnageDataGouv extends HelpFormBase {
 			}
 		} 
 		else {
-			\Drupal::messenger()->addMessage('Le jeu de données '.$newData['title'].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
+			\Drupal::messenger()->addMessage('La connaissance '.$newData['title'].' n\'a pas été créé : '. json_encode($resnew->error), 'error');
 		}
         
         return array('0'=>$coll, '1'=>$idNewData, '2'=>$NewTitle, '3'=>$NewName);

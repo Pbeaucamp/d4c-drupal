@@ -547,10 +547,10 @@
             "value": "Collection de données"
         }, {
             "id": "dataset",
-            "value": "Jeu de données"
+            "value": "Connaissance"
         }, {
             "id": "nonGeographicDataset",
-            "value": "Jeu de données non géographique"
+            "value": "Connaissance non géographique"
         }, {
             "id": "dimensionGroup",
             "value": "Dimension d’un groupe"

@@ -137,7 +137,7 @@ class VanillaForm extends HelpFormBase {
 		$form['Dataset_lies_table'] = array(
             '#type' => 'table',
             '#header' => array(
-                $this->t('Jeux de données'),
+                $this->t('Connaissances'),
             ),
             '#attributes' => array('style' => 'width: 100%;height: 450px;overflow:auto;'),
 

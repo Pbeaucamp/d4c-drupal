@@ -58,7 +58,7 @@ ckan_admin.editMetaDataForm:
   path: '/admin/config/data4citizen/editMetaDataForm'
   defaults:
     _form: 'Drupal\ckan_admin\Form\editMetaDataForm'
-    _title: 'Création et modification jeu de données'
+    _title: 'Création et modification connaissance'
   requirements:
     _permission: 'access dataset'
     

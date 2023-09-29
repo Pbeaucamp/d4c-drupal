@@ -433,7 +433,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 							$resourceUrlval = $resourceManager->manageXmlfile($resourceUrlval);
 						}
 					}
-					\Drupal::messenger()->addMessage(t("Le jeu de données '" . $datasetName ."' a été créé."), 'status');
+					\Drupal::messenger()->addMessage(t("La connaissance '" . $datasetName ."' a été créé."), 'status');
 							
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras);
 					
@@ -463,7 +463,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						\Drupal::messenger()->addMessage(t("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données."), 'status');
+						\Drupal::messenger()->addMessage(t("La ressource '" . $value['filename'] ."' a été ajouté sur la connaissance."), 'status');
 					}
 					else if ($value['type'] == 'CLUSTER') {
 						\Drupal::messenger()->addMessage(t("Les clusters ont été générés."), 'status');

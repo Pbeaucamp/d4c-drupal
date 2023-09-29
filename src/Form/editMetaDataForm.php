@@ -93,7 +93,7 @@ class editMetaDataForm extends HelpFormBase {
 		$lic = $api->getLicenses();
 
         $ids = array();
-		$ids["new"] = "Сréer un jeu de données";
+		$ids["new"] = "Сréer une connaissance";
 		if ($selectedDataset) {
 			Logger::logMessage("Set dataset with id " . $selectedDataset['id'] . " and name " . $selectedDataset['name']);
 			$ids[$selectedDataset['id']] = $selectedDataset['title'];
@@ -143,7 +143,7 @@ class editMetaDataForm extends HelpFormBase {
         
 		$form['selected_data'] = array(
             '#type' => 'select',
-            '#title' => t('*Sélectionner un jeu de données :'),
+            '#title' => t('*Sélectionner une connaissance :'),
             '#options' => $ids,
             '#attributes' => array(
                 'onchange' => 'addData('.$selectedData.')','style' => 'width: 50%;', 
@@ -188,7 +188,7 @@ class editMetaDataForm extends HelpFormBase {
         
         $form['img_backgr'] = array(
             '#type' => 'managed_file',
-            '#title' => t("L'image de fond du jeu de données :"),
+            '#title' => t("L'image de fond de la connaissance :"),
             '#upload_location' => 'public://dataset/',
             '#upload_validators' => array(
                 'file_validate_extensions' => array('jpeg png jpg svg gif WebP PNG JPG JPEG SVG GIF'),
@@ -211,7 +211,7 @@ class editMetaDataForm extends HelpFormBase {
 
 		$form['date_dataset'] = array(
             '#type' => 'date',
-            '#title' => $this->t('Date du jeu de données'),
+            '#title' => $this->t('Date de la connaissance'),
             '#date_date_format' => 'd/m/Y'
         );
 
@@ -414,7 +414,7 @@ class editMetaDataForm extends HelpFormBase {
 		$form['linked_dataset'] = array(
             '#markup' => '',
 			'#type' => 'textfield',
-			'#title' => $this->t('Saisir les identifiants des jeux de données liés (séparés par une virgule) :'),
+			'#title' => $this->t('Saisir les identifiants des connaissances liés (séparés par une virgule) :'),
 			'#attributes' => array('style' => 'width: 50%;'),
             '#required' => FALSE,
 			'#maxlength' => null,
@@ -517,7 +517,7 @@ class editMetaDataForm extends HelpFormBase {
 		$form['validata'] = array(
             '#prefix' =>'<div id="resAndValidTab">',
             '#type' => 'select',
-            '#title' => t('Valider les jeux de données : '),
+            '#title' => t('Valider les connaissances : '),
             '#options' => array("non_valider" => "Non validé", "valider" => "Validé"),
             '#attributes' => array('style' => 'width: 50%;'),
 
@@ -836,7 +836,7 @@ class editMetaDataForm extends HelpFormBase {
 			$deleteDataset = $form_state->getValue('del_dataset');
 			if ($deleteDataset) {
 				if ($resourceManager->deleteDataset($datasetId)) {
-					\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+					\Drupal::messenger()->addMessage(t('La connaissance a été supprimé!'), 'warning');
 					$datasetId = null;
 				}
 			}
@@ -850,7 +850,7 @@ class editMetaDataForm extends HelpFormBase {
 
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
-					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
+					\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
 
 					//Managing resources
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
@@ -883,7 +883,7 @@ class editMetaDataForm extends HelpFormBase {
 						$dataRgpd);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
-					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");
+					\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
@@ -960,7 +960,7 @@ class editMetaDataForm extends HelpFormBase {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur la connaissance.");
 					}
 					else if ($value['type'] == 'CLUSTER') {
 						\Drupal::messenger()->addMessage("Les clusters ont été générés.");
@@ -1183,7 +1183,7 @@ class editMetaDataForm extends HelpFormBase {
         
 		$ids = array();
 
-        $ids["new"] = "Сréer un jeu de données";
+        $ids["new"] = "Сréer une connaissance";
    
 		/*if($selected_org==''){*/
 			foreach($dataSet as &$ds) {

@@ -185,7 +185,7 @@ class PackagesForm extends HelpFormBase {
 		);
 
 		$form['jdd'] = array(
-			'#title' => t('Importer un jeu de données : '),
+			'#title' => t('Importer une connaissance : '),
 			'#type' => 'managed_file',
 			'#upload_location' => 'public://dataset/',
 			'#upload_validators' => array(
@@ -354,7 +354,7 @@ class PackagesForm extends HelpFormBase {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur la connaissance.");
 					}
 					else if ($value['type'] == 'CLUSTER') {
 						\Drupal::messenger()->addMessage("Les clusters ont été générés.");
