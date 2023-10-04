@@ -66,7 +66,21 @@ class MapViewer extends ControllerBase
 		return $element;
 	}
 
-	
+	public function getTitle(Request $request){
+		$idMap = $request->get("idmap");
+
+		$api = new Api;
+		$maps = $api->getMaps(null, $idMap);
+
+		$map = $maps[0]->map_json;
+		$map = json_decode($map, true);
+
+
+
+		$title = "Aperçu de la carte " . $map["title"];
+
+		return $title;
+	}
 	
 	public function myFrame(Request $request) {
 		$config = include(__DIR__ . "/../../config.php");

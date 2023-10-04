@@ -82,7 +82,7 @@ ckan_admin.portail:
   path: '/portail'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\portailController::myPage'
-    _title: ''
+    _title: 'Catalogue de données'
   requirements:
     _permission: 'access content'
 
@@ -91,7 +91,7 @@ ckan_admin.visualisation:
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\VisualisationController::myPage'
     tab: 'table'
-    _title: ''
+    _title_callback: '\Drupal\ckan_admin\Controller\VisualisationController::getTitle'
   requirements:
     _permission: 'access content'
  
@@ -107,7 +107,7 @@ ckan_admin.carte.preview:
   path: '/carte/{idmap}'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\MapViewer::myPage'
-    _title: ''
+    _title_callback: '\Drupal\ckan_admin\Controller\MapViewer::getTitle'
   requirements:
     _permission: 'access content'
 
@@ -115,7 +115,7 @@ ckan_admin.carte.frame:
   path: '/carte/frame/{idmap}'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\MapViewer::myFrame'
-    _title: ''
+    _title: 'Aperçu de carte'
   requirements:
     _permission: 'access content'
 
@@ -123,7 +123,7 @@ ckan_admin.carte.edit:
   path: '/carte/{idmap}/edit'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\MapController::myPage'
-    _title: ''
+    _title_callback: '\Drupal\ckan_admin\Controller\MapController::getTitle'
   requirements:
     _permission: 'access content'
 
@@ -832,7 +832,7 @@ ckan_admin.menu.chart:
   path: '/chart'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\ChartController::myPage'
-    _title: ''
+    _title: 'Créer un graphique'
   requirements:
     _permission: 'access content'
 
@@ -840,7 +840,7 @@ ckan_admin.menu.chart.frame:
   path: '/chart/frame'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\ChartController::myFrame'
-    _title: ''
+    _title: 'Aperçu de graphique'
   requirements:
     _permission: 'access content'
     
@@ -991,7 +991,7 @@ ckan_admin.api:
   path: '/d4c/api'
   defaults:
     _controller: '\Drupal\ckan_admin\Controller\ApiController::myPage'
-    _title: ''
+    _title: 'API'
   requirements:
     _permission: 'access content'
 
