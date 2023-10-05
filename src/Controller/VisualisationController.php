@@ -1290,7 +1290,7 @@ class VisualisationController extends ControllerBase {
 			$features = $dataset['features'];
 			// Does features exist, is not empty and contain the value geo
 			$hasGeo = isset($features) && $features != -1 && in_array('geo', $features);
-			$datasetType = $hasGeo /*|| hasWMS(data)*/ ? 'Carte' : 'Données';
+			$datasetType = $hasGeo /*|| hasWMS(data)*/ ? 'Données géo' : 'Données';
 		}
 	
 		return $datasetType;
