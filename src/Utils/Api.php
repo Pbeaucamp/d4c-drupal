@@ -553,7 +553,7 @@ class Api
 					curl_close($curl);
 					$result = json_decode($result, true);
 
-					Logger::logMessage("Result : " . json_encode($result));
+					// Logger::logMessage("Result : " . json_encode($result));
 					//echo count($result['result']['records']) . "\r\n";
 					//$nhits = $result['result']['total'];
 					//$nhits = count($result['result']['records']);
@@ -764,7 +764,7 @@ class Api
 		return $response;
 	}
 
-	public function getPackageShow($params, $useCkanApiKey = true, $checkDatasetSecurity = false, $applySecurity = true, $includeAllowedPrivate = true) {
+	public function getPackageShow($params, $useCkanApiKey = true, $checkDatasetSecurity = false, $applySecurity = true, $includeAllowedPrivate = true, $allowOtherOrganisation = false) {
 		$callUrl =  $this->urlCkan . "api/action/package_show?" . $params;
 		$curl = curl_init($callUrl);
 		curl_setopt_array($curl, $this->getStoreOptions($useCkanApiKey));
@@ -776,7 +776,7 @@ class Api
 		$datasetOrganization = $result['result']['organization']['name'];
 		$isPrivate = $result['result']['private'];
 		$deletedStatus = $result['result']['state'];
-		if ($checkDatasetSecurity && !$this->isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate)) {
+		if ($checkDatasetSecurity && !$this->isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate, $allowOtherOrganisation)) {
 			return null;
 		}
 
@@ -4031,7 +4031,7 @@ class Api
 			$resourceCSV = null;
 			$datasetId = $query_params['dataset'];
 
-			$package = $this->getPackageShow("id=" . $datasetId, true, true);
+			$package = $this->getPackageShow("id=" . $datasetId, true, true, true, true, true);
 			// Dataset is not found or not allowed
 			if (!isset($package)) {
 				$data_array["status"] = "error";
@@ -5868,7 +5868,7 @@ class Api
 		// Checking if the user can see the dataset which contains the resource
 		if ($applySecurity) {
 			$datasetId = $resource['result']['package_id'];
-			$dataset = $this->getPackageShow("id=" . $datasetId, true, true, true, true);
+			$dataset = $this->getPackageShow("id=" . $datasetId, true, true, true, true, true);
 			return isset($dataset) ? $resource : null;
 		}
 
@@ -8962,7 +8962,7 @@ class Api
 		return false;
 	}
 
-	function isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate) {
+	function isDatasetAllowed($datasetId, $datasetOrganization, $isPrivate, $deletedStatus, $applySecurity, $includeAllowedPrivate, $allowOtherOrganisation = false) {
 		if ($deletedStatus == 'deleted') {
 			Logger::logMessage("Dataset " . $datasetId . " is deleted.");
 			return false;
@@ -8972,7 +8972,7 @@ class Api
 			$datasetOrganization = $datasetOrganization;
 
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate, $allowOtherOrganisation)) {
 				return false;
 			}
 		}
@@ -8991,7 +8991,7 @@ class Api
 
 			$datasetOrganization = $datasetOrganization;
 			$allowedOrganizations = $this->getUserOrganisations();
-			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate)) {
+			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate, $allowOtherOrganisation)) {
 				return false;
 			}
 		}
@@ -8999,8 +8999,12 @@ class Api
 		return true;
 	}
 
-	function isDatasetAllowedForOrganization($organization, $allowedOrganizations, $isPrivate)
-	{
+	function isDatasetAllowedForOrganization($organization, $allowedOrganizations, $isPrivate, $allowOtherOrganisation = false) {
+		if ($allowOtherOrganisation) {
+			// We do not allow private datasets for other organisations
+			return !$isPrivate;
+		}
+
 		foreach ($allowedOrganizations as $orga) {
 			$org = $orga->getName();
 			$allowPrivate = $orga->getAllowPrivate();
