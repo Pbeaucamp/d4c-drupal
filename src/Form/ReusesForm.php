@@ -172,7 +172,7 @@ class ReusesForm extends HelpFormBase {
 		$form['filters']['selected_dataset'] = array(
 			//'#prefix' => '<div class="container-inline">',
             '#type' => 'select',
-            '#title' => t('Dataset :'),
+            '#title' => t('Connaissance :'),
             '#options' => $option_ds,
             '#empty_option' => t('----'),          
 			'#attributes' => array(
