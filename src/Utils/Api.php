@@ -3740,6 +3740,15 @@ class Api
 				}
 				$filters[preg_replace($patternRefine, "", $key)] =  "(*" . Tools::implode("* OR *", $refineThemes) . "*)";
 				unset($query_params[$key]);
+			} else if ($key == "refine.organization") {
+				if (is_array($query_params["refine.organization"])) {
+					$refineOrganizations = $query_params["refine.organization"];
+				} else {
+					$refineOrganizations = array();
+					$refineOrganizations[] = $query_params["refine.organization"];
+				}
+				$filters[preg_replace($patternRefine, "", $key)] =  "(" . Tools::implode(" OR ", $refineOrganizations) . ")";
+				unset($query_params[$key]);
 			} else if (preg_match($patternRefine, $key)) {
 				$filters[preg_replace($patternRefine, "", $key)] =  $value;
 				unset($query_params[$key]);
@@ -3751,7 +3760,7 @@ class Api
 		if (!empty($filters)) {
 			$reqQ = "";
 			foreach ($filters as $key => $value) {
-				if ($key != "features" && $key != "themes") {
+				if ($key != "features" && $key != "themes" && $key != "organization") {
 					$reqQ .= $key . ':"' . $value . '" AND ';
 				} else {
 					$reqQ .= $key . ':' . $value . ' AND ';
