@@ -55,7 +55,24 @@ class VisualisationController extends ControllerBase {
 		$resourceId = $request->query->get('resource_id');
 		$location = $request->query->get('location');
 		$visualizationId = $request->query->get('visualization_id');
-		return $this->myPage2($id, $tab, $resourceId, $location, $visualizationId);
+		return $this->myPage2($id, $$tab, $resourceId, $location, $visualizationId);
+	}
+
+	public function getTitle(Request $request, $tab){
+		$id = $request->query->get('id');
+		$resourceId = $request->query->get('resource_id');
+		
+		$api = new API();
+
+		$dataset = $api->getPackageShow2($id, "", true, true, $resourceId, true);
+
+		if(!isset($dataset["metas"]["id"])){
+			return "Erreur de visualisation";
+		}
+
+		$title = "Visualisation " . $dataset["metas"]["title"];
+
+		return $title;
 	}
 
 	/**
