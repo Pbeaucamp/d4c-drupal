@@ -2560,7 +2560,9 @@ class VisualisationController extends ControllerBase {
 
 					try {
 						$datasetId = $visualization["dataset_id"];
-						if (isset($datasetId)) {
+						$visuType = $visualization["type"];
+
+						if (isset($datasetId) && $visuType != 'cartograph') {
 							$dataset = $api->getPackageShow2($datasetId, "", true, false, null, true);
 	
 							if (isset($dataset["metas"]["id"])) {

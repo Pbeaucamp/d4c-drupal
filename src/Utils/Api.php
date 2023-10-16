@@ -8982,6 +8982,7 @@ class Api
 
 			$allowedOrganizations = $this->getUserOrganisations();
 			if (!$this->isDatasetAllowedForOrganization($datasetOrganization, $allowedOrganizations, $isPrivate, $allowOtherOrganisation)) {
+				Logger::logMessage("Dataset " . $datasetId . " is not allowed for user with this organisation.");
 				return false;
 			}
 		}
@@ -9011,7 +9012,7 @@ class Api
 	function isDatasetAllowedForOrganization($organization, $allowedOrganizations, $isPrivate, $allowOtherOrganisation = false) {
 		if ($allowOtherOrganisation) {
 			// We do not allow private datasets for other organisations
-			return !$isPrivate;
+			return $organization == $this->config->client->client_organisation || !$isPrivate;
 		}
 
 		foreach ($allowedOrganizations as $orga) {
