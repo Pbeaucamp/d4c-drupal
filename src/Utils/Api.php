@@ -3856,6 +3856,8 @@ class Api
 			$dataset["metas"]["language"] = "fr";
 			$dataset["metas"]["title"] = $value["name"];
 
+			$dataset["owner_org"] = $value["owner_org"];
+
 			$dataset["metas"]["modified"] = $value["metadata_modified"];
 			$dataset["metas"]["visibility"] = "domain";
 			$dataset["metas"]["metadata_processed"] = $value["metadata_created"];
