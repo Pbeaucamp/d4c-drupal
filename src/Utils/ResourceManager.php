@@ -1047,29 +1047,84 @@ class ResourceManager {
 
 		$isShape = false;
 		$isGtfs = false;
-		$color_array = [];
+
+		// Used to retrieve informations from routes for GTFS
+		$routesInfos = array();
+		// Used to retrieve matchs between shapes and routes from the trips GTFS file
+		$tripsMatch = array();
+		
 		foreach($files as $key=>$file) {
 			//Checking if one the required GTFS files exist
 			if (strpos($file, 'agency.txt') !== false || strpos($file, 'stops.txt') !== false
-				|| strpos($file, 'trips.txt') !== false|| strpos($file, 'stop_times.txt') !== false) {
+				|| strpos($file, 'stop_times.txt') !== false) {
 					$isGtfs = true;
 			}
 			// Getting route color if defined
 			else if (strpos($file, 'routes.txt') !== false) {
 				$isGtfs = true;
 
-				$key_rout_id="";
-				$key_color_route ="";
+				$lines = explode("\n", file_get_contents($file));
+				$firstLine = true;
 
-				$array = explode("\n", file_get_contents($file));
-				foreach ($array as $key => $value) {
-					$line = explode(',', $value);
-					if ($key == 0 ) {
-						$key_rout_id = array_search('route_id', $line);
-						$key_color_route = array_search('route_color', $line);
+				$routeIdIndex = 0;
+				$agencyIdIndex = 0;
+				$routeShortNameIndex = 0;
+				$routeLongNameIndex = 0;
+				$routeTypeIndex = 0;
+				$routeColorIndex = 0;
+
+				foreach ($lines as $line) {
+					$values = explode(',', $line);
+
+					if ($firstLine) {
+						$routeIdIndex = array_search('route_id', $values);
+						$agencyIdIndex = array_search('agency_id', $values);
+						$routeShortNameIndex = array_search('route_short_name', $values);
+						$routeLongNameIndex = array_search('route_long_name', $values);
+						$routeTypeIndex = array_search('route_type', $values);
+						$routeColorIndex = array_search('route_color', $values);
+
+						$firstLine = false;
+						continue;
 					}
-					else {
-						array_push($color_array,array("route_id"=>$line[$key_rout_id], "color_route"=>$line[$key_color_route]));
+
+					$routeId = $values[$routeIdIndex];
+					$routesInfos[$routeId] = array(
+						"route_id" => $values[$routeIdIndex],
+						"agency_id" => $values[$agencyIdIndex],
+						"route_short_name" => $values[$routeShortNameIndex],
+						"route_long_name" => $values[$routeLongNameIndex],
+						"route_type" => $values[$routeTypeIndex],
+						"route_color" => $values[$routeColorIndex]
+					);
+				}
+			}
+			// Getting route color if defined
+			else if (strpos($file, 'trips.txt') !== false) {
+				$isGtfs = true;
+
+				$lines = explode("\n", file_get_contents($file));
+
+				$routeIdIndex = 0;
+				$shapeIdIndex = 0;
+
+				$firstLine = true;
+				foreach ($lines as $line) {
+					$values = explode(',', $line);
+
+					if ($firstLine) {
+						$routeIdIndex = array_search('route_id', $values);
+						$shapeIdIndex = array_search('shape_id', $values);
+
+						$firstLine = false;
+						continue;
+					}
+
+					$routeId = $values[$routeIdIndex];
+					$shapeId = $values[$shapeIdIndex];
+
+					if ($tripsMatch[$shapeId] == null) {
+						$tripsMatch[$shapeId] = $routeId;
 					}
 				}
 			}
@@ -1111,8 +1166,10 @@ class ResourceManager {
 				else if ($isGtfs && $this->endsWith($file, '.txt')) {
 					Logger::logMessage("Found GTFS txt file converting to CSV");
 
-					$isShapeFile = strpos($file, 'shapes.txt') !== false;
-					$resourceUrl = $this->convertTextFileToCsv($file, $isShapeFile, "csv", $color_array);
+					if (strpos($file, 'shapes.txt') !== false) {
+						$shapeFilePath = $file;
+					}
+					$resourceUrl = $this->convertTextFileToCsv($file, "csv");
 
 					Logger::logMessage("New file to manage " . $resourceUrl);
 				}
@@ -1128,6 +1185,17 @@ class ResourceManager {
 					$resourceUrl = str_replace(self::ROOT, $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . '/', $file);
 					Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
 				}
+
+				//We don't move the file if it is a shape
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
+				$results = array_merge($results, $result);
+			}
+
+			// If we manage a GTFS, we need to create a new file containing the shapes of the routes
+			if ($isGtfs) {
+				Logger::logMessage("Generate GTFS shapes file");
+
+				$resourceUrl = $this->generateGTFSShapes($shapeFilePath, $routesInfos, $tripsMatch);
 
 				//We don't move the file if it is a shape
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
@@ -1167,7 +1235,7 @@ class ResourceManager {
 	}
 
 	//convert text file to csv
-	function convertTextFileToCsv($filepath, $isShapeFile, $new_extension, $color_array) {
+	function convertTextFileToCsv($filepath, $new_extension) {
 		// Get content of text file
 		$filepathContent = file_get_contents($filepath);
 
@@ -1191,84 +1259,98 @@ class ResourceManager {
 		// Create a new csv file with the same content as the text file
 		file_put_contents($newfile, $filepathContent);
 
-		if ($isShapeFile) {
-			$csv_data = array_map('str_getcsv', file($newfile));
+		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
+		return $newfile;
+	}
 
-			$extra_columns = array('geo_point_2d' => null, 'geo_shape' => null, 'route_color' => null);
+	function generateGTFSShapes($shapeFilePath, $routesInfos, $tripsMatch) {
+		$csv_data = array_map('str_getcsv', file($shapeFilePath));
 
-			// Find indices of shape_pt_lat, shape_pt_lon, and shape_id columns
-			$latIndex = array_search('shape_pt_lat', $csv_data[0]);
-			$lngIndex = array_search('shape_pt_lon', $csv_data[0]);
-			$shapeIdIndex = array_search('shape_id', $csv_data[0]);
+		// Find indices of shape_pt_lat, shape_pt_lon, and shape_id columns
+		$shapeIdIndex = array_search('shape_id', $csv_data[0]);
+		$latIndex = array_search('shape_pt_lat', $csv_data[0]);
+		$lngIndex = array_search('shape_pt_lon', $csv_data[0]);
 
-			$shape_ids = array(); // Initialize an empty array to store the different shape IDs
-
-			// Loop through each line in the file
-			foreach ($csv_data as $i => $data) {
-				if ($i == 0) {
-					continue;
-				}
-
-				$shape_id = $data[$shapeIdIndex]; // Get the value of the shape_id column
-				$coordinate = array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
-
-				// If the shape_id is not already in the array, add it
-				if (!in_array($shape_id, $shape_ids)) {
-					$shape_ids[$shape_id][] = $coordinate;
-				}
-				else {
-					// If the shape_id is already in the array, add the coordinate to the array
-					array_push($shape_ids[$shape_id], $coordinate);
-				}
+		$shape_ids = array(); // Initialize an empty array to store the different shape IDs
+		// Loop through each line in the file
+		foreach ($csv_data as $i => $data) {
+			if ($i == 0) {
+				continue;
 			}
-			
-			$routesvalue = [];
-			foreach ($shape_ids as $key => $value) {
-				$routesvalue[$key] = json_encode(array('type' => "LineString",'coordinates' => $value));
+
+			$shape_id = $data[$shapeIdIndex]; // Get the value of the shape_id column
+			$coordinate = array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+
+			// If the shape_id is not already in the array, add it
+			if (!in_array($shape_id, $shape_ids)) {
+				$shape_ids[$shape_id][] = $coordinate;
 			}
-			
-			Logger::logMessage("TRM - Routes " . json_encode($routesvalue));
-	
-			array_unshift($color_array,"");
-			unset($color_array[0]);
-	
-			foreach ($csv_data as $i => $data) {
-				$shapeId = $data[$shapeIdIndex];
-
-				if (array_key_exists($shapeId, $routesvalue)) {
-
-					Logger::logMessage("TRM - Found Shape ID " . $shapeId);
-
-					$geo_shape = $routesvalue[$shapeId];
-					if ($color_array[$i]["color_route"] != null) {
-						$color = $color_array[$i]["color_route"];
-					}
-					else {
-						$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
-						$keycolor = array_search($random_color, array_column($color_array, 'color_route'));
-						if ($keycolor ==false) {
-							$color = $random_color;
-						}
-					}
-
-					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);	
-					$csv_data[$i] = $data = array_merge($data, $extra_columns);
-				}
-				else {
-					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
-					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
-				}
-			}
-	
-			if (($handle = fopen($newfile, 'w')) !== FALSE) {
-				foreach ($csv_data as $data) {
-					fputcsv($handle, $data, ",");
-				}
-				fclose($handle);
+			else {
+				// If the shape_id is already in the array, add the coordinate to the array
+				array_push($shape_ids[$shape_id], $coordinate);
 			}
 		}
 
-		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
+		$data = array();
+		$data[] = array(
+			"shape_id",
+			"route_id",
+			"agency_id",
+			"route_short_name",
+			"route_long_name",
+			"route_type",
+			"route_color",
+			"geo_point_2d",
+			"geo_shape"
+		);
+
+		foreach ($shape_ids as $key => $value) {
+			$routeId = $tripsMatch[$key];
+
+			$geoPoint2d = (float) $value[0][1] ."," . (float) $value[0][0];
+			$geoShape = json_encode(array('type' => "LineString",'coordinates' => $value));
+
+			$routeData = $routesInfos[$routeId];
+
+			// Coming from routes.txt
+			$agencyId = $routeData["agency_id"];
+			$routeShortName = $routeData["route_short_name"];
+			$routeLongName = $routeData["route_long_name"];
+			$routeType = $routeData["route_type"];
+			$routeColor = $routeData["route_color"];
+
+			// $random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+			// $keycolor = array_search($random_color, array_column($color_array, 'color_route'));
+			// if ($keycolor ==false) {
+			// 	$color = $random_color;
+			// }
+
+			$line = array(
+				"shape_id" => $key,
+				"route_id" => $routeId,
+				"agency_id" => $agencyId,
+				"route_short_name" => $routeShortName,
+				"route_long_name" => $routeLongName,
+				"route_type" => $routeType,
+				"route_color" => $routeColor,
+				"geo_point_2d" => $geoPoint2d,
+				"geo_shape" => $geoShape
+			);
+
+			$data[] = $line;
+		}
+
+		$newFilePath = dirname($shapeFilePath) . "/shapes_description.csv";
+
+		$handle = fopen($newFilePath, 'w');
+		if ($handle !== FALSE) {
+			foreach ($data as $line) {
+				fputcsv($handle, $line);
+			}
+			fclose($handle);
+		}
+
+		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newFilePath);
 		return $newfile;
 	}
 
