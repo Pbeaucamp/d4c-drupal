@@ -788,7 +788,6 @@ class Api
 		//$params = str_replace("qf=title^3.0 notes^1.0", "qf=title^3.0+notes^1.0", $params);	 
 		$callUrl =  $this->urlCkan . "api/action/package_search";
 
-
 		if (!is_null($params)) {
 			$params = str_replace('&defType=edismax', '', $params);
 			$callUrl .= "?" . $params;
@@ -812,15 +811,15 @@ class Api
 		Logger::logMessage("Found " . Tools::count($result["result"]["results"]) . " datasets");
 
 		// Go through the results and add missing informations
-		foreach ($result["result"]["results"] as &$dataset) {
+		foreach ($result["result"]["results"] as &$ds) {
 			// Checking number of reuses for dataset
-			$reuses = $this->countReuses($dataset['name']);
-			$dataset['nb_reuses'] = $reuses;
+			$reuses = $this->countReuses($ds['name']);
+			$ds['nb_reuses'] = $reuses;
 
 			// Checking if dataset is a visualization
-			$datasetType = DatasetHelper::extractMetadata($dataset['extras'], 'data4citizen-type');
+			$datasetType = DatasetHelper::extractMetadata($ds['extras'], 'data4citizen-type');
 			if ($datasetType == "visualization") {
-				$entityId = DatasetHelper::extractMetadata($dataset['extras'], 'data4citizen-entity-id');
+				$entityId = DatasetHelper::extractMetadata($ds['extras'], 'data4citizen-entity-id');
 
 				$api = new Api;
 				$visualization = $api->getVisualization($entityId);
@@ -831,7 +830,7 @@ class Api
 				$widget = str_replace(array("'"), array("\'"), $widget);
 				$widget = str_replace(array("\""), array("&quot;"), $widget);
 
-				$dataset['visualization'] = [
+				$ds['visualization'] = [
 					"type" => $type,
 					"share_url" => $shareUrl,
 					"widget" => $widget
@@ -868,10 +867,43 @@ class Api
 			Logger::logMessage("Has coordinates : " . $hasCoordinates . " - " . json_encode($coordinates));
 			Logger::logMessage("Has siren : " . $hasSiren . " - " . $siren);
 
+			$isInsideObsEmprise = false;
+			$datasetsInsideSirenEmprise = [];
+			if ($hasSiren) {
+				// We retrieve the list of datasets with an emprise matching the siren
+				$sirenGeoloc = $this->getSirenGeoloc($siren);
+
+				// Check if siren has geoloc and match obs emprise
+				if ($sirenGeoloc != null && $this->isObservatory()) {
+					$propertiesHelper = new PropertiesHelper();
+					$observatoryEmpriseShape = $propertiesHelper->getProperty(PropertiesHelper::MAP_EMPRISE_SHAPE);
+					$observatoryEmpriseCoordinates = $propertiesHelper->getProperty(PropertiesHelper::MAP_EMPRISE_COORDINATES);
+
+					$observatoryEmprise = array(
+						'shape' => $observatoryEmpriseShape,
+						'coordinates' => $observatoryEmpriseCoordinates
+					);
+
+					$isInsideObsEmprise = $this->isPointInsideEmprise($sirenGeoloc, $observatoryEmprise);
+
+					// Get all datasets matching the Siren
+					$mapEmprises = MapEmpriseHelper::getDatasetEmprise();
+					// Checking each dataset emprise to see if the siren is inside
+					foreach ($mapEmprises as $mapEmprise) {
+						$isInsideEmprise = $this->isPointInsideEmprise($sirenGeoloc, $mapEmprise);
+						if ($isInsideEmprise) {
+							$datasetsInsideSirenEmprise[] = $mapEmprise['datasetId'];
+						}
+					}
+
+					Logger::logMessage("TRM - SIREN Test - Datasets matching siren : " . json_encode($datasetsInsideSirenEmprise) . "");
+				}
+			}
+
 			$datasets = [];
 			// We browse the resources of all the dataset found to see if it contains a geoloc field
 			foreach ($result["result"]["results"] as $keydataset => $dataset) {
-
+				$datasetMatch = false;
 				foreach ($dataset["resources"] as $value) {
 					$resourceId = $value['id'];
 
@@ -894,11 +926,15 @@ class Api
 					$fieldSiren = $fieldSiren['name'];
 
 					$datasetMatch = true;
-					if ($hasCoordinates && !$this->checkDataCoordinates($dataset['id'], $resourceId, $fieldCoordinates, $coordinates)) {
+					if ($hasCoordinates 
+							&& !$this->checkDataCoordinates($dataset['id'], $resourceId, $fieldCoordinates, $coordinates)) {
 						$datasetMatch = false;
 					}
 
-					if ($hasSiren && !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiren, $siren)) {
+					if ($hasSiren 
+							&& !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiren, $siren) 
+							&& !in_array($dataset['id'], $datasetsInsideSirenEmprise)
+							&& !$isInsideObsEmprise) {
 						$datasetMatch = false;
 					}
 
@@ -916,6 +952,21 @@ class Api
 		return $result;
 	}
 
+	function getSirenGeoloc($siren) {
+		// To change with a DB call
+
+		//To implement in database (this is a test list)
+		$sirenGeoPoint = array(
+			'2349374983' => '45.775753083964155,4.860275387763978',
+			'1234567890' => '47.2998615193689,5.05123342287015'
+		);
+
+		if (array_key_exists($siren,$sirenGeoPoint)) {
+			return $sirenGeoPoint[$siren];
+		}
+		return null;
+	}
+
 	function checkDataCoordinates($datasetId, $resourceId, $fieldCoordinates, $coordinates) {
 		if (!isset($fieldCoordinates)) {
 			return false;
@@ -927,11 +978,11 @@ class Api
 		$polygon = '';
 		$first = true;
 
-		$coord = explode(',', $coordinates);
-		if (sizeof($coordinates) <= 3) {
-			if ($coord == null) {
-				$coord = explode(',', $coordinates[0]);
-			}
+		if (sizeof($coordinates) <= 0){
+			return false;
+		}
+		else if (sizeof($coordinates) == 1) {
+			$coord = explode(',', $coordinates[0]);
 			$lat = $coord[0];
 			$long = $coord[1];
 
@@ -957,6 +1008,41 @@ class Api
 
 		$resultSql = $this->searchDatastoreSQL($sql);
 		return (int) $resultSql["result"]["records"][0]["count"] > 0;
+	}
+
+	function isPointInsideEmprise($geoPoint2D, $mapEmprise) {
+		$shape = $mapEmprise["shape"];
+		$coordinates = $mapEmprise["coordinates"];
+
+		if ($coordinates && $coordinates != "") {
+			switch($shape){
+			case 'circle':
+				$coord = explode(',', $coordinates);
+				$lat = $coord[0];
+				$long = $coord[1];
+	
+				if (Tools::count($coord) > 2) {
+					$dist = $coord[2];
+
+					$sql = "Select count(*)";
+					$sql .= "where circle(point(" . $lat . "," . $long . "), " . $this->getRadius($lat, $long, $dist) . ") @> point(" . $geoPoint2D . ")  ";
+				}
+				break;
+			case 'polygon':
+				$sql = "Select count(*)";
+				$sql .= " where polygon(path '(" . $coordinates . ")') @> point(" . $geoPoint2D . ") ";
+				break;
+			default:
+				return false;
+			}
+
+			if ($sql) {
+				$resultSql = $this->searchDatastoreSQL($sql);
+				return (int) $resultSql["result"]["records"][0]["count"] > 0;
+			}
+			return false;
+		}
+		return false;
 	}
 
 	function checkDataColumn($datasetId, $resourceId, $field, $value) {
@@ -1087,12 +1173,6 @@ class Api
 			if (array_key_exists('siren', $query_params)) {
 				$additionnalParameters['siren'] = $query_params['siren'];
 				unset($query_params['siren']);
-
-				if ($query_params["fq"] == null) {
-					$query_params["fq"] = "features:(*analyze*)";
-				} else {
-					$query_params["fq"] .= " AND features:(*analyze*)";
-				}
 			}
 			else if (array_key_exists('coordReq', $query_params)) {
 				$additionnalParameters['coordinates'] = $query_params['coordReq'];

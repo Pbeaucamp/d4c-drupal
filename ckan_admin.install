@@ -670,3 +670,31 @@ function ckan_admin_update_9001(&$sandbox) {
   $schema->dropField('d4c_reuses', 'reu_image');
   $schema->addField('d4c_reuses', 'reu_image', $spec);
 }
+
+function ckan_admin_update_9002(&$sandbox) {
+  $table_name = 'd4c_dataset_emprise';
+
+  $spec = [
+    'description' => 'Gestion des emprises de carte pour dataset',
+    'fields' => [
+      'dataset_id'=>[
+        'type' => 'text',
+        'description' => "Dataset ID",
+        'not null' => TRUE,
+      ],
+      'shape' => [
+        'type' => 'varchar',
+        'description' => "Forme emprise",
+        'length' => 255,
+      ],
+      'coordinates' => [
+        'type' => 'text',
+        'description' => "Coordonnees emprise",
+      ],
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['dataset_id']);
+}

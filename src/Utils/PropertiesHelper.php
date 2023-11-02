@@ -11,6 +11,8 @@ class PropertiesHelper {
 
 	// Create constants for the keys of the properties we want to use.
 	const PACKAGE_DOWNLOAD_LIMIT = 'package_download_limit';
+	const MAP_EMPRISE_SHAPE = "map_emprise_shape";
+	const MAP_EMPRISE_COORDINATES = "map_emprise_coordinates";
 	const CO_LINKED_SURVEYS = 'co_linked_surveys';
 	const MESSAGE_MAIL_RGPD = 'message_mail_rgpd';
 	const MESSAGE_RGPD = 'message_rgpd';

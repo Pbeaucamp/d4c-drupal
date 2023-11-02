@@ -52,7 +52,7 @@ class ResourceManager {
 		$api->updateDatabaseStatus($isNew, $uniqId, $datasetId, 'DATASET', 'MANAGE_DATASET', $action, $status, $message);
 	}
 
-	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
+	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null, $mapEmprise = null) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "' and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création de la connaissance \'' . $datasetName . '\'');
 
@@ -89,12 +89,14 @@ class ResourceManager {
 		$datasetId = $this->saveData($newData, $coll);
 		$datasetId = $datasetId[1];
 
+		MapEmpriseHelper::setDatasetEmprise($datasetId, $mapEmprise);
+
 		Logger::logMessage("New dataset has been saved with id '" . $datasetId . "'");
 		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été créé');
 		return $datasetId;
 	}
 
-	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
+	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null, $mapEmprise = null) {
 		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
 		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour de la connaissance \'' . $datasetName . '\'');
 		
@@ -125,6 +127,8 @@ class ResourceManager {
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 				}
 			}
+
+			MapEmpriseHelper::setDatasetEmprise($datasetId, $mapEmprise);
 
 			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été mis à jour');
 			return $datasetId;
@@ -1868,7 +1872,7 @@ class ResourceManager {
 				// 	$hasThemeLabel = true;
 				// 	$extras[$index]['value'] = $themeLabel;
 				// }
-					
+
 				if ($extras[$index]['key'] == 'type_map') {
 					$hasTypeMap = true;
 					$extras[$index]['value'] = $selectedTypeMap;
@@ -2609,6 +2613,8 @@ class ResourceManager {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
 
+			// Delete the emprise
+			MapEmpriseHelper::deleteDatasetEmprise($datasetId);
 
 			// If databfc module is enabled, we delete the integration from Vanilla if exist
 			try {
