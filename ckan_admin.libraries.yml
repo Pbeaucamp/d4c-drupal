@@ -95,6 +95,22 @@ editMetaDataFormModal.form:
     theme:
       css/modal.css: {} 
 
+MetaDataForm.form:
+  version: VERSION
+  js:
+    js/helpForm.js: {}
+    /sites/default/files/api/portail_d4c/js/bootstrap.min.js: {}
+    js/libraries.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-core.js: {}
+    /sites/default/files/api/portail_d4c/js/i18n.js: {}
+    /sites/default/files/api/portail_d4c/js/angular-carto.js: {}
+    js/MetadataForm.js: {}
+  css:
+    theme:
+      /sites/default/files/api/portail_d4c/css/visualisation.css: {}
+  dependencies:
+    - core/jquery
+
 organizationsManagementForm.form:
   version: VERSION
   js:

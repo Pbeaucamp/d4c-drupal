@@ -14,6 +14,7 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\DatasetHelper;
+use Drupal\ckan_admin\Utils\MapEmpriseHelper;
 use Drupal\ckan_admin\Utils\Tools;
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
@@ -56,6 +57,9 @@ abstract class MetadataForm extends FormBase {
 		$config = include(__DIR__ . "/../../config.php");
 		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
 
+		$form['#attached']['library'][] = 'ckan_admin/MetaDataForm.form';
+		$form['#attached']['library'][] = 'ckan_admin/leaflet';
+
 		$datasetTitle = \Drupal::request()->query->get('dataset-title');
 
 		$organization = $config->client->client_organisation;
@@ -91,6 +95,11 @@ abstract class MetadataForm extends FormBase {
 			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
 			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
 			$selectedThemes = json_decode($selectedThemes, true);
+
+			// Map Emprise from DB
+			$mapEmprise = MapEmpriseHelper::getDatasetEmprise($datasetId);
+			$mapEmpriseShape = $mapEmprise['shape'];
+			$mapEmpriseCoordinates = $mapEmprise['coordinates'];
 
 			// Inspire
 			$frequence = DatasetHelper::extractMetadata($selectedDataset["extras"], "frequency-of-update");
@@ -209,6 +218,28 @@ abstract class MetadataForm extends FormBase {
 				),
 			);
 		}
+
+		$form['map_emprise_html'] = array(
+			'#markup' => '<div ng-app="d4c-widgets" id="app"
+							<label for="app"><strong>Emprise géographique : </strong></label>
+							<d4c-map id="mapemprise" map-emprise-shape="' . $mapEmpriseShape . '" map-emprise-coordinates="'. $mapEmpriseCoordinates .'" location="' . $config->client->default_bounding_box . '" class="ng-isolate-scope"></d4c-map>
+							</div></br>
+							<script type="text/javascript">
+						</script>',
+			'#allowed_tags' => ['label', 'div','strong', 'd4c-map', 'br', 'script']
+		);
+
+		$form['map_emprise_shape'] = array(
+			'#type' => 'hidden',
+			'#default_value' => isset($mapEmpriseShape) ? $mapEmpriseShape : null,
+			'#attributes' => array('id' => 'map_emprise_shape')
+		);
+
+		$form['map_emprise_coordinates'] = array(
+			'#type' => 'hidden',
+			'#default_value' => isset($mapEmpriseCoordinates) ? $mapEmpriseCoordinates : null,
+			'#attributes' => array('id' => 'map_emprise_coordinates')
+		);
 
 		$form['integration_option'] = [
 			'#type' => 'details',
@@ -859,6 +890,15 @@ abstract class MetadataForm extends FormBase {
 		return json_encode($themes);
 	}
 
+	public function getMapEmprise(FormStateInterface $form_state){
+		$mapEmprise = [
+			'shape' => $form_state->getValue(['map_emprise_shape']),
+			'coordinates' => $form_state->getValue(['map_emprise_coordinates'])
+		];
+
+		return $mapEmprise;
+	}
+
 	public function getGeneralMetadata(FormStateInterface $form_state) {
 		//WIP everything should be there
 
@@ -1056,6 +1096,7 @@ abstract class MetadataForm extends FormBase {
 		$dataRgpd = $this->getDatasetRgpd($form_state);
 		$dataValidation = $this->getDataValidation($form_state);
 		$themes = $this->getThemes($form_state);
+		$mapEmprise = $this->getMapEmprise($form_state);
 
 		$generalMetadata = $this->getGeneralMetadata($form_state);
 		$inspireMetadata = $this->getInspireMetadata($form_state);
@@ -1083,7 +1124,7 @@ abstract class MetadataForm extends FormBase {
 					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
-					$licence, $organization, $isPrivate, $tags, $extras, null);
+					$licence, $organization, $isPrivate, $tags, $extras, null, $mapEmprise);
 
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mise à jour.");
 			}
@@ -1106,7 +1147,7 @@ abstract class MetadataForm extends FormBase {
 				Logger::logMessage(" and generatedTaskId " . $generatedTaskId);
 				Logger::logMessage(" and source " . $source);
 
-				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source, $mapEmprise);
 
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
 			}
