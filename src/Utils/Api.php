@@ -9155,14 +9155,19 @@ class Api
 			$datasetid = $data->datasetId;
 			$type = $data->embedType;
 			$name = $data->visualizationName;
+			$license = $data->visualizationLicense;
+			$isPrivate = $data->visualizationIsPrivate;
 			$shareUrl = $data->shareUrl;
 			$iframe = $data->iframe;
 			$widget = $data->widget;
 			
 			$visualizationId = $this->insertVisualization($datasetid, $userId, $type, $name, $shareUrl, $iframe, $widget);
+			$visuDatasetid = $this->createVisualizationDataset($visualizationId,null,$name,$license,$isPrivate);
+			
 
 			$visualization = array();
 			$visualization["visualizationId"] = $visualizationId;
+			$visualization["datasetId"] = $visuDatasetid;
 
 			$result = array();
 			$result["status"] = "success";
@@ -9245,6 +9250,44 @@ class Api
 			$widget,
 		]);
 		return $query->execute();
+	}
+
+	function createVisualizationDataset($visualizationId,$datasetName,$title,$license,$isPrivate){
+		$resourceManager = new ResourceManager;
+		$organization = $this->config->client->client_organisation;
+
+		$visualization = $this->getVisualization($visualizationId);
+		$datasetModel['item'] = $visualizationId;
+		// We don't want to add reference to dataset for type cartograph and chartbuilder as it reference himself
+		if ($visualization['type'] != 'cartograph' && $visualization['type'] != 'chartbuilder') {
+			$referenceDatasetId = $visualization['dataset_id'];
+			$datasetModel['reference-dataset-id'] = $referenceDatasetId;
+		}
+
+
+		//Add default extras
+		$dateDataset = date('Y-m-d');
+
+		//Users management
+		$currentUser = \Drupal::currentUser();
+		$userId = "*" . $currentUser->id() . "*";
+		$users = $this->getAdministrators();
+		$username = $currentUser->getAccountName();
+		$security = $resourceManager->defineSecurity($userId, $users);
+
+		$extras = $resourceManager->defineExtras(null,null,null,null,null,null,null,null,null,null,null,null,$dateDataset,
+		null,null,$security,null,null,null,null,null,null,null,"visualization",$visualizationId,null,$username,json_encode($datasetModel));
+		$tags = array();
+
+		$generatedTaskId = uniqid();
+		if(!$datasetName){
+			$datasetName = $resourceManager->defineDatasetName($title);
+		}
+		$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $license, $organization, $isPrivate, $tags, $extras);
+		
+		$this->updateVisualization($visualizationId, null, $datasetId);
+
+		return $datasetId;
 	}
 
 	function updateVisualization($visualizationId, $itemId, $publishDatasetId = null, $name = null, $shareUrl = null, $iframe = null, $widget = null) {
