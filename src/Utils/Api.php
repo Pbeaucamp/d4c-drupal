@@ -5198,7 +5198,6 @@ class Api
 		$method = $_SERVER['REQUEST_METHOD'];
 		$table = "d4c_maps";
 		$idUser = null;
-
 		if (\Drupal::currentUser()->isAuthenticated()) {
 			$idUser = \Drupal::currentUser()->id();
 		} else {
@@ -5213,43 +5212,70 @@ class Api
 		$response->headers->set('Content-Type', 'application/json');
 
 		switch ($method) {
-			case 'POST': //create map, no idMap
+			case 'POST': //if id_map => create dataset, else => create map
 				//$data = json_decode(file_get_contents('php://input'), true);  
 				$data = file_get_contents('php://input');
 				$data = json_decode($data, true);
 
-				$title = $data["title"];
-				$name = str_replace(" ", "-", strtolower($data["title"]));
-
-				$res = $this->getMaps($idUser, $name);
-				if (Tools::count($res) > 0) {
-					$name .= (Tools::count($res) + 1);
+				if($idmap != null && $idmap != ''){
+					$title = $data["title"];
+					$license = $data["license"];
+					$isPrivate = $data["is_private"];
+					$visualizationid = $data["visualization_id"];
+					try{
+						$datasetId = $this->createVisualizationDataset($visualizationid,$idmap,$title,$license,$isPrivate);
+						$data['dataset_id'] = $datasetId;
+						$data = json_encode($data);
+					} catch (\Exception $e) {
+						Logger::logMessage($e->getMessage());
+			
+						// If error contains "That URL is already in use"
+						if (strpos($e->getMessage(), "That URL is already in use") !== false) {
+							\Drupal::messenger()->addMessage("Le nom de la connaissance est déjà utilisé. Veuillez en choisir un autre.", 'error');
+						}
+						else {
+							\Drupal::messenger()->addMessage("Une erreur est survenue lors de la création de la connaissance (" . t($e->getMessage()) . ").", 'error');
+						}
+						$response->setStatusCode(500);
+						$response->headers->set('Content-Type', 'application/json');
+	
+						return $response;
+					}
 				}
-				$data["persist_id"] = $name;
-
-				$shareUrl = $data["directLink"];
-				$iframe = $data["embedCode"];
-				$widget = $data["widgetCode"];
-
-				// Build and add a visualisation link to the map
-				$visualizationId = $this->insertVisualization($name, $idUser, 'cartograph', $title, $shareUrl, $iframe, $widget);
-				$data["visualizationId"] = $visualizationId;
-
-				$data = json_encode($data);
-
-				$query = \Drupal::database()->insert($table);
-				$query->fields([
-					'map_id_user',
-					'map_name',
-					'map_json'
-				]);
-				$query->values([
-					$idUser,
-					$name,
-					$data
-				]);
-
-				$query->execute();
+				else{
+					$title = $data["title"];
+					$name = str_replace(" ", "-", strtolower($data["title"]));
+	
+					$res = $this->getMaps($idUser, $name);
+					if (Tools::count($res) > 0) {
+						$name .= (Tools::count($res) + 1);
+					}
+					$data["persist_id"] = $name;
+	
+					$shareUrl = $data["directLink"];
+					$iframe = $data["embedCode"];
+					$widget = $data["widgetCode"];
+	
+					// Build and add a visualisation link to the map
+					$visualizationId = $this->insertVisualization($name, $idUser, 'cartograph', $title, $shareUrl, $iframe, $widget);
+					$data["visualizationId"] = $visualizationId;
+	
+					$data = json_encode($data);
+	
+					$query = \Drupal::database()->insert($table);
+					$query->fields([
+						'map_id_user',
+						'map_name',
+						'map_json'
+					]);
+					$query->values([
+						$idUser,
+						$name,
+						$data
+					]);
+	
+					$query->execute();
+				}
 
 				$response->setStatusCode(200);
 				$response->setContent($data);
@@ -9245,6 +9271,42 @@ class Api
 			$widget,
 		]);
 		return $query->execute();
+	}
+
+	function createVisualizationDataset($visualizationId,$datasetName,$title,$license,$isPrivate){
+		$resourceManager = new ResourceManager;
+		$organization = $this->config->client->client_organisation;
+		$visualization = $this->getVisualization($visualizationId);
+		$datasetModel['item'] = $visualizationId;
+		// We don't want to add reference to dataset for type cartograph and chartbuilder as it reference himself
+		if ($visualization['type'] != 'cartograph' && $visualization['type'] != 'chartbuilder') {
+			$referenceDatasetId = $visualization['dataset_id'];
+			$datasetModel['reference-dataset-id'] = $referenceDatasetId;
+		}
+
+		//Add default extras
+		$dateDataset = date('Y-m-d');
+
+		//Users management
+		$currentUser = \Drupal::currentUser();
+		$userId = "*" . $currentUser->id() . "*";
+		$users = $this->getAdministrators();
+		$username = $currentUser->getAccountName();
+		$security = $resourceManager->defineSecurity($userId, $users);
+
+		$extras = $resourceManager->defineExtras(null,null,null,null,null,null,null,null,null,null,null,null,$dateDataset,
+		null,null,$security,null,null,null,null,null,null,null,"visualization",$visualizationId,null,$username,json_encode($datasetModel));
+		$tags = array();
+		$generatedTaskId = uniqid();
+
+		if(!$datasetName){
+			$datasetName = $resourceManager->defineDatasetName($title);
+		} 
+		$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $license, $organization, $isPrivate, $tags, $extras);
+		
+		$this->updateVisualization($visualizationId, null, $datasetId);
+
+		return $datasetId;
 	}
 
 	function updateVisualization($visualizationId, $itemId, $publishDatasetId = null, $name = null, $shareUrl = null, $iframe = null, $widget = null) {
