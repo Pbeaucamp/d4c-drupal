@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class External {
 	
 	protected $api;
+	protected $config;
 	
 	public function __construct(){
         $this->api = new Api();
@@ -80,7 +81,7 @@ class External {
 			}
 		}
 		
-		$facetReq = implode("&", $fields);
+		$facetReq = Tools::implode("&", $fields);
 		if($request != "") $request = "&".$request;
 		$requestUrl = $url . "/api/records/1.0/search/?".$facetReq."&dataset=".$idDataset.$request;
 		//echo $requestUrl;
@@ -259,7 +260,7 @@ class External {
 		return json_encode($res);
 	}
 	
-	function getDatasetFromD4c($url, $idDataset, $request){
+	function getDatasetFromD4c($url, $idDataset){
 		$requestUrl = $url . $this->config->client->routing_prefix . "/d4c/api/datasets/1.0/".$idDataset."/";
 		
 		$curl = curl_init($requestUrl);
@@ -276,7 +277,7 @@ class External {
 		return json_encode($res);
 	}
 	
-	function getDatasetFromCkan($url, $idDataset, $request){
+	function getDatasetFromCkan($url, $idDataset){
 		
 	}
 	
@@ -594,9 +595,9 @@ class External {
 		foreach($arr as &$row){
 			$cols = explode(";", $row);
 			unset($cols[0]);
-			$row = implode(";", $cols);
+			$row = Tools::implode(";", $cols);
 		}
-		$res = implode(PHP_EOL, $arr);
+		$res = Tools::implode(PHP_EOL, $arr);
 		//error_log( $res);
 		/*$res = json_decode($res, true);
 		if(array_key_exists("error", $res)){

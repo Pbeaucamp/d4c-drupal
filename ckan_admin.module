@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\ckan_admin\Utils\Logger;
+
 /**
  * Implements hook_mail().
  */
@@ -40,4 +42,16 @@ function ckan_admin_page_attachments(array &$attachments) {
 
     $attachments['#attached']['library'][] = 'ckan_admin/routing';
     $attachments['#attached']['library'][] = 'ckan_admin/tools';
+}
+
+/**
+  * Every job that needs to be run periodically should be added to this function.
+  */
+function ckan_admin_cron() {
+  Logger::logMessage("Cron job started");
+
+  $propertiesHelper = new \Drupal\ckan_admin\Utils\PropertiesHelper();
+  $propertiesHelper->updateSwagger();
+
+  Logger::logMessage("Cron job ended");
 }

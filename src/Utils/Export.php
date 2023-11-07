@@ -88,7 +88,7 @@ class Export{
     }
 
 	static function getCSVfromJson($json) {
-		if($json == null || count($json) == 0){
+		if($json == null || (is_countable($json) ? count($json) : 0) == 0){
 			return "";
 		}
 		
@@ -132,7 +132,7 @@ class Export{
 		$res = "";
 		if (($handle = fopen($strTempFile, "r")) !== FALSE) {
 			while (($data = fgetcsv($handle)) !== FALSE) {
-				$res .= implode(",",$data);
+				$res .= Tools::implode(",",$data);
 				$res .= "\n";
 			}
 			fclose($handle);
@@ -146,7 +146,7 @@ class Export{
 	
 	static function createCSVfromGeoJSON($json) {
 		$start = microtime(true);
-		if($json == null || count($json) == 0){
+		if($json == null || (is_countable($json) ? count($json) : 0) == 0){
 			return "";
 		}
 		
@@ -271,15 +271,15 @@ class Export{
 			if(count($row) < count($cols)){
 				$row = array_pad($row, count($cols), "");
 			}
-			$row = implode(",", $row);
+			$row = Tools::implode(",", $row);
 		}
 		
-		$data_csv = strtolower(implode(",", $colNames));
+		$data_csv = strtolower(Tools::implode(",", $colNames));
 		//$data_csv = array_merge($data_csv, $rows);
 		array_unshift($rows, $data_csv);
 		error_log("count ". (count($rows)));
-		//$res = utf8_encode(implode($data_csv, "\n"));
-		$res = implode("\n", $rows);
+		//$res = utf8_encode(Tools::implode($data_csv, "\n"));
+		$res = Tools::implode("\n", $rows);
 		//error_log("eeee ".mb_detect_encoding($res, 'CP1257,ASCII,ISO-8859-15,UTF-8'));
 		//$res = utf8_decode($res);
 		//$res = Export::convert_bad_characters($res);
@@ -299,7 +299,7 @@ class Export{
 	static function isNumericColumn($json, $colName) {
 		
 		for($i=0; $i< 100; $i++){
-			$val = $json["features"][$i]["properties"][$col];
+			$val = $json["features"][$i]["properties"][$colName];
 			if( !is_numeric ($val)){
 				return false;
 			} 

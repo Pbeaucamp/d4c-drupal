@@ -25,7 +25,7 @@ resume.tab_4:
  
 #resume.tab_1:
 #  route_name: ckan_admin.editMetaDataForm
-#  title: 'Création et modification jeu de données'
+#  title: 'Création et modification connaissance'
 #  base_route: ckan_admin.organisationForm
 #  weight: 20
 

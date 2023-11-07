@@ -39,16 +39,18 @@ return (object) array(
 		'master_api_login' => getenv('MASTER_API_LOGIN'),
 		'master_api_password' => getenv('MASTER_API_PASSWORD'),
 		'drupal_root' => getenv('DRUPAL_ROOT'),
+		'shapefile_projection' => getenv('CLIENT_SHAPEFILE_PROJECTION'),
 	),
-	'sitesSearch' => array(
+	'sitesSearch' => (object) array(
 		'https://yyy.data4citizen.com/',
         'https://zzz.data4citizen.com/'
 	),
-	'gravitee' => array(
+	'gravitee' => (object) array(
 		'url' => getenv('GRAVITEE_URL'),
-		'api_key' => getenv('GRAVITEE_API_KEY')
+		'api_key' => getenv('GRAVITEE_API_KEY'),
+		'header_key' => getenv('GRAVITEE_HEADER_KEY')
 	),
-    'csw' => array(
+    'csw' => (object) array(
 		'enabled' => getenv('CSW_ENABLED'),
 		'csw_server_path' => getenv('CSW_SERVER_PATH'),
 		'csw_model' => getenv('CSW_MODEL')

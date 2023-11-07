@@ -42,21 +42,21 @@ class GeolocForm extends HelpFormBase
 
 		$organizationList = array();
         foreach ($orgs as &$value) {
-            $organizationList[$value[name]] = $value[display_name];
+            $organizationList[$value['name']] = $value['display_name'];
 		}
 
 		$form['text_message1'] = [
 			'#prefix' => '<p>',
 			'#suffix' => '</p>',
-			'#markup' => $this->t('Pour créer un jeu de données avec cartographie, vous devez sélectionner un jeu de données contenant une ressource CSV 
+			'#markup' => $this->t('Pour créer une connaissance avec cartographie, vous devez sélectionner une connaissance contenant une ressource CSV 
 				<br/> et renseigner les informations obligatoires.'),
 		];
 
 		$form['text_message2'] = [
 			'#prefix' => '<p>',
 			'#suffix' => '</p>',
-			'#markup' => $this->t("Un fichier GeoJson ainsi que les nuages de points seront créés pour les jeux de données contenant une colonne géolocalisable.
-				<br/> Pour les jeux de données ne contenant pas la cardinalité, il sera possible de récupérer si l'adresse est présente dans les données à l'aide de l'api BAN."),
+			'#markup' => $this->t("Un fichier GeoJson ainsi que les nuages de points seront créés pour les connaissances contenant une colonne géolocalisable.
+				<br/> Pour les connaissances ne contenant pas la cardinalité, il sera possible de récupérer si l'adresse est présente dans les données à l'aide de l'api BAN."),
 		];
 
 		$form['selected_org'] = array(
@@ -71,7 +71,7 @@ class GeolocForm extends HelpFormBase
 
 		$form['selected_dataset'] = array(
 			'#type' => 'select',
-			'#title' => t('*Jeu de données:'),
+			'#title' => t('*Connaissance:'),
 			'#attributes' => array(
 				'onchange' => 'getResources("' . $this->urlCkan . '")'
 			),

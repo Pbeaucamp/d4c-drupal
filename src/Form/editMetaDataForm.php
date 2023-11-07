@@ -20,6 +20,7 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Drupal\Core\Url;
 use Drupal\ckan_admin\Utils\Logger;
+use Drupal\ckan_admin\Utils\Tools;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 /**
@@ -83,7 +84,7 @@ class editMetaDataForm extends HelpFormBase {
 
 			//We simulate the previous process - We have to encode it twice
 			$selectedData = array();
-			$selectedData[result][results][] = $selectedDataset;
+			$selectedData['result']['results'][] = $selectedDataset;
 			$selectedData = json_encode($selectedData);
 			$selectedData = json_encode($selectedData, true);
 		}
@@ -92,25 +93,25 @@ class editMetaDataForm extends HelpFormBase {
 		$lic = $api->getLicenses();
 
         $ids = array();
-		$ids["new"] = "Сréer un jeu de données";
+		$ids["new"] = "Сréer une connaissance";
 		if ($selectedDataset) {
-			Logger::logMessage("Set dataset with id " . $selectedDataset[id] . " and name " . $selectedDataset[name]);
-			$ids[$selectedDataset[id]] = $selectedDataset[title];
+			Logger::logMessage("Set dataset with id " . $selectedDataset['id'] . " and name " . $selectedDataset['name']);
+			$ids[$selectedDataset['id']] = $selectedDataset['title'];
 		}
 
         $organizationList = array();
         $organizationList2 = array();
 
         foreach ($orgs as &$value) {
-            $organizationList[$value[id]] = $value[display_name];
-            $organizationList2[$value[name]] = $value[display_name];
+            $organizationList[$value['id']] = $value['display_name'];
+            $organizationList2[$value['name']] = $value['display_name'];
         }
 
 
 		
         $licList = array();
-        foreach ($lic[result] as &$value) {
-            $licList[$value[id]] = $value[title];
+        foreach ($lic['result'] as &$value) {
+            $licList[$value['id']] = $value['title'];
         }
 
 		///// themes /////
@@ -142,7 +143,7 @@ class editMetaDataForm extends HelpFormBase {
         
 		$form['selected_data'] = array(
             '#type' => 'select',
-            '#title' => t('*Sélectionner un jeu de données :'),
+            '#title' => t('*Sélectionner une connaissance :'),
             '#options' => $ids,
             '#attributes' => array(
                 'onchange' => 'addData('.$selectedData.')','style' => 'width: 50%;', 
@@ -187,7 +188,7 @@ class editMetaDataForm extends HelpFormBase {
         
         $form['img_backgr'] = array(
             '#type' => 'managed_file',
-            '#title' => t("L'image de fond du jeu de données :"),
+            '#title' => t("L'image de fond de la connaissance :"),
             '#upload_location' => 'public://dataset/',
             '#upload_validators' => array(
                 'file_validate_extensions' => array('jpeg png jpg svg gif WebP PNG JPG JPEG SVG GIF'),
@@ -210,7 +211,7 @@ class editMetaDataForm extends HelpFormBase {
 
 		$form['date_dataset'] = array(
             '#type' => 'date',
-            '#title' => $this->t('Date du jeu de données'),
+            '#title' => $this->t('Date de la connaissance'),
             '#date_date_format' => 'd/m/Y'
         );
 
@@ -413,7 +414,7 @@ class editMetaDataForm extends HelpFormBase {
 		$form['linked_dataset'] = array(
             '#markup' => '',
 			'#type' => 'textfield',
-			'#title' => $this->t('Saisir les identifiants des jeux de données liés (séparés par une virgule) :'),
+			'#title' => $this->t('Saisir les identifiants des connaissances liés (séparés par une virgule) :'),
 			'#attributes' => array('style' => 'width: 50%;'),
             '#required' => FALSE,
 			'#maxlength' => null,
@@ -516,7 +517,7 @@ class editMetaDataForm extends HelpFormBase {
 		$form['validata'] = array(
             '#prefix' =>'<div id="resAndValidTab">',
             '#type' => 'select',
-            '#title' => t('Valider les jeux de données : '),
+            '#title' => t('Valider les connaissances : '),
             '#options' => array("non_valider" => "Non validé", "valider" => "Validé"),
             '#attributes' => array('style' => 'width: 50%;'),
 
@@ -811,7 +812,7 @@ class editMetaDataForm extends HelpFormBase {
         $selectedTypeMap = $form_state->getValue('selected_type_map');
 		$selectedOverlays = "";
 		if ($form_state->getValue('authorized_overlays_map') != NULL) {
-			$selectedOverlays = implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
+			$selectedOverlays = Tools::implode(",", array_keys(array_filter($form_state->getValue('authorized_overlays_map'))));
 		}
 
 		// Define link dataset
@@ -835,7 +836,7 @@ class editMetaDataForm extends HelpFormBase {
 			$deleteDataset = $form_state->getValue('del_dataset');
 			if ($deleteDataset) {
 				if ($resourceManager->deleteDataset($datasetId)) {
-					\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+					\Drupal::messenger()->addMessage(t('La connaissance a été supprimé!'), 'warning');
 					$datasetId = null;
 				}
 			}
@@ -849,7 +850,7 @@ class editMetaDataForm extends HelpFormBase {
 
 					$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
 
-					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été créé.");
+					\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
 
 					//Managing resources
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, $urlGsheet, $unzipZip);
@@ -872,31 +873,31 @@ class editMetaDataForm extends HelpFormBase {
 					$datasetToUpdate = $api->findDataset($datasetId);
 					Logger::logMessage("TRM - Found dataset " . json_encode($datasetToUpdate));
 
-					$datasetName = $datasetToUpdate[name];
+					$datasetName = $datasetToUpdate['name'];
 
 					//Update extras
-					$extras = $datasetToUpdate[extras];
+					$extras = $datasetToUpdate['extras'];
 					$extras = $resourceManager->defineExtras($extras, $imgPicto, $imgBackground, $removeBackground, $linkDatasets, $theme, "",
 						$selectedTypeMap, $selectedOverlays, $dont_visualize_tab, $widgets, $visu, 
 						$dateDataset, $disableFieldsEmpty, $analyseDefault, $security, $producer, $source, $donnees_source, $mention_legales, $frequence, $displayVersionning,
 						$dataRgpd);
 
 					$datasetId = $resourceManager->updateDataset($generatedTaskId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
-					\Drupal::messenger()->addMessage("Le jeu de données '" . $datasetName ."' a été mis à jour.");
+					\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mis à jour.");
 
 					//Managing resources
 					$this->manageFileResource($api, $resourceManager, $organization, $datasetId, $datasetName, null, $resources, $generateColumns, false, $encoding, $validata, null, $unzipZip);
 
 					// Manage other resources
-					for ($i = 1; $i <= count($table_data); $i++) {
-						$datasetName = $table_data[$i][name];
-						$resourceDescription = $table_data[$i][description];
-						$needToBeDelete = $table_data[$i][status][1];
-						$needUpdate = $table_data[$i][status][2];
-						$resourceId = $table_data[$i][status][3];
-						$resourceUrl = $table_data[$i][donnees];
-						$encoding = $table_data[$i][encoding];
-						$oldname = $table_data[$i][donnees_old];
+					for ($i = 1; $i <= (is_countable($table_data) ? count($table_data) : 0); $i++) {
+						$datasetName = $table_data[$i]['name'];
+						$resourceDescription = $table_data[$i]['description'];
+						$needToBeDelete = $table_data[$i]['status'][1];
+						$needUpdate = $table_data[$i]['status'][2];
+						$resourceId = $table_data[$i]['status'][3];
+						$resourceUrl = $table_data[$i]['donnees'];
+						$encoding = $table_data[$i]['encoding'];
+						$oldname = $table_data[$i]['donnees_old'];
 						$generateColumns = strpos($oldname, '_gencol.csv') !== false;
 						$unzipZip = false;
 
@@ -959,7 +960,7 @@ class editMetaDataForm extends HelpFormBase {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur la connaissance.");
 					}
 					else if ($value['type'] == 'CLUSTER') {
 						\Drupal::messenger()->addMessage("Les clusters ont été générés.");
@@ -989,18 +990,18 @@ class editMetaDataForm extends HelpFormBase {
 				$validataUrl = "https://go.validata.fr/api/v1/validate?schema=https://git.opendatafrance.net/scdl/deliberations/raw/master/schema.json&url=" . $validataResources[$v];
 				$validataResult = $resourceManager->validateData($validataUrl);
 
-				if ($validataResult[report][valid] == false) {
-					$errorsValid = $validataResult[report][tables][0][errors];
-					for ($i = 0; $i < count($errorsValid); $i++) {
+				if ($validataResult['report']['valid'] == false) {
+					$errorsValid = $validataResult['report']['tables'][0]['errors'];
+					for ($i = 0; $i < (is_countable($errorsValid) ? count($errorsValid) : 0); $i++) {
 						
-						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i][code] . ' | Message:' . $errorsValid[$i][message]), 'warning');
+						\Drupal::messenger()->addMessage(t(($i + 1) . '. Code:' . $errorsValid[$i]['code'] . ' | Message:' . $errorsValid[$i]['message']), 'warning');
 						
 						if($i>5){
 							break;
 						}
 					}
 				} 
-				else if ($validataResult[report][valid] == true) {
+				else if ($validataResult['report']['valid'] == true) {
 					\Drupal::messenger()->addMessage('Les données ont été validées');
 				}
 			}
@@ -1178,15 +1179,15 @@ class editMetaDataForm extends HelpFormBase {
         $dataSet = $dataSet->getContent();
         $dataSet2 = json_encode($dataSet, true);
         $dataSet = json_decode($dataSet, true);
-        $dataSet = $dataSet[result][results];
+        $dataSet = $dataSet['result']['results'];
         
 		$ids = array();
 
-        $ids["new"] = "Сréer un jeu de données";
+        $ids["new"] = "Сréer une connaissance";
    
 		/*if($selected_org==''){*/
 			foreach($dataSet as &$ds) {
-				$ids[$ds[id]] = $ds[title];
+				$ids[$ds['id']] = $ds['title'];
 			} 
 		/*}
 		else{

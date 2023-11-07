@@ -14,7 +14,8 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\DatasetHelper;
-
+use Drupal\ckan_admin\Utils\MapEmpriseHelper;
+use Drupal\ckan_admin\Utils\Tools;
 use Drupal\data_bfc\Utils\VanillaApiManager;
 
 abstract class MetadataForm extends FormBase {
@@ -52,9 +53,12 @@ abstract class MetadataForm extends FormBase {
 		return array_values($datasetModel)[0]["value"];
 	}
 
-	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false) {
+	public function buildMetadataForm(array $form, FormStateInterface $form_state, $selectedDataset = null, $includeSchemas = false, $includeScheduler = false, $type = null) {
 		$config = include(__DIR__ . "/../../config.php");
 		$locale = json_decode(file_get_contents(__DIR__ ."/../../locales.fr.json"), true);
+
+		$form['#attached']['library'][] = 'ckan_admin/MetaDataForm.form';
+		$form['#attached']['library'][] = 'ckan_admin/leaflet';
 
 		$datasetTitle = \Drupal::request()->query->get('dataset-title');
 
@@ -69,14 +73,17 @@ abstract class MetadataForm extends FormBase {
         $api = new Api;
 
 		if (isset($selectedDataset)) {
-			Logger::logMessage("Selected dataset " . $selectedDataset['metas']['id']);
+			$datasetId = $selectedDataset['metas']['id'];
+			Logger::logMessage("Selected dataset " . $datasetId);
 
 			$organization = $selectedDataset['metas']['organization']['name'];
+
+			$hasPassword = $api->hasDatasetPassword($datasetId);
 
 			$integration = $this->getDatasetIntegration($selectedDataset);
 			$selectedDataset = $selectedDataset['metas'];
 
-			$tags = $selectedDataset['keyword'] ? $tags = implode(",", $selectedDataset['keyword']) : '';
+			$tags = $selectedDataset['keyword'] ? $tags = Tools::implode(",", $selectedDataset['keyword']) : '';
 
 			$dateDataset = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_dataset");
 			$dateDeposit = DatasetHelper::extractMetadata($selectedDataset["extras"], "date_deposit");
@@ -88,6 +95,11 @@ abstract class MetadataForm extends FormBase {
 			$dataValidation = DatasetHelper::extractMetadata($selectedDataset["extras"], "data_validation");
 			$selectedThemes = DatasetHelper::extractMetadata($selectedDataset["extras"], "themes");
 			$selectedThemes = json_decode($selectedThemes, true);
+
+			// Map Emprise from DB
+			$mapEmprise = MapEmpriseHelper::getDatasetEmprise($datasetId);
+			$mapEmpriseShape = $mapEmprise['shape'];
+			$mapEmpriseCoordinates = $mapEmprise['coordinates'];
 
 			// Inspire
 			$frequence = DatasetHelper::extractMetadata($selectedDataset["extras"], "frequency-of-update");
@@ -135,7 +147,8 @@ abstract class MetadataForm extends FormBase {
 			$bboxSouthLat = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-south-lat");
 			$bboxWestLong = DatasetHelper::extractMetadata($selectedDataset["extras"], "bbox-west-long");
 
-			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution);
+			$hasGeographicData = isset($inspireTheme) || isset($representationType) || isset($referenceSystem) || isset($equivalentScale) || isset($spatialResolution)
+				|| isset($bboxEastLong) || isset($bboxNorthLat) || isset($bboxSouthLat) || isset($bboxWestLong);
 		}
 
 		$licences = $api->getLicenses();
@@ -189,6 +202,44 @@ abstract class MetadataForm extends FormBase {
 			'#required' => TRUE,
 			'#default_value' => $selectedDataset != null && $selectedDataset['private'] == 1 ? 1 : 0,
         );
+
+		// For now we only allow to create a password with type dataset = 'tdb' or 'visualization'
+		if ($type == 'visualization') {
+			$form['dataset_password'] = array(
+				'#type' => 'textfield',
+				'#title' => t('Mot de passe :'),
+				'#description' => t('Il est possible d\'ajouter un mot de passe pour les visualisations publiques. Ce mot de passe sera demandé aux utilisateurs qui souhaitent accéder à la visualisation.'),
+				'#required' => FALSE,
+				'#default_value' => $hasPassword ? '****' : '',
+				'#states' => array(
+					'invisible' => array(
+						':input[name="dataset_private"]' => array('value' => 1),  
+					),
+				),
+			);
+		}
+
+		$form['map_emprise_html'] = array(
+			'#markup' => '<div ng-app="d4c-widgets" id="app"
+							<label for="app"><strong>Emprise géographique : </strong></label>
+							<d4c-map id="mapemprise" map-emprise-shape="' . $mapEmpriseShape . '" map-emprise-coordinates="'. $mapEmpriseCoordinates .'" location="' . $config->client->default_bounding_box . '" class="ng-isolate-scope"></d4c-map>
+							</div></br>
+							<script type="text/javascript">
+						</script>',
+			'#allowed_tags' => ['label', 'div','strong', 'd4c-map', 'br', 'script']
+		);
+
+		$form['map_emprise_shape'] = array(
+			'#type' => 'hidden',
+			'#default_value' => isset($mapEmpriseShape) ? $mapEmpriseShape : null,
+			'#attributes' => array('id' => 'map_emprise_shape')
+		);
+
+		$form['map_emprise_coordinates'] = array(
+			'#type' => 'hidden',
+			'#default_value' => isset($mapEmpriseCoordinates) ? $mapEmpriseCoordinates : null,
+			'#attributes' => array('id' => 'map_emprise_coordinates')
+		);
 
 		$form['integration_option'] = [
 			'#type' => 'details',
@@ -410,10 +461,10 @@ abstract class MetadataForm extends FormBase {
 			'#default_value' => isset($frequence) ? $frequence : '',
 		];
 		
-		// Emprise temporelle du jeu de données with description field and two date fields
+		// Emprise temporelle de la connaissance with description field and two date fields
 		$form['inspire_option']['temporal_extent_description'] = [
 			'#type' => 'textfield',
-			'#title' => $this->t('Emprise temporelle du jeu de données'),
+			'#title' => $this->t('Emprise temporelle de la connaissance'),
 			'#default_value' => isset($extentName) ? $extentName : '',
 		];
 
@@ -527,12 +578,12 @@ abstract class MetadataForm extends FormBase {
 			'#tree' => FALSE,
 		);
 
-		//Emprise du jeu de données - Nom : extentName (epci)
+		//Emprise de la connaissance - Nom : extentName (epci)
 		$form['inspire_option']['technicaldescription']['extentName'] = array(
 			'#type' => 'textfield',
 			'#name' => 'extentName',
 			'#title' => t('Nom'),
-			'#description' => t('Nom de l\'emprise du jeu de données (epci)'),
+			'#description' => t('Nom de l\'emprise de la connaissance (epci)'),
 			'#default_value' => isset($extent) ? $extent : '',
 		);
 
@@ -774,6 +825,10 @@ abstract class MetadataForm extends FormBase {
 		return $form_state->getValue('dataset_private') == '1';
 	}
 
+	public function getDatasetPassword(FormStateInterface $form_state) {
+		return $form_state->getValue('dataset_password');
+	}
+
 	public function getDescription(FormStateInterface $form_state) {
 		return $form_state->getValue(['integration_option','dataset_description']);
 	}
@@ -833,6 +888,15 @@ abstract class MetadataForm extends FormBase {
 			}
 		}
 		return json_encode($themes);
+	}
+
+	public function getMapEmprise(FormStateInterface $form_state){
+		$mapEmprise = [
+			'shape' => $form_state->getValue(['map_emprise_shape']),
+			'coordinates' => $form_state->getValue(['map_emprise_coordinates'])
+		];
+
+		return $mapEmprise;
 	}
 
 	public function getGeneralMetadata(FormStateInterface $form_state) {
@@ -1025,12 +1089,14 @@ abstract class MetadataForm extends FormBase {
         $tags = $this->getTags($form_state);
         $licence = $this->getDatasetLicence($form_state);
         $isPrivate = $this->getDatasetIsPrivate($form_state);
+		$password = $this->getDatasetPassword($form_state);
 		$contributor = $this->getDatasetContributor($form_state);
 		$dateDeposit = $this->getDatasetDepositDate($form_state);
 		$username = $this->getDatasetUsername($form_state);
 		$dataRgpd = $this->getDatasetRgpd($form_state);
 		$dataValidation = $this->getDataValidation($form_state);
 		$themes = $this->getThemes($form_state);
+		$mapEmprise = $this->getMapEmprise($form_state);
 
 		$generalMetadata = $this->getGeneralMetadata($form_state);
 		$inspireMetadata = $this->getInspireMetadata($form_state);
@@ -1049,16 +1115,17 @@ abstract class MetadataForm extends FormBase {
 			if (isset($selectedDatasetId)) {
 				$datasetToUpdate = $api->findDataset($selectedDatasetId);
 
-				$datasetName = $datasetToUpdate[name];
+				$datasetName = $datasetToUpdate['name'];
 
 				//Update extras
-				$extras = $datasetToUpdate[extras];
+				$extras = $datasetToUpdate['extras'];
 				$extras = $resourceManager->defineExtras($extras, null, $datasetVignette, $datasetVignetteDeletion, null, $themes, "", null, null, null, 
 					null, null, $dateDataset, null, null, $security, $contributor, null, null, $mention_legales, null, null, $dataRgpd, $type, $entityId, 
 					$dateDeposit, $username, $datasetModel, $dataValidation, $generalMetadata, $inspireMetadata);
 
 				$datasetId = $resourceManager->updateDataset($generatedTaskId, $selectedDatasetId, $datasetToUpdate, $datasetName, $title, $description, 
-					$licence, $organization, $isPrivate, $tags, $extras, null);
+					$licence, $organization, $isPrivate, $tags, $extras, null, $mapEmprise);
+
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été mise à jour.");
 			}
 			else {
@@ -1080,9 +1147,14 @@ abstract class MetadataForm extends FormBase {
 				Logger::logMessage(" and generatedTaskId " . $generatedTaskId);
 				Logger::logMessage(" and source " . $source);
 
-				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source);
+				$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source, $mapEmprise);
 
 				\Drupal::messenger()->addMessage("La connaissance '" . $datasetName ."' a été créé.");
+			}
+
+			// If password does not equal to default value
+			if ($password != '****') {
+				$api->manageDatasetPassword($datasetId, $password);
 			}
 
 			return $datasetId;
@@ -1120,7 +1192,7 @@ abstract class MetadataForm extends FormBase {
 		if ($selectedDatasetId) {
 			$resourceManager = new ResourceManager();
 			if ($resourceManager->deleteDataset($selectedDatasetId)) {
-				\Drupal::messenger()->addMessage(t('Le jeu de données a été supprimé!'), 'warning');
+				\Drupal::messenger()->addMessage(t('La connaissance a été supprimé!'), 'warning');
 
 				$form_state->setRedirect('ckan_admin.portail');
 			}

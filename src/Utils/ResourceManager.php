@@ -52,9 +52,9 @@ class ResourceManager {
 		$api->updateDatabaseStatus($isNew, $uniqId, $datasetId, 'DATASET', 'MANAGE_DATASET', $action, $status, $message);
 	}
 
-	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
+	function createDataset($uniqId, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null, $mapEmprise = null) {
 		Logger::logMessage("Create new dataset with name '" . $datasetName . "' and licence = " . $licence);
-		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création du jeu de données \'' . $datasetName . '\'');
+		$this->updateDatabaseStatus(true, $uniqId, '', 'CREATE_DATASET', 'PENDING', 'Création de la connaissance \'' . $datasetName . '\'');
 
 		//We update the description if empty or equals to default.description
 		if (isset($description) && strpos($description, 'default.description') !== false) {
@@ -89,23 +89,25 @@ class ResourceManager {
 		$datasetId = $this->saveData($newData, $coll);
 		$datasetId = $datasetId[1];
 
+		MapEmpriseHelper::setDatasetEmprise($datasetId, $mapEmprise);
+
 		Logger::logMessage("New dataset has been saved with id '" . $datasetId . "'");
-		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', 'Le jeu de données \'' . $datasetName . '\' a été créé');
+		$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'CREATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été créé');
 		return $datasetId;
 	}
 
-	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null) {
+	function updateDataset($uniqId, $datasetId, $datasetToUpdate, $datasetName, $title, $description, $licence, $organization, $isPrivate, $tags, $extras, $source = null, $mapEmprise = null) {
 		Logger::logMessage("Updating dataset '" . $datasetName . "' with id = " . $datasetId . " and licence = " . $licence);
-		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour du jeu de données \'' . $datasetName . '\'');
+		$this->updateDatabaseStatus(true, $uniqId, $datasetId, 'UPDATE_DATASET', 'PENDING', 'Mise à jour de la connaissance \'' . $datasetName . '\'');
 		
-		$datasetToUpdate[title] = $title;
-		$datasetToUpdate[notes] = $description;
-		$datasetToUpdate[license_id] = $licence;
+		$datasetToUpdate['title'] = $title;
+		$datasetToUpdate['notes'] = $description;
+		$datasetToUpdate['license_id'] = $licence;
 		$datasetToUpdate['private'] = $isPrivate;
-		$datasetToUpdate[extras] = $extras;
+		$datasetToUpdate['extras'] = $extras;
 		$datasetToUpdate["tags"] = $tags;
 		if ($source != null) {
-			$datasetToUpdate[url] = $source;
+			$datasetToUpdate['url'] = $source;
 		}
 
 		$api = new Api;
@@ -114,24 +116,26 @@ class ResourceManager {
 
 		$result = json_decode($result);
 		if ($result->success == true) {
-			$currentOrganization = $datasetToUpdate[organization][id];
+			$currentOrganization = $datasetToUpdate['organization']['id'];
 			Logger::logMessage("Comparing current organization '" . $currentOrganization . "' with selected organization '" . $organization . "'");
 
 			if ($currentOrganization != $organization) {
 				Logger::logMessage("Updating organization.");
-				$result = $this->changeDatasetOrganization($datasetToUpdate[id], $organization);
+				$result = $this->changeDatasetOrganization($datasetToUpdate['id'], $organization);
 				if ($result->success != true) {
 					$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 					throw new \Exception("L'organisation ne peut pas être mise à jour ' (" . $result->error->message . ").");
 				}
 			}
 
-			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', 'Le jeu de données \'' . $datasetName . '\' a été mis à jour');
+			MapEmpriseHelper::setDatasetEmprise($datasetId, $mapEmprise);
+
+			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'SUCCESS', 'La connaissance \'' . $datasetName . '\' a été mis à jour');
 			return $datasetId;
 		}
 		else {
-			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
-			throw new \Exception("Le jeu de données ne peut pas être mis à jour (" . $result->error->message . ").");
+			$this->updateDatabaseStatus(false, $uniqId, $datasetId, 'UPDATE_DATASET', 'ERROR', "La connaissance ne peut pas être mis à jour (" . $result->error->message . ").");
+			throw new \Exception("La connaissance ne peut pas être mis à jour (" . $result->error->message . ").");
 		}
 	}
 
@@ -201,7 +205,7 @@ class ResourceManager {
 
 	function getFilePath($resourceUrl) {
 		$fileName = parse_url($resourceUrl);
-		$filePath = $fileName[path];
+		$filePath = $fileName['path'];
 
 		// Remove first slash if exists
 		if (substr($filePath, 0, 1) == "/") {
@@ -217,8 +221,8 @@ class ResourceManager {
 		$fileName = parse_url($resourceUrl);
 		$datasetFolder = $this->generateDatasetFolder($datasetId);
 
-		$host = isset($this->host) ? $this->host : $fileName[host];
-		$fileName = $fileName[path];
+		$host = isset($this->host) ? $this->host : $fileName['host'];
+		$fileName = $fileName['path'];
 		$filePath = $fileName;
 
 		$fileName = $this->cleanFileName($fileName);
@@ -281,6 +285,7 @@ class ResourceManager {
 
 					$firstRow = true;
 					$existingCols = array();
+					$index = 0;
 					while (($data = fgetcsv($handle, 0, $delimiter)) !== FALSE) {
 
 						$num = count($data);
@@ -304,6 +309,22 @@ class ResourceManager {
 							fputcsv($fp, $existingCols);
 						}
 						else {
+							// Replace pattern which can be in json data and break CSV files
+							for ($c=0; $c < $num; $c++) {
+								$item = $data[$c];
+
+								$target = '\\""';
+								if (strpos($item, $target) !== false) {
+									$data[$c] = str_replace($target, '', $item);
+								}
+
+								$target = '\\"';
+								if (strpos($item, $target) !== false) {
+									$data[$c] = str_replace($target, '', $item);
+								}
+							}
+
+							$index++;
 							fputcsv($fp, $data);
 						}
 						$firstRow = false;
@@ -444,7 +465,7 @@ class ResourceManager {
 				$resources = $dataset['result']['resources'];
 
 				//We check if the zip was previously unzip by counting the resources
-				$unzipZip = count($resources) > 1;
+				$unzipZip = (is_countable($resources) ? count($resources) : 0) > 1;
 
 				foreach($resources as $resource){
 					if (strpos($resource['name'], 'zip') !== false) {
@@ -869,7 +890,7 @@ class ResourceManager {
 		}
 
 		fclose($fp);
-		$this->updateDatabaseStatus(false, $datasetId, $datasetId, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \'' . $urlGsheet . '\'');
+		$this->updateDatabaseStatus(false, null, null, 'CREATE_FILE', 'SUCCESS', 'Le fichier \'' . $fileName . '\' a été créé depuis le fichier xml \' Unknown \'');
 
 		return $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . $this->getRoutingPrefix(true) . 'sites/default/files/dataset/xmlfile/' . $fileName;
 	}
@@ -880,7 +901,7 @@ class ResourceManager {
 		$fileName = parse_url($resourceUrl);
 
 		$host = isset($this->host) ? $this->host : $fileName['host'];
-		$fileName = $fileName[path];
+		$fileName = $fileName['path'];
 		$filePath = $fileName;
 
 		$fileName = $this->cleanFileName($fileName);
@@ -952,7 +973,7 @@ class ResourceManager {
 				$resources = $contentdataset["result"]["resources"];
 
 				//We retrieve the new CSV resource
-				for($i=0; $i<count($resources); $i++){
+				for($i=0; $i<(is_countable($resources) ? count($resources) : 0); $i++){
 					if ($resources[$i]['format'] == 'CSV') {
 						$resourceId = $resources[$i]['id'];   
 						break;
@@ -1030,29 +1051,84 @@ class ResourceManager {
 
 		$isShape = false;
 		$isGtfs = false;
-		$color_array = [];
+
+		// Used to retrieve informations from routes for GTFS
+		$routesInfos = array();
+		// Used to retrieve matchs between shapes and routes from the trips GTFS file
+		$tripsMatch = array();
+		
 		foreach($files as $key=>$file) {
 			//Checking if one the required GTFS files exist
 			if (strpos($file, 'agency.txt') !== false || strpos($file, 'stops.txt') !== false
-				|| strpos($file, 'trips.txt') !== false|| strpos($file, 'stop_times.txt') !== false) {
+				|| strpos($file, 'stop_times.txt') !== false) {
 					$isGtfs = true;
 			}
 			// Getting route color if defined
 			else if (strpos($file, 'routes.txt') !== false) {
 				$isGtfs = true;
 
-				$key_rout_id="";
-				$key_color_route ="";
+				$lines = explode("\n", file_get_contents($file));
+				$firstLine = true;
 
-				$array = explode("\n", file_get_contents($file));
-				foreach ($array as $key => $value) {
-					$line = explode(',', $value);
-					if ($key == 0 ) {
-						$key_rout_id = array_search('route_id', $line);
-						$key_color_route = array_search('route_color', $line);
+				$routeIdIndex = 0;
+				$agencyIdIndex = 0;
+				$routeShortNameIndex = 0;
+				$routeLongNameIndex = 0;
+				$routeTypeIndex = 0;
+				$routeColorIndex = 0;
+
+				foreach ($lines as $line) {
+					$values = explode(',', $line);
+
+					if ($firstLine) {
+						$routeIdIndex = array_search('route_id', $values);
+						$agencyIdIndex = array_search('agency_id', $values);
+						$routeShortNameIndex = array_search('route_short_name', $values);
+						$routeLongNameIndex = array_search('route_long_name', $values);
+						$routeTypeIndex = array_search('route_type', $values);
+						$routeColorIndex = array_search('route_color', $values);
+
+						$firstLine = false;
+						continue;
 					}
-					else {
-						array_push($color_array,array("route_id"=>$line[$key_rout_id], "color_route"=>$line[$key_color_route]));
+
+					$routeId = $values[$routeIdIndex];
+					$routesInfos[$routeId] = array(
+						"route_id" => $values[$routeIdIndex],
+						"agency_id" => $values[$agencyIdIndex],
+						"route_short_name" => $values[$routeShortNameIndex],
+						"route_long_name" => $values[$routeLongNameIndex],
+						"route_type" => $values[$routeTypeIndex],
+						"route_color" => $values[$routeColorIndex]
+					);
+				}
+			}
+			// Getting route color if defined
+			else if (strpos($file, 'trips.txt') !== false) {
+				$isGtfs = true;
+
+				$lines = explode("\n", file_get_contents($file));
+
+				$routeIdIndex = 0;
+				$shapeIdIndex = 0;
+
+				$firstLine = true;
+				foreach ($lines as $line) {
+					$values = explode(',', $line);
+
+					if ($firstLine) {
+						$routeIdIndex = array_search('route_id', $values);
+						$shapeIdIndex = array_search('shape_id', $values);
+
+						$firstLine = false;
+						continue;
+					}
+
+					$routeId = $values[$routeIdIndex];
+					$shapeId = $values[$shapeIdIndex];
+
+					if ($tripsMatch[$shapeId] == null) {
+						$tripsMatch[$shapeId] = $routeId;
 					}
 				}
 			}
@@ -1094,8 +1170,10 @@ class ResourceManager {
 				else if ($isGtfs && $this->endsWith($file, '.txt')) {
 					Logger::logMessage("Found GTFS txt file converting to CSV");
 
-					$isShapeFile = strpos($file, 'shapes.txt') !== false;
-					$resourceUrl = $this->convertTextFileToCsv($file, $isShapeFile, "csv", $color_array);
+					if (strpos($file, 'shapes.txt') !== false) {
+						$shapeFilePath = $file;
+					}
+					$resourceUrl = $this->convertTextFileToCsv($file, "csv");
 
 					Logger::logMessage("New file to manage " . $resourceUrl);
 				}
@@ -1111,6 +1189,17 @@ class ResourceManager {
 					$resourceUrl = str_replace(self::ROOT, $this->protocol . $_SERVER['HTTP_HOST'] . $this->port . '/', $file);
 					Logger::logMessage("TRM - Zip file URL '" . $resourceUrl . "'");
 				}
+
+				//We don't move the file if it is a shape
+				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
+				$results = array_merge($results, $result);
+			}
+
+			// If we manage a GTFS, we need to create a new file containing the shapes of the routes
+			if ($isGtfs) {
+				Logger::logMessage("Generate GTFS shapes file");
+
+				$resourceUrl = $this->generateGTFSShapes($shapeFilePath, $routesInfos, $tripsMatch);
 
 				//We don't move the file if it is a shape
 				$result = $this->manageFileWithPath($datasetId, $generateColumns, $isUpdate, $resourceId, $resourceUrl, '', $encoding, false, $fromPackage, true, null, !$isShape);
@@ -1150,7 +1239,7 @@ class ResourceManager {
 	}
 
 	//convert text file to csv
-	function convertTextFileToCsv($filepath, $isShapeFile, $new_extension, $color_array) {
+	function convertTextFileToCsv($filepath, $new_extension) {
 		// Get content of text file
 		$filepathContent = file_get_contents($filepath);
 
@@ -1174,84 +1263,98 @@ class ResourceManager {
 		// Create a new csv file with the same content as the text file
 		file_put_contents($newfile, $filepathContent);
 
-		if ($isShapeFile) {
-			$csv_data = array_map('str_getcsv', file($newfile));
+		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
+		return $newfile;
+	}
 
-			$extra_columns = array('geo_point_2d' => null, 'geo_shape' => null, 'route_color' => null);
+	function generateGTFSShapes($shapeFilePath, $routesInfos, $tripsMatch) {
+		$csv_data = array_map('str_getcsv', file($shapeFilePath));
 
-			// Find indices of shape_pt_lat, shape_pt_lon, and shape_id columns
-			$latIndex = array_search('shape_pt_lat', $csv_data[0]);
-			$lngIndex = array_search('shape_pt_lon', $csv_data[0]);
-			$shapeIdIndex = array_search('shape_id', $csv_data[0]);
+		// Find indices of shape_pt_lat, shape_pt_lon, and shape_id columns
+		$shapeIdIndex = array_search('shape_id', $csv_data[0]);
+		$latIndex = array_search('shape_pt_lat', $csv_data[0]);
+		$lngIndex = array_search('shape_pt_lon', $csv_data[0]);
 
-			$shape_ids = array(); // Initialize an empty array to store the different shape IDs
-
-			// Loop through each line in the file
-			foreach ($csv_data as $i => $data) {
-				if ($i == 0) {
-					continue;
-				}
-
-				$shape_id = $data[$shapeIdIndex]; // Get the value of the shape_id column
-				$coordinate = array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
-
-				// If the shape_id is not already in the array, add it
-				if (!in_array($shape_id, $shape_ids)) {
-					$shape_ids[$shape_id][] = $coordinate;
-				}
-				else {
-					// If the shape_id is already in the array, add the coordinate to the array
-					array_push($shape_ids[$shape_id], $coordinate);
-				}
+		$shape_ids = array(); // Initialize an empty array to store the different shape IDs
+		// Loop through each line in the file
+		foreach ($csv_data as $i => $data) {
+			if ($i == 0) {
+				continue;
 			}
-			
-			$routesvalue = [];
-			foreach ($shape_ids as $key => $value) {
-				$routesvalue[$key] = json_encode(array('type' => "LineString",'coordinates' => $value));
+
+			$shape_id = $data[$shapeIdIndex]; // Get the value of the shape_id column
+			$coordinate = array((float)$csv_data[$i][$lngIndex],(float)$csv_data[$i][$latIndex]);
+
+			// If the shape_id is not already in the array, add it
+			if (!in_array($shape_id, $shape_ids)) {
+				$shape_ids[$shape_id][] = $coordinate;
 			}
-			
-			Logger::logMessage("TRM - Routes " . json_encode($routesvalue));
-	
-			array_unshift($color_array,"");
-			unset($color_array[0]);
-	
-			foreach ($csv_data as $i => $data) {
-				$shapeId = $data[$shapeIdIndex];
-
-				if (array_key_exists($shapeId, $routesvalue)) {
-
-					Logger::logMessage("TRM - Found Shape ID " . $shapeId);
-
-					$geo_shape = $routesvalue[$shapeId];
-					if ($color_array[$i]["color_route"] != null) {
-						$color = $color_array[$i]["color_route"];
-					}
-					else {
-						$random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
-						$keycolor = array_search($random_color, array_column($color_array, 'color_route'));
-						if ($keycolor ==false) {
-							$color = $random_color;
-						}
-					}
-
-					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => $geo_shape, 'route_color' => $color);	
-					$csv_data[$i] = $data = array_merge($data, $extra_columns);
-				}
-				else {
-					$extra_columns = array('geo_point_2d' => (float)$data[$latIndex] ."," . (float)$data[$lngIndex], 'geo_shape' => "", 'route_color' => null);
-					$csv_data[$i] = array_merge($data, array_keys($extra_columns));
-				}
-			}
-	
-			if (($handle = fopen($newfile, 'w')) !== FALSE) {
-				foreach ($csv_data as $data) {
-					fputcsv($handle, $data, ",");
-				}
-				fclose($handle);
+			else {
+				// If the shape_id is already in the array, add the coordinate to the array
+				array_push($shape_ids[$shape_id], $coordinate);
 			}
 		}
 
-		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newfile);
+		$data = array();
+		$data[] = array(
+			"shape_id",
+			"route_id",
+			"agency_id",
+			"route_short_name",
+			"route_long_name",
+			"route_type",
+			"route_color",
+			"geo_point_2d",
+			"geo_shape"
+		);
+
+		foreach ($shape_ids as $key => $value) {
+			$routeId = $tripsMatch[$key];
+
+			$geoPoint2d = (float) $value[0][1] ."," . (float) $value[0][0];
+			$geoShape = json_encode(array('type' => "LineString",'coordinates' => $value));
+
+			$routeData = $routesInfos[$routeId];
+
+			// Coming from routes.txt
+			$agencyId = $routeData["agency_id"];
+			$routeShortName = $routeData["route_short_name"];
+			$routeLongName = $routeData["route_long_name"];
+			$routeType = $routeData["route_type"];
+			$routeColor = $routeData["route_color"];
+
+			// $random_color = str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+			// $keycolor = array_search($random_color, array_column($color_array, 'color_route'));
+			// if ($keycolor ==false) {
+			// 	$color = $random_color;
+			// }
+
+			$line = array(
+				"shape_id" => $key,
+				"route_id" => $routeId,
+				"agency_id" => $agencyId,
+				"route_short_name" => $routeShortName,
+				"route_long_name" => $routeLongName,
+				"route_type" => $routeType,
+				"route_color" => $routeColor,
+				"geo_point_2d" => $geoPoint2d,
+				"geo_shape" => $geoShape
+			);
+
+			$data[] = $line;
+		}
+
+		$newFilePath = dirname($shapeFilePath) . "/shapes_description.csv";
+
+		$handle = fopen($newFilePath, 'w');
+		if ($handle !== FALSE) {
+			foreach ($data as $line) {
+				fputcsv($handle, $line);
+			}
+			fclose($handle);
+		}
+
+		$newfile = str_replace($_SERVER['DOCUMENT_ROOT'], $this->protocol . $_SERVER['HTTP_HOST'] . $this->port, $newFilePath);
 		return $newfile;
 	}
 
@@ -1505,7 +1608,7 @@ class ResourceManager {
 		$contentdataset = json_decode($dataset->getContent(), true);
 		$resources = $contentdataset["result"]["resources"];
 
-		for($i=0; $i<count($resources); $i++) {
+		for($i=0; $i<(is_countable($resources) ? count($resources) : 0); $i++) {
 			$this->deleteResource($resources[$i]['id']);
 		}
 	}
@@ -1602,14 +1705,14 @@ class ResourceManager {
 		$widget_html='';
 		$hasWidget = false;
         foreach($widget as $key =>$val){
-            if ($val[name] != '' && $val[widget] != ''){
+            if ($val['name'] != '' && $val['widget'] != ''){
 				$off = '';  
-				if($val[offWidjet] == 1) {
+				if($val['offWidjet'] == 1) {
 					$off = '<.off.>'; 
 				}
 
 				$hasWidget = true;
-				$widget_html = $widget_html .$val[name].'<.info.>'.$val[description].'<.info.> '.$val[widget].' '.$off.'<.explode.>';            
+				$widget_html = $widget_html .$val['name'].'<.info.>'.$val['description'].'<.info.> '.$val['widget'].' '.$off.'<.explode.>';            
 			} 
         }
         
@@ -1727,9 +1830,9 @@ class ResourceManager {
 		$hasDatasetModel = false;
 		$hasDataValidation = false;
 		
-		if ($extras != null && count($extras) > 0) {
+		if ($extras != null && (is_countable($extras) ? count($extras) : 0) > 0) {
 	
-			for ($index = 0; $index < count($extras); $index++) {
+			for ($index = 0; $index < (is_countable($extras) ? count($extras) : 0); $index++) {
 
 				if ($extras[$index]['key'] == 'Picto') {
 					$hasPicto = true;
@@ -1769,7 +1872,7 @@ class ResourceManager {
 				// 	$hasThemeLabel = true;
 				// 	$extras[$index]['value'] = $themeLabel;
 				// }
-					
+
 				if ($extras[$index]['key'] == 'type_map') {
 					$hasTypeMap = true;
 					$extras[$index]['value'] = $selectedTypeMap;
@@ -1911,23 +2014,23 @@ class ResourceManager {
 		}
 
 		if ($hasPicto == false) {
-			$extras[count($extras)]['key'] = 'Picto';
-			$extras[(count($extras) - 1)]['value'] = $picto;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'Picto';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $picto;
 		}
 
 		if ($hasBackground == false && $imgBackground && $imgBackground != null && $imgBackground != '') {
-			$extras[count($extras)]['key'] = 'img_backgr';
-			$extras[(count($extras) - 1)]['value'] = $imgBackground;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'img_backgr';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $imgBackground;
 		}
 			
 		if ($hasLinkDatasets == false) {		
-			$extras[count($extras)]['key'] = 'LinkedDataSet';
-			$extras[(count($extras) - 1)]['value'] = $linkDatasets;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'LinkedDataSet';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $linkDatasets;
 		}
 
 		if ($hasThemes == false) {
-			$extras[count($extras)]['key'] = 'themes';
-			$extras[(count($extras) - 1)]['value'] = $themes;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'themes';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $themes;
 		}
 
 		// if ($hasTheme == false) {
@@ -1941,120 +2044,120 @@ class ResourceManager {
 		// }
 
 		if ($hasTypeMap == false && $selectedTypeMap != null && $selectedTypeMap != '') {
-			$extras[count($extras)]['key'] = 'type_map';
-			$extras[(count($extras) - 1)]['value'] = $selectedTypeMap;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'type_map';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedTypeMap;
 		}
 
 		if ($hasOverlays == false && $selectedOverlays != null && $selectedOverlays != ""){
-			$extras[count($extras)]['key'] = 'overlays';
-			$extras[(count($extras) - 1)]['value'] = $selectedOverlays;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'overlays';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedOverlays;
 		}
 
 		if ($hasVisualizeTab == false) {
-			$extras[count($extras)]['key'] = 'dont_visualize_tab';
-			$extras[(count($extras) - 1)]['value'] = $dont_visualize_tab;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'dont_visualize_tab';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dont_visualize_tab;
 		}
 
 		if ($hasFTP == false) {
-			$extras[count($extras)]['key'] = 'FTP_API';
-			$extras[(count($extras) - 1)]['value'] = 'FTP';
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = 'FTP';
 		}
 
 		if ($hasWidgets == false && $widgets != null && $widgets != '') {
-			$extras[count($extras)]['key'] = 'widgets';
-			$extras[(count($extras) - 1)]['value'] = $widgets;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'widgets';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $widgets;
 		}
 
 		if ($hasVisu == false) {
-			$extras[count($extras)]['key'] = 'default_visu';
-			$extras[(count($extras) - 1)]['value'] = $visu;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'default_visu';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $visu;
 		}
 
 		if ($hasDate == false) {
-			$extras[count($extras)]['key'] = 'date_dataset';
-			$extras[(count($extras) - 1)]['value'] = $dateDataset;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_dataset';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dateDataset;
 		}
 
 		if ($hasProducer == false) {
-			$extras[count($extras)]['key'] = 'producer';
-			$extras[(count($extras) - 1)]['value'] = $producer;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'producer';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $producer;
 		}
 
 		if ($hasFrequence == false) {
-			$extras[count($extras)]['key'] = 'frequence';
-			$extras[(count($extras) - 1)]['value'] = $frequence;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'frequence';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $frequence;
 		}
 
 		if ($hasSource == false) {
-			$extras[count($extras)]['key'] = 'source';
-			$extras[(count($extras) - 1)]['value'] = $source;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'source';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $source;
 		}
 
 		if ($hasDonneesSource == false) {
-			$extras[count($extras)]['key'] = 'donnees_source';
-			$extras[(count($extras) - 1)]['value'] = $donnees_source;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'donnees_source';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $donnees_source;
 		}
 
 		if ($hasDisableFieldsEmpty  == false) {
-			$extras[count($extras)]['key'] = 'disable_fields_empty';
-			$extras[(count($extras) - 1)]['value'] = $disableFieldsEmpty;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'disable_fields_empty';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $disableFieldsEmpty;
 		}
 		
 		if ($hasAnalyse == false && $analyseDefault != '') {
-			$extras[count($extras)]['key'] = 'analyse_default';
-			$extras[(count($extras) - 1)]['value'] = $analyseDefault; 
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'analyse_default';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $analyseDefault; 
 		}
 
 		if ($hasSecurity == false) {
-			$extras[count($extras)]['key'] = 'edition_security';
-			$extras[(count($extras) - 1)]['value'] = json_encode($security);
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'edition_security';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = json_encode($security);
 		}
 
 		if ($hasDisplayVersionning == false) {
-			$extras[count($extras)]['key'] = 'display_versionning';
-			$extras[(count($extras) - 1)]['value'] = $displayVersionning;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'display_versionning';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $displayVersionning;
 		}
 
 		if ($hasDataRgpd == false) {
-			$extras[count($extras)]['key'] = 'data_rgpd';
-			$extras[(count($extras) - 1)]['value'] = $dataRgpd;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data_rgpd';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dataRgpd;
 		}
 
 		if ($hasData4citizenType == false) {
-			$extras[count($extras)]['key'] = 'data4citizen-type';
-			$extras[(count($extras) - 1)]['value'] = $data4citizenType;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data4citizen-type';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $data4citizenType;
 		}
 
 		if ($hasEntityId == false) {
-			$extras[count($extras)]['key'] = 'data4citizen-entity-id';
-			$extras[(count($extras) - 1)]['value'] = $entityId;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data4citizen-entity-id';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $entityId;
 		}
 
 		if ($hasDateDeposit == false) {
-			$extras[count($extras)]['key'] = 'date_deposit';
-			$extras[(count($extras) - 1)]['value'] = $dateDeposit;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_deposit';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dateDeposit;
 		}
 
 		if ($hasUsername == false) {
-			$extras[count($extras)]['key'] = 'uploader';
-			$extras[(count($extras) - 1)]['value'] = $uploader;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'uploader';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $uploader;
 		}
 
 		if ($hasDatasetModel == false && isset($datasetModel)) {
-			$extras[count($extras)]['key'] = 'dataset-model';
-			$extras[(count($extras) - 1)]['value'] = $datasetModel;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'dataset-model';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $datasetModel;
 		}
 
 		if ($hasDataValidation == false) {
-			$extras[count($extras)]['key'] = 'data_validation';
-			$extras[(count($extras) - 1)]['value'] = $dataValidation;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'data_validation';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $dataValidation;
 		}
 
 		if (isset($generalMetadata)) {
 			foreach ($generalMetadata as $meta) {
 				if (!$meta->isDefine()) {
-					$extras[count($extras)]['key'] = $meta->getKey();
-					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+					$extras[is_countable($extras) ? count($extras) : 0]['key'] = $meta->getKey();
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $meta->getValue();
 				}
 			}
 		}
@@ -2062,8 +2165,8 @@ class ResourceManager {
 		if (isset($inspireMetadata)) {
 			foreach ($inspireMetadata as $meta) {
 				if (!$meta->isDefine()) {
-					$extras[count($extras)]['key'] = $meta->getKey();
-					$extras[(count($extras) - 1)]['value'] = $meta->getValue();
+					$extras[is_countable($extras) ? count($extras) : 0]['key'] = $meta->getKey();
+					$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $meta->getValue();
 				}
 			}
 		}
@@ -2246,6 +2349,8 @@ class ResourceManager {
 		// Writing the header
 		fputcsv($fp, $colNames, ',');
 
+		$index = 0;
+		
 		// $rows = array();
 		$colsTypes = array();
 		foreach($jsonItems as $feat) {
@@ -2279,7 +2384,7 @@ class ResourceManager {
 				}	
 				else {
 					$value = $feat["properties"][$col];
-					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !$this->isNumericColumn($json,$col)){
+					if((isset($colsTypes[$col]) && $colsTypes[$col] == "text") || !$this->isNumericColumn($jsonItems, $col)){
 						//We replace " by "" to escape them
 						$value = str_replace('"', "\"\"", $value);
 
@@ -2303,6 +2408,8 @@ class ResourceManager {
 			// though CSV stands for "comma separated value"
 			// in many countries (including France) separator is ";"
 			fputcsv($fp, $row, ',');
+
+			$index++;
 		}
 
 		fclose($fp);
@@ -2316,10 +2423,15 @@ class ResourceManager {
 		return true;
 	}
 	
-	function isNumericColumn($json, $colName) {
-		for($i=0; $i< 100; $i++){
-			$val = $json["features"][$i]["properties"][$col];
-			if( !is_numeric ($val)){
+	function isNumericColumn($jsonItems, $colName) {
+		$index = 0;
+		foreach($jsonItems as $feat) {
+			if ($index > 100) {
+				break;
+			}
+			$index++;
+			$val = $feat["properties"][$colName];
+			if (!is_numeric($val)){
 				return false;
 			} 
 		}
@@ -2353,54 +2465,54 @@ class ResourceManager {
 			$coll++;
 			
 			if($coll==1){
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10){
-				$newData[name]=substr($newData[name],0, -3);
-				$newData[name] = $newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -3);
+				$newData['name'] = $newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else if($coll>100){
-				$newData[name]=substr($newData[name],0, -4);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -4);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>1000){
-				$newData[name]=substr($newData[name],0, -5);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -5);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];    
 			}
 			else if($coll>10000){
-				$newData[name]=substr($newData[name],0, -6);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -6);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 			else{
-				$newData[name]=substr($newData[name],0, -2);
-				$newData[name]=$newData[name].'_'.$coll;
-				$newData[title] = $newData[title];
+				$newData['name']=substr($newData['name'],0, -2);
+				$newData['name']=$newData['name'].'_'.$coll;
+				$newData['title'] = $newData['title'];
 				$idNewData = $this->saveData($newData,array('0'=>$coll, '1'=>$idNewData));
 				$idNewData = $idNewData[1];
 			}
 		}
 		else {
-			Logger::logMessage("Impossible de créer un nouveau jeu de données (" . json_encode($resnew) . ")");
+			Logger::logMessage("Impossible de créer une nouvelle connaissance (" . json_encode($resnew) . ")");
 			if ($resnew->error->message) {
-				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error->message) . ")");
+				throw new \Exception("Impossible de créer une nouvelle connaissance (" . json_encode($resnew->error->message) . ")");
 			}
 			else {
-				throw new \Exception("Impossible de créer un nouveau jeu de données (" . json_encode($resnew->error) . ")");
+				throw new \Exception("Impossible de créer une nouvelle connaissance (" . json_encode($resnew->error) . ")");
 			}
 		}
 
@@ -2441,8 +2553,8 @@ class ResourceManager {
 			}
 			else if ($type == "extras") {
 				$extras = $datasetToUpdate["extras"];
-				if ($extras != null && count($extras) > 0) {
-					for ($index = 0; $index < count($extras); $index++) {
+				if ($extras != null && (is_countable($extras) ? count($extras) : 0) > 0) {
+					for ($index = 0; $index < (is_countable($extras) ? count($extras) : 0); $index++) {
 
 						foreach ($metadatas as $metadata) {
 							if ($extras[$index]['key'] == $metadata->getKey()) {
@@ -2465,8 +2577,8 @@ class ResourceManager {
 
 				foreach ($metadatas as $metadata) {
 					if (!$metadata->isDefine()) {
-						$extras[count($extras)]['key'] = $metadata->getKey();
-						$extras[(count($extras) - 1)]['value'] = $metadata->getValue();
+						$extras[is_countable($extras) ? count($extras) : 0]['key'] = $metadata->getKey();
+						$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $metadata->getValue();
 					}
 				}
 			}
@@ -2497,10 +2609,12 @@ class ResourceManager {
 		$response = $api->updateRequest($callUrl, $delDataset, "POST");
 		
 		$response = json_decode($response, true);
-		if ($response[success] == true) {
+		if ($response['success'] == true) {
 			$harvestManager = new HarvestManager;
 			$harvestManager->deleteHarvest($datasetId);
 
+			// Delete the emprise
+			MapEmpriseHelper::deleteDatasetEmprise($datasetId);
 
 			// If databfc module is enabled, we delete the integration from Vanilla if exist
 			try {
@@ -2528,12 +2642,6 @@ class ResourceManager {
 		if (!mb_detect_encoding($str, 'UTF-8', true)) {
 			$str = iconv("UTF-8", "Windows-1252//TRANSLIT", $str);
 		}
-		
-		//We remove whitespaces at the beggining and end of the label
-		$str = trim($str);
-		//We remove - or _ at the beggining
-		$str = ltrim($str, '_');
-		$str = ltrim($str, '-');
 		
 		$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
                             'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
@@ -2581,6 +2689,12 @@ class ResourceManager {
 		if (!$isDatasetName) {
 			$str = str_replace("-", "_", $str);
 		}
+		
+		//We remove whitespaces at the beggining and end of the label
+		$str = trim($str);
+		//We remove - or _ at the beggining
+		$str = ltrim($str, '_');
+		$str = ltrim($str, '-');
 
 		//We set the value to 63 characters as it is the limit of the database
 		$str = substr($str, 0, 62);

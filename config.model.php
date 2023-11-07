@@ -34,7 +34,8 @@ return (object) array(
 		'enable_mail' => false,
 		'client_is_observatory' => false,
 		'client_organisation' => 'master',
-		'drupal_root' => '/home/user-client/drupal-d4c/web'
+		'drupal_root' => '/home/user-client/drupal-d4c/web',
+		'shapefile_projection' => 'EPSG:4326',
 	),
 	'sitesSearch' => array(
 		'https://yyy.data4citizen.com/',

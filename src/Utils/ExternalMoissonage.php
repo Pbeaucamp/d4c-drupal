@@ -14,6 +14,6 @@ $kernel = DrupalKernel::createFromRequest($request, $autoloader, 'prod');
 $kernel->handle($request, HttpKernelInterface::SUB_REQUEST);
 $kernel->boot();
 
-$kernel->prepareLegacyRequest($request);
+$kernel->preHandle($request);
 
 DataSet::sendDataSetCron();

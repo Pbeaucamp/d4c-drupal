@@ -25,8 +25,10 @@ use Drupal\Core\Ajax\InvokeCommand;
  */
 class typeColumnsForm extends HelpFormBase {
 
-
+	private $config;
+	private $urlCkan;
 	protected $datasets;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -55,7 +57,7 @@ class typeColumnsForm extends HelpFormBase {
 		$organizationOptions = array();
 		$organizationOptions["-1"] = "----";
         foreach ($orgs as &$value) {
-			$organizationOptions[$value[name]] = $value[display_name];
+			$organizationOptions[$value['name']] = $value['display_name'];
 		}
 		
 			
@@ -467,9 +469,9 @@ class typeColumnsForm extends HelpFormBase {
 		
 		$form['tooltip']["html"]["help"] = array(
 			'#markup' => '<div class="col-md-4 col-xs-12 help"><p>Ce code html peut être dynamique, écrit en syntaxe AngularJs. De la même manière que les widget et vues personnalisées.</p>
-						<p>La variable <code>record</code> est disponible et contient les champs : <ul> <li><code>record.fields</code> (liste des valeurs de l\'enregistrement)</li> <li><code>records.recordid</code> (identifiant de l\'enregistrement concerné)</li> <li><code>record.datasetid</code> (identifiant du jeu de données)</li></ul></p>
-						<p>Tout widget, lié ou non au jeu de données, peut être intégré à l\'infobulle.</p>
-						<p>Note : les rapports Vanilla liés au jeu de données seront automatiquement intégrés en fin de l\'infobulle.</p></div></div>'
+						<p>La variable <code>record</code> est disponible et contient les champs : <ul> <li><code>record.fields</code> (liste des valeurs de l\'enregistrement)</li> <li><code>records.recordid</code> (identifiant de l\'enregistrement concerné)</li> <li><code>record.datasetid</code> (identifiant de la connaissance)</li></ul></p>
+						<p>Tout widget, lié ou non à la connaissance, peut être intégré à l\'infobulle.</p>
+						<p>Note : les rapports Vanilla liés à la connaissance seront automatiquement intégrés en fin de l\'infobulle.</p></div></div>'
 		);
 
 		// Couleur des points sur la carte en fonction d'un champ
@@ -512,9 +514,9 @@ class typeColumnsForm extends HelpFormBase {
 		$dataset = $this->loadDataset($selectedDataset);
 		$resourceId = null;
 
-		foreach ($dataset[metas][resources] as $resource) {
-			if ($resource[format] == 'CSV') {
-				$resourceId = $resource[id];
+		foreach ($dataset['metas']['resources'] as $resource) {
+			if ($resource['format'] == 'CSV') {
+				$resourceId = $resource['id'];
 				break;
 			}
 		}
@@ -541,7 +543,7 @@ class typeColumnsForm extends HelpFormBase {
 			
         $dataSet = $dataSet->getContent();
         $dataSet = json_decode($dataSet, true);
-		$dataSet = $dataSet[result][results];
+		$dataSet = $dataSet['result']['results'];
 		
 		uasort($dataSet, function($a, $b) {
 			$res =  strcasecmp($a['title'], $b['title']);
@@ -564,28 +566,28 @@ class typeColumnsForm extends HelpFormBase {
         $table_data = $form_state->getValue('table');
         
 		$json=array();
-        $json["resource_id"]=$fields[result][resource_id];
+        $json["resource_id"]=$fields['result']['resource_id'];
         $json["force"]='true';
         $json["fields"]=array();
         
         //array_push($json["fields"], $fields[result][fields][0]);
 
-        for( $i=1; $i<count($fields[result][fields]); $i++){
+        for( $i=1; $i<(is_countable($fields['result']['fields']) ? count($fields['result']['fields']) : 0); $i++){
             
             $notes='';
             $title='';
             $poids ='';
 			 
-            if ($table_data[$i][Intitulé]){
-				$title = $table_data[$i][Intitulé];
+            if ($table_data[$i]['Intitulé']){
+				$title = $table_data[$i]['Intitulé'];
             }
 
-            if ($table_data[$i][Poids]){
-				$poids = $table_data[$i][Poids];
+            if ($table_data[$i]['Poids']){
+				$poids = $table_data[$i]['Poids'];
             }
                      
-            if ($table_data[$i][facet]){
-               $facet = $table_data[$i][facet];
+            if ($table_data[$i]['facet']){
+               $facet = $table_data[$i]['facet'];
                 if($facet==1){
                     $notes=$notes.'<!--facet-->,';
                 }
@@ -595,8 +597,8 @@ class typeColumnsForm extends HelpFormBase {
             }
 
             // check if exportapi field is true and add to notes array 
-            if ($table_data[$i][exportApi]){
-               $exportapi = $table_data[$i][exportApi];
+            if ($table_data[$i]['exportApi']){
+               $exportapi = $table_data[$i]['exportApi'];
                 if($exportapi==1){
                     $notes=$notes.'<!--exportApi-->,';
                 }
@@ -606,8 +608,8 @@ class typeColumnsForm extends HelpFormBase {
             }
 
             // check if hideColumnsApi field is true and add to notes array 
-            if ($table_data[$i][hideColumnsApi]){
-               $hideColumnsApi = $table_data[$i][hideColumnsApi];
+            if ($table_data[$i]['hideColumnsApi']){
+               $hideColumnsApi = $table_data[$i]['hideColumnsApi'];
                 if($hideColumnsApi==1){
                     $notes=$notes.'<!--hideColumnsApi-->,';
                 }
@@ -616,8 +618,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
             
-            if ($table_data[$i][table]){
-               $table = $table_data[$i][table];
+            if ($table_data[$i]['table']){
+               $table = $table_data[$i]['table'];
                 if($table==1){
                      $notes=$notes.'<!--table-->,'; 
                  }
@@ -636,8 +638,8 @@ class typeColumnsForm extends HelpFormBase {
 ////                }
 //            }
 
-            if ($table_data[$i][sortable]){
-               $sortable = $table_data[$i][sortable];
+            if ($table_data[$i]['sortable']){
+               $sortable = $table_data[$i]['sortable'];
                 if($sortable==1){
                     $notes=$notes.'<!--sortable-->,'; 
                 }
@@ -646,8 +648,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
             
-            if ($table_data[$i][disjunctive]){
-				$disjunctive = $table_data[$i][disjunctive];
+            if ($table_data[$i]['disjunctive']){
+				$disjunctive = $table_data[$i]['disjunctive'];
                 if($disjunctive==1){
                     $notes=$notes.'<!--disjunctive-->,'; 
                 }
@@ -666,8 +668,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
 
-            if ($table_data[$i][startDate]){
-                $startdate = $table_data[$i][startDate];
+            if ($table_data[$i]['startDate']){
+                $startdate = $table_data[$i]['startDate'];
                 if($startdate==1){
                     $notes=$notes.'<!--startDate-->,'; 
                 }
@@ -676,8 +678,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
 
-            if ($table_data[$i][endDate]){
-                $enddate = $table_data[$i][endDate];
+            if ($table_data[$i]['endDate']){
+                $enddate = $table_data[$i]['endDate'];
                 if($enddate==1){
                     $notes=$notes.'<!--endDate-->,';
                 }
@@ -686,8 +688,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
 
-            if ($table_data[$i][images]){
-                $images = $table_data[$i][images];
+            if ($table_data[$i]['images']){
+                $images = $table_data[$i]['images'];
                 if($images==1){
                     $notes=$notes.'<!--images-->,';
                 }
@@ -696,8 +698,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
 
-            if ($table_data[$i][wordCount]){
-                $wordcount = $table_data[$i][wordCount];
+            if ($table_data[$i]['wordCount']){
+                $wordcount = $table_data[$i]['wordCount'];
                 if($wordcount==1){
                     $notes=$notes.'<!--wordcount-->,';
                 }
@@ -706,8 +708,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
 
-            if ($table_data[$i][wordCountNumber]){
-                $wordcountNumber = $table_data[$i][wordCountNumber];
+            if ($table_data[$i]['wordCountNumber']){
+                $wordcountNumber = $table_data[$i]['wordCountNumber'];
                 if($wordcountNumber==1){
                     $notes=$notes.'<!--wordcountNumber-->,';
                 }
@@ -716,8 +718,8 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
             
-            if ($table_data[$i][dateTime]){
-                $dateTime = $table_data[$i][dateTime];
+            if ($table_data[$i]['dateTime']){
+                $dateTime = $table_data[$i]['dateTime'];
                 if($dateTime==1){
                     $notes=$notes.'<!--timeserie_precision-->,';
                 }
@@ -726,31 +728,31 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
             
-            if ($table_data[$i][intitule_facette]){
-				$notes =$notes.'<!--facet_name?'.str_replace(' ', '_', $table_data[$i][intitule_facette]).'-->,';
+            if ($table_data[$i]['intitule_facette']){
+				$notes =$notes.'<!--facet_name?'.str_replace(' ', '_', $table_data[$i]['intitule_facette']).'-->,';
             }
             
-            if ($table_data[$i][description]){
-				$notes =$notes.'<!--description?'.str_replace(' ', '_', $table_data[$i][description]).'-->,';
+            if ($table_data[$i]['description']){
+				$notes =$notes.'<!--description?'.str_replace(' ', '_', $table_data[$i]['description']).'-->,';
 				//$notes =$notes.'<!--description?'.$table_data[$i][description].'-->,';
             }
             
-            if ($table_data[$i][title_for_timeLine]){
-                $title_for_timeLine = $table_data[$i][title_for_timeLine];
+            if ($table_data[$i]['title_for_timeLine']){
+                $title_for_timeLine = $table_data[$i]['title_for_timeLine'];
                 if($title_for_timeLine == 1){
                     $notes=$notes.'<!--title_for_timeLine-->,';
                 }
             }
             
-            if ($table_data[$i][descr_for_timeLine]){
-                $descr_for_timeLine = $table_data[$i][descr_for_timeLine];
+            if ($table_data[$i]['descr_for_timeLine']){
+                $descr_for_timeLine = $table_data[$i]['descr_for_timeLine'];
                 if($descr_for_timeLine == 1){
                     $notes=$notes.'<!--descr_for_timeLine-->,';
                 }
             }
              
-            if ($table_data[$i][image_url]){
-                $image_url = $table_data[$i][image_url];
+            if ($table_data[$i]['image_url']){
+                $image_url = $table_data[$i]['image_url'];
                 if($image_url==1){
                     $notes=$notes.'<!--image_url-->,';
 				}
@@ -766,26 +768,26 @@ class typeColumnsForm extends HelpFormBase {
 //              }
             }
             
-            if ($table_data[$i][can_edit]){
-                $canEdit = $table_data[$i][can_edit];
+            if ($table_data[$i]['can_edit']){
+                $canEdit = $table_data[$i]['can_edit'];
                 if ($canEdit == 1){
                     $notes = $notes.'<!--can_edit-->,';
                 }
             }
 
-            if ($table_data[$i][map_display]) {
-               $mapDisplay = $table_data[$i][map_display];
+            if ($table_data[$i]['map_display']) {
+               $mapDisplay = $table_data[$i]['map_display'];
                 if ($mapDisplay == 1) {
                     $notes=  $notes.'<!--map_display-->,'; 
                 }
             }
 			
 			$notes = substr($notes, 0, -1);
-			$fields[result][fields][$i][info][notes] = $notes;  
-			$fields[result][fields][$i][info][label] = $title;
-			$fields[result][fields][$i][info][poids] = $poids;
+			$fields['result']['fields'][$i]['info']['notes'] = $notes;  
+			$fields['result']['fields'][$i]['info']['label'] = $title;
+			$fields['result']['fields'][$i]['info']['poids'] = $poids;
         
-			array_push($json["fields"], $fields[result][fields][$i]);
+			array_push($json["fields"], $fields['result']['fields'][$i]);
 		}
 
         $callUrl = $this->urlCkan . "/api/action/datastore_create";//create
@@ -825,8 +827,8 @@ class typeColumnsForm extends HelpFormBase {
 			}
 		}
 		if(!$found){
-			$extras[count($extras)]['key'] = 'tooltip';
-			$extras[(count($extras) - 1)]['value'] = $json;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'tooltip';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $json;
 		}
 
 		//Couleur des points
@@ -854,8 +856,8 @@ class typeColumnsForm extends HelpFormBase {
 		if(!$found && !($selectedFieldColor == '' || $selectedFieldColor == '----')) {
 			Logger::logMessage("Setting field color " . $selectedFieldColor);
 			
-			$extras[count($extras)]['key'] = 'FieldColor';
-			$extras[(count($extras) - 1)]['value'] = $selectedFieldColor;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FieldColor';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $selectedFieldColor;
 		}
 
 		//Predefined filters
@@ -881,8 +883,8 @@ class typeColumnsForm extends HelpFormBase {
 			}
 		}
 		if(!$found && !($predefinedFilters == '')) {
-			$extras[count($extras)]['key'] = 'PredefinedFilters';
-			$extras[(count($extras) - 1)]['value'] = $predefinedFilters;
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'PredefinedFilters';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $predefinedFilters;
 		}
 		
 		$oldDataset["extras"] = $extras;

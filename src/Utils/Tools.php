@@ -1,8 +1,8 @@
 <?php
 
-use Drupal\ckan_admin\Utils\Logger;
-
 namespace Drupal\ckan_admin\Utils;
+
+use Drupal\ckan_admin\Utils\Logger;
 
 class Tools {
 
@@ -24,6 +24,11 @@ class Tools {
         }
 
 		return $params;
+    }
+
+    static function extractParameterFromURL($url, $paramName) {
+        $params = Tools::parseQueryString($url);
+        return $params[$paramName];
     }
 
     // Générer queryString à partir d'un dictionnaire clé/valeur
@@ -121,5 +126,40 @@ class Tools {
         else {
             Logger::logMessage("There was a problem sending a mail to '" . $email . "'.");
         }
+    }
+
+    /**
+     * Helper method to count an array which can be null or not an array - Simulate the count function of PHP prior to 8
+     */
+    static function count($array) {
+        // Logger::logMessage("TRM - Trying to count array: " . json_encode($array));
+
+        if (is_null($array)) {
+            return 0;
+        }
+        if (!is_countable($array)) {
+            return 1;
+        }
+        return count($array);
+    }
+
+    /**
+     * Helper method to flter an array which can be null or not an array
+     */
+    static function array_filter($array, $callback) {
+        if (is_null($array) || !is_array($array)) {
+            return array();
+        }
+        return array_filter($array, $callback);
+    }
+
+    /**
+     * Helper method to implode an array which can be null or not an array
+     */
+    static function implode($separator, $array) {
+        if (is_null($array) || !is_array($array)) {
+            return "";
+        }
+        return implode($separator, $array);
     }
 }

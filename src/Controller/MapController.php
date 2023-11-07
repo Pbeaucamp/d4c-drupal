@@ -110,6 +110,25 @@ class MapController extends ControllerBase
 		return $element;
 	}
 
+
+	
+	public function getTitle(Request $request){
+		$idMap = $request->get("idmap");
+
+		$api = new Api;
+		$maps = $api->getMaps(null, $idMap);
+
+		$map = $maps[0]->map_json;
+		$map = json_decode($map, true);
+
+
+		if(isset($map["title"])){
+			return "Editer la carte " . $map["title"];
+		}
+
+		return "Créer une carte";
+	}
+
 	public function manage(Request $request)
 	{
 		$uri = \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]);

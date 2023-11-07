@@ -796,7 +796,7 @@ function validUpload(event, name) { //backgr//resours
 
 function delDataset(event) {
 
-    var conf = confirm("Etes-vous sûr de vouloir supprimer ce jeu de données?");
+    var conf = confirm("Etes-vous sûr de vouloir supprimer cette connaissance?");
 
 
     if (conf) {

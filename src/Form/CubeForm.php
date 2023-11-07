@@ -56,8 +56,8 @@ class CubeForm extends HelpFormBase {
 
 		$organizationList = array();
 
-		for ($i = 0; $i < count($orgs[result]); $i++) {
-			$organizationList[$orgs[result][$i][name]] = $orgs[result][$i][display_name];
+		for ($i = 0; $i < (is_countable($orgs['result']) ? count($orgs['result']) : 0); $i++) {
+			$organizationList[$orgs['result'][$i]['name']] = $orgs['result'][$i]['display_name'];
 		}
 		
         $form = parent::buildForm($form, $form_state);
@@ -168,7 +168,7 @@ class CubeForm extends HelpFormBase {
 
 		$form['selected_dataset'] = array(
 			'#type' => 'select',
-			'#title' => t('Jeu de données :'),
+			'#title' => t('Connaissance :'),
 			'#attributes' => array(
 				'onchange' => 'loadFields("' . $this->urlCkan . '")'
 			),

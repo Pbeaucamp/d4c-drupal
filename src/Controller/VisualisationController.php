@@ -42,6 +42,7 @@ class VisualisationController extends ControllerBase {
 
 	private $config;
 	private $locale;
+	private $noIndex;
     
 	public function __construct(){
 		$this->config = include(__DIR__ . "/../../config.php");
@@ -54,7 +55,24 @@ class VisualisationController extends ControllerBase {
 		$resourceId = $request->query->get('resource_id');
 		$location = $request->query->get('location');
 		$visualizationId = $request->query->get('visualization_id');
-		return $this->myPage2($id, $tab, $resourceId, $location, $visualizationId);
+		return $this->myPage2($id, $$tab, $resourceId, $location, $visualizationId);
+	}
+
+	public function getTitle(Request $request, $tab){
+		$id = $request->query->get('id');
+		$resourceId = $request->query->get('resource_id');
+		
+		$api = new API();
+
+		$dataset = $api->getPackageShow2($id, "", true, true, $resourceId, true);
+
+		if(!isset($dataset["metas"]["id"])){
+			return "Erreur de visualisation";
+		}
+
+		$title = "Visualisation " . $dataset["metas"]["title"];
+
+		return $title;
 	}
 
 	/**
@@ -250,7 +268,7 @@ class VisualisationController extends ControllerBase {
 		);
 		$element['#attached']['library'][] = 'ckan_admin/visu.angular';
 
-		if ($isPrivate || $isRgpd) {
+		if ($this->noIndex || $isPrivate || $isRgpd) {
 			$noindex = [
 				'#tag' => 'meta',
 				'#attributes' => [
@@ -331,7 +349,7 @@ class VisualisationController extends ControllerBase {
 		$rgpdNonConnected = $this->config->client->check_rgpd && !$isConnected && $isRgpd;
 
 		$filters = $this->buildFilters($id, $dataset, $resourceId);
-		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected, $visualization);
+		$tabs = $this->buildTabs($api, $tab, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $resourceId, $location, $isRgpd, $rgpdNonConnected, $visualization);
 		$disqus = $this->buildDisqus($host, $dataset);
 		$imports = $this->buildImports($id, $name, $description, $url, $dateModified, $licence, $keywords, $exports);
 
@@ -438,9 +456,9 @@ class VisualisationController extends ControllerBase {
 
 		$list = '<div class="d4c-resources-choices" ng-show="canDisplayFilters()">';
 		$list .= '
-				<p>Jeu de données affiché : </p>
+				<p>Connaissance affichée : </p>
 				<select ng-model="selectedItem" class="form-control" ng-change="visualizeResource(\'' . $pageId . '\', selectedItem)">
-					<option value="" ng-if="false">Choix du jeu de données</option>
+					<option value="" ng-if="false">Choix de la connaissance</option>
 		';
 
 		if (sizeof($resources) > 0 ) {
@@ -471,18 +489,18 @@ class VisualisationController extends ControllerBase {
 		return $numberOfResources > 1 ? $list : '';
 	}
 
-	function buildTabs($api, $tab, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected, $visualization = null) {
+	function buildTabs($api, $tab, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $location, $isRgpd, $rgpdNonConnected, $visualization = null) {
 		$loggedIn = \Drupal::currentUser()->isAuthenticated();
 		$data4citizenType = $this->exportExtras($metadataExtras, 'data4citizen-type');
 
-		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
+		$tabInformation = $this->buildTabInformation($loggedIn, $dataset, $id, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected);
 		if (!$rgpdNonConnected) {
 
 			if ($data4citizenType == 'visualization') {
-				$tabVisualization = $this->buildTabVisualization($api, $metadataExtras);
+				$tabVisualization = $this->buildTabVisualization($api, $id, $metadataExtras);
 			}
 			else if ($data4citizenType == 'tdb') {
-				$tabVisualization = $this->buildTabTDB($api, $metadataExtras);
+				$tabVisualization = $this->buildTabTDB($api, $id, $metadataExtras);
 			}
 			else {
 				$tabTable = $this->buildTabTable($loggedIn, $visualization);
@@ -535,7 +553,7 @@ class VisualisationController extends ControllerBase {
 		';
 	}
 
-	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
+	function buildTabInformation($loggedIn, $dataset, $datasetId, $name, $description, $licence, $themes, $metadataExtras, $keywords, $selectedResourceId, $isRgpd, $rgpdNonConnected) {
 		// $sources = $this->buildSources($metadataExtras);
 		// $ftpApi = $sources[0];
 		// $source = $sources[1];
@@ -559,7 +577,7 @@ class VisualisationController extends ControllerBase {
 		$dataValidation = $this->buildDataValidation($metadataExtras);
 
 		//SYNTHÈSE
-		$synthese = $this->buildSynthese($dataset, $metadataExtras, $themes, $keywords);
+		$synthese = $this->buildSynthese($dataset, $licence, $metadataExtras, $themes, $keywords);
 
 		//CONTACTS
 		$contacts = $this->buildContacts($loggedIn, $metadataExtras);
@@ -598,7 +616,7 @@ class VisualisationController extends ControllerBase {
 						' . ($keywordsPart != null ? $this->buildCard('Mots clefs', $keywordsPart) : '') . '
 						' . ($ratingPart != null ? $this->buildCard('Notation', $ratingPart) : '') . '
 						' . ($referencePart != null ? $this->buildCard('Connaissances de référence', $referencePart) : '') . '
-						' . ($linkedDataSets != null ? $this->buildCard('Jeux de données liés', $linkedDataSets) : '') . '
+						' . ($linkedDataSets != null ? $this->buildCard('Connaissances liés', $linkedDataSets) : '') . '
 					</div>
 					<div class="col-sm-3">
 						' . ($image != null ? $this->buildCardImage($image) : '') . '
@@ -1048,7 +1066,7 @@ class VisualisationController extends ControllerBase {
 		return json_last_error() === JSON_ERROR_NONE;
 	 }
 
-	function buildSynthese($dataset, $metadataExtras, $themes, $keywords) {
+	function buildSynthese($dataset, $licence, $metadataExtras, $themes, $keywords) {
 		$recordsCount = $this->exportExtras($metadataExtras, 'records_count');
 		$datasetSize = $this->exportExtras($metadataExtras, 'dataset_size');
 		$encoding = $this->exportExtras($metadataExtras, 'encoding');
@@ -1090,7 +1108,7 @@ class VisualisationController extends ControllerBase {
 			$synthese .= '
 				<div class="my-3">
 					<i class="fa fa-file"></i>
-					<span class="ms-2">Taille du jeu de données : <b>' . $datasetSize . ' mo</b></span>
+					<span class="ms-2">Taille de la connaissance : <b>' . $datasetSize . ' mo</b></span>
 				</div>
 			';
 		}
@@ -1100,6 +1118,15 @@ class VisualisationController extends ControllerBase {
 				<div class="my-3">
 					<i class="fa fa-file"></i>
 					<span class="ms-2">Encodage : <b>' . $encoding . '</b></span>
+				</div>
+			';
+		}
+
+		if (isset($licence)) {
+			$synthese .= '
+				<div class="my-3">
+					<i class="fa fa-unlock"></i>
+					<span class="ms-2">Licence : <b>' . $licence . '</b></span>
 				</div>
 			';
 		}
@@ -1280,7 +1307,7 @@ class VisualisationController extends ControllerBase {
 			$features = $dataset['features'];
 			// Does features exist, is not empty and contain the value geo
 			$hasGeo = isset($features) && $features != -1 && in_array('geo', $features);
-			$datasetType = $hasGeo /*|| hasWMS(data)*/ ? 'Carte' : 'Données';
+			$datasetType = $hasGeo /*|| hasWMS(data)*/ ? 'Données géo' : 'Données';
 		}
 	
 		return $datasetType;
@@ -1369,8 +1396,8 @@ class VisualisationController extends ControllerBase {
 		$schemaResult = '';
 		foreach ($dataValidation->schemaValidationResults as $schemaValidation) {
 
-			$columnsWithError = implode(', ', $schemaValidation->columnsWithError);
-			$rulesWithError = implode(', ', $schemaValidation->rulesWithError);
+			$columnsWithError = Tools::implode(', ', $schemaValidation->columnsWithError);
+			$rulesWithError = Tools::implode(', ', $schemaValidation->rulesWithError);
 
 			if ($schemaValidation->schema == 'rgpd_schema' || $schemaValidation->schema == 'interop_schema') {
 				$type = $schemaValidation->schema == 'rgpd_schema' ? 'RGPD' : 'INTEROP';
@@ -1389,7 +1416,7 @@ class VisualisationController extends ControllerBase {
 					$details .= '<span><strong>Nombre de lignes conformes:</strong> ' . $schemaValidation->nbLinesCheck . '</span><br/>';
 				}
 
-				$nbColumnsWithError = count($schemaValidation->columnsWithError);
+				$nbColumnsWithError = is_countable($schemaValidation->columnsWithError) ? count($schemaValidation->columnsWithError) : 0;
 
 				$schemaResult .= '
 					<div class="row schema-data-validation">
@@ -1653,25 +1680,28 @@ class VisualisationController extends ControllerBase {
 		$apiManager = new Api();
 
 		$dataset = $apiManager->getPackageShow2($datasetId, "", true, false, null, true);
-		$organization = $dataset['metas']['organization']['name'];
+		// Dataset does not exist or the user does not have the right to see it
+		if (isset($dataset["metas"]["id"])) {
+			$organization = $dataset['metas']['organization']['name'];
 
-		if ($organization != $observatory) {
-			// We need to get the organization url if it exist
-			$organization = $apiManager->getOrganization("id=" . $organization);
-			$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
-			if (isset($organizationUrl)) {
-				// Check if contains http
-				if (strpos($organizationUrl, 'http') === false) {
-					$organizationUrl = "https://" . $organizationUrl;
+			if ($organization != $observatory) {
+				// We need to get the organization url if it exist
+				$organization = $apiManager->getOrganization("id=" . $organization);
+				$organizationUrl = DatasetHelper::extractMetadata($organization['result']['extras'], "observatory-url");
+				if (isset($organizationUrl)) {
+					// Check if contains http
+					if (strpos($organizationUrl, 'http') === false) {
+						$organizationUrl = "https://" . $organizationUrl;
+					}
+				}
+				else {
+					// We put the url of the master organization
+					$organizationUrl = $masterUrl;
 				}
 			}
-			else {
-				// We put the url of the master organization
-				$organizationUrl = $masterUrl;
-			}
-		}
 
-		$datasetUrl = $organizationUrl . "/visualisation?id=" . $datasetId;
+			$datasetUrl = $organizationUrl . "/visualisation?id=" . $datasetId;
+		}
 		return '
 			<div class="col-sm-9 download-item">
 				<i class="fa fa-gauge-high inline download-img" fa-4x></i>
@@ -1713,10 +1743,10 @@ class VisualisationController extends ControllerBase {
 		}
 
 		if ($rgpdNonConnected) {
-			$messageRgpd = "Ce jeu de données nécessite d'être connectée pour être consulté car il contient des données RGPD.";
+			$messageRgpd = "Cette connaissance nécessite d'être connectée pour être consulté car il contient des données RGPD.";
 		}
 		else {
-			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur le jeu de données sont enregistrées.";
+			$messageRgpd = "Cette connaissance contient des données RGPD. Les actions sur la connaissance sont enregistrées.";
 		}
 
 		return '
@@ -1909,18 +1939,27 @@ class VisualisationController extends ControllerBase {
 	}
 
 	function buildServiceUrl($metadataExtras, $serviceUrl, $type, $layerName, $maxFeatures) {
+		// Extract version from url
+		$version = Tools::extractParameterFromURL($serviceUrl, "version");
+
 		$bboxEastLong = $this->exportExtras($metadataExtras, 'bbox-east-long');
 		$bboxNorthLat = $this->exportExtras($metadataExtras, 'bbox-north-lat');
 		$bboxSouthLat = $this->exportExtras($metadataExtras, 'bbox-south-lat');
 		$bboxWestLong = $this->exportExtras($metadataExtras, 'bbox-west-long');
-
-		$bbox = $bboxWestLong . "," . $bboxSouthLat . "," . $bboxEastLong . "," . $bboxNorthLat;
 
 		$width = "1024";
 		$height = "1024";
 
 		//Not used for now
 		// $maxFeatures = '&maxFeatures=' . $maxFeatures;
+
+		$versionIs130 = isset($version) && $version == "1.3.0";
+		if ($versionIs130) {
+			$bbox = $bboxSouthLat . "," . $bboxWestLong . "," . $bboxNorthLat . "," . $bboxEastLong;
+		}
+		else {
+			$bbox = $bboxWestLong . "," . $bboxSouthLat . "," . $bboxEastLong . "," . $bboxNorthLat;
+		}
 
 		// Default projection
 		$srs = "EPSG%3A4326";
@@ -1930,13 +1969,14 @@ class VisualisationController extends ControllerBase {
 		
 		if ($type == "WMS") {
 			$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
-			$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+			$queryString = Tools::updateQueryStringParameter($queryString, "version", isset($version) ? $version : '1.1.0');
 			$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetMap');
 			$queryString = Tools::updateQueryStringParameter($queryString, "layers", $layerName);
 			$queryString = Tools::updateQueryStringParameter($queryString, "bbox", $bbox);
 			$queryString = Tools::updateQueryStringParameter($queryString, "width", $width);
 			$queryString = Tools::updateQueryStringParameter($queryString, "height", $height);
-			$queryString = Tools::updateQueryStringParameter($queryString, "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, $versionIs130 ? "crs" : "srs", $srs);
+			$queryString = Tools::updateQueryStringParameter($queryString, "styles", '');
 			$queryString = Tools::updateQueryStringParameter($queryString, "format", '');
 			
 			// $url = $serviceUrl . '?service=' . $type . '&version=1.3.0&request=GetMap&layers=' . $layerName . '&bbox=' . $bbox . '&width=' . $width . '&height=' . $height . '&srs=' . $srs . '&styles=&format=';
@@ -1966,7 +2006,7 @@ class VisualisationController extends ControllerBase {
 
 		$queryString = Tools::updateQueryStringParameter($queryString, "service", $type);
 		$queryString = Tools::updateQueryStringParameter($queryString, "request", 'GetCapabilities');
-		$queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
+		// $queryString = Tools::updateQueryStringParameter($queryString, "version", '1.1.0');
 		$url = $serviceUrlWithoutParams . '?' . $queryString;
 
 		$xml = simplexml_load_file($url);
@@ -2025,13 +2065,19 @@ class VisualisationController extends ControllerBase {
 					$wmsURL = $this->buildServiceUrl($metadataExtras, $url, "WMS", $name, $maxFeatures);
 					$availableFormatsWMS = $this->getAvailableFormats($url, "WMS");
 
+					$hasMapstore = false;
+					$mapStoreButton = '';
+					if ($hasMapstore) {
+						$mapStoreButton = '<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>';								
+					}
+
 					$additionnalResources .= '
 						<li class="d4c-dataset-export__format-choice ng-scope">
 							<div class="d4c-dataset-export-link">
 								<span class="d4c-dataset-export-link__format-name d4c-dataset-export-link__format-name--alternative geo-format">WMS</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">' . $name . '</span>
 								<span class="d4c-dataset-export-link__format-name--alternative geo-title " style="width: 30rem;display: inline-block;vertical-align: top;">&nbsp; - &nbsp;' . $displayName . '</span>
-								<a class="d4c-dataset-export-link__link" target="_blank" href="#" ng-click="$event.preventDefault();openMapfishapp(\'' . $name . '\', \'' . $url . '\', \'wms\')"><i class="fa fa-link" aria-hidden="true"></i> <span translate=""><span class="ng-scope">Consulter</span></span></a>
+								' . $mapStoreButton . '
 								<a class="d4c-dataset-export-link__link" target="_blank" ng-href="" endverbatim="" href=""></a>
 							</div>
 						</li>
@@ -2059,7 +2105,7 @@ class VisualisationController extends ControllerBase {
 		$additionnalResources .= '</ul>';
 
 		if (isset($wmsURL) || isset($wfsURL)) {
-			if (isset($availableFormatsWMS) && count($availableFormatsWMS) > 0) {
+			if (isset($availableFormatsWMS) && (is_countable($availableFormatsWMS) ? count($availableFormatsWMS) : 0) > 0) {
 				$optionsWMS = '<optgroup label="WMS">';
 
 				foreach ($availableFormatsWMS as $format) {
@@ -2069,7 +2115,7 @@ class VisualisationController extends ControllerBase {
 				$optionsWMS .= '</optgroup>';
 			}
 
-			if (isset($availableFormatsWFS) && count($availableFormatsWFS) > 0) {
+			if (isset($availableFormatsWFS) && (is_countable($availableFormatsWFS) ? count($availableFormatsWFS) : 0) > 0) {
 				$optionsWFS = '<optgroup label="WFS">';
 
 				foreach ($availableFormatsWFS as $format) {
@@ -2155,8 +2201,8 @@ class VisualisationController extends ControllerBase {
 			<d4c-pane pane-auto-unload="true" title="API" icon="cogs"  translate="title" slug="api">
 				' . $apiGeo . '
 			
-				<h3>API Data4Citizen</h3>
-				<d4c-dataset-api-console context="ctx"></d4c-dataset-api-console>
+				<h3>API</h3>
+				<d4c-dataset-api-console context="ctx" service-url="' . $this->config->gravitee->url . '" service-header-key="' . $this->config->gravitee->header_key . '" service-api-key="' . $this->config->gravitee->api_key . '"></d4c-dataset-api-console>
 			</d4c-pane>
 		';
 	}
@@ -2245,7 +2291,7 @@ class VisualisationController extends ControllerBase {
 			$displayEditor = false;
 			foreach($fields as $key=>$value) {
 				$canEdit = false;
-				if (sizeof($value["annotations"]) > 0 ) {
+				if (isset($value["annotations"]) && sizeof($value["annotations"]) > 0 ) {
 					foreach($value["annotations"] as $key2=>$annotation) {
 						if ($annotation["name"] == "can_edit") {
 							$canEdit = true;
@@ -2271,8 +2317,8 @@ class VisualisationController extends ControllerBase {
 			if ($displayEditor) {
 				$buttonEditor = '
 					<a id="btn-edit-data" ng-click="editData()">
-						<img alt="Editer le jeu de données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
-						<span>Editer le jeu de données</span>
+						<img alt="Editer la connaissance" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/edit.png">
+						<span>Editer la connaissance</span>
 					</a>';
 			}
 		}
@@ -2340,7 +2386,7 @@ class VisualisationController extends ControllerBase {
 
 						if (sizeof($supSchemas) > 0) {
 							// Comma separated list of schemas
-							$schemas = implode(',', $supSchemas);
+							$schemas = Tools::implode(',', $supSchemas);
 							$buttonValidateDataSchemas = '
 								<a id="btn-validate-data" ng-click="validateData(' . $contractId . ', \'' . $datasetId . '\', \'' . $selectedResourceId . '\', \'' . $schemas . '\')">
 									<img alt="Valider les données" data-entity-type="file" data-entity-uuid="" src="/sites/default/files/api/portail_d4c/img/validate_data.png">
@@ -2492,7 +2538,7 @@ class VisualisationController extends ControllerBase {
 	}
 
 	/* Other types of dataset */
-	function buildTabVisualization($api, $metadataExtras) {
+	function buildTabVisualization($api, $visualizationDatasetId, $metadataExtras) {
 		$type = $this->exportExtras($metadataExtras, 'data4citizen-type');
 		$entityId = $this->exportExtras($metadataExtras, 'data4citizen-entity-id');
 
@@ -2510,6 +2556,33 @@ class VisualisationController extends ControllerBase {
 				$visualizationPart = '';
 				$widgetPart = '';
 				if (isset($visualization)) {
+					// We need to check if the associated dataset has rgpd data so we can set noIndex to true
+
+					try {
+						$datasetId = $visualization["dataset_id"];
+						$visuType = $visualization["type"];
+
+						if (isset($datasetId) && $visuType != 'cartograph') {
+							$dataset = $api->getPackageShow2($datasetId, "", true, false, null, true);
+	
+							if (isset($dataset["metas"]["id"])) {
+								$metadata = $dataset["metas"];
+								$metadataExtras = $metadata["extras"];
+								$isRgpd = $this->exportExtras($metadataExtras, 'data_rgpd');
+								if ($isRgpd) {
+									$this->noIndex = true;
+								}
+								$isVisualizationAvailable = true;
+							}
+							else {
+								$isVisualizationAvailable = false;
+							}
+						}
+						else {
+							$isVisualizationAvailable = true;
+						}
+					} catch (\Exception $e) { }
+
 					$iframeUrl = $visualization['share_url'];
 					$widget = $visualization["widget"];
 					$widget = str_replace(array("'"), array("\'"), $widget);
@@ -2524,8 +2597,23 @@ class VisualisationController extends ControllerBase {
 						</div>
 					';
 				}
-				else {
-					$visualizationPart = 'La visualisation n\'est pas disponible';
+
+				$hasPassword = $api->hasDatasetPassword($visualizationDatasetId);
+				if ($hasPassword) {
+					// Had a text field and a button to validate password
+					$visualizationPart = '
+						<div>					
+							<d4c-pass context="ctx" visualization-id="' . $entityId . '"/>
+						</div>
+						<div>
+							<iframe id="visualizationFrame" frameborder="0" width="100%" height="600px"></iframe>
+						</div>
+					';
+					$widgetPart = '';
+				}
+				else if (!$isVisualizationAvailable) {
+					$visualizationPart = 'La visualisation n\'est pas disponible ou vous n\'avez pas les droits pour la consulter';
+					$widgetPart = '';
 				}
 		
 				return '
@@ -2542,10 +2630,30 @@ class VisualisationController extends ControllerBase {
 	}
 
 	/* Other types of dataset */
-	function buildTabTDB($api, $metadataExtras) {
+	function buildTabTDB($api, $visualizationDatasetId, $metadataExtras) {
 		$datasetModel = $this->exportExtras($metadataExtras, "dataset-model");
 		$datasetModel = json_decode($datasetModel, true);
 		$tdbUrl = $datasetModel['item'];
+
+
+		// Work in progress
+		// $hasPassword = $api->hasDatasetPassword($visualizationDatasetId);
+		// if ($hasPassword) {
+		// 	// Had a text field and a button to validate password
+		// 	$visualizationPart = '
+		// 		<div>					
+		// 			<d4c-pass context="ctx" visualization-id="' . $entityId . '"/>
+		// 		</div>
+		// 		<div>
+		// 			<iframe id="visualizationFrame" frameborder="0" width="100%" height="600px"></iframe>
+		// 		</div>
+		// 	';
+		// 	$widgetPart = '';
+		// }
+		// else if (!$isVisualizationAvailable) {
+		// 	$visualizationPart = 'La visualisation n\'est pas disponible ou vous n\'avez pas les droits pour la consulter';
+		// 	$widgetPart = '';
+		// }
 
 		$visualizationPart = '';
 		if (isset($tdbUrl)) {

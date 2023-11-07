@@ -16,12 +16,12 @@ fi
 
 if [ -z "$shapeName" ]
 then
-    echo "Shape name is empty"
+    echo "Shape name is not defined as a parameter"
     ogr2ogr_command="ogr2ogr -t_srs $projection -f '$fileType' $output $input"
     output=$(eval "$ogr2ogr_command")
     echo "$output"
 else
-    echo "Shape name is defined"
+    echo "Shape name is defined as a parameter"
     ogr2ogr_command="ogr2ogr -t_srs $projection -f '$fileType' $output $input -nln $shapeName"
     output=$(eval "$ogr2ogr_command")
     echo "$output"

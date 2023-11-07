@@ -50,7 +50,7 @@ class PackageManager {
     }
 
 	public function createPackageZip($datasets) {
-		if (count($datasets) == 0) {
+		if ((is_countable($datasets) ? count($datasets) : 0) == 0) {
 			return json_encode(array('status' => 'error', 'code' => 0, 'message' => "Pas de connaissances à télécharger"));
 		}
 
@@ -467,7 +467,7 @@ class PackageManager {
 		$metadata->appendChild($hierarchyLevel);
 
 		/*$hierarchyLevelName = $doc->createElement("gmd:hierarchyLevelName");
-		$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "jeu de données");
+		$gcoCharacterString = $doc->createElement("gco:gcoCharacterString", "connaissance");
 		$hierarchyLevelName->appendChild($gcoCharacterString);
 		$metadata->appendChild($hierarchyLevelName);*/	
 

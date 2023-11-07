@@ -66,7 +66,21 @@ class MapViewer extends ControllerBase
 		return $element;
 	}
 
-	
+	public function getTitle(Request $request){
+		$idMap = $request->get("idmap");
+
+		$api = new Api;
+		$maps = $api->getMaps(null, $idMap);
+
+		$map = $maps[0]->map_json;
+		$map = json_decode($map, true);
+
+
+
+		$title = "Aperçu de la carte " . $map["title"];
+
+		return $title;
+	}
 	
 	public function myFrame(Request $request) {
 		$config = include(__DIR__ . "/../../config.php");
@@ -111,7 +125,7 @@ class MapViewer extends ControllerBase
 				</script>
 				<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/i18n.js"></script>
 				<script src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/supported-browsers-message.js" type="text/javascript"></script>
-				<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-chart.js"></script>
+				<script type="text/javascript" src="'. $config->client->routing_prefix . '/sites/default/files/api/portail_d4c/js/angular-carto.js"></script>
 			</body>
 		';
 		

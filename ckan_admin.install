@@ -228,7 +228,7 @@ function ckan_admin_schema() {
   );
  
   $schema['d4c_dataset_subscription'] = array(
-    'description' => 'Gestion des abonnements aux jeux de données',
+    'description' => 'Gestion des abonnements aux connaissances',
     'fields' => array(
       'id'=>array(
         'type'=>'serial',
@@ -456,7 +456,7 @@ function ckan_admin_update_8706(&$sandbox) {
 
 function ckan_admin_update_8707(&$sandbox) {
   $spec = [
-    'description' => 'Gestion des abonnements aux jeux de données',
+    'description' => 'Gestion des abonnements aux connaissances',
     'fields' => [
       'id' => [
         'type' => 'serial',
@@ -602,4 +602,99 @@ function ckan_admin_update_8712(&$sandbox) {
   ]; 
   $schema = Database::getConnection()->schema();
   $schema->createTable('d4c_user_story', $spec);
+}
+
+function ckan_admin_update_8713(&$sandbox) {
+  $table_name = 'd4c_properties';
+
+  $spec = [
+    'description' => 'Gestion des proprietes',
+    'fields' => [
+      'key' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ],
+      'value' => [
+        'type' => 'text',
+        'not null' => TRUE
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['key']);
+}
+
+function ckan_admin_update_8714(&$sandbox) {
+  $spec = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'description' => "Ordre des vues personnalisees",
+  ); 
+  $schema = Database::getConnection()->schema();
+  $schema->addField('d4c_custom_views_html', 'cvh_order', $spec);
+}
+
+function ckan_admin_update_8715(&$sandbox) {
+  $table_name = 'd4c_dataset_password';
+
+  $spec = [
+    'description' => 'Gestion des mots de passe pour dataset',
+    'fields' => [
+      'dataset_id'=>array(
+        'type' => 'text',
+        'description' => "Dataset ID",
+        'not null' => TRUE,
+      ),
+      'password' => [
+        'type' => 'varchar',
+        'description' => "Password",
+        'length' => 255,
+        'not null' => TRUE,
+      ]
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['dataset_id']);
+}
+
+function ckan_admin_update_9001(&$sandbox) {
+  $spec = array(
+    'type' => 'text',
+    'not null' => FALSE
+  ); 
+  $schema = Database::getConnection()->schema();
+  $schema->dropField('d4c_reuses', 'reu_image');
+  $schema->addField('d4c_reuses', 'reu_image', $spec);
+}
+
+function ckan_admin_update_9002(&$sandbox) {
+  $table_name = 'd4c_dataset_emprise';
+
+  $spec = [
+    'description' => 'Gestion des emprises de carte pour dataset',
+    'fields' => [
+      'dataset_id'=>[
+        'type' => 'text',
+        'description' => "Dataset ID",
+        'not null' => TRUE,
+      ],
+      'shape' => [
+        'type' => 'varchar',
+        'description' => "Forme emprise",
+        'length' => 255,
+      ],
+      'coordinates' => [
+        'type' => 'text',
+        'description' => "Coordonnees emprise",
+      ],
+    ]
+  ]; 
+  $schema = Database::getConnection()->schema();
+  $schema->createTable($table_name, $spec);
+
+  Database::getConnection()->schema()->addUniqueKey($table_name, 'unique_key', ['dataset_id']);
 }

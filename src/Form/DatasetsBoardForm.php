@@ -47,7 +47,9 @@ class DatasetsBoardForm extends HelpFormBase {
 
         $option_org=array();
 		
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -87,11 +89,11 @@ class DatasetsBoardForm extends HelpFormBase {
 							   
         $result = $result->getContent();
 		
-        $result = json_decode($result, true)[result];
-        $datasets = $result[results];
+        $result = json_decode($result, true)['result'];
+        $datasets = $result['results'];
 		
-		pager_default_initialize($result["count"], $num_per_page);
-		
+		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
+
 		$header =  array(
 			"name" => $this->t('Nom'),
 			"orga" => $this->t('Organisation'),
@@ -109,9 +111,9 @@ class DatasetsBoardForm extends HelpFormBase {
 		foreach ($datasets as $row) {
 			
 			//$default_chart
-			 for ($j = 0; $j < count($row[extras]); $j++) {
-				 if ($row[extras][$j]['key'] == 'analyse_default') {
-					 $default_chart = $row[extras][$j]['value'];
+			 for ($j = 0; $j < (is_countable($row['extras']) ? count($row['extras']) : 0); $j++) {
+				 if ($row['extras'][$j]['key'] == 'analyse_default') {
+					 $default_chart = $row['extras'][$j]['value'];
 					 break;
 				 }
 			 }
@@ -377,7 +379,7 @@ class DatasetsBoardForm extends HelpFormBase {
 		if($visibility != ""){
 			$oldDataset["private"] = ($visibility == "private" ? true : false);
 			
-			\Drupal::messenger()->addMessage('Le jeu de données '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
+			\Drupal::messenger()->addMessage('La connaissance '. $oldDataset["title"] . ' a été rendu '. ($visibility == "private" ? "Privé" : "Public"));
 		} 
 		if($security != ""){
 			$exists = false;
@@ -391,11 +393,11 @@ class DatasetsBoardForm extends HelpFormBase {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$oldDataset["extras"][count($oldDataset["extras"])]['key'] = 'edition_security';
-				$oldDataset["extras"][(count($oldDataset["extras"]) - 1)]['value'] = $security;
+				$oldDataset["extras"][is_countable($oldDataset["extras"]) ? count($oldDataset["extras"]) : 0]['key'] = 'edition_security';
+				$oldDataset["extras"][((is_countable($oldDataset["extras"]) ? count($oldDataset["extras"]) : 0) - 1)]['value'] = $security;
 			}
 			
-			\Drupal::messenger()->addMessage('La sécurité sur le jeu de données '. $oldDataset["title"] . ' a été modifiée');
+			\Drupal::messenger()->addMessage('La sécurité sur la connaissance '. $oldDataset["title"] . ' a été modifiée');
 		}
 		
 		$callUrl = $this->urlCkan . "/api/action/package_update";

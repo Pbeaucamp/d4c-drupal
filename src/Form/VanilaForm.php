@@ -18,6 +18,8 @@ use Drupal\ckan_admin\Utils\HelpFormBase;
  */
 class VanilaForm extends HelpFormBase {
 
+    private $config;
+    private $urlCkan;
 
 	/**
 	 * {@inheritdoc}
@@ -81,7 +83,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
         $datas_arr=array();
         $datas_arr['new']='Сréer';
 
-        for ($i=0; $i<count($datas); $i++){
+        for ($i=0; $i<(is_countable($datas) ? count($datas) : 0); $i++){
             
            $datas_arr[$datas[$i]->name]= $datas[$i]->title;  
             
@@ -313,7 +315,7 @@ public function delete(array &$form, FormStateInterface $form_state){
         $datas = json_decode($datas);
         
 
-        for ($i=0; $i<count($datas); $i++){
+        for ($i=0; $i<(is_countable($datas) ? count($datas) : 0); $i++){
 
             if($datas[$i]->name ==$datas_name){
              unset($datas[$i]);

@@ -6,6 +6,9 @@ use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\Logger;
 
 class GeolocHelper {
+
+    private $config;
+    private $urlCkan;
     
     public function __construct(){
 		$this->config = include(__DIR__ . "/../../config.php");

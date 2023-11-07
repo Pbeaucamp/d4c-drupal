@@ -20,6 +20,9 @@ use Exception;
  */
 class PackagesForm extends HelpFormBase {
 	
+	private $config;
+	private $urlCkan;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -46,7 +49,9 @@ class PackagesForm extends HelpFormBase {
 		$option_org=array();
 		
 		// pagination
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+		
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -84,10 +89,10 @@ class PackagesForm extends HelpFormBase {
         $result = $api->callPackageSearch_public_private($query);
 
         $result = $result->getContent();
-        $result = json_decode($result, true)[result];
+        $result = json_decode($result, true)['result'];
 
         // get datasets
-        $datasets = $result[results];
+        $datasets = $result['results'];
 		
         //-------------------- Filter form ---------------------------
 		$form['top'] = [
@@ -180,7 +185,7 @@ class PackagesForm extends HelpFormBase {
 		);
 
 		$form['jdd'] = array(
-			'#title' => t('Importer un jeu de données : '),
+			'#title' => t('Importer une connaissance : '),
 			'#type' => 'managed_file',
 			'#upload_location' => 'public://dataset/',
 			'#upload_validators' => array(
@@ -195,7 +200,7 @@ class PackagesForm extends HelpFormBase {
             '#markup' => '',
             '#type' => 'textfield',
             '#attributes' => array('style' => 'width: 50%;'),
-			'display' => none,
+			'display' => 'none',
 			'#maxlength' => 300
 		);
 
@@ -221,7 +226,7 @@ class PackagesForm extends HelpFormBase {
 		); 
 
 		// intialize pagination
-		pager_default_initialize($result["count"], $num_per_page);
+		\Drupal::service('pager.manager')->createPager($result["count"], $num_per_page)->getCurrentPage();
 		
 		//  create table header
 		$header =  array(
@@ -349,7 +354,7 @@ class PackagesForm extends HelpFormBase {
 					if ($value['type'] == 'DATAPUSHER') {
 						$validataResources[] = $value['resourceUrl'];
 
-						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur le jeu de données.");
+						\Drupal::messenger()->addMessage("La ressource '" . $value['filename'] ."' a été ajouté sur la connaissance.");
 					}
 					else if ($value['type'] == 'CLUSTER') {
 						\Drupal::messenger()->addMessage("Les clusters ont été générés.");

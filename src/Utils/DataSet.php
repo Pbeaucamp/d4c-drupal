@@ -16,6 +16,8 @@ use Drupal\ckan_admin\Utils\Logger;
 
 class DataSet {
 
+	private $config;
+
 	static function checkConnexion()
 	{
 		$config = include(__DIR__ . "/../../config.php");
@@ -34,7 +36,6 @@ class DataSet {
 		$names = array();
 		$datasets = array();
 		
-		//$file_path = drupal_realpath('public://').'/api/portail_anfr';
 		//$file_name = "liste_autocomplete.json";
 		//if(!file_exists("$file_path/$file_name"))
 		//{	
@@ -116,7 +117,9 @@ class DataSet {
 		$names = array();
 		$datasets = array();
 		
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		if(!file_exists("$file_path/$file_name"))
 		{	
@@ -664,8 +667,10 @@ class DataSet {
 		$pos = strpos($header, "filename=");
 		$file_name = substr($header, $pos+9);
 		$file_name = str_replace('"', '', $file_name);
-		$file_name = trim($file_name);			
-		$file_path = drupal_realpath('public://').'/tmp';
+		$file_name = trim($file_name);
+		
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/tmp';
 		$file = file_put_contents("$file_path/$file_name", $body);
 		$resource['upload'] = curl_file_create("$file_path/$file_name");
 		
@@ -723,7 +728,8 @@ class DataSet {
 		}
 		
 		$config->set('json',null)->save();
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", "");
 	}
@@ -775,7 +781,8 @@ class DataSet {
 		$config = \Drupal::service('config.factory')->getEditable('ckan_admin.organisationForm');
 		$json = $config->get('json');
 		$json_string = json_encode($json);
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", $json_string);
 	}
@@ -811,7 +818,8 @@ class DataSet {
 		
 		$config->set('json',$json);
 		$json_string = json_encode($json);
-		$file_path = drupal_realpath('public://').'/api/portail_anfr';
+		$publicPath = \Drupal::service('file_system')->realpath('public://');
+		$file_path = $publicPath . '/api/portail_anfr';
 		$file_name = "liste_autocomplete.json";
 		$file = file_put_contents("$file_path/$file_name", $json_string);
 		\Drupal::messenger()->addMessage($file,'status');
@@ -971,7 +979,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras2 = $result2[extras];
+			$extras2 = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1002,7 +1010,7 @@ class DataSet {
 			$ex_dmlm=false;
 			$ex_dmc=false;
 			
-            for($i= 0; $i<count($extras); $i++ ){
+            for($i= 0; $i<(is_countable($extras) ? count($extras) : 0); $i++ ){
 				if($extras[$i]->key == 'FTP_API'){
 					$ex_Ftp=true;
 					$extras[$i]->value  == $site_search."visualisation/?id=".$id_dataset_gouv;
@@ -1017,16 +1025,16 @@ class DataSet {
 			}
 
             if( $ex_Ftp==false){
-                $extras[count($extras)]->key = 'FTP_API';
-                $extras[(count($extras) - 1)]->value = $site_search."visualisation/?id=".$id_dataset_gouv;  
+                $extras[is_countable($extras) ? count($extras) : 0]->key = 'FTP_API';
+                $extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $site_search."visualisation/?id=".$id_dataset_gouv;  
             }
 			if($ex_dmlm==false){
-				$extras[count($extras)]->key = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]->value = $results->metadata_modified;
+				$extras[is_countable($extras) ? count($extras) : 0]->key = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $results->metadata_modified;
 			}
 			if($ex_dmc==false){
-				$extras[count($extras)]->key = 'date_moissonnage_creation';
-				$extras[(count($extras) - 1)]->value = $results->metadata_created;
+				$extras[is_countable($extras) ? count($extras) : 0]->key = 'date_moissonnage_creation';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $results->metadata_created;
 			}
 			
             if($result2){
@@ -1042,7 +1050,7 @@ class DataSet {
 				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
 
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
@@ -1168,7 +1176,7 @@ class DataSet {
         
             $result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras2 = $result2[extras];
+			$extras2 = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1200,7 +1208,7 @@ class DataSet {
 			$ex_dmlm=false;
 			$ex_dmc=false;
 			
-            for($i= 0; $i<count($extras); $i++ ){
+            for($i= 0; $i<(is_countable($extras) ? count($extras) : 0); $i++ ){
 				if($extras[$i]->key == 'FTP_API'){
 					$ex_Ftp=true;
 					$extras[$i]->value  == $site_search."visualisation/?id=".$id_dataset_gouv;
@@ -1215,16 +1223,16 @@ class DataSet {
 			}
 
             if( $ex_Ftp==false){
-                $extras[count($extras)]->key = 'FTP_API';
-                $extras[(count($extras) - 1)]->value = $site_search."visualisation/?id=".$id_dataset_gouv;  
+                $extras[is_countable($extras) ? count($extras) : 0]->key = 'FTP_API';
+                $extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $site_search."visualisation/?id=".$id_dataset_gouv;  
             }
 			if($ex_dmlm==false){
-				$extras[count($extras)]->key = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]->value = $results->metadata_modified;
+				$extras[is_countable($extras) ? count($extras) : 0]->key = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $results->metadata_modified;
 			}
 			if($ex_dmc==false){
-				$extras[count($extras)]->key = 'date_moissonnage_creation';
-				$extras[(count($extras) - 1)]->value = $results->metadata_created;
+				$extras[is_countable($extras) ? count($extras) : 0]->key = 'date_moissonnage_creation';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]->value = $results->metadata_created;
 			}
 			
             if($result2){
@@ -1240,7 +1248,7 @@ class DataSet {
 				$query = Query::putSolrRequest($ckan . '/api/action/package_patch', $binaryData, 'POST');
             }
             
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			$add_tres = false;
             foreach($results->resources as &$res){
 				$host = $_SERVER['HTTP_HOST']; 
@@ -1367,12 +1375,12 @@ class DataSet {
 			$results = $query2->metas;
 			
 			$tagsData = array();
-			if ($results->keyword == '' || count($results->keyword)==0 || !$results->keyword) {
+			if ($results->keyword == '' || (is_countable($results->keyword) ? count($results->keyword) : 0)==0 || !$results->keyword) {
 				$tagsData = [];
 			} 
 			else {
 				$tags = $results->keyword;
-				for ($j = 0; $j < count($tags); $j++) {
+				for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 					if($tags[$j]!=''){
 						$val = Dataset::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1382,7 +1390,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_processed;
 			
@@ -1418,8 +1426,8 @@ class DataSet {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = $lastmod; 
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $lastmod; 
 			}
 			
             if($result2){
@@ -1434,7 +1442,7 @@ class DataSet {
             }
 			
 			$idNewData=$id_dataset;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 
 
             //resources//
@@ -1516,12 +1524,12 @@ class DataSet {
 			$results = $query2->metas;
 			
 			$tagsData = array();
-			if ($results->keyword == '' || count($results->keyword)==0 || !$results->keyword) {
+			if ($results->keyword == '' || (is_countable($results->keyword) ? count($results->keyword) : 0)==0 || !$results->keyword) {
 				$tagsData = [];
 			} 
 			else {
 				$tags = $results->keyword;
-				for ($j = 0; $j < count($tags); $j++) {
+				for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 					if($tags[$j]!=''){
 						$val = Dataset::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1531,7 +1539,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_processed;
 			
@@ -1567,8 +1575,8 @@ class DataSet {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = $lastmod; 
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $lastmod; 
 			}
 			
             if($result2){
@@ -1583,7 +1591,7 @@ class DataSet {
             }
 
 			$idNewData=$id_dataset;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			
             //resources//
 
@@ -1657,12 +1665,12 @@ class DataSet {
             $results = json_decode($query);
             $tagsData = array();
             
-            if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+            if ($results->tags == '' || (is_countable($results->tags) ? count($results->tags) : 0)==0 || !$results->tags) {
 				$tagsData = [];
 			} 
             else {
 				$tags = $results->tags;
-				for ($j = 0; $j < count($tags); $j++) {
+				for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 					if($tags[$j]!=''){
 						$val = DataSet::nettoyage($tags[$j]);
 						array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -1672,7 +1680,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->updatedAt;
 			
@@ -1708,8 +1716,8 @@ class DataSet {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = $lastmod; 
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $lastmod; 
 			}
 			
             if($result2){
@@ -1726,7 +1734,7 @@ class DataSet {
     
              /////////////////////resources////////////    
             $host = $_SERVER['HTTP_HOST']; 
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			
 			$editId = null;
 			foreach($old_resources as $oldRes){
@@ -1808,7 +1816,7 @@ class DataSet {
 			
 			$result2 = $api->getPackageShow("id=".$id_dataset);		
 			$result2 = $result2["result"];
-			$extras = $result2[extras];
+			$extras = $result2['extras'];
 			
 			$lastmod = $results->metadata_modified;
 			
@@ -1844,8 +1852,8 @@ class DataSet {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = $lastmod; 
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $lastmod; 
 			}
 			
             if($result2){
@@ -1860,7 +1868,7 @@ class DataSet {
             }
     
 			$add_tres = false;
-			$old_resources = $result2[resources];
+			$old_resources = $result2['resources'];
 			/// resources update
 			foreach($results->resources as &$res){
 				
@@ -2136,8 +2144,8 @@ class DataSet {
 			}
 			if(!$exists) {
 				//error_log('extras added');
-				$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-				$extras[(count($extras) - 1)]['value'] = (strtotime($lastmod1) >= strtotime($lastmod2))?  $lastmod1 : $lastmod2; 
+				$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+				$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = (strtotime($lastmod1) >= strtotime($lastmod2))?  $lastmod1 : $lastmod2; 
 			}
 			
            // if($result2){
@@ -2152,12 +2160,12 @@ class DataSet {
             $columns_data2=$site_search[3];
             
             $tagsData = array();
-			if ($datasetUpt->tags == '' || count($datasetUpt->tags)==0 || !$datasetUpt->tags) {
+			if ($datasetUpt->tags == '' || (is_countable($datasetUpt->tags) ? count($datasetUpt->tags) : 0)==0 || !$datasetUpt->tags) {
 				$tagsData = [];
 			} 
 			else {
 				$tags = $datasetUpt->tags;
-				for ($j = 0; $j < count($tags); $j++) {
+				for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 					if($tags[$j]!=''){
 						array_push($tagsData, $tags[$j]->name);
 					}
@@ -2436,7 +2444,7 @@ class DataSet {
 							$url_attach = $site_search . "/".$feat["id"]."/attachments?f=pjson";
 							$res = Query::callSolrServer($url_attach);
 							$res = json_decode($res, true);
-							if(count($res["attachmentInfos"]) > $nb_att){
+							if((is_countable($res["attachmentInfos"]) ? count($res["attachmentInfos"]) : 0) > $nb_att){
 								
 								$cols[] = "attachment_" . $nb_att . "_name";
 								$cols[] = "attachment_" . $nb_att . "_url";
@@ -2445,7 +2453,7 @@ class DataSet {
 							preg_match('/attachment_([\d]+)_name/i',$col, $matches);
 							$c = floatval($matches[1]);
 							//error_log(json_encode($c));
-							if(count($res["attachmentInfos"]) > $c){ 
+							if((is_countable($res["attachmentInfos"]) ? count($res["attachmentInfos"]) : 0) > $c){ 
 								$att = $res["attachmentInfos"][$c];
 								//error_log(json_encode($att));
 								$name = $att["name"];
@@ -2478,16 +2486,16 @@ class DataSet {
 					if(count($row) < count($cols)){
 						$row = array_pad($row, count($cols), "");
 					}
-					$row = implode($row, ";");
+					$row = Tools::implode(";", $row);
 				}
 				
-				$data_csv[] = strtolower(implode($cols, ";"));
+				$data_csv[] = strtolower(Tools::implode(";", $cols));
 				$data_csv = array_merge($data_csv, $rows);
 				$resname = $fileName . "_" . uniqid();
 				$rootCsv='/home/user-client/drupal-d4c' . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 				$urlCsv = 'https://'.$_SERVER['HTTP_HOST'] . $this->config->client->routing_prefix . '/sites/default/files/dataset/'.$fileName.'.csv';
 				
-				file_put_contents($rootCsv, implode($data_csv, "\n"));
+				file_put_contents($rootCsv, Tools::implode("\n", $data_csv));
 		
 				
 				if($editId == null){
@@ -2593,12 +2601,12 @@ class DataSet {
 		Logger::logMessage(" -> Calling 'https://www.data.gouv.fr/api/1/datasets/". $id_dataset_gouv . "' ... \r\n");
 
 		$tagsData = array();
-		if ($results->tags == '' || count($results->tags)==0 || !$results->tags) {
+		if ($results->tags == '' || (is_countable($results->tags) ? count($results->tags) : 0)==0 || !$results->tags) {
 			$tagsData = [];
 		} 
 		else {
 			$tags = $results->tags;
-			for ($j = 0; $j < count($tags); $j++) {
+			for ($j = 0; $j < (is_countable($tags) ? count($tags) : 0); $j++) {
 				if($tags[$j]!=''){
 					$val = DataSet::nettoyage($tags[$j]);
 					array_push($tagsData, ["vocabulary_id" => null, "state" => "active", "display_name" => $val, "name" => $val]);
@@ -2614,7 +2622,7 @@ class DataSet {
 		
 		$result2 = $api->getPackageShow("id=".$id_dataset);		
 		$result2 = $result2["result"];
-		$extras = $result2[extras];
+		$extras = $result2['extras'];
 		
 		$lastmod = $results->last_modified;
 		$externalDatasetLastModificationLog = date('m/d/Y H:i:s', strtotime($lastmod));
@@ -2683,15 +2691,15 @@ class DataSet {
 		Logger::logMessage(" -> Modification check is OK ... \r\n");
 
 		//error_log('moissonage datagouv id : ' .$name . ' moissonnage');
-		if(count($extras)==0){
-			$extras[count($extras)]['key'] = 'LinkedDataSet';
-			$extras[(count($extras) - 1)]['value'] = '';
+		if((is_countable($extras) ? count($extras) : 0)==0){
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'LinkedDataSet';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = '';
 			
 			$themes = array();
 			$themes[] = "default";
 
-			$extras[count($extras)]['key'] = 'themes';
-			$extras[(count($extras) - 1)]['value'] = json_encode($themes);
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'themes';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = json_encode($themes);
 
 			// $extras[count($extras)]['key'] = 'label_theme';
 			// $extras[(count($extras) - 1)]['value'] = 'Default';
@@ -2699,8 +2707,8 @@ class DataSet {
 			//$extras[count($extras)]['key'] = 'type_map';
 			//$extras[(count($extras) - 1)]['value'] = 'osm';
 
-			$extras[count($extras)]['key'] = 'FTP_API';
-			$extras[(count($extras) - 1)]['value'] = 'https://www.data.gouv.fr/fr/datasets/'.$id_dataset_gouv.'/'; 
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = 'https://www.data.gouv.fr/fr/datasets/'.$id_dataset_gouv.'/'; 
 		}
 
 		//set new date in extras
@@ -2719,8 +2727,8 @@ class DataSet {
 		}
 		if(!$exists) {
 			Logger::logMessage(" -> Extra not found, we had it '" . $externalDatasetLastModificationLog . "' \r\n");
-			$extras[count($extras)]['key'] = 'date_moissonnage_last_modification';
-			$extras[(count($extras) - 1)]['value'] = $lastmod; 
+			$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'date_moissonnage_last_modification';
+			$extras[((is_countable($extras) ? count($extras) : 0) - 1)]['value'] = $lastmod; 
 		}
 		
 		$description = $results->description;
@@ -2733,7 +2741,7 @@ class DataSet {
 		$query = DataSet::updatePackage($name, $id_org, $description, $results->license, $tags, $id_dataset, $extras);
 
 		$idNewData = $id_dataset;
-		$old_resources = $result2[resources];
+		$old_resources = $result2['resources'];
 		$add_tres = false;
 		$geo_res = array();
 		/////////////////////resources////////////
@@ -3210,7 +3218,7 @@ class DataSet {
 		$arr_csv1 = array();
 		$arr_csv2 = array();
 		
-		for($a = 1; $a<count($csv1); $a++){
+		for($a = 1; $a<(is_countable($csv1) ? count($csv1) : 0); $a++){
 
 			$arr=array();
         
@@ -3222,7 +3230,7 @@ class DataSet {
     
 		}
     
-		for($a = 1; $a<count($csv2); $a++){
+		for($a = 1; $a<(is_countable($csv2) ? count($csv2) : 0); $a++){
 
 			$arr=array();
         
@@ -3276,7 +3284,7 @@ class DataSet {
 		$res_arr[0] = $nome_column_new;
     
     
-		for($x=0; $x<count($line); $x++){
+		for($x=0; $x<(is_countable($line) ? count($line) : 0); $x++){
 			for($y=0; $y <count($nome_column_new); $y++){
 			   
 				$val='';
@@ -3351,11 +3359,11 @@ class DataSet {
 				
 				//Getting harvest's URL
                 $datasetInfos = $api->getPackageShow2($dataset->id_data, "");
-                $met = $datasetInfos[metas][extras];
-				for($i=0; $i < count($met); $i++){
+                $met = $datasetInfos['metas']['extras'];
+				for($i=0; $i < (is_countable($met) ? count($met) : 0); $i++){
                     if($met[$i]['key']=='FTP_API'){
-						if($met[$i][value]!='FTP'){
-                        	$dataset->siteUrl =  $met[$i][value];
+						if($met[$i]['value']!='FTP'){
+                        	$dataset->siteUrl =  $met[$i]['value'];
                         } 
 					}
 				}

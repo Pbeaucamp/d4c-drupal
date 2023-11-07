@@ -14,6 +14,7 @@ use Drupal\ckan_admin\Utils\DataSet;
 use Drupal\ckan_admin\Utils\Api;
 use Drupal\ckan_admin\Utils\ResourceManager;
 use Drupal\ckan_admin\Utils\HelpFormBase;
+use Drupal\ckan_admin\Utils\Tools;
 
 /**
  * Implements an example form.
@@ -48,13 +49,13 @@ class joinDatasetsForm extends HelpFormBase
 		
 		$this->organizationList = array();
         foreach ($orgs as &$value) {
-			$this->organizationList[$value[id]] = $value[display_name];
+			$this->organizationList[$value['id']] = $value['display_name'];
 		}
 
 		$dataSet = $api->callPackageSearch_public_private('include_private=true&rows=1000&sort=title_string asc', \Drupal::currentUser()->id());
 		$dataSet = $dataSet->getContent();
 		$dataSet = json_decode($dataSet, true);
-		$this->datasets = $dataSet[result][results];
+		$this->datasets = $dataSet['result']['results'];
 
 
 		///////////////////////////////license_list////
@@ -62,8 +63,8 @@ class joinDatasetsForm extends HelpFormBase
 		$lic = $api->getLicenses();
 
 		$licList = array();
-		foreach ($lic[result] as $value) {
-			$licList[$value[id]] = $value[title];
+		foreach ($lic['result'] as $value) {
+			$licList[$value['id']] = $value['title'];
 		}
 
 		///////////////////////////////license_list////
@@ -72,7 +73,7 @@ class joinDatasetsForm extends HelpFormBase
 		$ids = array();
 
 		foreach ($this->datasets as $ds) {
-			$ids[$ds[id]] = $ds[title];
+			$ids[$ds['id']] = $ds['title'];
 		}
 		//error_log("ff-".count($ids));
 
@@ -131,22 +132,22 @@ class joinDatasetsForm extends HelpFormBase
 			$selected_org = $form_state->getUserInput()['org1'];
 			$idss = array();
 
-			//$ids["new"] = "Сréer un jeu de données";
+			//$ids["new"] = "Сréer une connaissance";
 			if ($selected_org == '') {
 				foreach ($this->datasets as $ds) {
-					$idss[$ds[id]] = $ds[title];
+					$idss[$ds['id']] = $ds['title'];
 				}
 			} else {
 				foreach ($this->datasets as $ds) {
-					if ($ds[organization][id] == $selected_org) {
-						$idss[$ds[id]] = $ds[title];
+					if ($ds['organization']['id'] == $selected_org) {
+						$idss[$ds['id']] = $ds['title'];
 					}
 				}
 			}
 
 			$form['selected_data'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $idss,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -163,7 +164,7 @@ class joinDatasetsForm extends HelpFormBase
 		} else {
 			$form['selected_data'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $ids,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -187,8 +188,8 @@ class joinDatasetsForm extends HelpFormBase
 			$jdd = $jdd[resources];*/
 
 			foreach ($this->datasets as $d) {
-				if ($d[id] == $jdd) {
-					$jdd = $d[resources];
+				if ($d['id'] == $jdd) {
+					$jdd = $d['resources'];
 				}
 			}
 
@@ -196,7 +197,7 @@ class joinDatasetsForm extends HelpFormBase
 			$columns['empty'] = '---';
 
 			foreach ($jdd as $value) {
-				if ($value[format] == 'CSV' || $value[format] == 'csv') {
+				if ($value['format'] == 'CSV' || $value['format'] == 'csv') {
 
 					/*$fh = fopen($value[url], 'r');
 				
@@ -216,7 +217,7 @@ class joinDatasetsForm extends HelpFormBase
 						}
 					}*/
 
-					$cols = $api->getAllFields($value[id]);
+					$cols = $api->getAllFields($value['id']);
 					foreach ($cols as $c) {
 						$columns[$c["name"]]  = $c["name"];
 					}
@@ -274,22 +275,22 @@ class joinDatasetsForm extends HelpFormBase
 			$selected_org = $form_state->getUserInput()['org2'];
 			$idss = array();
 
-			//$ids["new"] = "Сréer un jeu de données";
+			//$ids["new"] = "Сréer une connaissance";
 			if ($selected_org == '') {
 				foreach ($this->datasets as $ds) {
-					$idss[$ds[id]] = $ds[title];
+					$idss[$ds['id']] = $ds['title'];
 				}
 			} else {
 				foreach ($this->datasets as $ds) {
-					if ($ds[organization][id] == $selected_org) {
-						$idss[$ds[id]] = $ds[title];
+					if ($ds['organization']['id'] == $selected_org) {
+						$idss[$ds['id']] = $ds['title'];
 					}
 				}
 			}
 			//error_log("gg-".json_encode($idss));
 			$form['selected_data2'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données'),
+				'#title' => t('Sélectionner une connaissance'),
 				'#options' => $idss,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -306,7 +307,7 @@ class joinDatasetsForm extends HelpFormBase
 		} else {
 			$form['selected_data2'] = array(
 				'#type' => 'select',
-				'#title' => t('Sélectionner un jeu de données 2'),
+				'#title' => t('Sélectionner une connaissance 2'),
 				'#options' => $ids,
 				'#empty_option' => t('----'),
 				'#attributes' => array(
@@ -326,8 +327,8 @@ class joinDatasetsForm extends HelpFormBase
 			$jdd = $form_state->getUserInput()['ds2'];
 
 			foreach ($this->datasets as $d) {
-				if ($d[id] == $jdd) {
-					$jdd = $d[resources];
+				if ($d['id'] == $jdd) {
+					$jdd = $d['resources'];
 				}
 			}
 
@@ -335,8 +336,8 @@ class joinDatasetsForm extends HelpFormBase
 			$columns['empty'] = '---';
 
 			foreach ($jdd as $value) {
-				if ($value[format] == 'CSV' || $value[format] == 'csv') {
-					$cols = $api->getAllFields($value[id]);
+				if ($value['format'] == 'CSV' || $value['format'] == 'csv') {
+					$cols = $api->getAllFields($value['id']);
 					foreach ($cols as $c) {
 						$columns[$c["name"]]  = $c["name"];
 					}
@@ -416,17 +417,17 @@ class joinDatasetsForm extends HelpFormBase
 		$jdd1;
 		$jdd2;
 		foreach ($this->datasets as $d) {
-			if ($d[id] == $jdd1_id) {
+			if ($d['id'] == $jdd1_id) {
 				$jdd1 = $d;
 			}
-			if ($d[id] == $jdd2_id) {
+			if ($d['id'] == $jdd2_id) {
 				$jdd2 = $d;
 			}
 		}
 
-		$urlRes = $this->urlCkan . "/dataset/" . $jdd1[name] . '_' . $jdd2[name];
+		$urlRes = $this->urlCkan . "/dataset/" . $jdd1['name'] . '_' . $jdd2['name'];
 
-		$extras[count($extras)]['key'] = 'FTP_API';
+		$extras[is_countable($extras) ? count($extras) : 0]['key'] = 'FTP_API';
 		$extras[(count($extras) - 1)]['value'] = 'FTP';
 
 		###### security #######
@@ -454,13 +455,13 @@ class joinDatasetsForm extends HelpFormBase
 		$extras[count($extras)]['key'] = 'edition_security';
 		$extras[(count($extras) - 1)]['value'] = $security;
 
-		if ($jdd1[tags] == null) $jdd1[tags] = array();
-		if ($jdd2[tags] == null) $jdd2[tags] = array();
+		if ($jdd1['tags'] == null) $jdd1['tags'] = array();
+		if ($jdd2['tags'] == null) $jdd2['tags'] = array();
 
-		$description = 'Ce DataSet a été créé par la jointure entre les jeux de données: "' . $jdd1[title] . '" et "' . $jdd2[title] . '". </br>'
+		$description = 'Ce DataSet a été créé par la jointure entre les connaissances: "' . $jdd1['title'] . '" et "' . $jdd2['title'] . '". </br>'
 			. $description . '</br>'
-			. "[" . $jdd1[notes] . ']</br>'
-			. "[" . $jdd2[notes] . ']</br>';
+			. "[" . $jdd1['notes'] . ']</br>'
+			. "[" . $jdd2['notes'] . ']</br>';
 
 		$newData = [
 			"name" => $this->nettoyage($title),
@@ -477,7 +478,7 @@ class joinDatasetsForm extends HelpFormBase
 			"state" => "active",
 			"type" => "dataset",
 			"resources" => [],
-			"tags" => array_merge($jdd1[tags], $jdd2[tags]),
+			"tags" => array_merge($jdd1['tags'], $jdd2['tags']),
 			"extras" => $extras,
 			"relationships_as_object" => [],
 			"relationships_as_subject" => [],
@@ -496,9 +497,9 @@ class joinDatasetsForm extends HelpFormBase
 		$org;
 		$org_name;
 		foreach ($this->organizationList as $o) {
-			if ($o[id] == $org_new) {
+			if ($o['id'] == $org_new) {
 				$org = $o;
-				$org_name = $org[title];
+				$org_name = $org['title'];
 			}
 		}
 
@@ -523,7 +524,7 @@ class joinDatasetsForm extends HelpFormBase
 		}
 
 		if ($controlEx == false) {
-			$dataForUpdateDatasets[count($dataForUpdateDatasets)] = [
+			$dataForUpdateDatasets[is_countable($dataForUpdateDatasets) ? count($dataForUpdateDatasets) : 0] = [
 				"id_org" => $org_new,
 				"name_org" => $org_name,
 				"datasets" => [$dataset_conf],
@@ -536,30 +537,30 @@ class joinDatasetsForm extends HelpFormBase
 		$csv2 = '';
 
 
-		foreach ($jdd1[resources] as $value) {
-			if (($value[format] == "CSV" || $value[format] == "csv" || $value[datastore_active] == true) && $csv1 == "") {
-				$csv1 = $value[id];
+		foreach ($jdd1['resources'] as $value) {
+			if (($value['format'] == "CSV" || $value['format'] == "csv" || $value['datastore_active'] == true) && $csv1 == "") {
+				$csv1 = $value['id'];
 			} else {
 				$resources = [
 					"package_id" => $idNewData,
-					"url" => $value[url],
-					"description" => $value[description],
-					"name" => $value[name],
+					"url" => $value['url'],
+					"description" => $value['description'],
+					"name" => $value['name'],
 				];
 				$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 				$return = $api->updateRequest($callUrluptres, $resources, "POST");
 			}
 		}
 
-		foreach ($jdd2[resources] as $value) {
-			if (($value[format] == "CSV" || $value[format] == "csv" || $value[datastore_active] == true) && $csv2 == "") {
-				$csv2 = $value[id];
+		foreach ($jdd2['resources'] as $value) {
+			if (($value['format'] == "CSV" || $value['format'] == "csv" || $value['datastore_active'] == true) && $csv2 == "") {
+				$csv2 = $value['id'];
 			} else {
 				$resources = [
 					"package_id" => $idNewData,
-					"url" => $value[url],
-					"description" => $value[description],
-					"name" => $value[name],
+					"url" => $value['url'],
+					"description" => $value['description'],
+					"name" => $value['name'],
 				];
 				$callUrluptres = $this->urlCkan . "/api/action/resource_create";
 				$return = $api->updateRequest($callUrluptres, $resources, "POST");
@@ -567,11 +568,11 @@ class joinDatasetsForm extends HelpFormBase
 		}
 
 		if ($csv1 != '' && $csv2 != '') {
-			$urlFileNew = $this->join2csv($csv1, $csv2, $jdd1[name] . '_' . $jdd2[name], $columns_data, $columns_data2);
+			$urlFileNew = $this->join2csv($csv1, $csv2, $jdd1['name'] . '_' . $jdd2['name'], $columns_data, $columns_data2);
 
 			//Managing resources
 			$resourceManager = new ResourceManager;
-			$results = $resourceManager->manageFileWithPath($idNewData, null, false, null, $urlFileNew, '', null, false, false, true, $jdd1[name] . '_' . $jdd2[name], true);
+			$results = $resourceManager->manageFileWithPath($idNewData, null, false, null, $urlFileNew, '', null, false, false, true, $jdd1['name'] . '_' . $jdd2['name'], true);
 
 			// $resources = [
 			// 	"package_id" => $idNewData,
@@ -653,48 +654,48 @@ class joinDatasetsForm extends HelpFormBase
 			$coll++;
 
 			if ($coll == 1) {
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 			} else if ($coll > 10) {
-				$newData[name] = substr($newData[name], 0, -3);
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = substr($newData[title], 0, -3);
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = substr($newData['name'], 0, -3);
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = substr($newData['title'], 0, -3);
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 			} else if ($coll > 100) {
-				$newData[name] = substr($newData[name], 0, -4);
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = substr($newData[title], 0, -4);
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = substr($newData['name'], 0, -4);
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = substr($newData['title'], 0, -4);
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 			} else if ($coll > 1000) {
-				$newData[name] = substr($newData[name], 0, -5);
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = substr($newData[title], 0, -5);
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = substr($newData['name'], 0, -5);
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = substr($newData['title'], 0, -5);
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 			} else if ($coll > 10000) {
-				$newData[name] = substr($newData[name], 0, -6);
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = substr($newData[title], 0, -6);
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = substr($newData['name'], 0, -6);
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = substr($newData['title'], 0, -6);
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
 			} else {
-				$newData[name] = substr($newData[name], 0, -2);
-				$newData[name] = $newData[name] . '_' . $coll;
-				$newData[title] = substr($newData[title], 0, -2);
-				$newData[title] = $newData[title] . ' ' . $coll;
+				$newData['name'] = substr($newData['name'], 0, -2);
+				$newData['name'] = $newData['name'] . '_' . $coll;
+				$newData['title'] = substr($newData['title'], 0, -2);
+				$newData['title'] = $newData['title'] . ' ' . $coll;
 				$NewData = $this->saveData($newData, array('0' => $coll, '1' => $idNewData, '2' => $NewTitle));
 				$idNewData = $NewData[1];
 				$NewTitle = $NewData[2];
@@ -813,7 +814,7 @@ class joinDatasetsForm extends HelpFormBase
 		foreach ($cols2 as $key => $value2) {
 			$fields[] = "b." . $key . " as " . $value2;
 		}
-		$fieldreq = implode(", ", $fields);
+		$fieldreq = Tools::implode(", ", $fields);
 		//error_log(json_encode($fields));
 		$sql = "Select " . $fieldreq . " from \"" . $url1 . "\" as a full join \"" . $url2 . "\" as b on cast(a." . $columns_data . " as varchar) = cast(b." . $columns_data2 . " as varchar)";
 		$req['sql'] = $sql;
@@ -830,7 +831,7 @@ class joinDatasetsForm extends HelpFormBase
 		$result = json_decode($result, true);
 
 		$res_arr = array();
-		if (count($result["result"]["records"]) > 0) {
+		if ((is_countable($result["result"]["records"]) ? count($result["result"]["records"]) : 0) > 0) {
 			$nome_column_new = array_merge(array_values($cols1), array_values($cols2));
 
 			$res_arr[0] = $nome_column_new;

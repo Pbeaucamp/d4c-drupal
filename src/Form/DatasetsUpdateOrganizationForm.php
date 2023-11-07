@@ -33,7 +33,7 @@ class DatasetsUpdateOrganizationForm extends DatasetsForm {
 		$selectedOrganisme = $_GET["observatory"];
 
 		$result = parent::loadDatasets("", $selectedOrganisme);
-        $datasets = $result[results];
+        $datasets = $result['results'];
 		$count = $result["count"];
 
 		$headers = array();

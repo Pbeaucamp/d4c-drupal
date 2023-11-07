@@ -45,7 +45,7 @@ function addWidgetRow(num) {
 
 function delStory(event) {
 
-  var conf = confirm("Etes-vous sûr de vouloir supprimer ce jeu de données?");
+  var conf = confirm("Etes-vous sûr de vouloir supprimer cette connaissance?");
   if (conf) {
     $('#edit-del-story').selected(true);
     $('#edit-del-story').val('1');

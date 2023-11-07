@@ -7,7 +7,7 @@ info:
   version: 1.0.0
 tags:
 - name: datasets
-  description: Action sur les jeux de données
+  description: Action sur les connaissances
 - name: records
   description: Action sur les enregistrements
 paths:
@@ -17,7 +17,7 @@ paths:
       - datasets
       summary: Recherche des paquets satisfaisant à un critère de recherche donné.
 
-        Cette action accepte les paramètres de requête de recherche solr (détails ci-dessous) et renvoie un dictionnaire de résultats, y compris des jeux de données dictionnés qui correspondent aux critères de recherche, un compte de recherche et également des informations sur les facettes.
+        Cette action accepte les paramètres de requête de recherche solr (détails ci-dessous) et renvoie un dictionnaire de résultats, y compris des connaissances dictionnés qui correspondent aux critères de recherche, un compte de recherche et également des informations sur les facettes.
 
         Dans le cas d'une utilisation sans paramètre de recherche, tous les Datasets sont restituées.
       operationId: data4citizen.api.datasets.search
@@ -82,13 +82,13 @@ paths:
           type: string
       - name: include_drafts
         in: query
-        description: si Oui, les jeux de données à l'état de brouillon seront inclus dans les résultats. Un utilisateur verra seulement ses propres brouillons, et un administrateur les verra tous. Optionnel. Non par défaut
+        description: si Oui, les connaissances à l'état de brouillon seront inclus dans les résultats. Un utilisateur verra seulement ses propres brouillons, et un administrateur les verra tous. Optionnel. Non par défaut
         required: false
         schema:
           type: boolean
       - name: include_private
         in: query
-        description: si Oui, les datasets privés seront inclus dans les résultats. Un utilisateur verra seulement les jeux de données de son Organisation, et un administrateur les verra tous. Optionnel. Non par défaut.
+        description: si Oui, les datasets privés seront inclus dans les résultats. Un utilisateur verra seulement les connaissances de son Organisation, et un administrateur les verra tous. Optionnel. Non par défaut.
         required: false
         schema:
           type: boolean
@@ -102,7 +102,7 @@ paths:
     get:
       tags:
       - datasets
-      summary: Renvoie les jeux de données (packages) d'un groupe.
+      summary: Renvoie les connaissances (packages) d'un groupe.
       operationId: data4citizen.api.datasets.display
       parameters:
       - name: id
@@ -113,7 +113,7 @@ paths:
           type: string
       - name: limit
         in: query
-        description: le nombre maximal de jeux de données à renvoyer (facultatif)
+        description: le nombre maximal de connaissances à renvoyer (facultatif)
         required: false
         schema:
           type: integer

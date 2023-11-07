@@ -11,6 +11,11 @@ class CSWManager {
 	const NODE_FOLDER = '{$NODE_FOLDER}';
 	const FLUX_NAME = '{$FLUX_NAME}';
 
+	private $config;
+	private $isCSWEnabled;
+	private $cswServerPath;
+	private $cswModel;
+
 	function __construct() {
 		$this->config = include(__DIR__ . "/../../config.php");
 		$this->isCSWEnabled = $this->config->csw->enabled;

@@ -34,14 +34,14 @@ class AutocompleteController extends ControllerBase {
 
     $datasets = $datasets->getContent();
     $datasets = json_decode($datasets, true);
-    $datasets = $datasets[result][results];
+    $datasets = $datasets['result']['results'];
     
     $datasetOptions = array();
     // $datasetOptions["-1"] = "----";
     foreach($datasets as &$ds) {
         $item = array();
-        $item["value"] = $ds[name];
-        $item["label"] = $ds[title];
+        $item["value"] = $ds['name'];
+        $item["label"] = $ds['title'];
         $datasetOptions[] = $item;
     }
 

@@ -6,7 +6,7 @@ Ceci est la partie serveur de Drupal, un module spécifique nommé ckan_admin.
 
 Il offre plusieurs fonctionnalités : 
 
-1. Gère une interface de configuration Drupal pour le moissonnage de jeux de données
+1. Gère une interface de configuration Drupal pour le moissonnage de connaissances
 2. Gère le routage du site
 3. Gère quelques interfaces clients en tant que Controller.php
 4. Gère l'API D4C
@@ -31,7 +31,7 @@ Il est impératif d'indiquer, l'url ckan, la clé api ckan, l'url cluster et le 
 
 ---
 
-## Outils pour l'export de jeux de données
+## Outils pour l'export de connaissances
 
 - Ogr2ogr (permet la conversion kml et shapefile)
 	- `apt-get install gdal` (non nécessaire à priori)

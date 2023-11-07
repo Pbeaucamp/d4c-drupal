@@ -52,7 +52,18 @@ class ChartController extends ControllerBase {
 				<div ng-app="d4c.frontend"
 					 ng-controller="BigController">
 					<div class="row">
-						<div class="col-md-6 ng-cloak">
+					<div class="col-md-12 ng-cloak">
+						<div advanced-chart-controls
+									
+								urlsynchronize
+									
+								advanced="true"
+								can-save="true"
+								chart-context="chartContext"
+								context="fakeMultiChartContext"></div>
+						</div>
+
+						<div class="col-md-12 ng-cloak">
 							<div class="d4c-box">
 								<div d4c-highcharts-chart
 									 context="fakeMultiChartContext"
@@ -67,16 +78,7 @@ class ChartController extends ControllerBase {
 							</div>
 							 <d4c-notification-handler></d4c-notification-handler>
 						</div>
-						<div class="col-md-6 ng-cloak">
-							<div advanced-chart-controls
-									
-								 urlsynchronize
-									
-								 advanced="true"
-								 can-save="true"
-								 chart-context="chartContext"
-								 context="fakeMultiChartContext"></div>
-						</div>
+						
 						
 					</div>
 				</div>

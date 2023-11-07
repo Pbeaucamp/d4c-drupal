@@ -49,7 +49,7 @@ class ReusesController extends ControllerBase {
 		 
 
         /*'<div id="filter" class="col-md-2 content-body" >
-            <h1> <span id="nb_jeux">0</span> Jeux de données</h1>
+            <h1> <span id="nb_jeux">0</span> Connaissances</h1>
 			<input id="input-tag" type="text" class="hidden-filter">
                                 						
 			<div class="form-group">
@@ -86,7 +86,7 @@ class ReusesController extends ControllerBase {
 			
 			<form id="search-form">
 				<div class="input-group" id="barreRecherche">
-					<input id="search_bar" type="text"  class="form-control" aria-label="recherche" placeholder="Rechercher un jeu de données...">
+					<input id="search_bar" type="text"  class="form-control" aria-label="recherche" placeholder="Rechercher une connaissance...">
 					<div class="input-group-btn">
 						<button class="btn btn-default" type="submit">
 						<i class="glyphicon glyphicon-search"></i>

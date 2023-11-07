@@ -45,6 +45,9 @@ SOFTWARE.
 
 class themeForm extends HelpFormBase {
 
+	private $config;
+	private $urlCkan;
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -123,7 +126,7 @@ class themeForm extends HelpFormBase {
             $themes_defolt[8]->label = "Default";
 			$themes_defolt[8]->url = $this->config->client->routing_prefix . '/sites/default/files/api/portail_d4c/img/theme-default.png';
             
-			for($i=9; $i<count($themes); $i++){
+			for($i=9; $i<(is_countable($themes) ? count($themes) : 0); $i++){
 				if(!$themes[$i]->label){
 					$themes[$i]->label=$themes[$i]->title;
 					array_push($themes_defolt,$themes[$i]);
@@ -135,7 +138,7 @@ class themeForm extends HelpFormBase {
         }
         
 		$valuesForSelect=array();   
-		for($i=0; $i<count($themes); $i++){
+		for($i=0; $i<(is_countable($themes) ? count($themes) : 0); $i++){
 			$themeValue = $i . "%" . $themes[$i]->url . "%" . $themes[$i]->title;
 			if (isset($themes[$i]->url_light)) {
 				$themeValue = $themeValue . "%" . $themes[$i]->url_light;
@@ -225,9 +228,9 @@ class themeForm extends HelpFormBase {
 		if(intval($selectThemIndex) > 8){
 			$themeTitle = $themes[$selectThemIndex]->title;
 			$datasetsToUpdate = json_decode($api->datasetByTheme($themeTitle)->getContent());
-			for($i=0; $i< count($datasetsToUpdate) ; $i++){
+			for($i=0; $i< (is_countable($datasetsToUpdate) ? count($datasetsToUpdate) : 0) ; $i++){
 				
-				for($j=0; $j<count($datasetsToUpdate[$i]->extras) ; $j++ ){
+				for($j=0; $j<(is_countable($datasetsToUpdate[$i]->extras) ? count($datasetsToUpdate[$i]->extras) : 0) ; $j++ ){
 					if( $datasetsToUpdate[$i]->extras[$j]->key == "theme" ) {
 						
 						$selectedTheme = array();
@@ -279,8 +282,8 @@ class themeForm extends HelpFormBase {
 			$themeValid = preg_replace('#\&[^;]+\;#', '', $themeValid); // supprime les autres caractères
 			$themeValid = preg_replace('@[^a-zA-Z0-9_]@','',$themeValid);
            
-            $themes[count($themes)]->title = $themeValid;  
-            $themes[count($themes)-1]->label = $theme_label;  
+            $themes[is_countable($themes) ? count($themes) : 0]->title = $themeValid;  
+            $themes[(is_countable($themes) ? count($themes) : 0)-1]->label = $theme_label;  
             
 			$form_file = $form_state->getValue('img_theme');
             
@@ -289,13 +292,13 @@ class themeForm extends HelpFormBase {
 				$file->setPermanent();
 				$file->save();
 				$url_t=parse_url($file->createFileUrl(FALSE));
-				$themes[count($themes)-1]->url = $url_t["path"];
+				$themes[(is_countable($themes) ? count($themes) : 0)-1]->url = $url_t["path"];
 			}
 			else if($form_state->getValue('imgBack')!=''|| $form_state->getValue('imgBack')!=null){
-				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
+				$themes[(is_countable($themes) ? count($themes) : 0)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/set-v3/pictos/".$form_state->getValue('imgBack').".svg";
             }
             else{
-				$themes[count($themes)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png";
+				$themes[(is_countable($themes) ? count($themes) : 0)-1]->url = $this->config->client->routing_prefix . "/sites/default/files/api/portail_d4c/img/theme-default.png";
             }
             
             $config->set('themes',null)->save();
@@ -370,22 +373,22 @@ class themeForm extends HelpFormBase {
 			
 			$dataSet = $dataSet->getContent();
 			$dataSet = json_decode($dataSet,true);
-			$dataSet = $dataSet[result][results];
+			$dataSet = $dataSet['result']['results'];
 			$callUrl = $this->urlCkan . "/api/action/package_update";
         
-			for($i=0; $i<count($dataSet); $i++){  
+			for($i=0; $i<(is_countable($dataSet) ? count($dataSet) : 0); $i++){  
 				$them_label_ex = false;
-				if($dataSet[$i][extras]){
-					$cout_extras =count($dataSet[$i][extras]);
+				if($dataSet[$i]['extras']){
+					$cout_extras =is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0;
 					if($cout_extras!=0){
-						for($j=0; $j<count($dataSet[$i][extras]); $j++){
-							if($dataSet[$i][extras][$j]['key']=='theme' && $dataSet[$i][extras][$j]['value']==$them_old){
-								$dataSet[$i][extras][$j]['value']=$themeValid;
+						for($j=0; $j<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0); $j++){
+							if($dataSet[$i]['extras'][$j]['key']=='theme' && $dataSet[$i]['extras'][$j]['value']==$them_old){
+								$dataSet[$i]['extras'][$j]['value']=$themeValid;
 								
-								for($jj=0; $jj<count($dataSet[$i][extras]); $jj++){
-									if($dataSet[$i][extras][$jj]['key']=='label_theme'){
+								for($jj=0; $jj<(is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0); $jj++){
+									if($dataSet[$i]['extras'][$jj]['key']=='label_theme'){
 										$them_label_ex = true;
-										$dataSet[$i][extras][$jj]['value']=$theme_label;
+										$dataSet[$i]['extras'][$jj]['value']=$theme_label;
 									} 
 								}
 								$return = $api->updateRequest($callUrl,$dataSet[$i],"POST");
@@ -393,8 +396,8 @@ class themeForm extends HelpFormBase {
 							}
 						}
 						if($them_label_ex==false){
-							$dataSet[$i][extras][count($dataSet[$i][extras])]['key'] = 'label_theme';
-							$dataSet[$i][extras][(count($dataSet[$i][extras])-1)]['value']=$theme_label;
+							$dataSet[$i]['extras'][is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0]['key'] = 'label_theme';
+							$dataSet[$i]['extras'][((is_countable($dataSet[$i]['extras']) ? count($dataSet[$i]['extras']) : 0)-1)]['value']=$theme_label;
 						}
 					}
 				}								   

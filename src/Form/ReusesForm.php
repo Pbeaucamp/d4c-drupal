@@ -25,7 +25,9 @@ use Drupal\Component\Render\FormattableMarkup;
  * Implements an example form.
  */
 class ReusesForm extends HelpFormBase {
-	
+
+	private $config;
+	private $urlCkan;
 
 	/**
 	 * {@inheritdoc}
@@ -49,7 +51,9 @@ class ReusesForm extends HelpFormBase {
         $option_org=array();
         $option_ds=array();
 		
-		$page = pager_find_page();
+		$pager_parameters = \Drupal::service('pager.parameters');
+  		$page = $pager_parameters->findPage(0);
+
 		$num_per_page = 10;
 		$offset = $num_per_page * $page;
 
@@ -65,11 +69,12 @@ class ReusesForm extends HelpFormBase {
         $result = $api->getReuses($orga, $dataset, $queryParam, $status, $num_per_page, $offset);
 		$result = json_decode(json_encode($result), true);
 		$reuses = $result["reuses"];
-		pager_default_initialize($result["nhits"], $num_per_page);
+
+		\Drupal::service('pager.manager')->createPager($result["nhits"], $num_per_page)->getCurrentPage();
 		
 		$header =  array(
 			"name" => $this->t('Nom'),
-			"dataset" => $this->t('Jeu de données'),
+			"dataset" => $this->t('Connaissance'),
 			"author" => $this->t("Créateur"),
 			"date" => $this->t("Date ajout"),
 			"type" => $this->t("Type"),
@@ -130,8 +135,8 @@ class ReusesForm extends HelpFormBase {
 		$datasets = $api->callPackageSearch_public_private($req, \Drupal::currentUser()->id());
 		$datasets = $datasets->getContent();
 		
-        $datasets = json_decode($datasets, true)[result];
-        $datasets = $datasets[results];
+        $datasets = json_decode($datasets, true)['result'];
+        $datasets = $datasets['results'];
 		foreach ($datasets as $value) {
             $option_ds[$value["id"]] = $value["title"];
         }
@@ -167,7 +172,7 @@ class ReusesForm extends HelpFormBase {
 		$form['filters']['selected_dataset'] = array(
 			//'#prefix' => '<div class="container-inline">',
             '#type' => 'select',
-            '#title' => t('Dataset :'),
+            '#title' => t('Connaissance :'),
             '#options' => $option_ds,
             '#empty_option' => t('----'),          
 			'#attributes' => array(
