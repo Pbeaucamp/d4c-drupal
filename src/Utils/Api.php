@@ -932,9 +932,7 @@ class Api
 					}
 
 					if ($hasSiren 
-							&& !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiren, $siren) 
-							&& !in_array($dataset['id'], $datasetsInsideSirenEmprise)
-							&& !$isInsideObsEmprise) {
+							&& !$this->checkDataColumn($dataset['id'], $resourceId, $fieldSiren, $siren)) {
 						$datasetMatch = false;
 					}
 
@@ -943,6 +941,10 @@ class Api
 						break;
 					}
 				}
+			}
+
+			if (!$datasetMatch && (in_array($dataset['id'], $datasetsInsideSirenEmprise) || $isInsideObsEmprise)) {
+				$datasets[] = $dataset;
 			}
 
 			$result["result"]["results"] = $datasets;
