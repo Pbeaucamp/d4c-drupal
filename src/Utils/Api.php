@@ -5225,7 +5225,7 @@ class Api
 					$isPrivate = $data["is_private"];
 					$visualizationid = $data["visualization_id"];
 					try{
-						$datasetId = $this->createVisualizationDataset($visualizationid,$idmap,$title,$license,$isPrivate);
+						$datasetId = $this->createVisualizationDataset($visualizationid,$title,$license,$isPrivate);
 						$data['dataset_id'] = $datasetId;
 						$data = json_encode($data);
 					} catch (\Exception $e) {
@@ -9190,7 +9190,7 @@ class Api
 			$widget = $data->widget;
 			
 			$visualizationId = $this->insertVisualization($datasetid, $userId, $type, $name, $shareUrl, $iframe, $widget);
-			$visuDatasetid = $this->createVisualizationDataset($visualizationId,null,$name,$license,$isPrivate);
+			$visuDatasetid = $this->createVisualizationDataset($visualizationId,$name,$license,$isPrivate);
 			
 
 			$visualization = array();
@@ -9280,7 +9280,7 @@ class Api
 		return $query->execute();
 	}
 
-	function createVisualizationDataset($visualizationId,$datasetName,$title,$license,$isPrivate){
+	function createVisualizationDataset($visualizationId,$title,$license,$isPrivate){
 		$resourceManager = new ResourceManager;
 		$organization = $this->config->client->client_organisation;
 
@@ -9308,9 +9308,8 @@ class Api
 		$tags = array();
 
 		$generatedTaskId = uniqid();
-		if(!$datasetName){
-			$datasetName = $resourceManager->defineDatasetName($title);
-		}
+
+		$datasetName = $resourceManager->defineDatasetName($title);
 		$datasetId = $resourceManager->createDataset($generatedTaskId, $datasetName, $title, "", $license, $organization, $isPrivate, $tags, $extras);
 		
 		$this->updateVisualization($visualizationId, null, $datasetId);
