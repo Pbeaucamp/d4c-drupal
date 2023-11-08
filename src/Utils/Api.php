@@ -941,10 +941,10 @@ class Api
 						break;
 					}
 				}
-			}
 
-			if (!$datasetMatch && (in_array($dataset['id'], $datasetsInsideSirenEmprise) || $isInsideObsEmprise)) {
-				$datasets[] = $dataset;
+				if (!$datasetMatch && (in_array($dataset['id'], $datasetsInsideSirenEmprise) || $isInsideObsEmprise)) {
+					$datasets[] = $dataset;
+				}
 			}
 
 			$result["result"]["results"] = $datasets;
